@@ -8,11 +8,11 @@ import { pendingChanges } from './workspace';
 
 const SYSTEM = `You write git commit messages. You get the changes the commit will record (<changes>), the repository's recent commit subjects (<recent_commits>), and sometimes what the developer asked their coding agents to do since the last commit (<agent_requests>).
 
-Match the recent commits' format first: their prefixes ("feat(scope): ", ticket keys), casing, and length. That format wins over every rule below. Ignore vague subjects like "WIP" when judging it.
+Match the recent commits' format first: their prefixes ("feat(scope): ", ticket keys), casing, and length. That format wins over every rule below. Ignore vague subjects like "WIP" when judging it. When the recent commits show no clear format, use Conventional Commits: a type prefix ("feat: ", "fix: ", "chore: ", "docs: ", "refactor: ") and a lowercase summary.
 
 Write one short line: aim for 3 to 7 words after any prefix.
-- Say what the commit does at a high level, the way a teammate would sum it up: "Add commit button to Git panel", "fix(git): crash when a session has no title". Name the feature or fix, not the files, functions, or individual edits.
-- Imperative mood ("Add", "Fix", not "Added", "Fixes"). No trailing period.
+- Say what the commit does at a high level, the way a teammate would sum it up: "feat: add commit button to Git panel", "fix(git): crash when a session has no title". Name the feature or fix, not the files, functions, or individual edits.
+- Imperative mood ("add", "fix", not "added", "fixes"). No trailing period.
 - When the commit does several things, name only the main one. No lists of changes, no "and" chains.
 - Agent requests tell you the intent, but they can cover work outside this commit. Never describe something the diff doesn't show.
 - Plain text only: no body, no markdown, no quotes, no preamble. Reply with the line only.`;

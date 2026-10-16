@@ -19,7 +19,7 @@ With a fast model set, an empty commit box means "write it for me": Commit has t
 
 Commit, push, and pull show a toast whose spinner turns into a check or a cross, and the Commit button draws a check for a moment once it went through. Staged and Changes show their lines added and removed, rolling as files move.
 
-The model writes one short line that says what the commit does. It works from the diff, the repo's recent commit subjects so it copies their style, and the prompts you gave agents in this workspace, which hold the why that a diff can't show.
+The model writes one short line that says what the commit does. It works from the diff, the repo's recent commit subjects so it copies their style (Conventional Commits when they show none), and the prompts you gave agents in this workspace, which hold the why that a diff can't show.
 
 ## Folders without git
 

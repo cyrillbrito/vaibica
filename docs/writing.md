@@ -28,4 +28,4 @@ Comments are rare and say why, never what. Write one when the code alone would m
 
 ## Commit messages
 
-One short line that says what the commit does for the user, not which files changed.
+Commits follow [Conventional Commits](https://www.conventionalcommits.org/): a type prefix such as `feat:`, `fix:`, `chore:`, `docs:`, or `refactor:`, then one short lowercase summary of what the commit does for the user, not which files changed. For example, `feat: drag sessions between projects`.
