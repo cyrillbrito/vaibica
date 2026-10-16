@@ -6,7 +6,6 @@
     "solid-env.d.ts",
     "skills",
     ".agents/skills",
-    ".pi/skills",
     "docs/explorations/*.html"
   ],
   "overrides": [

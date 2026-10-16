@@ -176,7 +176,7 @@ Emil Kowalski's design-engineering skills ([emilkowalski/skills](https://github.
 - [find-animation-opportunities](https://github.com/emilkowalski/skills/blob/main/skills/find-animation-opportunities/SKILL.md): where motion helps, and the gate that rejects most candidates.
 - [improve-animations](https://github.com/emilkowalski/skills/blob/main/skills/improve-animations/SKILL.md) and [review-animations](https://github.com/emilkowalski/skills/blob/main/skills/review-animations/SKILL.md): audit and review existing motion.
 
-The repo's `frontend-design` skill (`.pi/skills/`) covers visual direction and typography.
+The repo's `frontend-design` skill (`.agents/skills/`) covers visual direction and typography.
 
 ## Inspiration
 

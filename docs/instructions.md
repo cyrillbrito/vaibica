@@ -14,6 +14,8 @@ Skills are Agent Skills folders, each with a `SKILL.md`. Only their names and de
 
 Skills marked `disable-model-invocation` are left out, since there are no slash commands.
 
+This repo's own skills come from GitHub through the [skills](https://skills.sh) CLI, pinned in `skills-lock.json`. Install with `bunx skills add <owner/repo> -s <skill> -a pi`, which writes to `.agents/skills`, and refresh with `bunx skills update -p`. `skills/` holds only the skills Bica ships.
+
 ## Short replies
 
 The instructions end with rules for how the agent replies, since replies are read on a phone between sessions. They give the reason as a fact about the reader, because a preference like "be concise" gets traded away and a fact doesn't. They set hard limits: usually 2 to 6 lines, one list of up to 5 points, no headings or bold labels. Without numbers, replies to long dictated prompts doubled. A dictated message that asks several things gets the main answer in full and the rest in a sentence each. A named list of exceptions, such as "explain" or a destructive action, keeps the model from inventing its own. A check before sending asks whether the first and last lines alone say what happened and what to do next.
