@@ -214,14 +214,14 @@ export async function reorderProjects(ids: string[]) {
 /**
  * A new worktree for a session: its own branch from the freshly fetched
  * default branch, or the local one when it is ahead, in a sibling folder
- * like `../vali-sidebar-resize`. Its path.
+ * like `../shop-sidebar-resize`. Its path.
  */
 export async function createWorktree(projectId: string, title: string) {
   const project = await getProject(projectId);
   if (!project.git) throw new Error(`${project.name} is not a git repo`);
   const git = (args: string[]) => exec('git', args, { cwd: project.path });
-  // The folder already says the project: `dever-ui-polish`, not
-  // `dever-dever-ui-polish`.
+  // The folder already says the project: `shop-ui-polish`, not
+  // `shop-shop-ui-polish`.
   const prefix = `${slugify(project.name, '')}-`;
   let slug = slugify(title, 'session');
   if (slug.startsWith(prefix) && slug.length > prefix.length)

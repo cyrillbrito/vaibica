@@ -1,8 +1,8 @@
 // The `bica` command: Bica's production server in the terminal, with keys to
 // open the UI, the way Vite's dev server does. cli/build.ts compiles it into
-// one binary, with the client, skills, and codemode's files embedded.
+// one binary, with the client and codemode's files embedded.
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import {
   createServer,
   type IncomingMessage,
@@ -24,8 +24,6 @@ export interface Build {
   }>;
   /** URL path, such as `/assets/app.js`, to its embedded file. */
   client: Record<string, string>;
-  /** Path inside `skills/` to its embedded file. */
-  skills: Record<string, string>;
   wasm: string;
   worker: string;
 }
@@ -58,7 +56,6 @@ export async function run(build: Build) {
 
   // Set before the server loads: its modules read them once.
   const data = (process.env.BICA_DATA_DIR ||= join(homedir(), '.bica/data'));
-  process.env.BICA_SKILLS_DIR = unpackSkills(build.skills, data);
   process.env.BICA_CODEMODE_WASM = build.wasm;
   process.env.BICA_CODEMODE_WORKER = build.worker;
 
@@ -95,17 +92,6 @@ export async function run(build: Build) {
 function fail(message: string): never {
   console.error(message);
   process.exit(1);
-}
-
-/** Skills must be real files: the agent reads them with its own tools. */
-function unpackSkills(skills: Record<string, string>, data: string) {
-  const dir = join(data, 'skills');
-  rmSync(dir, { recursive: true, force: true });
-  for (const [path, file] of Object.entries(skills)) {
-    mkdirSync(dirname(join(dir, path)), { recursive: true });
-    writeFileSync(join(dir, path), readFileSync(file));
-  }
-  return dir;
 }
 
 function sendEmbedded(

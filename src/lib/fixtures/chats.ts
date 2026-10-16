@@ -298,7 +298,7 @@ const PASTE = Array.from(
 
 const WIDE_TABLE = `| Session | Branch | Pull request | Status | Owner | Last run |
 | --- | --- | --- | --- | --- | --- |
-| Benachrichtigungseinstellungenüberarbeitung | cyrill-brito-altium/AFS-69095-restore-export-of-archived-sessions-with-unicode-titles | #128473 | error | Aleksandra Wiśniewska-Kowalczyk | 2026-10-11 09:41:07 |
+| Benachrichtigungseinstellungenüberarbeitung | aleksandra/NW-69095-restore-export-of-archived-sessions-with-unicode-titles | #128473 | error | Aleksandra Wiśniewska-Kowalczyk | 2026-10-11 09:41:07 |
 | J | wip | — | done | Jo | 59 s ago |
 | 修复侧边栏在窄屏幕上的溢出问题 | 修复侧边栏溢出 | #100234 | waiting | 王秀英 | 12 min ago |`;
 
@@ -309,14 +309,14 @@ export const worstChat: Turn[] = [
 Fix the session list overflowing in the left sidebar at 320px.
 
 ## Done so far
-- Reproduced with the branch \`cyrill-brito-altium/AFS-69095-restore-export-of-archived-sessions-with-unicode-titles\`.
+- Reproduced with the branch \`aleksandra/NW-69095-restore-export-of-archived-sessions-with-unicode-titles\`.
 - Ruled out the PR badge; the ticket tag is what wraps.
 
 ## Open
 - ${LONG_URL}`,
   },
   {
-    user: `${LONG_URL}\n\nThe export test fails again on CI, see the trace below. Also: why does the sidebar still overflow with this branch? cyrill-brito-altium/AFS-69095-restore-export-of-archived-sessions-with-unicode-titles\n\n${PASTE}`,
+    user: `${LONG_URL}\n\nThe export test fails again on CI, see the trace below. Also: why does the sidebar still overflow with this branch? aleksandra/NW-69095-restore-export-of-archived-sessions-with-unicode-titles\n\n${PASTE}`,
     images: [
       {
         mimeType: 'image/png',
@@ -386,7 +386,7 @@ Fix the session list overflowing in the left sidebar at 320px.
       {
         say: `# Why it overflows
 
-The ticket tag \`AFS-69095\` sits in a flex row without \`min-width: 0\`, so the branch name pushes it out: ${LONG_URL}
+The ticket tag \`NW-69095\` sits in a flex row without \`min-width: 0\`, so the branch name pushes it out: ${LONG_URL}
 
 ${WIDE_TABLE}
 

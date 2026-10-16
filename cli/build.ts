@@ -1,5 +1,5 @@
 // Builds the `bica` binary into dist/bica/bica: Vite's build, bundled with
-// cli/bica.ts, with the client, skills, and codemode's wasm embedded as files.
+// cli/bica.ts, with the client and codemode's wasm embedded as files.
 // Each `--target bun-<os>-<arch>` builds dist/bica/<os>-<arch>/bica instead.
 // BICA_VERSION sets the version `bica --version` prints.
 import { $, Glob } from 'bun';
@@ -36,10 +36,6 @@ const client = files('dist/client').map((path): [string, string] => [
   `/${path}`,
   embed(join(root, 'dist/client', path)),
 ]);
-const skills = files('skills').map((path): [string, string] => [
-  path,
-  embed(join(root, 'skills', path)),
-]);
 const codemode = Bun.resolveSync('@earendil-works/pi-codemode', root);
 const wasm = embed(
   Bun.resolveSync('quickjs-wasi/quickjs.wasm', dirname(codemode)),
@@ -69,7 +65,6 @@ await run({
     ...(await import(${JSON.stringify(join(root, 'dist/server/socket.js'))})),
   }),
   client: ${map(client)},
-  skills: ${map(skills)},
   wasm: ${wasm},
   // Bun resolves this form from the binary's own module graph.
   worker: './cli/codemode-worker.ts',

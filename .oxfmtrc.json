@@ -4,7 +4,6 @@
   "ignorePatterns": [
     "file-routes.d.ts",
     "solid-env.d.ts",
-    "skills",
     ".agents/skills",
     "docs/explorations/*.html"
   ],

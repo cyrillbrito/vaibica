@@ -45,15 +45,15 @@ The common pattern: the unit of work is a branch with a PR and a card attached, 
 
 ### 1. The branch is the identity, not the folder
 
-A session belongs to a folder. Clean up already notes the branch and PR on each archived session, but only at that moment. Record the branch when it is first seen in a worktree or lane instead (the lane is already in `.data/lanes.json`). Then archived sessions could group under "AFS-66263 dl-checks · merged #11439" whatever happened to their folder.
+A session belongs to a folder. Clean up already notes the branch and PR on each archived session, but only at that moment. Record the branch when it is first seen in a worktree or lane instead (the lane is already in `.data/lanes.json`). Then archived sessions could group under "NW-66263 dl-checks · merged #11439" whatever happened to their folder.
 
 ### 2. Move a session into a worktree
 
-The missing step between investigating and building. In a main-folder session, "Move to new worktree" makes the worktree from the fast model's name (as today), carries uncommitted changes over (stash in main, apply in the worktree), and moves the session's folder. The agent learns its new folder with the next prompt, the same way it learns a new lane. Also "Start from…" in the workspace picker: an existing branch, a PR number, or a Jira key, which names the branch `AFS-1234-short-title` and puts the card's text in the first prompt.
+The missing step between investigating and building. In a main-folder session, "Move to new worktree" makes the worktree from the fast model's name (as today), carries uncommitted changes over (stash in main, apply in the worktree), and moves the session's folder. The agent learns its new folder with the next prompt, the same way it learns a new lane. Also "Start from…" in the workspace picker: an existing branch, a PR number, or a Jira key, which names the branch `NW-1234-short-title` and puts the card's text in the first prompt.
 
 ### 3. Try it in the main folder
 
-The main folder runs the heavy dev stack, so that is where trying should happen. On a parked or active worktree: "Try in main folder". It needs a clean main folder, then runs `git checkout --detach <branch>` there (detached, since git won't check out a branch twice). The main folder's header then says "Trying vali-AFS-66990 · Back to main". Later this could follow the worktree as it changes, like Spotlight. For a merged PR the action is simpler: "Pull main" in the main folder, shown when it is behind `origin/main`. GitButler needs none of this, since all lanes are already applied.
+The main folder runs the heavy dev stack, so that is where trying should happen. On a parked or active worktree: "Try in main folder". It needs a clean main folder, then runs `git checkout --detach <branch>` there (detached, since git won't check out a branch twice). The main folder's header then says "Trying shop-NW-66990 · Back to main". Later this could follow the worktree as it changes, like Spotlight. For a merged PR the action is simpler: "Pull main" in the main folder, shown when it is behind `origin/main`. GitButler needs none of this, since all lanes are already applied.
 
 ### 4. Parked sorted by what it needs
 

@@ -14,7 +14,7 @@ export interface Skill {
   path: string;
 }
 
-/** Earlier folders win when two skills share a name: project over user over Bica's own. */
+/** Earlier folders win when two skills share a name: project over user. */
 function skillDirs(cwd: string) {
   const home = homedir();
   return [
@@ -24,9 +24,6 @@ function skillDirs(cwd: string) {
     join(home, '.agents/skills'),
     join(home, '.claude/skills'),
     join(BICA_HOME, 'skills'),
-    // Shipped with Bica; the server runs from the repo root, like `.data`,
-    // except the `bica` binary, which unpacks its own copy.
-    process.env.BICA_SKILLS_DIR || join(process.cwd(), 'skills'),
   ];
 }
 

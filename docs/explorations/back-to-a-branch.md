@@ -1,6 +1,6 @@
 # Getting back to a branch (exploration)
 
-This is research, not a spec. It looks at going back to a parked branch, such as `vali-null-checks`, and starting a session there. Ideas 1 to 3 are built, see [projects.md](../projects.md#where-a-session-starts) and [files.md](../files.md); what is left is starting from a branch with no worktree, and the smaller things.
+This is research, not a spec. It looks at going back to a parked branch, such as `shop-null-checks`, and starting a session there. Ideas 1 to 3 are built, see [projects.md](../projects.md#where-a-session-starts) and [files.md](../files.md); what is left is starting from a branch with no worktree, and the smaller things.
 
 ## What others do
 

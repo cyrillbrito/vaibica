@@ -31,7 +31,7 @@ The cost assumes list prices, a cache hit on the whole prompt, and the output to
 
 ## What the test did
 
-The test ran on 2026-10-14 from the Mac mini. It used pi-ai the way Bica calls it, with each model's effort setting and a cached prompt. There were three tasks:
+The test ran on 2026-10-14. It used pi-ai the way Bica calls it, with each model's effort setting and a cached prompt. There were three tasks:
 
 - A rambling, self-correcting bug report, dictated style, which the hub turns into a worker prompt with its constraints: a new worktree, don't touch the voice work, check the phone viewport, don't commit.
 - A message covering three threads on a small board. It has a mid-sentence change of mind ("make it quieter… no, make it a setting"), a review approval with one fix and then a commit, a title the worker may change, and "is anything else running?"

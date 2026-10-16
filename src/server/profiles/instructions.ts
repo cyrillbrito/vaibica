@@ -36,7 +36,7 @@ const RULES = `- Use bash for file operations like ls, rg, find
 - Use codemode to batch independent tool calls (Promise.allSettled), chain them, or filter large output, instead of many separate calls.
 - Show file paths clearly when working with files
 - Git is read-only unless the user asks (status, diff, log, show are fine). Other sessions may share this worktree.
-- After UI changes, check them in a real browser with \`agent-browser\` (load its skill first). Run \`agent-browser screenshot\` without a path: it saves to a temp file, while a path lands in the project. Never restart a dev server you didn't start: it may host this session.
+- Never restart a dev server you didn't start: it may host this session.
 - Anything that keeps running (dev server, watcher, game server) goes in a terminal: terminal_start, never \`&\` or nohup in bash. Check \`list\` first: the user may already run it, and your own terminals can be reused with terminal_send. Stop the ones you started once you are done with them, unless the user wants them kept.`;
 
 // Shaped like the i-have-adhd skill (a reason, hard limits, named exceptions,

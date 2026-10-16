@@ -402,7 +402,7 @@ function demo(): Dataset {
 function worst(): Dataset {
   const nw = `${HOME}/Repos/northwind-industries-customer-onboarding-platform`;
   const x = `${HOME}/x`;
-  const vali = `${HOME}/Repos/vali`;
+  const shop = `${HOME}/Repos/shop`;
   const cjk = `${HOME}/Repos/王秀英的毕业设计`;
   const long200 =
     'Investigate why the session list in the left sidebar overflows when a worktree branch name, a pull request badge and a ticket tag all share one line on a 320px phone, then fix it without moving rows';
@@ -415,7 +415,7 @@ function worst(): Dataset {
           ws(nw, 'main', true),
           ws(
             `${nw}-restore-export-of-archived-sessions-wit`,
-            'cyrill-brito-altium/AFS-69095-restore-export-of-archived-sessions-with-unicode-titles',
+            'aleksandra/NW-69095-restore-export-of-archived-sessions-with-unicode-titles',
             false,
             pr(
               128473,
@@ -430,7 +430,7 @@ function worst(): Dataset {
             pr(7, 'draft'),
           ),
           ws(`${nw}-bisect-flaky-checkout-e2e`, null),
-          ws(`${nw}-AFS-123456789`, 'AFS-123456789', false, pr(9999, 'closed')),
+          ws(`${nw}-NW-123456789`, 'NW-123456789', false, pr(9999, 'closed')),
           // Parked: nothing open, PR merged or closed.
           ws(
             `${nw}-benachrichtigungseinstellungen`,
@@ -449,7 +449,7 @@ function worst(): Dataset {
         { tickets: 'https://example.atlassian.net/browse/{key}' },
       ),
       project('x', 'x', [ws(x, null, true)], { git: false }),
-      project('vali', 'vali', [ws(vali, 'main', true)]),
+      project('shop', 'shop', [ws(shop, 'main', true)]),
       project('cjk', '王秀英的毕业设计', [ws(cjk, '修复侧边栏溢出', true)]),
       // Parked, alone in its project: the project's name shares the line.
       project('parked-long', 'konstantin-oberhauser-wettstein-dotfiles', [
@@ -513,7 +513,7 @@ function worst(): Dataset {
       ),
       session(
         'nw',
-        `${nw}-AFS-123456789`,
+        `${nw}-NW-123456789`,
         '👩🏽‍💻 Pair on the release checklist',
         'idle',
         2 * DAY,
@@ -521,8 +521,8 @@ function worst(): Dataset {
       session('x', x, 'نور الهدى: إصلاح القائمة الجانبية', 'done', 30 * MIN, {
         id: 'worst-x',
       }),
-      session('vali', vali, 'Split the export lane', 'running', MIN),
-      session('vali', vali, 'Rename', 'idle', 9 * HOUR),
+      session('shop', shop, 'Split the export lane', 'running', MIN),
+      session('shop', shop, 'Rename', 'idle', 9 * HOUR),
       session(
         'cjk',
         cjk,
@@ -556,7 +556,7 @@ function worst(): Dataset {
         archivedAt: now - 700 * DAY,
         cleanedUp: {
           branch:
-            'cyrill-brito-altium/AFS-70001-ship-the-restore-flow-behind-a-feature-flag',
+            'aleksandra/NW-70001-ship-the-restore-flow-behind-a-feature-flag',
           pr: pr(127001, 'merged'),
         },
       }),
@@ -659,7 +659,7 @@ function worst(): Dataset {
           'Revert "Revert "Restore export of archived sessions with unicode titles and emoji in their names (#128473)""',
           '👩🏽‍💻',
           'wip',
-          "Merge branch 'main' of github.com:northwind-industries/customer-onboarding-platform into cyrill-brito-altium/AFS-69095",
+          "Merge branch 'main' of github.com:northwind-industries/customer-onboarding-platform into aleksandra/NW-69095",
         ]),
         submodules: [
           {
@@ -686,9 +686,9 @@ function worst(): Dataset {
         branch: null,
         upstream: null,
       }),
-      [`${nw}-AFS-123456789`]: status({
-        branch: 'AFS-123456789',
-        upstream: 'origin/AFS-123456789',
+      [`${nw}-NW-123456789`]: status({
+        branch: 'NW-123456789',
+        upstream: 'origin/NW-123456789',
         behind: 99,
       }),
       [cjk]: status({

@@ -3,7 +3,7 @@
 Bica runs as one Bun process on the dev machine, usually the dev server (`bun run dev`, port 3142). Phones and other machines reach it through `tailscale serve` on the same port:
 
 - local: `http://localhost:3142`
-- tailnet: `https://mini.boa-carob.ts.net:3142`
+- tailnet: `https://<machine>.<tailnet>.ts.net:3142`
 
 ```sh
 tailscale serve --bg --https=3142 http://localhost:3142
@@ -30,7 +30,7 @@ Data lives in `.data/`, relative to where the server starts. Never run two serve
 
 ## The `bica` binary
 
-`bun run build:bica` compiles the same production server into one file, `dist/bica/bica`, that runs from any folder with no repo or `node_modules`. The client, the shipped skills, and codemode's worker and wasm are embedded. `bica` listens on `localhost:3141` (`--port` picks another) and keeps its data in `~/.bica/data`, or in `BICA_DATA_DIR`, so it never shares the repo's `.data/`.
+`bun run build:bica` compiles the same production server into one file, `dist/bica/bica`, that runs from any folder with no repo or `node_modules`. The client and codemode's worker and wasm are embedded. `bica` listens on `localhost:3141` (`--port` picks another) and keeps its data in `~/.bica/data`, or in `BICA_DATA_DIR`, so it never shares the repo's `.data/`.
 
 In a terminal it prints its address and a few keys, the way Vite does:
 
@@ -39,7 +39,7 @@ In a terminal it prints its address and a few keys, the way Vite does:
 - `p` picks the Chrome profile from Chrome's `Local State`, saved in `chrome.json` in the data folder.
 - `q` and Ctrl-C stop it, which ends its shells. Pi Durable resumes agent runs on the next start.
 
-Without a terminal, as a background service, it only logs. Skills are unpacked to `skills/` in the data folder on every start, since the agent reads them as files. See [cli/bica.ts](../cli/bica.ts) and [cli/build.ts](../cli/build.ts).
+Without a terminal, as a background service, it only logs. See [cli/bica.ts](../cli/bica.ts) and [cli/build.ts](../cli/build.ts).
 
 `bica --version` prints the version, which comes from `BICA_VERSION` at build time. A local build without it says `0.0.0-dev`. `bun run build:bica --target bun-linux-x64` cross-compiles, into `dist/bica/linux-x64/bica`, and takes several `--target` flags at once.
 

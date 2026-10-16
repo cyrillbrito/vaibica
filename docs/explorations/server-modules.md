@@ -233,7 +233,7 @@ Web Push is unused and goes (see below), so there is no `notifications/` module,
 
 ## What to remove first
 
-Removing a feature nobody uses beats any restructure: fewer files to move, fewer edges in the cycle, smaller interfaces. The live data in `~/Repos/vaibica/.data` shows which features are in use. The user agreed to remove the first four.
+Removing a feature nobody uses beats any restructure: fewer files to move, fewer edges in the cycle, smaller interfaces. The live data in `.data` shows which features are in use. The user agreed to remove the first four.
 
 1. GitButler, about 1,500 lines. No project is in GitButler mode (every `.git/HEAD` points at a normal branch), and `lanes.json` holds one workspace with no files. It spans `butler.ts` (412), `ButlerPanel.tsx` (642), `LanePicker.tsx` (81), about 130 lines of `sessions.ts` (`claimEdit`, `branchName`, `setLane`, `renameBranch`, the `claiming` lock, the `lane` parameter), about 60 lines of `socket.ts`, 37 lines of `protocol.ts`, the `gitbutler` instructions section, the lane options in `commit-message.ts`, and bits of `Sidebar`, `Inspector`, the home page, and the session page. Removing it also takes out the `coding-tools → sessions` dynamic import, `instructions → butler`, two `globalThis` entries, the second `inside`, the `polled` and `readRepo` exports of `workspace.ts`, and a fast-model call that every first edit waits up to 5 seconds on. The `lane` field stays in stored `SessionDoc`s, unread, which is harmless.
 2. Web Push, about 550 lines. `notify.ts` (142), `push.ts` (160), `public/sw.js` (42), most of `lib/notifications.ts` (166), `scripts/test-bun-push.ts`, the `presence` topic, three `push.*` calls, the Settings toggle, `.data/push.json`, and `docs/notifications.md`. It also removes the `sessions → notify` call, the dynamic import back, `runOutcome`, and three `globalThis` maps. The app badge and `pageFocused` live in the same client file. `pageFocused` stays as a tiny helper. The badge stays, since `setAppBadge` works without push while the app is open (step 0b).
@@ -357,7 +357,7 @@ Each step is one commit. Run `bun run check`, `bun run lint`, and `bun run test:
   - In `projects.ts`, run `git init` in `addProject` for a folder without `.git`, and in `createChatFolder`. The `git` flag on a project and the `git: false` branch stay for a folder that can't be a repo.
   - In `workspace.ts`, the no-git branches of `watchStatus` and `watchFiles` stay, but `toText` loses its outside caller.
 - Shared and client: in `lib/protocol.ts`, remove the `session.diff` and `session.discard` calls and the `session.changes` topic. In `lib/workspace.ts`, remove `useSessionChanges` and `discardSessionChanges`. Remove the session-change view in `OpenFile.tsx`, and the `plain` tab ("Changes") in `Inspector.tsx`.
-- Data: `.data/shadow/` can be deleted. Run `git init` once by hand in `~/Repos/vault` and the existing chat folders in `~/.bica/chats/`.
+- Data: `.data/shadow/` can be deleted. Run `git init` once by hand in the hub's notes folder and the existing chat folders in `~/.bica/chats/`.
 - Docs: the folders-without-git section of `docs/git.md`, the `shadow/` row in `architecture.md`, and the mentions in `files.md` and `projects.md`.
 
 1. Mechanical: add `paths.ts`, and replace the 9 `.data` literals and the `BICA_HOME` import in `ws-log`. This is a pure rename.

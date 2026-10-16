@@ -3,7 +3,7 @@
 const TICKET = /^([A-Z][A-Z0-9]+-\d+)(?:[-_](.*))?$/;
 
 /**
- * "me/AFS-69095-restore-export" → prefix "me/", ticket "AFS-69095", rest
+ * "me/NW-69095-restore-export" → prefix "me/", ticket "NW-69095", rest
  * "restore-export". The prefix is everything up to the last slash.
  */
 export function splitBranch(branch: string) {

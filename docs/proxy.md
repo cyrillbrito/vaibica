@@ -6,7 +6,7 @@ Bica can send model requests to a CLIProxyAPI server, which holds many plan sign
 
 There are several sources of model access: personal Claude and ChatGPT plans, a second Claude account, work accounts, Copilot, and OpenRouter. Bica holds one sign-in per provider, while the proxy holds many and picks between them by priority. Plans whose limits reset on a timer go first, since unused time is lost. Work accounts billed by tokens come next, and OpenRouter, paid per request, comes last.
 
-The proxy runs on the Legion and is reached over Tailscale, so the laptop and the Mac Mini share one pool. Session affinity keeps a conversation on one account, so its prompt cache stays warm. Keep one direct sign-in in Bica as a backup for when the Legion is off.
+The proxy can run on another machine and be reached over Tailscale, so every machine running Bica shares one pool. Session affinity keeps a conversation on one account, so its prompt cache stays warm. Keep one direct sign-in in Bica as a backup for when the proxy's machine is off.
 
 Anthropic's terms don't allow plan sign-ins in third-party apps, and the proxy poses as Claude Code, so an account can be blocked for it.
 

@@ -170,7 +170,7 @@ function parentHint(path: string, paths: string[]) {
   return parts.slice(0, -1).join('/');
 }
 
-// "vali / AFS-69095-restore-export" for messages and tooltips.
+// "shop / NW-69095-restore-export" for messages and tooltips.
 const nameOf = (g: Group) =>
   [g.projectName, g.branch ?? g.folder].filter(Boolean).join(' / ');
 
