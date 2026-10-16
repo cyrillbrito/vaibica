@@ -1,5 +1,5 @@
 import type { FileTreeRowDecoration, GitStatusEntry } from '@pierre/trees';
-import { createEffect, onSettled, untrack } from 'solid-js';
+import { createEffect, createMemo, onSettled, untrack } from 'solid-js';
 
 import { openContextMenu, type MenuEntry } from './ui/ContextMenu';
 
@@ -39,6 +39,11 @@ export default function FileTree(props: {
   // fills its parent, scrolls, reveals only the open file and has search.
   fit?: boolean;
 }) {
+  // Read once here: Pierre and the effects below read it outside any owner, and
+  // a parent may pass an expression the compiler wraps in a fresh memo per read.
+  const selected = createMemo(() => props.selected, {
+    name: 'fileTreeSelected',
+  });
   let host: HTMLDivElement | undefined;
   let tree: Tree | undefined;
   let loading: Promise<Tree> | undefined;
@@ -67,7 +72,8 @@ export default function FileTree(props: {
     (props.status ?? []).map((s) => ({ ...s, path: out(s.path) }));
   const expanded = (t?: Tree) => {
     if (flat) return [];
-    if (!props.fit) return props.selected ? folders(props.selected) : [];
+    const s = selected();
+    if (!props.fit) return s ? folders(s) : [];
     // All open, except folders closed by hand that are still there.
     const all = new Set(props.paths.flatMap(folders));
     return [...all].filter(
@@ -92,7 +98,8 @@ export default function FileTree(props: {
   };
 
   const select = (t: Tree) => {
-    const want = props.selected ? out(props.selected) : undefined;
+    const s = selected();
+    const want = s ? out(s) : undefined;
     const have = t.getSelectedPaths();
     if (have.length === (want ? 1 : 0) && (!want || have[0] === want)) return;
     for (const p of have) t.getItem(p)?.deselect();
@@ -112,7 +119,7 @@ export default function FileTree(props: {
       const t = new m.FileTree({
         paths: props.paths.map(out),
         gitStatus: status(),
-        initialSelectedPaths: props.selected ? [out(props.selected)] : [],
+        initialSelectedPaths: selected() ? [out(selected()!)] : [],
         initialExpandedPaths: expanded(),
         flattenEmptyDirectories: true,
         search: !props.fit,
@@ -124,7 +131,7 @@ export default function FileTree(props: {
         onSelectionChange: (ids) => {
           if (ids.length !== 1) return;
           const path = back(ids[0]!);
-          if (path === props.selected || !props.paths.includes(path)) return;
+          if (path === selected() || !props.paths.includes(path)) return;
           props.onOpen(path);
         },
         renderRowDecoration: ({ item }) =>
@@ -186,10 +193,7 @@ export default function FileTree(props: {
   );
   // Also redraws the decorations, which Pierre can't watch.
   createEffect(status, (entries) => tree?.setGitStatus(entries));
-  createEffect(
-    () => props.selected,
-    () => tree && untrack(() => select(tree!)),
-  );
+  createEffect(selected, () => tree && untrack(() => select(tree!)));
 
   return (
     <div

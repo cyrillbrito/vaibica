@@ -6,7 +6,9 @@ import {
   createEffect,
   createMemo,
   createSignal,
+  getOwner,
   onSettled,
+  runWithOwner,
   untrack,
 } from 'solid-js';
 
@@ -144,11 +146,16 @@ export default function CodeView(props: {
   let sides = { deletions: [] as string[], additions: [] as string[] };
   // Comment cards live in Pierre's annotation slots, each its own Solid root.
   const cards = new Map<string, { el: HTMLElement; dispose: () => void }>();
+  // Pierre asks for cards from inside effects, which have no owner of their own.
+  const owner = getOwner();
   const card = (id: string) => {
     let c = cards.get(id);
     if (!c) {
       const el = document.createElement('div');
-      c = { el, dispose: render(() => <CommentCard id={id} />, el) };
+      const dispose = runWithOwner(owner, () =>
+        render(() => <CommentCard id={id} />, el),
+      );
+      c = { el, dispose };
       cards.set(id, c);
     }
     return c.el;
