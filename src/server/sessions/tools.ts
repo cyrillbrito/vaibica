@@ -114,7 +114,7 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
       const last =
         from.last === undefined
           ? ''
-          : ` Last prompt from: ${from.last === 'user' ? 'the user' : from.last === 'tau' ? 'a Tau note' : from.last === me ? 'you' : `session ${from.last}`}.`;
+          : ` Last prompt from: ${from.last === 'user' ? 'the user' : from.last === 'bica' ? 'a Bica note' : from.last === me ? 'you' : `session ${from.last}`}.`;
       const whose = from.user
         ? ' The user prompts it himself, so it is his.'
         : '';
@@ -256,7 +256,7 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
 
   const list = defineTool({
     name: 'list',
-    description: `List every project, folder or worktree, open session, and terminal in Tau, as a tree, with each one's status, which one is you, and what you started. With \`archived\`, the archived sessions instead, newest first.${hub ? '' : " Leave others' sessions and terminals alone unless the user names them."}`,
+    description: `List every project, folder or worktree, open session, and terminal in Bica, as a tree, with each one's status, which one is you, and what you started. With \`archived\`, the archived sessions instead, newest first.${hub ? '' : " Leave others' sessions and terminals alone unless the user names them."}`,
     parameters: Type.Object({
       archived: Type.Optional(
         Type.Boolean({

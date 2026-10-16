@@ -63,7 +63,7 @@ export default function Hub() {
 
   return (
     <>
-      <Title>τ! Hub</Title>
+      <Title>Hub · Bica</Title>
       <TopBar
         actions={
           <IconButton title="Hub settings" aria-haspopup="menu" onClick={menu}>

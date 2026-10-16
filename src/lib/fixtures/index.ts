@@ -32,7 +32,7 @@ export function openWithTestData(next: Mode | undefined) {
   }
 }
 
-const KEY = 'tau.data';
+const KEY = 'bica.data';
 
 function initial() {
   if (!import.meta.env.DEV || isServer) return null;

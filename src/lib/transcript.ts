@@ -21,7 +21,7 @@ export type Message = { key: string } & (
       text: string;
       images: PromptImage[];
       timestamp: number;
-      // Not typed by you: a note from Tau or a message from another session.
+      // Not typed by you: a note from Bica or a message from another session.
       from?: Sender;
     }
   // The end of an answer: a fork from here continues after it. `text` is its last reply, for copying.
@@ -53,13 +53,13 @@ export type Sender = { label: string; session?: string };
 // The labels src/server/sessions/ (tell) and session-tools.ts
 // (session_send) put in front. The model reads a plain user message, which
 // is the only kind that starts a turn; only the transcript tells them apart.
-const NOTE = '[Note from Tau, not from the user] ';
+const NOTE = '[Note from Bica, not from the user] ';
 const SENT = /^\[Message from session (\d+) "(.*?)"\] /;
 
-/** The sender and the text without its label, for a prompt sent by Tau. */
+/** The sender and the text without its label, for a prompt sent by Bica. */
 export function senderOf(text: string): { from?: Sender; text: string } {
   if (text.startsWith(NOTE))
-    return { from: { label: 'Tau' }, text: text.slice(NOTE.length) };
+    return { from: { label: 'Bica' }, text: text.slice(NOTE.length) };
   const sent = SENT.exec(text);
   if (sent)
     return {
@@ -73,7 +73,7 @@ export function senderOf(text: string): { from?: Sender; text: string } {
  * One thing said in a voice call (src/server/voice.ts). Stored as an entry
  * without model messages, so the agent never reads it.
  */
-export const VOICE_ENTRY = 'tau.voice';
+export const VOICE_ENTRY = 'bica.voice';
 export type VoiceLine = { who: 'you' | 'voice'; text: string; at: number };
 
 /** From the agent or a prompt: voice lines and clean ups don't set the status. */

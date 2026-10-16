@@ -65,8 +65,8 @@ So a cached copy can be out of date for the moment until its snapshot lands, for
 
 ## Hosting the socket
 
-Tau uses Solid's Vite plugin directly, not SolidStart, and the plugin has no WebSocket hook. In development, a small Vite plugin answers socket upgrades on Vite's server. In production, the start script attaches the same handler to the app's server. Either way it runs in the one process that owns the harness.
+Bica uses Solid's Vite plugin directly, not SolidStart, and the plugin has no WebSocket hook. In development, a small Vite plugin answers socket upgrades on Vite's server. In production, the start script attaches the same handler to the app's server. Either way it runs in the one process that owns the harness.
 
 ## Logging the traffic
 
-Creating `~/.tau/ws-log.jsonl` makes the server append every message, in and out, as one JSON line with its time, connection, and size. Deleting the file stops it, with no restart. `bun scripts/ws-log.ts` sums the log by message type and topic, by changed path, and lists the largest messages.
+Creating `~/.bica/ws-log.jsonl` makes the server append every message, in and out, as one JSON line with its time, connection, and size. Deleting the file stops it, with no restart. `bun scripts/ws-log.ts` sums the log by message type and topic, by changed path, and lists the largest messages.

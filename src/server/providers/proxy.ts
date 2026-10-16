@@ -23,7 +23,7 @@ import { refreshModels } from './models';
 
 /*
  * A CLIProxyAPI server as one provider (docs/proxy.md). It holds many plan
- * sign-ins and picks between them, so Tau sends every request to one URL.
+ * sign-ins and picks between them, so Bica sends every request to one URL.
  *
  * Its key, URL and management key are one credential in .data/auth.json:
  * the key as the key, the rest in its env.

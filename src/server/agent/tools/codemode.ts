@@ -91,7 +91,7 @@ export interface NestedCall {
 const cut = (text: string, max: number) =>
   text.length > max ? `${text.slice(0, max - 3)}...` : text;
 
-/** The tool's parameters without Tau's `summary`, which only the transcript uses. */
+/** The tool's parameters without Bica's `summary`, which only the transcript uses. */
 function scriptParameters(tool: ToolRegistration) {
   const schema = tool.parameters as {
     properties?: Record<string, unknown>;
@@ -244,7 +244,7 @@ async function truncate(
   const tailChars = budget - headChars;
   const removed = combined.length - headChars - tailChars;
   let text = `Warning: truncated output (original token count: ${Math.ceil(combined.length / CHARS_PER_TOKEN)})\nTotal output lines: ${combined.split('\n').length}\n\n${combined.slice(0, headChars)}…${Math.ceil(removed / CHARS_PER_TOKEN)} tokens truncated…${tailChars > 0 ? combined.slice(-tailChars) : ''}`;
-  const path = join(tmpdir(), `tau-codemode-${randomUUID()}.txt`);
+  const path = join(tmpdir(), `bica-codemode-${randomUUID()}.txt`);
   try {
     await writeFile(path, combined);
     text += `\n\n[Full output: ${path} (read with offset/limit)]`;
@@ -416,10 +416,10 @@ export function createCodemode(
         globals,
         timeoutMs: options.timeoutMs ?? Number.POSITIVE_INFINITY,
         memoryLimitBytes: MEMORY_LIMIT_BYTES,
-        // The `tau` binary embeds both, where codemode can't find them itself.
-        ...(process.env.TAU_CODEMODE_WASM && {
-          wasm: loadQuickJSWasm(process.env.TAU_CODEMODE_WASM),
-          workerUrl: process.env.TAU_CODEMODE_WORKER,
+        // The `bica` binary embeds both, where codemode can't find them itself.
+        ...(process.env.BICA_CODEMODE_WASM && {
+          wasm: loadQuickJSWasm(process.env.BICA_CODEMODE_WASM),
+          workerUrl: process.env.BICA_CODEMODE_WORKER,
         }),
       });
       let result: CodemodeResult;

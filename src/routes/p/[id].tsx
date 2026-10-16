@@ -37,7 +37,7 @@ export default function ProjectPage(_props: RouteProps<'/p/:id'>) {
         const name = () => workspaceName(c().project, c().workspace.path);
         return (
           <>
-            <Title>{`τ! ${open()?.path.split('/').pop() ?? name()}`}</Title>
+            <Title>{`${open()?.path.split('/').pop() ?? name()} · Bica`}</Title>
             <TopBar>
               <h1 class="truncate font-semibold">{name()}</h1>
               <Show when={c().workspace.branch}>

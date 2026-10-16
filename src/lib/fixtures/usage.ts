@@ -410,7 +410,7 @@ export function fixtureAccounts(worst: boolean): Accounts {
   };
 }
 
-// The CLI proxy's signed-in accounts, the only plans Tau shows.
+// The CLI proxy's signed-in accounts, the only plans Bica shows.
 export function fixturePlanUsage(worst: boolean): PlanUsage {
   return [
     {

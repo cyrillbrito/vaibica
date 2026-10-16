@@ -1,6 +1,6 @@
 # Work lifecycle: from investigation to cleanup (brainstorm)
 
-This is a brainstorm, not a spec. Cleaning up a worktree and keeping its branch and PR on the archived sessions are built, see [projects.md](../projects.md); the ideas below are what's left. It looks at how a piece of work moves from a first question to a merged pull request, where Tau helps today, where it leaves me stuck, and what other tools do about it.
+This is a brainstorm, not a spec. Cleaning up a worktree and keeping its branch and PR on the archived sessions are built, see [projects.md](../projects.md); the ideas below are what's left. It looks at how a piece of work moves from a first question to a merged pull request, where Bica helps today, where it leaves me stuck, and what other tools do about it.
 
 ## The lifecycle
 
@@ -19,7 +19,7 @@ There are three ways to keep work apart, and each stage looks different in each:
 - Worktree: one folder and one branch per piece of work. The folder is the unit.
 - GitButler: one folder with many branches (lanes) applied at once. The lane is the unit.
 
-## Where Tau stands today
+## Where Bica stands today
 
 - Investigate: works. A session in the main folder has no branch, which is fine.
 - Commit to it: works for GitButler, where the lane appears on the first edit. A main-folder session can't move into a new worktree; I have to start over in a new session.
@@ -66,9 +66,9 @@ Group the Parked rows by state, with the action on the row:
 
 ### 5. Clean up for GitButler, and in bulk
 
-Worktree clean up exists. For GitButler, `but pull` already drops integrated lanes; Tau would then archive the sessions that were on them and clear their lane records. An "auto clean up merged" setting could follow, only for clean workspaces.
+Worktree clean up exists. For GitButler, `but pull` already drops integrated lanes; Bica would then archive the sessions that were on them and clear their lane records. An "auto clean up merged" setting could follow, only for clean workspaces.
 
-### 6. Pull requests from Tau
+### 6. Pull requests from Bica
 
 "Open PR" next to Push: push, then `gh pr create` with a title and body drafted by the fast model from the commits and sessions, the same way commit messages are drafted. Later, the badge can show CI and review state, and review comments can go back to the session.
 

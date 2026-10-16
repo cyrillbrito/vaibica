@@ -43,9 +43,9 @@ export interface Target {
   worktree?: boolean;
 }
 
-const KEY = 'tau.project';
-const CWD_KEY = 'tau.cwd';
-const WORKTREE_KEY = 'tau.worktree';
+const KEY = 'bica.project';
+const CWD_KEY = 'bica.cwd';
+const WORKTREE_KEY = 'bica.worktree';
 
 // Where new sessions start; remembered across visits.
 const [currentTarget, setTarget] = createSignal<Target | undefined>(

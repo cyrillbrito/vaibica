@@ -6,7 +6,7 @@ export const PROFILES = {
     about: 'Works on code with every tool',
     // The Git, files, and terminal panels.
     panels: true,
-    // Tau cleans up and compacts it while idle (src/server/profiles/upkeep.ts).
+    // Bica cleans up and compacts it while idle (src/server/profiles/upkeep.ts).
     longLived: false,
   },
   assistant: {

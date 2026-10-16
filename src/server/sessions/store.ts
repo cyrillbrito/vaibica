@@ -37,7 +37,7 @@ export const SessionDoc = defineDoc<{
   profile?: ProfileId;
   // Started with session_start's `notify: false`: its starter hears nothing.
   quiet?: boolean;
-  // Who sent the newest prompt: "user", "tau" for a note, or a session id.
+  // Who sent the newest prompt: "user", "bica" for a note, or a session id.
   lastFrom?: string;
   // The user prompted it himself, so it is his (docs/hub.md). Unset: from
   // before the field, so a session the user started counts as his.
@@ -49,8 +49,7 @@ export const SessionDoc = defineDoc<{
   // The project list for the hub, kept like `memory`.
   projects?: string;
 }>({
-  // Pre-rename name, kept: existing sessions are stored under this kind.
-  kind: 'humble.session',
+  kind: 'bica.session',
   version: 1,
   scope: 'conversation',
   history: 'latest',

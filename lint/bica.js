@@ -81,6 +81,6 @@ const radiusTokens = defineRule({
 });
 
 export default definePlugin({
-  meta: { name: 'tau' },
+  meta: { name: 'bica' },
   rules: { 'type-tokens': typeTokens, 'radius-tokens': radiusTokens },
 });

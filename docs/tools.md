@@ -18,7 +18,7 @@ Scripts can also call classifier models. A classifier doesn't chat: it answers t
 
 ## Other sessions
 
-Agents can see everything open in Tau and work with other sessions the way they work with terminals: start, read, send, and stop.
+Agents can see everything open in Bica and work with other sessions the way they work with terminals: start, read, send, and stop.
 
 - `list` shows every project, workspace, open session, and terminal as a tree, with their status and which one is the caller. With `archived`, it lists the last 50 archived sessions instead. The agent is told to leave the rest alone unless you name it. The [hub](./hub.md) has no such limit, but waits for your go before it changes anything.
 - `session_start` starts a normal session with the same model and a prompt that stands on its own, in any workspace or in a new worktree.
@@ -27,9 +27,9 @@ Agents can see everything open in Tau and work with other sessions the way they 
 - `session_stop` stops a session's turn. The session stays.
 - `session_archive` archives a finished session and closes the terminals it started. With `remove_worktree`, its worktree and branch go too, unless another open session works there or it holds uncommitted files or commits no other branch has.
 
-The starter gets a note whenever a session it started finishes a turn, with its last reply, unless it started it with `notify: false`. A `session_send` with `notify` gets a note for that one turn. A session that already messaged its starter during that turn sends no note, unless it stopped with an error or waits on a question. Notes arrive as queued prompts marked as coming from Tau, and say when the user prompts that session himself. Who started a session is stored with it, so notes survive restarts. Notes that pile up while a session works merge into one.
+The starter gets a note whenever a session it started finishes a turn, with its last reply, unless it started it with `notify: false`. A `session_send` with `notify` gets a note for that one turn. A session that already messaged its starter during that turn sends no note, unless it stopped with an error or waits on a question. Notes arrive as queued prompts marked as coming from Bica, and say when the user prompts that session himself. Who started a session is stored with it, so notes survive restarts. Notes that pile up while a session works merge into one.
 
-Tau has no hidden subagents. Every helper is a normal session you can open, read, and steer, and a short job that reports back is a session with a clear task.
+Bica has no hidden subagents. Every helper is a normal session you can open, read, and steer, and a short job that reports back is a session with a clear task.
 
 ## Sources
 

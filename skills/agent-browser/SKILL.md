@@ -4,7 +4,7 @@ description: How to drive a real browser with the agent-browser CLI. Read this b
 allowed-tools: Bash(agent-browser:*), Bash(npx agent-browser:*)
 ---
 
-<!-- From agent-browser 0.38.2 (skill-data/core, Apache-2.0), copied with its references/ and templates/. Tau changes: renamed to agent-browser, a UI-check trigger in the description, dropped the MCP, eve, other-skills and dashboard sections, and the full reference points at the local files. Re-copy after CLI upgrades: `agent-browser skills path core`. -->
+<!-- From agent-browser 0.38.2 (skill-data/core, Apache-2.0), copied with its references/ and templates/. Bica changes: renamed to agent-browser, a UI-check trigger in the description, dropped the MCP, eve, other-skills and dashboard sections, and the full reference points at the local files. Re-copy after CLI upgrades: `agent-browser skills path core`. -->
 
 # agent-browser
 

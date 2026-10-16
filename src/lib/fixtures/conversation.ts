@@ -9,6 +9,7 @@ import type {
 } from '@earendil-works/pi-durable';
 
 import { projector, stepDetail } from '../projection';
+import { VOICE_ENTRY } from '../transcript';
 import type {
   ModelCatalog,
   PromptImage,
@@ -236,7 +237,7 @@ export function chat(id: string, turns: Turn[], opts: ChatOptions): Chat {
     } else
       for (const [who, text] of turn.voice) {
         at += 4_000;
-        entry('tau.voice', undefined, { who, text, at });
+        entry(VOICE_ENTRY, undefined, { who, text, at });
       }
   }
 

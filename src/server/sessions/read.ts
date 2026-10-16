@@ -51,7 +51,7 @@ export async function recentMessages(id: string, count: number) {
 }
 
 /**
- * Who sent a session's prompts: `last`, the newest sender ("user", "tau",
+ * Who sent a session's prompts: `last`, the newest sender ("user", "bica",
  * or a session id), and `user`, whether the user prompted it himself.
  * Tickets from session_start, session_send messages, and notes aren't his.
  */

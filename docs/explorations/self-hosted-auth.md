@@ -1,18 +1,18 @@
 # Self-hosted auth
 
-This is exploration work. Nothing here is built. It looks at how other self-hosted tools protect themselves with one shared secret, and proposes the smallest version of that for Tau.
+This is exploration work. Nothing here is built. It looks at how other self-hosted tools protect themselves with one shared secret, and proposes the smallest version of that for Bica.
 
 ## The problem
 
-Tau runs agents, terminals, and git on the machine it runs on, so anyone who reaches its socket has a shell there. Today the network is the lock: the server listens on localhost, and the phone reaches it through `tailscale serve` (see [deploy.md](../deploy.md)).
+Bica runs agents, terminals, and git on the machine it runs on, so anyone who reaches its socket has a shell there. Today the network is the lock: the server listens on localhost, and the phone reaches it through `tailscale serve` (see [deploy.md](../deploy.md)).
 
-If Tau becomes public software that people host themselves, some of them will put it behind a reverse proxy, a Cloudflare tunnel, or `0.0.0.0` on a LAN. It then needs a lock of its own. The decisions so far:
+If Bica becomes public software that people host themselves, some of them will put it behind a reverse proxy, a Cloudflare tunnel, or `0.0.0.0` on a LAN. It then needs a lock of its own. The decisions so far:
 
 - The server keeps serving its own frontend.
 - Users decide how to expose it.
 - There are no user accounts, only one global secret.
 
-There is also a hole today, even without exposure. The socket accepts a handshake when the `Origin` host equals the `Host` header (`handleUpgrade` in `src/server/socket.ts`). A DNS rebinding attack passes that check: a page on `evil.example` re-points its own name to `127.0.0.1`, so both headers say `evil.example:3142`, and the page drives the agent. Vite's `allowedHosts` doesn't help in dev, because Tau answers the upgrade on Vite's HTTP server before Vite's host check runs. The fix is the same as for the rest of this doc: a secret the attacker's page doesn't have, or a `Host` allowlist.
+There is also a hole today, even without exposure. The socket accepts a handshake when the `Origin` host equals the `Host` header (`handleUpgrade` in `src/server/socket.ts`). A DNS rebinding attack passes that check: a page on `evil.example` re-points its own name to `127.0.0.1`, so both headers say `evil.example:3142`, and the page drives the agent. Vite's `allowedHosts` doesn't help in dev, because Bica answers the upgrade on Vite's HTTP server before Vite's host check runs. The fix is the same as for the rest of this doc: a secret the attacker's page doesn't have, or a `Host` allowlist.
 
 ## How other tools do it
 
@@ -33,17 +33,17 @@ There is also a hole today, even without exposure. The socket accepts a handshak
 
 What each one teaches:
 
-- Jupyter is the closest match to Tau: it runs code, it has no accounts, and it has had token auth on by default for years. The token is generated on each start and printed as a clickable URL, and visiting it once sets a cookie. Setting the token to an empty string turns auth off, and the docs say not to. A separate `Host` check refuses names that don't look local (`allow_remote_access`, `local_hostnames`), which is its DNS rebinding defense.
+- Jupyter is the closest match to Bica: it runs code, it has no accounts, and it has had token auth on by default for years. The token is generated on each start and printed as a clickable URL, and visiting it once sets a cookie. Setting the token to an empty string turns auth off, and the docs say not to. A separate `Host` check refuses names that don't look local (`allow_remote_access`, `local_hostnames`), which is its DNS rebinding defense.
 - code-server writes a random password to a config file on first run, so it is never unprotected and the user can still change it. It rate-limits failed logins in-process (about 2 a minute and 12 an hour) and logs each failure with the forwarded IP. Its cookie holds a hash of the password, so changing the password logs everyone out. `--auth none` is the opt-out for people behind a proxy. It also shipped CVE-2023-26114: the socket didn't check `Origin`, and the fix broke reverse proxies that didn't forward `Host`.
 - openvscode-server shows the opposite default. Since 1.64 its Docker image runs `--without-connection-token`, on the theory that a proxy does auth. That's convenient, and it's how people end up with open IDEs on the internet.
 - OpenCode is the simplest: one env var turns on basic auth, and with no password it serves openly with a warning. A recent change that generated a password on every start was reverted because it broke people already behind Cloudflare Access. That's the opt-out lesson: a forced, rotating secret hurts proxy users.
 - T3 Code is closest in spirit to a coding agent UI. `t3 serve` prints a connection string, a one-time pairing token, a URL, and a QR code. The phone trades the token for its own session, and `t3 auth` lists and revokes sessions and links. The token sits in the URL hash, so it isn't sent to servers or logged by proxies. Its docs treat pairing links as passwords and say to bind to a Tailnet IP.
-- Pi-hole caps concurrent sessions (16) and returns 429 when logins come too fast. Its `sid` cookie once collided with other apps on the same IP, because cookies ignore the port. Tau's cookie needs a name nobody else uses.
+- Pi-hole caps concurrent sessions (16) and returns 429 when logins come too fast. Its `sid` cookie once collided with other apps on the same IP, because cookies ignore the port. Bica's cookie needs a name nobody else uses.
 - Syncthing ships with no password, but shows a warning banner whenever the GUI is reachable from outside without one. When it is bound to localhost, it refuses any `Host` that isn't localhost, which breaks proxies until the user sets `insecureSkipHostcheck`. A failed login sleeps before answering. The reset path is a CLI command run while the server is stopped.
-- Portainer, Home Assistant, and AdGuard Home create the secret on the first visit. That has a race: whoever loads the page first owns the install. Portainer closes it by shutting setup down if nobody finishes it within 5 minutes of start. This is the main reason to avoid first-visit setup for Tau.
+- Portainer, Home Assistant, and AdGuard Home create the secret on the first visit. That has a race: whoever loads the page first owns the install. Portainer closes it by shutting setup down if nobody finishes it within 5 minutes of start. This is the main reason to avoid first-visit setup for Bica.
 - Transmission learned DNS rebinding the hard way. Its CSRF header (`X-Transmission-Session-Id`, handed out with a 409) didn't stop a rebinding attack that led to code execution in 2018. The fix was a `Host` allowlist on by default.
 - ttyd hits the WebSocket problem directly: browsers can't set headers on a WebSocket, so it exchanges basic auth for a token the socket carries. It also has `-H`, which trusts a header set by an auth proxy.
-- Claude Code Remote Control isn't self-hosted. The local session connects outward to Anthropic and the phone signs in with a claude.ai account, so no port is opened. Its QR code is just a link to the session. The useful part for Tau is the habit: show a QR code, don't make anyone type.
+- Claude Code Remote Control isn't self-hosted. The local session connects outward to Anthropic and the phone signs in with a claude.ai account, so no port is opened. Its QR code is just a link to the session. The useful part for Bica is the habit: show a QR code, don't make anyone type.
 
 Common patterns across all of them:
 
@@ -75,38 +75,38 @@ Typing a 30-character token on a phone is miserable. Every tool that cares about
 
 People behind Tailscale, Cloudflare Access, or an auth proxy already have a login, and a second one is friction. The author is one of them.
 
-- An env var turns auth off: `TAU_AUTH=off`, like code-server's `--auth none` or Jupyter's empty token. Off should be a choice, not the default.
+- An env var turns auth off: `BICA_AUTH=off`, like code-server's `--auth none` or Jupyter's empty token. Off should be a choice, not the default.
 - Don't skip auth for "local" requests by looking at the client address. Every reverse proxy on the same machine, `tailscale serve` included, connects from `127.0.0.1`, so every remote request would look local.
 - Don't skip it by looking at the `Host` header either. nginx rewrites `Host` to the upstream (`localhost:3142`) unless told otherwise, so remote requests would look local again.
-- Trusting `Tailscale-User-Login` is tempting, since `tailscale serve` strips and sets it. But any other path to the port, such as another proxy, can send the header too. It's only safe if the user says so, which is the same as `TAU_AUTH=off`.
+- Trusting `Tailscale-User-Login` is tempting, since `tailscale serve` strips and sets it. But any other path to the port, such as another proxy, can send the header too. It's only safe if the user says so, which is the same as `BICA_AUTH=off`.
 - With auth off, the DNS rebinding hole is still there, so the `Host` allowlist must stay on: localhost, IP addresses, and names the user adds (Vite's `allowedHosts` already uses `.ts.net` in dev).
 - When auth is off and the server binds to something other than loopback, print a loud warning, as Syncthing and OpenCode do.
 
 ## Pitfalls
 
 - Cross-site WebSocket hijacking. Browsers send cookies on cross-site WebSocket handshakes, and the same-origin policy doesn't cover WebSockets. The `Origin` check that exists today stays. `SameSite=Lax` on the cookie helps but isn't a defense on its own.
-- CSRF. Tau has no HTTP routes that change state, because all work goes over the socket. That keeps CSRF out of scope, as long as any new HTTP route (a login endpoint, for example) also checks `Origin`.
+- CSRF. Bica has no HTTP routes that change state, because all work goes over the socket. That keeps CSRF out of scope, as long as any new HTTP route (a login endpoint, for example) also checks `Origin`.
 - DNS rebinding. A cookie or token defeats it, because the attacker's page sits on another site and has neither. Without auth, only a `Host` allowlist does.
-- Plain HTTP. The token and cookie cross the network in clear text, and installed apps and secure-context APIs need HTTPS anyway, except on localhost. Tau can't fix this, since the user's proxy owns TLS. The docs should say "use Tailscale or an HTTPS proxy", and the cookie gets `Secure` whenever the request came over HTTPS.
-- Cookies ignore ports. The dev server (3142) and the built server (3141) on one host share cookies, as do other tools on the same host. A specific name like `tau_token` avoids collisions with other apps, and both Tau servers read the same `.data/` anyway.
+- Plain HTTP. The token and cookie cross the network in clear text, and installed apps and secure-context APIs need HTTPS anyway, except on localhost. Bica can't fix this, since the user's proxy owns TLS. The docs should say "use Tailscale or an HTTPS proxy", and the cookie gets `Secure` whenever the request came over HTTPS.
+- Cookies ignore ports. The dev server (3142) and the built server (3141) on one host share cookies, as do other tools on the same host. A specific name like `bica_token` avoids collisions with other apps, and both Bica servers read the same `.data/` anyway.
 - Comparing secrets. Use `crypto.timingSafeEqual`, not `===`.
-- XSS. Tau renders agent output as markdown, so a rendering bug could run script. An `HttpOnly` cookie keeps the token itself out of reach, even though such a script could still use the open socket while it runs.
+- XSS. Bica renders agent output as markdown, so a rendering bug could run script. An `HttpOnly` cookie keeps the token itself out of reach, even though such a script could still use the open socket while it runs.
 
 ## Candidate designs
 
 ### A: one generated token, a pairing link, and a cookie on the socket
 
-On first start, the server writes a random token to `.data/token` with owner-only permissions, unless `TAU_TOKEN` is set. It prints a link with the token in the hash, and later a QR code. Only the WebSocket handshake is checked. The app shell, icons, and manifest stay public, since they hold no data and Tau is open source.
+On first start, the server writes a random token to `.data/token` with owner-only permissions, unless `BICA_TOKEN` is set. It prints a link with the token in the hash, and later a QR code. Only the WebSocket handshake is checked. The app shell, icons, and manifest stay public, since they hold no data and Bica is open source.
 
-- The page reads the token from the hash or from a paste box, and the server sets a long-lived `HttpOnly` cookie named `tau_token`. Each handshake checks the cookie with `timingSafeEqual` and refreshes it.
+- The page reads the token from the hash or from a paste box, and the server sets a long-lived `HttpOnly` cookie named `bica_token`. Each handshake checks the cookie with `timingSafeEqual` and refreshes it.
 - To keep everything in `handleUpgrade`, which dev and built already share, the client can send the token once as a WebSocket subprotocol, and the server can put `Set-Cookie` on the 101 response. Whether iOS Safari stores a cookie from a 101 response needs a test. If it doesn't, a small `POST /auth` route does the same job, at the cost of adding it to both the Vite middleware and `start.js`.
 - When the socket is refused, the app shows a "Paste your token" screen in place, with no redirect, so installed apps never leave their shell.
-- Reset: delete `.data/token` and restart. Every device is logged out. `TAU_AUTH=off` turns it off, and the `Host` allowlist stays on.
+- Reset: delete `.data/token` and restart. Every device is logged out. `BICA_AUTH=off` turns it off, and the `Host` allowlist stays on.
 - Trade-offs: very little code, nothing to guess, no rate limiter, no first-visit race, and it works on localhost the same as anywhere. The cost is pairing each browser once, the localhost one included, as in Jupyter. Revoking one device means revoking all of them.
 
 ### B: a password the user chooses
 
-`TAU_PASSWORD` or a password set in Settings, a login form, and the same cookie on the socket.
+`BICA_PASSWORD` or a password set in Settings, a login form, and the same cookie on the socket.
 
 - Trade-offs: it's familiar, and it's easy to type on a new device. But users choose weak passwords, so it needs a rate limiter and failure logs, as code-server and AdGuard have. Setting it on first visit brings the Portainer race back, so it must come from an env var or a file, not the browser. On a phone it is still more typing than a QR code.
 
@@ -124,8 +124,8 @@ Design A. It's the Jupyter model, which has protected a code-running server with
 
 Build it in this order, and stop as soon as it's enough:
 
-1. The token file, the cookie check in `handleUpgrade`, the paste screen, the startup link, `TAU_AUTH=off`, and a `Host` allowlist for when auth is off.
+1. The token file, the cookie check in `handleUpgrade`, the paste screen, the startup link, `BICA_AUTH=off`, and a `Host` allowlist for when auth is off.
 2. A "Pair a phone" QR code in Settings, built from `location.origin`.
 3. A QR code in the terminal, if people run it headless.
 
-Skip a user-chosen password, per-device sessions, and rate limiting until someone needs them. `TAU_TOKEN` already lets anyone pick their own token.
+Skip a user-chosen password, per-device sessions, and rate limiting until someone needs them. `BICA_TOKEN` already lets anyone pick their own token.

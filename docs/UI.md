@@ -1,6 +1,6 @@
 # UI
 
-How Tau looks and is built. Read before touching UI.
+How Bica looks and is built. Read before touching UI.
 
 ## Principles
 
@@ -28,12 +28,12 @@ Tokens are defined once with `light-dark()`. Light and dark follow the system un
 
 ### Color
 
-- Colors: `bg`, `panel`, `surface`, `hover`, `active`, `line`, `line-strong`, `fg`, `muted`, `accent` (orange), `brand` (blue, the τ! logo only), `running` (green), `warn` (yellow), `danger`, `merged` (purple, merged PRs), `thumb` (the raised thumb of a segmented control: white in light, a light veil in dark). Small colored text on a tint of its own color (a tag, the sidebar's running clock) uses the `-ink` shade: `accent-ink`, `running-ink`, `warn-ink`, `danger-ink`, `merged-ink`, darker in light mode so 12px text keeps AA contrast. Use them as `bg-panel`, `text-muted`, `border-line`.
+- Colors: `bg`, `panel`, `surface`, `hover`, `active`, `line`, `line-strong`, `fg`, `muted`, `accent` (orange), `brand` (blue, the logo and confetti), `running` (green), `warn` (yellow), `danger`, `merged` (purple, merged PRs), `thumb` (the raised thumb of a segmented control: white in light, a light veil in dark). Small colored text on a tint of its own color (a tag, the sidebar's running clock) uses the `-ink` shade: `accent-ink`, `running-ink`, `warn-ink`, `danger-ink`, `merged-ink`, darker in light mode so 12px text keeps AA contrast. Use them as `bg-panel`, `text-muted`, `border-line`.
 - Selection is tinted with the accent. Replies wrap with `text-wrap: pretty` (no lone last word), and headings with `balance`.
 
 ### Radius
 
-Only these exist. Tailwind's others are removed, and the `tau/radius-tokens` lint rule fails on them and on raw values.
+Only these exist. Tailwind's others are removed, and the `bica/radius-tokens` lint rule fails on them and on raw values.
 
 - Controls by height: `rounded-sm` (4px) for swatches, inline code, and badges, `rounded-md` (6px) for rows and controls up to 28px, and `rounded-lg` (8px) for 32px+ controls, chips, and strips.
 - Surfaces by role: `rounded-card` (10px) for cards, menus, popovers, dialogs, and code blocks, `rounded-sheet` (16px) for the composer, your prompts, and bottom-sheet tops, and `rounded-tray` (20px) for a tray holding a sheet-round card with `p-1` (a question, the composer with queued prompts).
@@ -64,7 +64,7 @@ Sizes are defined by role in `@theme`, and Tailwind's own sizes (`text-sm`, `tex
 - `text-read` (16px, 1.65): the conversation (agent replies, your prompts, the composer) and touch inputs, since iOS zooms below 16px.
 - `text-display` (22px): one big number or title per screen.
 - `font-ui` (Atkinson Hyperlegible Next, built for legibility and narrower than Lexend, so rows fit more) for the app, `font-reading` (Libron, a book face) for what the agent writes (`.markdown`), and `font-mono` (Atkinson Hyperlegible Mono, the same family) for code, paths, diffs and terminals. Fonts are self-hosted in `public/fonts/`. Tables in replies stay in `font-ui`, and Markdown headings scale in `em`.
-- The `tau/type-tokens` lint rule (`lint/tau.js`) fails on removed Tailwind names and raw sizes like `text-[13px]`. A new role goes in `@theme` and here, not inline.
+- The `bica/type-tokens` lint rule (`lint/bica.js`) fails on removed Tailwind names and raw sizes like `text-[13px]`. A new role goes in `@theme` and here, not inline.
 
 ### Motion
 
@@ -192,14 +192,14 @@ Use [mobbin.com](https://mobbin.com) for real app screens and flows; its [MCP se
 
 ### affectUI
 
-[affectUI](https://www.affectui.com) is a React kit of components for AI products: tool calls, approvals, agent inboxes, context windows, model pickers, usage meters, toasts. It is the closest match to what Tau shows, and its motion is calm and exact. Much of Tau's current finish comes from it: `RollingNumber`, the gliding `Segmented` thumb, `Button loading`, the toast stack, `ThinkingLoader`, the Activity header, question cards, the context field, the model picker bars, ⌘K, the sidebar tabs and clocks, and the workspace card. [explorations/affectui-polish.md](explorations/affectui-polish.md) lists each piece, its commit, and the item it came from.
+[affectUI](https://www.affectui.com) is a React kit of components for AI products: tool calls, approvals, agent inboxes, context windows, model pickers, usage meters, toasts. It is the closest match to what Bica shows, and its motion is calm and exact. Much of Bica's current finish comes from it: `RollingNumber`, the gliding `Segmented` thumb, `Button loading`, the toast stack, `ThinkingLoader`, the Activity header, question cards, the context field, the model picker bars, ⌘K, the sidebar tabs and clocks, and the workspace card. [explorations/affectui-polish.md](explorations/affectui-polish.md) lists each piece, its commit, and the item it came from.
 
 Look there first when designing a new agent surface:
 
 - Every item is one `.tsx` file with its CSS inside. The 40 free ones are MIT, and their source comes from `https://www.affectui.com/r/<name>.json` (the shadcn registry format). Read their keyframes, easing, and durations.
 - Pro items have no source, but their demo pages do the real thing. Open them with `agent-browser`, interact, and read computed styles and `document.getAnimations()`.
 - `https://www.affectui.com/llms-full.txt` holds every item's docs. The Motion, Accessibility, and "When not to use" sections are worth more than the props.
-- Port the idea, never the code: it is React, Tau is Solid. Tau's tokens, radii, type roles, and motion rules above win over affectUI's.
+- Port the idea, never the code: it is React, Bica is Solid. Bica's tokens, radii, type roles, and motion rules above win over affectUI's.
 - Not taken: big flashy illustrations, and pills where a word does. The working state is a shimmering word, not a capsule.
 
 Mobbin references:

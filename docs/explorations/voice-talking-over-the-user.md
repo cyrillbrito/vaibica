@@ -94,5 +94,5 @@ Types, lint and the Bun checks pass. Nothing here was tried on a real call.
 - [Server-side controls](https://developers.openai.com/api/docs/guides/voice-server-controls): client playback control is only for blocking audio.
 - [jambonz on GPT-Live](https://jambonz.org/blog/openai-gpt-live-support-in-jambonz): no `response.create`, `response.cancel` or `turn_detection`.
 - [openai/codex `realtime_conversation.rs`](https://github.com/openai/codex/blob/main/codex-rs/core/src/realtime_conversation.rs): an omitted channel is speakable; quiet status goes on commentary.
-- [pi-live-codex 0.1.9](https://www.npmjs.com/package/pi-live-codex): the extension Tau ported; its 1.5 s continuation grace and delegation dedupe.
+- [pi-live-codex 0.1.9](https://www.npmjs.com/package/pi-live-codex): the extension Bica ported; its 1.5 s continuation grace and delegation dedupe.
 - [MDN: echoCancellation](https://developer.mozilla.org/en-US/docs/Web/API/MediaTrackConstraints/echoCancellation) and [Chrome 141 `all`/`remote-only`](https://chromestatus.com/feature/5585747985563648): `true` only guarantees cancelling peer-connection audio.

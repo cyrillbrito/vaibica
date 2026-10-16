@@ -14,7 +14,7 @@ import {
 } from '#server/sessions';
 
 // Long-lived profiles, assistant (docs/assistant-mode.md) and hub
-// (docs/hub.md): Tau keeps their sessions small while they sit idle. Clean up runs once the cache is cold, when it is
+// (docs/hub.md): Bica keeps their sessions small while they sit idle. Clean up runs once the cache is cold, when it is
 // free. Saving memories and compacting call the model, so they run just
 // before the cache expires, while reading it is still cheap.
 
@@ -27,7 +27,7 @@ const COMPACT_AT = 120_000;
 // quality drops, so waiting for a long pause isn't worth it.
 const COMPACT_NOW_AT = 200_000;
 
-const SAVE_NOTE = '[Note from Tau, not from the user] Memory save:';
+const SAVE_NOTE = '[Note from Bica, not from the user] Memory save:';
 const SAVE_PROMPT = `${SAVE_NOTE} this session is about to be compacted, and older turns will shrink to a summary. Save what should outlast it to the memory files, the way the project's instructions and skills say: decisions, preferences, open tasks, and facts you will need later. Look for what was said but never written down. Replace lines that are now wrong instead of adding next to them, and keep the files short. Then reply with one line. Start nothing else.`;
 
 // Taelin's compaction rules (OptChat), trimmed.
@@ -73,7 +73,7 @@ async function tend(id: string, unread: boolean) {
     const prompts = view.entries.filter((e) => e.kind === 'pi.user');
     const last = JSON.stringify(prompts.at(-1)?.model ?? '');
     if (last.includes(SAVE_NOTE)) return;
-    await submit(id, SAVE_PROMPT, [], `memory:${Date.now()}`, 'tau');
+    await submit(id, SAVE_PROMPT, [], `memory:${Date.now()}`, 'bica');
     await conversation.waitForIdle(context);
     await compact(id, SUMMARY_RULES);
     // The save is bookkeeping, not news: a read session stays read.

@@ -13,7 +13,7 @@ export const CLEANUP_HINT =
   'Clears old tool output and images from what the model reads, so the next message sends less. Your messages, the replies and the reasoning stay, and the transcript keeps everything.';
 
 /** The entry that carries the edits; it adds nothing to the context itself. */
-export const CLEANUP_ENTRY = 'tau.cleanup';
+export const CLEANUP_ENTRY = 'bica.cleanup';
 
 // pi-ai's estimate, as in context-usage.ts.
 export const IMAGE_CHARS = 4800;

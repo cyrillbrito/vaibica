@@ -27,11 +27,11 @@ The two speed columns come from the test below: a direct sign-in, a hub-style sy
 | Gemini 3.8 Flash, `low` (proxy) | 33 | not measured | not run | 2.6 s / 5.7 s | ~$0.004 | Padded the prompt with invented code paths |
 | GPT-6 Luna, reasoning off | 18 | 5.4 s | not run | 1.2 s / 2.1 s | ~$0.0004 | Very thin prompts, and once wrote a prompt addressed to itself |
 
-The cost assumes list prices, a cache hit on the whole prompt, and the output tokens actually measured, thinking included. On a plan sign-in the cost comes out of plan limits instead, in the same proportions. A cold turn also writes the cache, which costs about $0.13 on Sonnet, $0.26 on Opus, and under a cent on Haiku, for 52k tokens with the 5-minute cache. OpenAI and Gemini don't charge for cache writes. Hub turns are often minutes apart, so on Claude the write can cost more than the turn itself, and Tau's long-cache setting (1 hour) is worth turning on for the hub.
+The cost assumes list prices, a cache hit on the whole prompt, and the output tokens actually measured, thinking included. On a plan sign-in the cost comes out of plan limits instead, in the same proportions. A cold turn also writes the cache, which costs about $0.13 on Sonnet, $0.26 on Opus, and under a cent on Haiku, for 52k tokens with the 5-minute cache. OpenAI and Gemini don't charge for cache writes. Hub turns are often minutes apart, so on Claude the write can cost more than the turn itself, and Bica's long-cache setting (1 hour) is worth turning on for the hub.
 
 ## What the test did
 
-The test ran on 2026-10-14 from the Mac mini. It used pi-ai the way Tau calls it, with each model's effort setting and a cached prompt. There were three tasks:
+The test ran on 2026-10-14 from the Mac mini. It used pi-ai the way Bica calls it, with each model's effort setting and a cached prompt. There were three tasks:
 
 - A rambling, self-correcting bug report, dictated style, which the hub turns into a worker prompt with its constraints: a new worktree, don't touch the voice work, check the phone viewport, don't commit.
 - A message covering three threads on a small board. It has a mid-sentence change of mind ("make it quieter… no, make it a setting"), a review approval with one fix and then a commit, a title the worker may change, and "is anything else running?"
@@ -41,7 +41,7 @@ What stood out:
 
 - On the board message, Sonnet, Opus, and Sol all said the board might not list everything and offered to check. Haiku without thinking said "Nothing else is on the board" as if it had checked. On the status question it reported "four other threads in progress" when there was one. Haiku at `low` invented a "per device" setting rule.
 - GPT-6 Luna without reasoning wrote one-paragraph prompts that lost the user's nuance, and once added a "Hub" section telling itself to run `list`.
-- Gemini 3.8 Flash at `low` added route names and field names that don't exist in Tau. Its lowest level is `low`, since `minimal` returns an error on this model.
+- Gemini 3.8 Flash at `low` added route names and field names that don't exist in Bica. Its lowest level is `low`, since `minimal` returns an error on this model.
 - Through the proxy, a one-word reply took about 5 seconds on Claude and GPT models, and about 1.6 seconds on Gemini. Direct, it took 1 to 2 seconds. Haiku without thinking also once ran on to the 4,000-token cap through the proxy, which it never did direct.
 - Claude's tokenizer counted the same text as about 1.5 times as many tokens as OpenAI's, which raises Claude's real cost per turn.
 
@@ -50,7 +50,7 @@ Treat these as a sanity check, not a benchmark: one machine, one day, two to fou
 ## What the published data says
 
 - Artificial Analysis measures speed with a 10k-token prompt and models a 500-token answer, including thinking. Sonnet 5.5 at `low` has the lowest latency in Anthropic's lineup there (0.57 s to the first answer token, 5.5 s end to end), because it often skips thinking. Haiku 5.5 at `low` still thinks first (9.2 s to the first answer), and so does Opus 5.5 at `low` (12.4 s). AA has no non-thinking Haiku 5.5 entry, so the "off" row above leans on this test alone.
-- Anthropic's prompting guide says the same: at `low`, Sonnet 5.5 "skips thinking on most simple requests", while from `medium` up it thinks before almost every reply. Haiku 5.5 can turn thinking off entirely at `low`, `medium`, or `high`. Sonnet 5.5's floor is `between_tools`, which pi-ai doesn't expose, so `low` is the lowest effort Tau can pick for it.
+- Anthropic's prompting guide says the same: at `low`, Sonnet 5.5 "skips thinking on most simple requests", while from `medium` up it thinks before almost every reply. Haiku 5.5 can turn thinking off entirely at `low`, `medium`, or `high`. Sonnet 5.5's floor is `between_tools`, which pi-ai doesn't expose, so `low` is the lowest effort Bica can pick for it.
 - An independent test of Claude Code subagents (Ovidius, 458 graded runs) moved mechanical work to Haiku 5.5 at `low`, but kept "judgment prose", such as specs, client emails, and fact checks, on Sonnet 5.5. Haiku 5.5 at `low` lost points mainly on the build spec, which is the hub's main job.
 - A replay of real builder briefs (Jean Brito) found Opus 5.5 at `low` beat Sonnet 5.5 on quality and speed for coding work, and that raising Sonnet's effort didn't close the gap. That fits the Opus note above, but it measured coding agents, not prompt writing.
 - OpenAI dropped `none` and `minimal` on GPT-6.1 Sol, so `low` is its floor. An independent test (seedrouter) found the first text at `low` after 3 s and answers streaming at about 25 tokens a second, close to what this test saw.
@@ -63,7 +63,7 @@ The benchmarks agree with the test on one point: below a certain size, speed com
 
 - The hub should use the direct `anthropic` sign-in even when other sessions use the proxy. The proxy's account pooling buys nothing for one small session, and its overhead lands on every turn.
 - Changing effort mid-conversation invalidates Claude's cache unless it goes through the per-message effort change. Keep the hub at one effort.
-- pi-ai lists Sonnet 5.5's cache read at $0.20 per million tokens, but Anthropic charges $0.10, so Tau's spend display overstates the hub's cost by about a third.
+- pi-ai lists Sonnet 5.5's cache read at $0.20 per million tokens, but Anthropic charges $0.10, so Bica's spend display overstates the hub's cost by about a third.
 
 ## Sources
 

@@ -66,7 +66,7 @@ export default function FilePreview(props: {
         </div>
       </Match>
       <Match when={props.kind === 'html'}>
-        {/* Scripts run, but in their own origin: no access to Tau. */}
+        {/* Scripts run, but in their own origin: no access to Bica. */}
         <iframe
           srcdoc={props.text}
           sandbox="allow-scripts allow-popups allow-forms"

@@ -1,10 +1,12 @@
-# Tau!
+# Bica
 
-Tau is a fast web UI for Pi agents, built on Pi Durable. It runs on the dev machine and works from any browser, on desktop or phone.
+Bica is a fast web UI for Pi agents, built on Pi Durable. It runs on the dev machine and works from any browser, on desktop or phone.
+
+The name is Bica, a Lisbon espresso, in the UI, docs, code, the binary, env vars, and the data folder. `vaibica` ("Vai Bica", go, Bica!) is only for what you find or install it by: the domains `vaibica.com` and `vaibica.dev`, the GitHub repo, the package name, and an npm scope.
 
 ## Mindset
 
-Tau is a complete development tool for one person, the author. It is not a product for others. It should cover everything needed to build features with agents, from start to finish:
+Bica is a complete development tool for one person, the author. It is not a product for others. It should cover everything needed to build features with agents, from start to finish:
 
 - Agent sessions are the core, but not the whole tool.
 - Each feature gets its own worktree, so parallel agents never collide.
@@ -25,7 +27,7 @@ There is no time to prove every idea here, so borrow from people who already bui
 
 ## Out of scope
 
-- The Pi coding agent itself. Tau runs its own agent on Pi Durable. The coding agent's code and extensions are a good source of ideas, since the APIs are close, but Tau never runs them.
+- The Pi coding agent itself. Bica runs its own agent on Pi Durable. The coding agent's code and extensions are a good source of ideas, since the APIs are close, but Bica never runs them.
 - A full IDE. Heavy editing opens your editor.
 - Native mobile or desktop apps. The web app is the app.
 
@@ -46,7 +48,7 @@ There is no time to prove every idea here, so borrow from people who already bui
 - `bun run test:bun` runs the Bun checks for Pi Durable, restart recovery, and images. There is no Vitest suite.
 - `bun run dev` is the dev server on port 3142. It usually runs already, see Verifying UI below.
 - `bun run build` and `bun run start` run a built copy, see [docs/deploy.md](docs/deploy.md).
-- `bun run build:tau` compiles the `tau` binary into `dist/tau/tau`, and the `release` workflow publishes it as a draft GitHub release, see the same doc.
+- `bun run build:bica` compiles the `bica` binary into `dist/bica/bica`, and the `release` workflow publishes it as a draft GitHub release, see the same doc.
 
 ## Next
 
@@ -87,7 +89,7 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 - [providers.md](docs/providers.md): keys, sign-ins, models, plan usage.
 - [proxy.md](docs/proxy.md): the CLIProxyAPI provider.
 - [realtime-communication.md](docs/realtime-communication.md): the WebSocket protocol.
-- [deploy.md](docs/deploy.md): running Tau, reaching it over Tailscale, the `tau` binary, and releases.
+- [deploy.md](docs/deploy.md): running Bica, reaching it over Tailscale, the `bica` binary, and releases.
 - [UI.md](docs/UI.md): design rules and tokens. Read before UI work.
 - [writing.md](docs/writing.md): how to write docs, comments, and commit messages.
 
@@ -105,7 +107,7 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 
 After UI changes, check them in a real browser with `agent-browser`, a global CLI configured in `~/.agent-browser/config.json`. Its skill explains how to use it. These are the facts for this repo:
 
-- The dev server (`bun run dev`, port 3142) usually hosts the Tau session you are running in. Don't restart or stop it. Vite picks up page edits on its own, but server code (`src/server`) runs as it started until Tau restarts: test server changes on your own dev server on another port. Another dev server may run on a different port; inspect running terminals before starting one.
+- The dev server (`bun run dev`, port 3142) usually hosts the Bica session you are running in. Don't restart or stop it. Vite picks up page edits on its own, but server code (`src/server`) runs as it started until Bica restarts: test server changes on your own dev server on another port. Another dev server may run on a different port; inspect running terminals before starting one.
 - Open `http://localhost:3142`, then check `errors` and `console` for Solid warnings and socket errors.
 - For the phone layout, run `set viewport 390 844` and check again.
 - For worst-case data, open the page with `?data=worst`. See Test data in `docs/UI.md`.

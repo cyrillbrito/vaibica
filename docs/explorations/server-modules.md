@@ -97,7 +97,7 @@ Over the last 60 commits that touched `src/server`, `sessions.ts` and `socket.ts
 7. Importing a file starts behavior. `socket.ts:56` has `import './long-lived'`, and `long-lived.ts:42-44` starts a one-minute interval at load. `harness.ts:34-38` sets up the proxy at load. Boot order is implicit.
 8. Two `inside` functions have opposite contracts. `workspace.ts:37` throws and returns an absolute path. `butler.ts:164` returns a relative path or null, and strips `@`. `coding-tools` imports the GitButler one to fence the hub's folder.
 9. `models.ts` owns `settings.json` (`:21`, `:175-213`), but that file also holds a git habit (`stageOnView`) and two hub settings. A provider module shouldn't own the hub's folder.
-10. The literal `.data` appears in 9 files, and `ws-log.ts` imports `skills.ts` only for `TAU_HOME`.
+10. The literal `.data` appears in 9 files, and `ws-log.ts` imports `skills.ts` only for `BICA_HOME`.
 11. Two contracts cross into the client without being declared. `lib/context-usage.ts:244` parses the `<project_context>` and `<memory>` tags that `instructions.ts` renders. `lib/fixtures/conversation.ts:11` imports `server/projection`, which works only because `projection` is pure.
 
 Several files are already deep and should stay as they are:
@@ -135,7 +135,7 @@ Each module gets one `index.ts`. Callers outside the folder import only that fil
 - Callers: `socket`, `sessions`, `profiles`, `agent`, `voice`, and `commit-message`.
 - This is the step that ends most of the cycle.
 
-### `sessions/`: everything about one conversation as Tau sees it
+### `sessions/`: everything about one conversation as Bica sees it
 
 - Files: `sessions.ts` split by job, plus `projection.ts` and the session tools.
 
@@ -163,7 +163,7 @@ Each module gets one `index.ts`. Callers outside the folder import only that fil
 
 ### `profiles/`: what kind of session this is
 
-This is the example the user asked about. Today it is a table. It should be the one place that says, per profile, which tools a session has, which instructions it gets, which model it starts on, which panels it shows, whether Tau tends it while idle, and how it relates to other sessions.
+This is the example the user asked about. Today it is a table. It should be the one place that says, per profile, which tools a session has, which instructions it gets, which model it starts on, which panels it shows, whether Bica tends it while idle, and how it relates to other sessions.
 
 - Files: `profiles.ts`, `instructions.ts`, `skills.ts`, and `long-lived.ts`, plus the hub parts pulled out of nine files into `hub.ts`.
 
@@ -233,15 +233,15 @@ Web Push is unused and goes (see below), so there is no `notifications/` module,
 
 ## What to remove first
 
-Removing a feature nobody uses beats any restructure: fewer files to move, fewer edges in the cycle, smaller interfaces. The live data in `~/Repos/humble-pie/.data` shows which features are in use. The user agreed to remove the first four.
+Removing a feature nobody uses beats any restructure: fewer files to move, fewer edges in the cycle, smaller interfaces. The live data in `~/Repos/vaibica/.data` shows which features are in use. The user agreed to remove the first four.
 
 1. GitButler, about 1,500 lines. No project is in GitButler mode (every `.git/HEAD` points at a normal branch), and `lanes.json` holds one workspace with no files. It spans `butler.ts` (412), `ButlerPanel.tsx` (642), `LanePicker.tsx` (81), about 130 lines of `sessions.ts` (`claimEdit`, `branchName`, `setLane`, `renameBranch`, the `claiming` lock, the `lane` parameter), about 60 lines of `socket.ts`, 37 lines of `protocol.ts`, the `gitbutler` instructions section, the lane options in `commit-message.ts`, and bits of `Sidebar`, `Inspector`, the home page, and the session page. Removing it also takes out the `coding-tools → sessions` dynamic import, `instructions → butler`, two `globalThis` entries, the second `inside`, the `polled` and `readRepo` exports of `workspace.ts`, and a fast-model call that every first edit waits up to 5 seconds on. The `lane` field stays in stored `SessionDoc`s, unread, which is harmless.
 2. Web Push, about 550 lines. `notify.ts` (142), `push.ts` (160), `public/sw.js` (42), most of `lib/notifications.ts` (166), `scripts/test-bun-push.ts`, the `presence` topic, three `push.*` calls, the Settings toggle, `.data/push.json`, and `docs/notifications.md`. It also removes the `sessions → notify` call, the dynamic import back, `runOutcome`, and three `globalThis` maps. The app badge and `pageFocused` live in the same client file. `pageFocused` stays as a tiny helper. The badge stays, since `setAppBadge` works without push while the app is open (step 0b).
-3. Plan meters read twice, about 250 lines. `plan-usage.ts` fetches Claude and ChatGPT plan windows with Tau's own sign-ins (`fetchClaude`, `fetchCodex`), and `proxy.ts` reads the same windows from the proxy's management API (`claudeWindows`, `codexWindows`). The API key spend in `plan-usage.json` is empty, so `trackPlanUsage` records nothing. Keep only the proxy's meters: `plan-usage.ts` shrinks to reading `proxyUsage`, and the `trackPlanUsage` hook leaves the harness, which takes one more edge out of the cycle. A setup without the proxy shows no meters, which is acceptable for a fallback.
-4. Shadow git for folders without git, about 450 lines. `session-changes.ts` (226), `SessionChanges.tsx` (89), the `session.changes` topic and calls, and the no-git branches in `workspace.ts` and the client exist for the `vault` project and chat folders, the only folders without git. Tau runs `git init` instead when such a folder is added and when a chat folder is made, so the normal Git tab covers them. The vault gets a `.git` folder, and "what this session changed" becomes "what changed since the last commit". Existing folders without git need one `git init` by hand.
+3. Plan meters read twice, about 250 lines. `plan-usage.ts` fetches Claude and ChatGPT plan windows with Bica's own sign-ins (`fetchClaude`, `fetchCodex`), and `proxy.ts` reads the same windows from the proxy's management API (`claudeWindows`, `codexWindows`). The API key spend in `plan-usage.json` is empty, so `trackPlanUsage` records nothing. Keep only the proxy's meters: `plan-usage.ts` shrinks to reading `proxyUsage`, and the `trackPlanUsage` hook leaves the harness, which takes one more edge out of the cycle. A setup without the proxy shows no meters, which is acceptable for a fallback.
+4. Shadow git for folders without git, about 450 lines. `session-changes.ts` (226), `SessionChanges.tsx` (89), the `session.changes` topic and calls, and the no-git branches in `workspace.ts` and the client exist for the `vault` project and chat folders, the only folders without git. Bica runs `git init` instead when such a folder is added and when a chat folder is made, so the normal Git tab covers them. The vault gets a `.git` folder, and "what this session changed" becomes "what changed since the last commit". Existing folders without git need one `git init` by hand.
 5. Pre-profile compatibility, a few lines. `profileOf` still reads the old `assistant` flag. Not worth a migration on its own.
 
-These stay, because the data shows they are in use or they are the point of Tau: the CLI proxy (every model goes through it), voice, codemode, terminals, the hub, and profiles. Sign-ins stay too, but they are already thin: pi-ai runs the OAuth flows and stores nothing itself. `accounts.ts` (255 lines) only lists pi-ai's providers for Settings with a short guide each, and relays pi-ai's prompts, such as a pasted code, to the browser. `credentials.ts` (70) saves what pi-ai hands back in pi's `auth.json` shape. The only sign-in code Tau owns outright is the proxy's, in `proxy.ts`.
+These stay, because the data shows they are in use or they are the point of Bica: the CLI proxy (every model goes through it), voice, codemode, terminals, the hub, and profiles. Sign-ins stay too, but they are already thin: pi-ai runs the OAuth flows and stores nothing itself. `accounts.ts` (255 lines) only lists pi-ai's providers for Settings with a short guide each, and relays pi-ai's prompts, such as a pasted code, to the browser. `credentials.ts` (70) saves what pi-ai hands back in pi's `auth.json` shape. The only sign-in code Bica owns outright is the proxy's, in `proxy.ts`.
 
 ## Proposed layout
 
@@ -250,7 +250,7 @@ src/server/
   socket.ts              transport: one table of calls and topics (stays)
   ws-log.ts              (stays)
   live.ts                the watch primitive (stays)
-  paths.ts               DATA_DIR, TAU_HOME, dataFile(name)   new, tiny
+  paths.ts               DATA_DIR, BICA_HOME, dataFile(name)   new, tiny
   voice.ts               (stays flat, uses sessions' VoiceTurn)
   hub.ts                 openHub, updateHub: a session of the hub profile   new, small
   projects.ts            (stays flat)
@@ -357,10 +357,10 @@ Each step is one commit. Run `bun run check`, `bun run lint`, and `bun run test:
   - In `projects.ts`, run `git init` in `addProject` for a folder without `.git`, and in `createChatFolder`. The `git` flag on a project and the `git: false` branch stay for a folder that can't be a repo.
   - In `workspace.ts`, the no-git branches of `watchStatus` and `watchFiles` stay, but `toText` loses its outside caller.
 - Shared and client: in `lib/protocol.ts`, remove the `session.diff` and `session.discard` calls and the `session.changes` topic. In `lib/workspace.ts`, remove `useSessionChanges` and `discardSessionChanges`. Remove the session-change view in `OpenFile.tsx`, and the `plain` tab ("Changes") in `Inspector.tsx`.
-- Data: `.data/shadow/` can be deleted. Run `git init` once by hand in `~/Repos/vault` and the existing chat folders in `~/.tau/chats/`.
+- Data: `.data/shadow/` can be deleted. Run `git init` once by hand in `~/Repos/vault` and the existing chat folders in `~/.bica/chats/`.
 - Docs: the folders-without-git section of `docs/git.md`, the `shadow/` row in `architecture.md`, and the mentions in `files.md` and `projects.md`.
 
-1. Mechanical: add `paths.ts`, and replace the 9 `.data` literals and the `TAU_HOME` import in `ws-log`. This is a pure rename.
+1. Mechanical: add `paths.ts`, and replace the 9 `.data` literals and the `BICA_HOME` import in `ws-log`. This is a pure rename.
 2. Mechanical: move the pi-ai registry from `harness.ts:33-38` to `providers/registry.ts`, and point `models`, `proxy`, `accounts`, `fast-model`, and `voice` at it. This changes when the proxy refresh starts (module load order), so watch for "unknown model" on a session that resumes after a restart. That gives it low to medium risk. It ends the provider half of the cycle.
 3. Mechanical: create `providers/`, `git/`, and `terminals/` folders with `index.ts` files that re-export today's names, and move the files in. Update imports, including `scripts/test-bun-*.ts` and `src/lib/fixtures/conversation.ts`. There is no behavior change. `git mv` keeps the history.
 4. Mechanical: move `terminal-tools.ts` into `terminals/`, and stop exporting `interruptTerminal`, `settle`, `tail`, and `terminalInfo` from the index.
@@ -378,7 +378,7 @@ The risks:
 - In dev, the harness lives on `globalThis` and outlives module reloads (`harness.ts:88`). Any step that changes which module instance a tool closes over can bring back the stale-code bug the dynamic imports were added for.
 - The prompt cache depends on the exact instructions text. Step 8 must not reorder sections.
 - Pi Durable stores the extension selection by name. Renaming an extension (`hub-file-tools`, `hub-session-tools`, `coding-tools`, and so on) orphans stored selections, so names stay as they are.
-- `SessionDoc` keeps the kind `humble.session` (`sessions.ts:98`) and its field names. Moving the code must not touch the stored shape.
+- `SessionDoc` keeps the kind `bica.session` (`sessions.ts:98`) and its field names. Moving the code must not touch the stored shape.
 
 ## What not to group
 
@@ -402,5 +402,5 @@ The risks:
 3. Should settings get their own small module? `settings.json` holds model defaults, a git habit, and hub settings in one file owned by `models.ts`. One option is a `settings.ts` that owns the file, with each module reading its own keys. The other is leaving it in `providers/`.
 4. Should agent tools live with their feature, or together in `agent/tools/`? The proposal puts session and terminal tools with their features, to keep those features' internals private, and generic tools in `agent/tools/`. A single tools folder is simpler to find but leaks more.
 5. Do you want the lint rule that forbids deep imports into a module folder, or is the `index.ts` convention enough?
-6. Should profiles stay defined in code, or is a later profile file in `~/.tau/` (like skills) on the table? The proposed `ServerProfile` shape would allow it, but nothing here builds it.
+6. Should profiles stay defined in code, or is a later profile file in `~/.bica/` (like skills) on the table? The proposed `ServerProfile` shape would allow it, but nothing here builds it.
 7. `projection.ts` is imported by a client fixture. Should it move to `src/lib/` as shared, pure code, or should the fixture stop using it?

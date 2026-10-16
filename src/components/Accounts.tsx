@@ -15,7 +15,7 @@ import { ExternalIcon, SpinnerIcon } from './ui/icons';
 import { Card } from './ui/Card';
 import { Field, checkKey } from './ui/Field';
 
-/** Settings → Providers: who Tau can reach, and signing in or adding keys. */
+/** Settings → Providers: who Bica can reach, and signing in or adding keys. */
 export default function Accounts() {
   const data = useAccounts();
   const catalog = useModels();
@@ -133,8 +133,8 @@ export default function Accounts() {
     <>
       <Card
         title="Providers"
-        description="Who Tau can reach: plans you sign in to and API keys."
-        footer="Environment means the key comes from a variable set outside Tau. A key or sign-in saved here is stored in .data/auth.json on the server and wins over it. Tau never reads other apps' logins."
+        description="Who Bica can reach: plans you sign in to and API keys."
+        footer="Environment means the key comes from a variable set outside Bica. A key or sign-in saved here is stored in .data/auth.json on the server and wins over it. Bica never reads other apps' logins."
         bare={
           <Show when={!connected().length}>
             <p class="rounded-sheet border border-line bg-surface p-3.5 text-meta">

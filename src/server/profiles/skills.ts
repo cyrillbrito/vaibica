@@ -1,5 +1,5 @@
 import 'server-only';
-import { TAU_HOME } from '#server/paths';
+import { BICA_HOME } from '#server/paths';
 import { readdir, readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
@@ -14,19 +14,19 @@ export interface Skill {
   path: string;
 }
 
-/** Earlier folders win when two skills share a name: project over user over Tau's own. */
+/** Earlier folders win when two skills share a name: project over user over Bica's own. */
 function skillDirs(cwd: string) {
   const home = homedir();
   return [
     join(cwd, '.agents/skills'),
     join(cwd, '.claude/skills'),
-    join(cwd, '.tau/skills'),
+    join(cwd, '.bica/skills'),
     join(home, '.agents/skills'),
     join(home, '.claude/skills'),
-    join(TAU_HOME, 'skills'),
-    // Shipped with Tau; the server runs from the repo root, like `.data`,
-    // except the `tau` binary, which unpacks its own copy.
-    process.env.TAU_SKILLS_DIR || join(process.cwd(), 'skills'),
+    join(BICA_HOME, 'skills'),
+    // Shipped with Bica; the server runs from the repo root, like `.data`,
+    // except the `bica` binary, which unpacks its own copy.
+    process.env.BICA_SKILLS_DIR || join(process.cwd(), 'skills'),
   ];
 }
 

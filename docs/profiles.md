@@ -1,8 +1,8 @@
 # Profiles
 
-A profile says what kind of session a session is. It sets the agent's tools, its instructions, its default model and effort, whether the page shows the Git, files, and terminal panels, and whether Tau keeps the session small on its own while it sits idle.
+A profile says what kind of session a session is. It sets the agent's tools, its instructions, its default model and effort, whether the page shows the Git, files, and terminal panels, and whether Bica keeps the session small on its own while it sits idle.
 
-Tau ships three, defined in code:
+Bica ships three, defined in code:
 
 - Coding: every tool and the coding rules. This is the default.
 - Assistant: Coding plus memory rules, kept small while idle. See [assistant-mode.md](./assistant-mode.md).

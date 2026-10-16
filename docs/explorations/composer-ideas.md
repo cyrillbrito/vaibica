@@ -1,8 +1,8 @@
 # Composer and session page ideas
 
-What the composer and the session page around it could do better, ranked by benefit for the cost. The top five are small, fix real friction when many sessions run at once, and mostly reuse what Tau already has. This doc leaves out three things built in another session (↑/↓ prompt history, folding long pastes, Esc twice to stop) and `@` file mentions.
+What the composer and the session page around it could do better, ranked by benefit for the cost. The top five are small, fix real friction when many sessions run at once, and mostly reuse what Bica already has. This doc leaves out three things built in another session (↑/↓ prompt history, folding long pastes, Esc twice to stop) and `@` file mentions.
 
-## What Tau does today
+## What Bica does today
 
 This list comes from reading `src/components/Composer.tsx`, `src/routes/s/[id].tsx`, `Queue.tsx`, `Activity.tsx`, `ToolCalls.tsx` and `src/lib/stick-to-bottom.ts`.
 
@@ -23,7 +23,7 @@ This list comes from reading `src/components/Composer.tsx`, `src/routes/s/[id].t
 Each session keeps its own draft: switching sessions saves the box and restores the other session's draft, and the text is in `localStorage` under the session id, so a reload, a crash or iOS dropping the installed app keeps it. The home page keeps one draft of its own. A sent prompt clears its draft.
 
 - Seen in Pi Pocket, which keeps "per-conversation composer drafts" in `localStorage` (`web/store.js`, `pocket.draft.<id>`), and in every chat app where a half-written message waits in its conversation.
-- It fits Tau because switching between many sessions is the main loop, and today the draft follows you. Sending the wrong session a prompt meant for another is the worst outcome of that, and it is one Enter away. On a phone, Safari reloads a backgrounded app often, which loses whatever was typed.
+- It fits Bica because switching between many sessions is the main loop, and today the draft follows you. Sending the wrong session a prompt meant for another is the worst outcome of that, and it is one Enter away. On a phone, Safari reloads a backgrounded app often, which loses whatever was typed.
 - Cost: small. A `draftKey` prop on the composer, a save on input (or on switch and `pagehide`), and a restore when the key changes. Images can stay in memory only, since they would fill `localStorage`. The folded pastes from the other session need to go with the draft, as Pi Pocket keeps "each conversation's pastes by number, kept with its draft".
 
 ### 2. A live "Working · 12s" line at the end of the transcript
@@ -31,7 +31,7 @@ Each session keeps its own draft: switching sessions saves the box and restores 
 While a run works, the last line of the transcript says so: a spinner, a shimmering "Working", and the time since the run started. It shows only when nothing else live is on screen (no thinking or tool call streaming, no compacting row), so it fills exactly the silent gaps. On desktop it can add "Esc twice to stop", which also teaches the new shortcut.
 
 - Seen in Codex CLI's status indicator ("Working (12s • esc to interrupt)", `codex-rs/tui/src/status_indicator_widget.rs`) and Claude Code's spinner line with elapsed time and tokens.
-- It fits Tau because the gap between send and first token is where a session looks stuck, more so over Tailscale on a phone and with thinking hidden. The run's start is the last user prompt's timestamp, so the timer needs no new data, and `shimmer` and `SpinnerIcon` already exist.
+- It fits Bica because the gap between send and first token is where a session looks stuck, more so over Tailscale on a phone and with thinking hidden. The run's start is the last user prompt's timestamp, so the timer needs no new data, and `shimmer` and `SpinnerIcon` already exist.
 - Cost: small. One row kind in `toMessages`, or a row after the list in `[id].tsx`, shown while `live.run` exists and the tail isn't already live. The timer ticks once a second, like slow tool calls do now.
 
 ### 3. Fold each activity into one summary line
@@ -39,15 +39,15 @@ While a run works, the last line of the transcript says so: a spinner, a shimmer
 An activity card collapses to one line that says what it did and how long it took, like "Thought, read 4 files, edited 2, ran 3 commands · 1m 12s", with the step rows inside. The live activity, and the newest one, start open; older ones start closed. Opening or closing one by hand sticks for the page's life.
 
 - Seen in Pi Pocket 0.12 ("Turns, not cards": "Pi's thinking and tool calls fold into one line" with "a timeline of Pi's calls" inside, "the newest turn starts open"). Its `summarize()` in `web/turns.js` builds the sentence from a table of verbs and nouns per tool, counting distinct paths, so two edits to one file are "edited 1 file". Claude Code and Codex fold finished tool output the same way.
-- It fits Tau because long runs are the norm, the transcript is the phone's only scroller, and what you want from an old turn is its prose, not its 30 rows. Tau already has the parts: `<details class="expand">`, the row chevron, per-call times stamped by the server, and the `stats` on edits for a "+12 −3" at the end of the line.
-- Cost: medium. A summary function (about 40 lines for Tau's eight tools), a `<details>` around `Activity`, and open state that doesn't jump. To keep "nothing jumps", decide open or closed when the row mounts and never close one on its own: the live activity stays open after its run ends, until the page reloads or the session switches. Pi Pocket closes an older turn when a newer one arrives, which moves content above the reader; Safari has no scroll anchoring, so Tau should not.
+- It fits Bica because long runs are the norm, the transcript is the phone's only scroller, and what you want from an old turn is its prose, not its 30 rows. Bica already has the parts: `<details class="expand">`, the row chevron, per-call times stamped by the server, and the `stats` on edits for a "+12 −3" at the end of the line.
+- Cost: medium. A summary function (about 40 lines for Bica's eight tools), a `<details>` around `Activity`, and open state that doesn't jump. To keep "nothing jumps", decide open or closed when the row mounts and never close one on its own: the live activity stays open after its run ends, until the page reloads or the session switches. Pi Pocket closes an older turn when a newer one arrives, which moves content above the reader; Safari has no scroll anchoring, so Bica should not.
 
 ### 4. A jump-to-latest button
 
 When you scroll up in a running or long session, a small round ↓ button floats above the composer. Pressing it scrolls to the end and follows again. It hides once you are back at the bottom.
 
 - Seen in ChatGPT on the web (users filed issues when the new desktop app dropped it: openai/codex#33768), Pi Pocket ("the jump-to-bottom button"), and shadcn's message scroller, whose button "re-engages follow-output".
-- It fits Tau because reading back while an agent streams is common, and the way down on a phone is a long flick through expanded diffs. Stick-to-bottom already knows whether it follows; it only needs to say so.
+- It fits Bica because reading back while an agent streams is common, and the way down on a phone is a long flick through expanded diffs. Stick-to-bottom already knows whether it follows; it only needs to say so.
 - Cost: small. Expose `following` from `createStickToBottom` as a signal, and an `IconButton` with `appear` above the composer that calls `follow()`. The scroll should be instant, not smooth, since it can be thousands of pixels.
 
 ### 5. ⌘Enter steers while a run works
@@ -55,7 +55,7 @@ When you scroll up in a running or long session, a small round ↓ button floats
 With a run going, Enter queues as now, and ⌘Enter (Ctrl+Enter elsewhere) sends the prompt as a steer, which joins the run after the current step. The send button's title says so while busy. When idle, ⌘Enter sends like Enter.
 
 - Seen in Cursor (Enter queues, ⌘Enter sends now and "steers the active turn at the agent's next tool call"), Codex (Enter steers and Tab queues in the CLI; ⌘Enter steers in the app), and Claude Code (Ctrl+Enter "send queued messages now").
-- It fits Tau because a correction ("not that file") has to land before the mistake, and today it takes a send and a Push, two actions on a moving row. The server already takes `whenBusy: 'steer'`.
+- It fits Bica because a correction ("not that file") has to land before the mistake, and today it takes a send and a Push, two actions on a moving row. The server already takes `whenBusy: 'steer'`.
 - Cost: tiny. A `whenBusy` argument through `onSend` and `sendPrompt`, and one more key check. Push in the queue stays the touch path.
 
 ## More ideas, ranked
@@ -72,7 +72,7 @@ A prompt that arrives while you watch fades in and rises 4px, with the existing 
 A quiet "+42 −7" chip in the top bar for the files this session changed, which opens the right panel on Changes. It hides when the session changed nothing.
 
 - Seen in Pi Pocket 0.12 ("a count of lines added and removed, which opens Changes"), and in Codex and Claude Desktop's diff badges.
-- It fits Tau because review is a core goal, and on a phone the panel is a sheet you open blind. `session.changes` already carries `added` and `removed` per file.
+- It fits Bica because review is a core goal, and on a phone the panel is a sheet you open blind. `session.changes` already carries `added` and `removed` per file.
 - Cost: small. One subscription the inspector already makes, summed, and a button.
 
 ### 8. Focus the composer without reaching for it
@@ -87,7 +87,7 @@ On desktop, opening a session focuses the composer, and typing a printable key w
 A user prompt's context menu gets "Edit in a fork": it forks the session just before that prompt and puts the prompt's text and images into the fork's composer, unsent. The original stays as it was.
 
 - Seen in Pi Pocket ("edit a message and send it again… Pi gets the edited message in a new session that forks just before the original"), Codex (Esc Esc on an empty composer to "edit your previous message and fork the chat from there"), and Claude.ai's message edit, which branches.
-- It fits Tau because forks exist, and a misread prompt is easier to reword than to explain. Tau's forks share the folder and don't roll files back, so the menu item should say so in its hint, as `docs/sessions.md` does.
+- It fits Bica because forks exist, and a misread prompt is easier to reword than to explain. Bica's forks share the folder and don't roll files back, so the menu item should say so in its hint, as `docs/sessions.md` does.
 - Cost: small to medium. `forkSession` takes the entry before the prompt, and per-session drafts (idea 1) give the fork's composer somewhere to hold the text.
 
 ### 10. Jump to the next session that needs you
@@ -95,7 +95,7 @@ A user prompt's context menu gets "Edit in a fork": it forks the session just be
 A shortcut goes to the next session that is waiting for an answer, failed, or finished unread, in sidebar order. ⌥↑ and ⌥↓ step through sessions.
 
 - Seen in the Codex app ("Next chat needing attention", ⌘⌥A) and Pi Pocket (Alt+↑/↓ for the previous or next session, Alt+1–9 to jump).
-- It fits Tau because with ten sessions running, the question is always "who needs me now". Statuses already exist on the server.
+- It fits Bica because with ten sessions running, the question is always "who needs me now". Statuses already exist on the server.
 - Cost: small. It is desktop only, and switching must stay instant, with no animation.
 
 ### 11. Cap the queue's height
@@ -126,7 +126,7 @@ Once ideas 5, 8 and 10 land, there are enough keys to forget. `?` with nothing f
 
 Every candidate went through the gate in Emil Kowalski's find-animation-opportunities skill: how often you see it, what it's for, whether it fits the budget, and whether it helps the content. Sending, queueing and stopping happen tens of times a day, often from the keyboard, so almost everything fails on frequency. Two pass, one already exists, and the rest are rejected.
 
-- Sending a prompt passes, as idea 6. Purpose: preventing a jarring change, since the box empties and the prompt appears elsewhere. It is seen tens of times a day, so it stays near the edge of noticing: the existing `appear` (opacity and 4px, 200ms, movement only under `motion-safe`). Pi Pocket's 420ms rise is too long for Tau's 200ms limit.
+- Sending a prompt passes, as idea 6. Purpose: preventing a jarring change, since the box empties and the prompt appears elsewhere. It is seen tens of times a day, so it stays near the edge of noticing: the existing `appear` (opacity and 4px, 200ms, movement only under `motion-safe`). Pi Pocket's 420ms rise is too long for Bica's 200ms limit.
 - A prompt joining the queue already uses `appear`, and that is right: it turns up in a list that wasn't there. Leave it.
 - The jump-to-latest button (idea 4) fades in, opacity only, 150ms, and leaves at once. It appears on scroll, so it must not move. The scroll it triggers is instant.
 - Opening a folded activity (idea 3) uses `expand` and the turning chevron, which tool rows already have. No new motion.
@@ -134,7 +134,7 @@ Every candidate went through the gate in Emil Kowalski's find-animation-opportun
 - The working line (idea 2) gets no entrance. It appears in the gap after a send, right where the prompt just rose in, and two moving things in one spot is noise. Its shimmer is the state signal and stays on under reduced motion, as `docs/UI.md` says progress signals do.
 - Stop gets no motion. It is an urgent action, often from the keyboard (Esc twice), and its spinner already shows the wait. The prompts it gives back land in the box at once.
 - The run finishing gets no flash. Pi Pocket flashes each finished call green for 0.9s, which in a 30-call run is constant blinking. The chime and the spinner-to-icon `swap-in` already mark the end.
-- Morphing the stop and send buttons into one (ChatGPT, Claude.ai) is possible with `swap-in`, but Tau needs both while busy, since you can queue during a run. Today the stop button appears beside send and pushes the voice button left; reserving its slot would stop that shift without any motion.
+- Morphing the stop and send buttons into one (ChatGPT, Claude.ai) is possible with `swap-in`, but Bica needs both while busy, since you can queue during a run. Today the stop button appears beside send and pushes the voice button left; reserving its slot would stop that shift without any motion.
 - Staggering the transcript in on load fails: switching sessions is 100+ times a day.
 
 ## Sources

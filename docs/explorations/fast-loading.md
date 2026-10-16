@@ -1,6 +1,6 @@
 # Fast loading
 
-Ways to make opening the app and moving between pages feel faster, through app code and drawing, with the pros, cons, effort, and complexity of each. None of it is built. Keeping data around between pages is built, see the Caching section of [realtime-communication.md](../realtime-communication.md), and what's left for data is in [data-sync.md](./data-sync.md). The goal stays the same as everywhere in Tau: no spinners, because the data should already be there or arrive before anyone looks for it.
+Ways to make opening the app and moving between pages feel faster, through app code and drawing, with the pros, cons, effort, and complexity of each. None of it is built. Keeping data around between pages is built, see the Caching section of [realtime-communication.md](../realtime-communication.md), and what's left for data is in [data-sync.md](./data-sync.md). The goal stays the same as everywhere in Bica: no spinners, because the data should already be there or arrive before anyone looks for it.
 
 ## Where the time goes
 
@@ -71,7 +71,7 @@ A service worker would store the built app's files, so opening the installed app
 
 ## Off-the-shelf options
 
-- TanStack Query keeps fetched data around and refreshes it in the background. Tau's topic layer already does the hard part, which is live changes, and keeps topics alive itself.
+- TanStack Query keeps fetched data around and refreshes it in the background. Bica's topic layer already does the hard part, which is live changes, and keeps topics alive itself.
 - Plain HTTP requests instead of the socket would gain browser caching and ETags. But snapshots and their changes would then come down two channels, and stitching them is where data gets duplicated or lost. The socket stays.
 
 ## Suggested order

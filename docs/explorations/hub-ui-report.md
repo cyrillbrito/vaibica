@@ -29,7 +29,7 @@ Left as they are, for you to decide:
 
 - Archive: the sidebar's Hub row has no menu, and the palette's "This session" actions don't show on `/hub`, so the hub can't be archived from the UI now. Archiving it would start a fresh hub on the next visit and lose its transcript.
 - Mark as unread: makes little sense for the hub.
-- Clean up old output and the context breakdown: Tau does both on its own for long-lived sessions. The hub page has no context chip, so its size and cost are not visible anywhere now. A small read-only size readout may be worth adding.
+- Clean up old output and the context breakdown: Bica does both on its own for long-lived sessions. The hub page has no context chip, so its size and cost are not visible anywhere now. A small read-only size readout may be worth adding.
 - Voice settings: lived in the context chip menu, so the hub's voice can't be tuned from its page now.
 
 ## Next

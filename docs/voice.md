@@ -12,12 +12,12 @@ While the agent works in silence, Groove Salad plays: a calm internet radio stat
 - It follows the session's status, not the page, so it keeps playing while you look at another session or page, as a sign the agent is still working.
 - It plays through an `<audio>` element like the voice, so it keeps going when the phone locks. Web Audio, which the chimes use, is suspended in the background on iOS.
 - It is muted rather than turned down, because iOS ignores an element's volume. On a computer it plays at the Background music level, and the fades are smooth. On iOS it plays at the phone's volume whatever the level, unless it is Off, and only goes silent at the end of the fade out.
-- Tau's pages send no referrer, because SomaFM refuses streams to a page on localhost.
+- Bica's pages send no referrer, because SomaFM refuses streams to a page on localhost.
 
 ## How it works
 
 ```
- you ──speech──▶ GPT-Live (OpenAI) ── hand-off ──▶ Tau server ── prompt ──▶ the session
+ you ──speech──▶ GPT-Live (OpenAI) ── hand-off ──▶ Bica server ── prompt ──▶ the session
      ◀─speech──                     ◀── result ───             ◀─ reply ──
 ```
 

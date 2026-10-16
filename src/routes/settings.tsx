@@ -87,7 +87,7 @@ export default function Settings() {
 
   return (
     <>
-      <Title>τ! Settings</Title>
+      <Title>Settings · Bica</Title>
       <TopBar>
         <h1 class="truncate font-semibold">Settings</h1>
       </TopBar>
@@ -365,7 +365,7 @@ export default function Settings() {
           <Show when={import.meta.env.DEV}>
             <Card
               title="Test data"
-              description="Reopens Tau on made-up data, to see how screens hold up with long names, huge lists, or nothing at all. Real sessions are left alone, and commands aren't sent. Only in development, for this tab."
+              description="Reopens Bica on made-up data, to see how screens hold up with long names, huge lists, or nothing at all. Real sessions are left alone, and commands aren't sent. Only in development, for this tab."
               bare={
                 <div class="px-2 pb-2">
                   <Segmented class="self-start">

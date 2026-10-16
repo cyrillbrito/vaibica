@@ -1,6 +1,6 @@
 # The data layer
 
-What kinds of data Tau moves between the server and the browser, and the ways a data layer can be built around them. The goal is a design that sends only what the browser lacks, keeps what it has seen, and grows topic by topic. [fast-loading.md](./fast-loading.md) covers app code and drawing; this doc is about the data.
+What kinds of data Bica moves between the server and the browser, and the ways a data layer can be built around them. The goal is a design that sends only what the browser lacks, keeps what it has seen, and grows topic by topic. [fast-loading.md](./fast-loading.md) covers app code and drawing; this doc is about the data.
 
 ## What's built and what's left
 
@@ -13,11 +13,11 @@ What's left:
 - The conversation projection still sends pasted images inline as base64. One session was 450 KB of one image.
 - A copy derived from disk, such as git status, is shown from the device cache like any other topic, with nothing to say it may be stale.
 
-Tau's data is not one thing. There are about seven kinds, and each needs its own rule for "what do you already have, and what's missing".
+Bica's data is not one thing. There are about seven kinds, and each needs its own rule for "what do you already have, and what's missing".
 
 ## Seven kinds of data
 
-Every piece of data in Tau falls into one of these kinds. The kind decides how to resume, whether the browser may keep it, and how to tell if a kept copy is current. Adding a new topic later means picking its kind, and the rules come with it.
+Every piece of data in Bica falls into one of these kinds. The kind decides how to resume, whether the browser may keep it, and how to tell if a kept copy is current. Adding a new topic later means picking its kind, and the rules come with it.
 
 ### 1. Logs: append-only, with ids
 
@@ -59,7 +59,7 @@ The session list, terminals list, and the file tree (paths are ids). The whole c
 
 ### 5. Derived from disk: true only now
 
-Git status, GitButler status, a session's changed files. They're computed from files that change behind Tau's back, from an editor or a shell.
+Git status, GitButler status, a session's changed files. They're computed from files that change behind Bica's back, from an editor or a shell.
 
 - Version: no natural one. A hash of the value tells whether the browser's copy matches.
 - Resume: send the hash, the server answers "unchanged" or with the value. The server must still read git to know.
@@ -84,7 +84,7 @@ Typing indicators, a voice call's state, "someone else is viewing". Pi Pocket li
 
 ## What Pi Pocket does
 
-Pi Pocket is a web app on the same Pi Durable, by another author. Its source is public, it's the closest reference for Tau, and Tau's conversation projection follows its own. It does no caching across sessions at all: switching sends the room's full view again. What it does instead:
+Pi Pocket is a web app on the same Pi Durable, by another author. Its source is public, it's the closest reference for Bica, and Bica's conversation projection follows its own. It does no caching across sessions at all: switching sends the room's full view again. What it does instead:
 
 - A server-side projection (`projection.ts`). Browsers never see Pi Durable records. Each entry becomes a small display shape: a user message is its text and an image count, and an assistant message is its blocks. Tool arguments are clipped at 1,500 characters and tool output at 8,000, with the middle cut out, and the browser asks for the full entry when you expand it. Images load by URL. Thinking signatures and system prompts never leave the server.
 - Per-connection memory of what was sent. Each tab's connection remembers which entry ids it already got, so updates carry only new entries, plus the list of ids in order when it changed.
@@ -96,7 +96,7 @@ Pi Pocket is a web app on the same Pi Durable, by another author. Its source is 
 - A list in its docs of what lives only in memory and is lost on restart: who's connected or typing, approvals waiting, browser pages, and when runs ended.
 - Its own data (chat, pins, notes, schedules) stored as Pi Durable documents, changed in the same commit as the transcript, so a crash never leaves them out of step.
 
-Not in Tau, and worth a look: peek tiles, batching per kind of data, images by URL, and drawing only the last rows.
+Not in Bica, and worth a look: peek tiles, batching per kind of data, images by URL, and drawing only the last rows.
 
 ## Ways to build a data layer
 
@@ -104,11 +104,11 @@ Six families, from how the systems above work inside. Each is a complete way of 
 
 ### Server-driven views
 
-The server knows what each client shows and pushes a projection of it. The client is a thin renderer. Phoenix LiveView, Hotwire, and Pi Pocket work like this, and Tau's topics are already close.
+The server knows what each client shows and pushes a projection of it. The client is a thin renderer. Phoenix LiveView, Hotwire, and Pi Pocket work like this, and Bica's topics are already close.
 
 - Where data lives: on the server. The client has only what's on screen.
-- Duplicates: the server remembers what each connection got (Pi Pocket's `sentEntries`), or numbers changes (Tau's `n`).
-- Good for: one server that owns the truth, which is Tau. Small client, simple rules.
+- Duplicates: the server remembers what each connection got (Pi Pocket's `sentEntries`), or numbers changes (Bica's `n`).
+- Good for: one server that owns the truth, which is Bica. Small client, simple rules.
 - Weak at: anything after a disconnect or a page switch, since the memory belongs to the connection.
 
 ### Query cache
@@ -117,7 +117,7 @@ The client caches request results by key, shows them at once, and refetches when
 
 - Where data lives: client memory, optionally saved to IndexedDB with a `buster` (the build hash) and `maxAge`.
 - Duplicates: one in-flight request per key. Unused results stay for `gcTime` (5 minutes by default), then go.
-- Good for: documents and content by hash. The lifecycle (`staleTime`, `gcTime`, `buster`, `maxAge`) is the right vocabulary for Tau's client side.
+- Good for: documents and content by hash. The lifecycle (`staleTime`, `gcTime`, `buster`, `maxAge`) is the right vocabulary for Bica's client side.
 - Weak at: live changes and big values, since a refetch sends everything. Convex resends a whole query result on each change, which is why T3 Chat sent the whole thread on every token until they split streaming out.
 
 ### Sync engine with a client replica
@@ -137,7 +137,7 @@ Every entity is an append-only stream with offsets, readable over plain HTTP fro
 - Where data lives: the server keeps the log, and the client keeps the offset and what it built from it.
 - Duplicates: offsets, plus producer ids and sequence numbers that the server deduplicates.
 - Good for: transcripts and terminal output, which are already logs. Offsets are the cleanest resume rule there is.
-- Weak at: state that isn't a log (git status, a file tree). Turning those into logs means inventing events, and Tau's rule is to render from state, not events.
+- Weak at: state that isn't a log (git status, a file tree). Turning those into logs means inventing events, and Bica's rule is to render from state, not events.
 
 ### CRDTs
 
@@ -145,13 +145,13 @@ Each peer holds a full copy and can change it, and merges always agree. Yjs, Aut
 
 - Where data lives: every peer, with IndexedDB providers in the browser.
 - Good for: many writers editing the same thing, such as collaborative text.
-- For Tau: the server is the only writer of everything except your drafts. The state vector idea is worth knowing, since it's a cursor generalized to many writers. A CRDT would only matter for editing files together with an agent, which is far away.
+- For Bica: the server is the only writer of everything except your drafts. The state vector idea is worth knowing, since it's a cursor generalized to many writers. A CRDT would only matter for editing files together with an agent, which is far away.
 
 ### Local-first databases
 
 The app's state is an event log or a SQLite database in the browser, synced to a server. LiveStore and Jazz work this way.
 
-- For Tau: they want to own the data model, and Pi Durable already does. Loading a WASM database also costs about half a second on a phone before anything shows.
+- For Bica: they want to own the data model, and Pi Durable already does. Loading a WASM database also costs about half a second on a phone before anything shows.
 
 ## Can git and the file tree resume like a log?
 
@@ -184,9 +184,9 @@ This is how Cursor keeps its index of a codebase in sync: a Merkle tree of file 
 
 ### Reconcile a stale copy
 
-When the browser has an old copy and no usable clock, for example after a server restart, it can send a hash of what it has. Equal means done. For large sets there is research on sending less than everything: range-based set reconciliation sorts the items, compares hashes of ranges, and splits only the ranges that differ, a few rounds for a small difference in a huge set. It's how Nostr relays and some databases sync. For Tau, one round with a hash per top-level folder would get most of the gain, and even that is only worth it for repositories much larger than this one.
+When the browser has an old copy and no usable clock, for example after a server restart, it can send a hash of what it has. Equal means done. For large sets there is research on sending less than everything: range-based set reconciliation sorts the items, compares hashes of ranges, and splits only the ranges that differ, a few rounds for a small difference in a huge set. It's how Nostr relays and some databases sync. For Bica, one round with a hash per top-level folder would get most of the gain, and even that is only worth it for repositories much larger than this one.
 
-### What fits Tau
+### What fits Bica
 
 | Data | Resume by | Survives a restart |
 | --- | --- | --- |
@@ -198,7 +198,7 @@ When the browser has an old copy and no usable clock, for example after a server
 
 The clock and ring is the general tool, and git's hashes are the special one for anything git already stores.
 
-## A layered design for Tau
+## A layered design for Bica
 
 The families above suggest four layers, each with one job. Each piece of data keeps one source, and the design grows by adding topics, not mechanisms.
 

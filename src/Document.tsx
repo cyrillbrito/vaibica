@@ -34,7 +34,7 @@ export default function Document(props: ParentProps) {
         <meta name="referrer" content="no-referrer" />
         {/* oxlint-disable-next-line solid/no-innerhtml -- a constant of ours, no user input */}
         <script innerHTML={themeBootScript + motionBootScript} />
-        <title>τ!</title>
+        <title>Bica</title>
         <HydrationScript />
       </head>
       <body>{props.children}</body>

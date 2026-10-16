@@ -8,11 +8,11 @@ Assistant is a [profile](./profiles.md): pick it when you start a session, or sw
 
 A long conversation has two problems. It gets expensive, because every message resends everything before it. And it gets forgetful, because the model works worse as the context grows, and summaries lose detail every time they are made.
 
-Assistant mode answers both with one split. The conversation is short-term memory, and it gets trimmed regularly. Files in the project are long-term memory, and they keep what matters. The agent writes to them as it goes, and always before anything is summarized away. The files sync with the folder like any other note, so the memory follows you to another machine and doesn't depend on Tau.
+Assistant mode answers both with one split. The conversation is short-term memory, and it gets trimmed regularly. Files in the project are long-term memory, and they keep what matters. The agent writes to them as it goes, and always before anything is summarized away. The files sync with the folder like any other note, so the memory follows you to another machine and doesn't depend on Bica.
 
 ## What happens
 
-Tau looks after the session while it sits idle, so it never interrupts you in the middle of work.
+Bica looks after the session while it sits idle, so it never interrupts you in the middle of work.
 
 - It clears old tool output once the session has been idle long enough that the prompt cache has expired. This is the cheap step: your messages and the agent's replies stay, and only the bulky output of past tool calls goes.
 - When the session is still big after that, it asks the agent to save anything worth keeping to the memory files, and then compacts the older turns into a summary. It does this just before the cache expires, while rereading the conversation is still cheap.
@@ -24,11 +24,11 @@ The agent also gets a few extra instructions in assistant mode. It writes decisi
 
 ## The memory index
 
-Every session, assistant or not, starts with the memory index in its instructions, so the agent doesn't have to remember to read it. The index is `MEMORY.md` or, failing that, `PROFILE.md` in the session's folder. Tau takes a copy when the session starts and keeps it until the next compaction, even when the agent edits the file. Reloading it on every change would break the prompt cache each time. An index over 8,000 characters is cut, and the agent is told it was cut, so it can read the rest and shorten the file. The context meter shows the index as its own line.
+Every session, assistant or not, starts with the memory index in its instructions, so the agent doesn't have to remember to read it. The index is `MEMORY.md` or, failing that, `PROFILE.md` in the session's folder. Bica takes a copy when the session starts and keeps it until the next compaction, even when the agent edits the file. Reloading it on every change would break the prompt cache each time. An index over 8,000 characters is cut, and the agent is told it was cut, so it can read the rest and shorten the file. The context meter shows the index as its own line.
 
 ## Why it works this way
 
-- Rereading from the prompt cache is cheap ([context-usage.md](./context-usage.md)), and every change to old context breaks the cache once. So Tau changes it rarely, in large steps, and only when the cache is expired or about to be.
+- Rereading from the prompt cache is cheap ([context-usage.md](./context-usage.md)), and every change to old context breaks the cache once. So Bica changes it rarely, in large steps, and only when the cache is expired or about to be.
 - Clearing old tool output keeps nearly all the value of a summary at no cost, so it comes first, and compaction only follows when that isn't enough.
 - A summary of a summary of a summary forgets more each time. Saving to files before each compaction means the summary never has to carry what matters most.
 - Compacting costs about as much as rereading what it removes twenty times. Below the first threshold, a compaction during a pause you may not come back from is often wasted money.
@@ -49,4 +49,4 @@ Left out on purpose: model-driven folding, as in [billion-context](https://pi.de
 
 ## Where it lives
 
-The behavior is in `src/server/profiles/upkeep.ts`, and the memory index in `loadMemory` in `src/server/profiles/instructions.ts`. Assistant mode needs a model with a known cache lifetime, which means Anthropic's, and works best with the 1-hour prompt cache that Tau uses by default. See [context-usage.md](./context-usage.md) for the cache, Clean up, and compaction themselves.
+The behavior is in `src/server/profiles/upkeep.ts`, and the memory index in `loadMemory` in `src/server/profiles/instructions.ts`. Assistant mode needs a model with a known cache lifetime, which means Anthropic's, and works best with the 1-hour prompt cache that Bica uses by default. See [context-usage.md](./context-usage.md) for the cache, Clean up, and compaction themselves.

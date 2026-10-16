@@ -91,7 +91,7 @@ export interface ModelSettings extends ModelChoice {
   longCache: boolean;
   // The hub's folder (docs/hub.md); null: not picked yet.
   hubFolder: string | null;
-  // The hub's model and effort; null: Tau's pick for it.
+  // The hub's model and effort; null: Bica's pick for it.
   hubModel: ModelChoice | null;
 }
 

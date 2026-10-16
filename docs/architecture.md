@@ -1,6 +1,6 @@
 # Architecture
 
-Tau is a Bun server on the dev machine and a web app that talks to it over one WebSocket. The server owns the agent, the data, the disk, and git. The browser is a view that keeps a live copy of what it shows and nothing else.
+Bica is a Bun server on the dev machine and a web app that talks to it over one WebSocket. The server owns the agent, the data, the disk, and git. The browser is a view that keeps a live copy of what it shows and nothing else.
 
 ```
  Browser (laptop, phone)                     Server (dev machine, one process)
@@ -32,14 +32,14 @@ The server runs on Bun, which gives terminals a native PTY with no addon, loads 
 
 - `agent/`: the Pi Durable harness and the agent's own tools (files, bash, web, codemode, `ask`).
 - `providers/`: models, keys, sign-ins, the CLI proxy, and the fast model.
-- `sessions/`: everything Tau adds to a conversation: titles, projects, notes between sessions, prompts and the queue, voice turns, and the session tools.
+- `sessions/`: everything Bica adds to a conversation: titles, projects, notes between sessions, prompts and the queue, voice turns, and the session tools.
 - `profiles/`: what a coding, assistant, or hub session runs with: tools, model, instructions, skills, and the upkeep of long-lived sessions.
 - `git/`: status, diffs, staging, commits, and commit messages.
 - `terminals/`: shells and the agent's terminal tools.
 
 `socket.ts`, `live.ts`, `projects.ts`, `github.ts`, `voice.ts`, `paths.ts`, and `ws-log.ts` stay flat files: each is one job with a small surface. `socket.ts` is the one table of calls and topics, and it starts the upkeep loop when the first socket connects.
 
-In development the server code doesn't hot-reload. `vite.config.ts` loads `socket.ts` once, through a module runner of its own with HMR off, so the server keeps running the code it started with until Tau restarts. Page edits still hot-reload. Editing `vite.config.ts` restarts Vite in the same process and runs the server code again, which is why the open harness alone lives on `globalThis`: one process owns its storage.
+In development the server code doesn't hot-reload. `vite.config.ts` loads `socket.ts` once, through a module runner of its own with HMR off, so the server keeps running the code it started with until Bica restarts. Page edits still hot-reload. Editing `vite.config.ts` restarts Vite in the same process and runs the server code again, which is why the open harness alone lives on `globalThis`: one process owns its storage.
 
 ## How a prompt travels
 
@@ -53,7 +53,7 @@ A server restart resumes unfinished runs, and a dropped phone reconnects to fres
 
 ## Where data lives
 
-Tau's own data sits in `.data/`, relative to where the server starts. The browser keeps small preferences per device, such as the theme, and a cache of what it last showed, so pages open at once (see [realtime-communication.md](./realtime-communication.md)).
+Bica's own data sits in `.data/`, relative to where the server starts. The browser keeps small preferences per device, such as the theme, and a cache of what it last showed, so pages open at once (see [realtime-communication.md](./realtime-communication.md)).
 
 | What                               | Where                             |
 | ---------------------------------- | --------------------------------- |
@@ -63,7 +63,7 @@ Tau's own data sits in `.data/`, relative to where the server starts. The browse
 | Keys and sign-ins from Settings    | `auth.json`                       |
 | Worktrees, branches, file contents | git and the disk, read when asked |
 
-Your own files for Tau live in `~/.tau/`: an `AGENTS.md` and skills for every session ([instructions.md](./instructions.md)), the chat folders ([projects.md](./projects.md)), and the socket log ([realtime-communication.md](./realtime-communication.md)).
+Your own files for Bica live in `~/.bica/`: an `AGENTS.md` and skills for every session ([instructions.md](./instructions.md)), the chat folders ([projects.md](./projects.md)), and the socket log ([realtime-communication.md](./realtime-communication.md)).
 
 ## Pages
 

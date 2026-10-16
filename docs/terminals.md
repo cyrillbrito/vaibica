@@ -14,9 +14,9 @@ Terminals are shells in a workspace, for commands and long-running processes suc
 
 The server owns the shells, each in its own PTY, and streams their output over the WebSocket like everything else. The browser draws them with [ghostty-web](https://github.com/coder/ghostty-web), Ghostty's terminal compiled to WebAssembly. Any tab can join late and gets the kept output. Several tabs can show one terminal, and the last one to resize sets its size.
 
-In zsh, Tau knows when each command starts and ends, and its exit code, no matter who typed it. It uses the same invisible shell marks as VS Code and Ghostty, added without touching your own zsh config. Other shells work without them.
+In zsh, Bica knows when each command starts and ends, and its exit code, no matter who typed it. It uses the same invisible shell marks as VS Code and Ghostty, added without touching your own zsh config. Other shells work without them.
 
-Shells live in the server process, so restarting Tau ends them.
+Shells live in the server process, so restarting Bica ends them.
 
 ## Agents
 

@@ -95,12 +95,12 @@ async function runEnded(
   }
 }
 
-const NOTE = '[Note from Tau, not from the user]';
+const NOTE = '[Note from Bica, not from the user]';
 // Notes' request ids start with it, so a queued note can be found and merged.
 const NOTE_REQUEST = 'note:';
 
 /**
- * A note from Tau to a session about work it watches, queued like a
+ * A note from Bica to a session about work it watches, queued like a
  * follow-up: it waits for a running turn and wakes an idle one. Notes that
  * pile up while it works merge into one, so ten finished sessions cost one
  * turn, not ten. An archived or deleted session gets nothing.
@@ -135,7 +135,7 @@ export async function tell(id: string, text: string) {
       note,
       [],
       `${NOTE_REQUEST}${Date.now()}:${Math.random()}`,
-      'tau',
+      'bica',
     );
   } catch (error) {
     console.error('[note]', error);

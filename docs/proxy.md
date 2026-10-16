@@ -1,12 +1,12 @@
 # CLI proxy
 
-Tau can send model requests to a CLIProxyAPI server, which holds many plan sign-ins and switches between them when one runs out. It shows in Tau as one provider, set up in Settings → CLI proxy.
+Bica can send model requests to a CLIProxyAPI server, which holds many plan sign-ins and switches between them when one runs out. It shows in Bica as one provider, set up in Settings → CLI proxy.
 
 ## Why a proxy
 
-There are several sources of model access: personal Claude and ChatGPT plans, a second Claude account, work accounts, Copilot, and OpenRouter. Tau holds one sign-in per provider, while the proxy holds many and picks between them by priority. Plans whose limits reset on a timer go first, since unused time is lost. Work accounts billed by tokens come next, and OpenRouter, paid per request, comes last.
+There are several sources of model access: personal Claude and ChatGPT plans, a second Claude account, work accounts, Copilot, and OpenRouter. Bica holds one sign-in per provider, while the proxy holds many and picks between them by priority. Plans whose limits reset on a timer go first, since unused time is lost. Work accounts billed by tokens come next, and OpenRouter, paid per request, comes last.
 
-The proxy runs on the Legion and is reached over Tailscale, so the laptop and the Mac Mini share one pool. Session affinity keeps a conversation on one account, so its prompt cache stays warm. Keep one direct sign-in in Tau as a backup for when the Legion is off.
+The proxy runs on the Legion and is reached over Tailscale, so the laptop and the Mac Mini share one pool. Session affinity keeps a conversation on one account, so its prompt cache stays warm. Keep one direct sign-in in Bica as a backup for when the Legion is off.
 
 Anthropic's terms don't allow plan sign-ins in third-party apps, and the proxy poses as Claude Code, so an account can be blocked for it.
 
@@ -16,9 +16,9 @@ Settings asks for the proxy's URL, one of its API keys, and optionally its manag
 
 ## Models
 
-The proxy only lists model names, so Tau looks each one up in pi-ai's catalog to learn its context size, thinking levels, image input, and price. The match also picks the API to speak, since the proxy serves Anthropic's, OpenAI's, and the generic chat format on one port. A Claude model too new for pi-ai borrows the newest one of its kind. Names with an account prefix, like `work/claude-opus-5-5`, keep it.
+The proxy only lists model names, so Bica looks each one up in pi-ai's catalog to learn its context size, thinking levels, image input, and price. The match also picks the API to speak, since the proxy serves Anthropic's, OpenAI's, and the generic chat format on one port. A Claude model too new for pi-ai borrows the newest one of its kind. Names with an account prefix, like `work/claude-opus-5-5`, keep it.
 
-The list loads when the server starts and on every save. If the proxy is down at start, Tau tries again each minute while a tab is open.
+The list loads when the server starts and on every save. If the proxy is down at start, Bica tries again each minute while a tab is open.
 
 ## Accounts and limits
 

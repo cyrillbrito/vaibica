@@ -1,4 +1,4 @@
-// Sessions as Tau sees them: Pi Durable conversations plus a title, a
+// Sessions as Bica sees them: Pi Durable conversations plus a title, a
 // project, a profile, and the notes between them (docs/sessions.md).
 export { watchSessions, listSessions, sessionWorkspace } from './store';
 export { watchConversation, conversationDetail } from './conversation';

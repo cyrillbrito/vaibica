@@ -220,7 +220,7 @@ export default function Session(props: RouteProps<'/s/:id'>) {
   // Worked out by the server, which holds the full conversation; shared by
   // the chip and the nag above the composer.
   const usage = createMemo(
-    () => view()?.docs['tau.context'] as ContextUsage | undefined,
+    () => view()?.docs['bica.context'] as ContextUsage | undefined,
     { name: 'contextUsage' },
   );
   const lastCompaction = createMemo(
@@ -273,7 +273,7 @@ export default function Session(props: RouteProps<'/s/:id'>) {
         </>
       }
     >
-      <Title>{`τ! ${title()}`}</Title>
+      <Title>{`${title()} · Bica`}</Title>
       <TopBar
         actions={
           <Ready>

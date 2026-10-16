@@ -14,8 +14,8 @@ import { serverProfile, loadMemory } from '#server/profiles';
 import { checkChoice } from '#server/providers';
 import { SessionDoc, getConversation, profileOf } from './store';
 
-/** Who sends a prompt: the user, Tau's own notes, or another session's id. */
-export type Sender = 'user' | 'tau' | (string & {});
+/** Who sends a prompt: the user, Bica's own notes, or another session's id. */
+export type Sender = 'user' | 'bica' | (string & {});
 
 export async function submit(
   id: string,

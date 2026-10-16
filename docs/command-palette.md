@@ -1,6 +1,6 @@
 # Command palette
 
-The command palette is one search box for going anywhere and doing anything in Tau. ⌘K (Ctrl+K) opens it from any page, even while typing in the composer or a terminal. On the phone, the search button at the top of the sidebar opens it full screen.
+The command palette is one search box for going anywhere and doing anything in Bica. ⌘K (Ctrl+K) opens it from any page, even while typing in the composer or a terminal. On the phone, the search button at the top of the sidebar opens it full screen.
 
 ## What it lists
 
@@ -9,7 +9,7 @@ Opened empty, it answers "what needs me?" first:
 - Needs you: sessions waiting on an answer, then unread answers, then failures, newest first in each.
 - Recent: the other sessions, by their last message.
 - This session: the open session's own actions, like Rename, Fork, Stop, Mark as unread, and Archive.
-- Actions: everything else Tau can do from anywhere.
+- Actions: everything else Bica can do from anywhere.
 
 Typing searches sessions (archived ones last), projects and worktrees, terminals, and actions together, best match first. Letters can be out of place, so "nwe sess" still finds New session, and actions have extra words, so "chat" finds it too. Files aren't listed, since there are too many.
 

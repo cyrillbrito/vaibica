@@ -111,14 +111,14 @@ function shell() {
 // exit code (OSC 133). Terminals draw nothing for the marks. Other shells
 // run without marks.
 // ponytail: zsh only; bash 3.2 on macOS has no preexec hook.
-const ZSHENV = `if [[ -n $TAU_ZDOTDIR ]]; then ZDOTDIR=$TAU_ZDOTDIR; else unset ZDOTDIR; fi
-unset TAU_ZDOTDIR
+const ZSHENV = `if [[ -n $BICA_ZDOTDIR ]]; then ZDOTDIR=$BICA_ZDOTDIR; else unset ZDOTDIR; fi
+unset BICA_ZDOTDIR
 [[ -f \${ZDOTDIR:-$HOME}/.zshenv ]] && source \${ZDOTDIR:-$HOME}/.zshenv
 if [[ -o interactive ]]; then
-  _tau_precmd() { local ret=$?; print -n "\\e]133;D;$ret\\a" }
-  _tau_preexec() { print -n "\\e]133;C\\a" }
-  precmd_functions=(_tau_precmd $precmd_functions)
-  preexec_functions=(_tau_preexec $preexec_functions)
+  _bica_precmd() { local ret=$?; print -n "\\e]133;D;$ret\\a" }
+  _bica_preexec() { print -n "\\e]133;C\\a" }
+  precmd_functions=(_bica_precmd $precmd_functions)
+  preexec_functions=(_bica_preexec $preexec_functions)
 fi
 `;
 
@@ -132,7 +132,7 @@ function integration(): Record<string, string> {
   }
   return {
     ZDOTDIR: zdotdir,
-    ...(process.env.ZDOTDIR ? { TAU_ZDOTDIR: process.env.ZDOTDIR } : {}),
+    ...(process.env.ZDOTDIR ? { BICA_ZDOTDIR: process.env.ZDOTDIR } : {}),
   };
 }
 

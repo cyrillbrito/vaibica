@@ -21,7 +21,7 @@ There are no tabs. Opening something replaces what was there, and what's open li
 - A switch jumps between a file and its diff.
 - Diffs are side by side or unified, and always unified on a phone.
 - Images, PDFs, audio, and video show as themselves, and their diff puts before and after next to each other.
-- Markdown, HTML, and Mermaid files open rendered, since agents often write them as artifacts. The eye button shows the source. HTML runs in a sandboxed frame with no access to Tau. Diffs always show the source.
+- Markdown, HTML, and Mermaid files open rendered, since agents often write them as artifacts. The eye button shows the source. HTML runs in a sandboxed frame with no access to Bica. Diffs always show the source.
 - Long lines scroll with one scrollbar pinned to the bottom of the view, or wrap with the wrap button, remembered per device.
 - Open in editor starts your editor on the dev machine, picked from `VISUAL` or `EDITOR`. It only helps when you sit at that machine.
 - Paths in replies are links: `~/…`, `./…` and `/a/b/c` in text, and anything path-like in code, relative to the session's folder, with an optional `:line:column`. A file opens in the editor and a folder in Finder, and Alt-click shows a file in Finder. They can point outside the workspace, since agents leave reports anywhere, like terminal links in VS Code or iTerm2.

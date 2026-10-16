@@ -47,7 +47,7 @@ import {
 } from './ui/icons';
 
 const LONG_LIVED_HINT =
-  'While it sits idle, Tau clears old tool output once the cache is cold, and past 120k it has the agent save memories to files, then compacts. Past 200k it does that at the first pause.';
+  'While it sits idle, Bica clears old tool output once the cache is cold, and past 120k it has the agent save memories to files, then compacts. Past 200k it does that at the first pause.';
 
 const PROFILE_ICON: Record<ProfileId, () => JSX.Element> = {
   coding: CodeIcon,

@@ -20,7 +20,7 @@ import type {
 } from '#lib/protocol';
 import { pullRequests } from '#server/github';
 import { live } from '#server/live';
-import { dataFile, TAU_HOME } from '#server/paths';
+import { dataFile, BICA_HOME } from '#server/paths';
 
 const FILE = dataFile('projects.json');
 
@@ -29,7 +29,7 @@ export const CHATS_ID = 'chats';
 const CHATS: Stored = {
   id: CHATS_ID,
   name: 'Chats',
-  path: join(TAU_HOME, 'chats'),
+  path: join(BICA_HOME, 'chats'),
 };
 // Worktrees made in a terminal show up within this long.
 const POLL_MS = 5000;
@@ -133,7 +133,7 @@ export async function getProject(id: string) {
   return withWorkspaces(stored);
 }
 
-/** A new empty folder for a chat, like `~/.tau/chats/2025-06-12-recipe-ideas`. Its path. */
+/** A new empty folder for a chat, like `~/.bica/chats/2025-06-12-recipe-ideas`. Its path. */
 export async function createChatFolder(title: string) {
   const name = `${new Date().toISOString().slice(0, 10)}-${slugify(title, 'chat')}`;
   let path = join(CHATS.path, name);

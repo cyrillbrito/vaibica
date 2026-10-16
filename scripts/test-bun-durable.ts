@@ -19,7 +19,7 @@ import { openNodeSqliteStorage } from '@earendil-works/pi-durable/storage/sqlite
 import { CodemodeSandbox } from '@earendil-works/pi-codemode';
 import { Type } from '@earendil-works/pi-ai';
 
-const dir = await mkdtemp(join(tmpdir(), 'tau-durable-bun-'));
+const dir = await mkdtemp(join(tmpdir(), 'bica-durable-bun-'));
 const file = join(dir, 'test.sqlite');
 const faux = fauxProvider({ tokensPerSecond: 50 });
 const models = createModels();

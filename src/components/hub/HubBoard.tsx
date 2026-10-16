@@ -67,11 +67,11 @@ export default function HubBoard(props: { hubId: string }) {
         class="group/board expand shrink-0 border-t border-line"
         open={
           typeof localStorage === 'undefined' ||
-          localStorage.getItem('tau.hubBoardOpen') !== '0'
+          localStorage.getItem('bica.hubBoardOpen') !== '0'
         }
         onToggle={(e) =>
           localStorage.setItem(
-            'tau.hubBoardOpen',
+            'bica.hubBoardOpen',
             e.currentTarget.open ? '1' : '0',
           )
         }

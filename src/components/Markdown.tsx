@@ -143,7 +143,7 @@ const autolinks: MarkdownExtension = {
 };
 
 // Paths open on the dev machine (src/server/editor.ts), not in the browser.
-const PATH = 'tau-path:';
+const PATH = 'bica-path:';
 const LINE = /(?::\d+){0,2}$/;
 const EXTENSIONS = new Set(
   'md mdx txt json jsonl ts tsx js jsx mjs cjs css html py go rs sh sql yaml yml toml lock env log csv xml svg png jpg jpeg gif pdf'.split(

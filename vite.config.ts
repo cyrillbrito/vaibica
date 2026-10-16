@@ -12,7 +12,7 @@ const SOCKET_MODULE = './src/server/socket.ts';
 // emit the socket module for start.js to attach to the built server.
 function socket(): Plugin {
   return {
-    name: 'tau:socket',
+    name: 'bica:socket',
     // After the Solid plugin, so the entry names below win.
     enforce: 'post',
     config: (_, { command }) =>
@@ -35,7 +35,7 @@ function socket(): Plugin {
           },
     configureServer(server) {
       // Its own runner without HMR, imported once: the server code runs once
-      // and keeps running as it started until Tau restarts. The SSR runner
+      // and keeps running as it started until Bica restarts. The SSR runner
       // reloads on any page edit, and every import checks for changes, so
       // either would run a second copy next to the agents.
       let socket: Promise<typeof import('./src/server/socket')> | undefined;
@@ -61,7 +61,7 @@ function socket(): Plugin {
 // dev sends everything uncompressed. Added before Vite's own middlewares.
 function compress(): Plugin {
   return {
-    name: 'tau:compress',
+    name: 'bica:compress',
     configureServer(server) {
       const gzip = compression();
       // Its types expect Express requests; Vite passes plain Node ones.
@@ -98,7 +98,7 @@ export default defineConfig({
   // Own ports so other projects never collide (live is 3141, see start.js);
   // fail instead of hopping so the tailscale serve mapping stays right.
   server: {
-    port: Number(process.env.TAU_PORT || 3142),
+    port: Number(process.env.BICA_PORT || 3142),
     strictPort: true,
     // Reached from the phone through `tailscale serve` (docs/deploy.md).
     allowedHosts: ['.ts.net'],

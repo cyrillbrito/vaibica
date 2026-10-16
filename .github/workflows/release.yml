@@ -1,4 +1,4 @@
-# Builds `tau` and creates a draft release, see docs/deploy.md.
+# Builds `bica` and creates a draft release, see docs/deploy.md.
 name: release
 
 on:
@@ -44,14 +44,14 @@ jobs:
 
       - name: Build
         env:
-          TAU_VERSION: ${{ steps.version.outputs.next }}
+          BICA_VERSION: ${{ steps.version.outputs.next }}
         run: |
           bun cli/build.ts --target bun-darwin-arm64 --target bun-darwin-x64 --target bun-linux-x64 --target bun-linux-arm64
-          cd dist/tau
-          for dir in darwin-*; do codesign --force --sign - "$dir/tau"; done
-          for dir in */; do tar -czf "tau-${dir%/}.tar.gz" -C "$dir" tau; done
-          shasum -a 256 tau-*.tar.gz > SHA256SUMS
-          test "$(darwin-arm64/tau --version)" = "$TAU_VERSION"
+          cd dist/bica
+          for dir in darwin-*; do codesign --force --sign - "$dir/bica"; done
+          for dir in */; do tar -czf "bica-${dir%/}.tar.gz" -C "$dir" bica; done
+          shasum -a 256 bica-*.tar.gz > SHA256SUMS
+          test "$(darwin-arm64/bica --version)" = "$BICA_VERSION"
 
       - name: Tag and create the draft release
         env:
@@ -67,4 +67,4 @@ jobs:
           fi
           git tag "$TAG"
           git push origin "$TAG"
-          gh release create "$TAG" --draft --title "$TAG" --notes-file notes.md dist/tau/tau-*.tar.gz dist/tau/SHA256SUMS
+          gh release create "$TAG" --draft --title "$TAG" --notes-file notes.md dist/bica/bica-*.tar.gz dist/bica/SHA256SUMS

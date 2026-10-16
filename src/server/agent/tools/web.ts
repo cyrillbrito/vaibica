@@ -35,7 +35,7 @@ async function exa(
   const key = await apiKey();
   if (!key)
     throw new Error(
-      'No Exa key: the user can add one in Tau under Settings → Providers',
+      'No Exa key: the user can add one in Bica under Settings → Providers',
     );
   const timeout = AbortSignal.timeout(60_000);
   const response = await fetch(`https://api.exa.ai${path}`, {

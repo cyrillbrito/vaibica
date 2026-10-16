@@ -7,7 +7,7 @@ import { Button, IconButton } from './ui/Button';
 import { CloseIcon, DrawnCheckIcon } from './ui/icons';
 import Kbd from './ui/Kbd';
 
-const KEY = 'tau.tipsClosed';
+const KEY = 'bica.tipsClosed';
 
 interface Tip {
   id: string;

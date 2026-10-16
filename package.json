@@ -1,5 +1,5 @@
 {
-  "name": "tau",
+  "name": "vaibica",
   "version": "0.0.0",
   "description": "",
   "type": "module",
@@ -11,10 +11,10 @@
     "dev": "bunx --bun vite dev",
     "build": "bunx --bun vite build",
     "start": "bun start.js",
-    "build:tau": "bun cli/build.ts",
+    "build:bica": "bun cli/build.ts",
     "lint": "oxlint --config .oxlintrc.json src",
     "fmt": "oxfmt --config .oxfmtrc.json",
-    "fmt:check": "oxfmt --config .oxfmtrc.json --check src vite.config.ts start.js lint/tau.js",
+    "fmt:check": "oxfmt --config .oxfmtrc.json --check src vite.config.ts start.js lint/bica.js",
     "check": "tsc --noEmit",
     "test:bun": "bun scripts/test-bun-durable.ts && bun scripts/test-bun-recovery.ts && bun scripts/test-bun-image.ts"
   },

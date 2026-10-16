@@ -60,7 +60,7 @@ export function projector(catalog: () => ModelCatalog | undefined) {
         ...view.docs,
         'pi.agent': agent,
         'pi.live': live && slimLive(live),
-        'tau.context': usage,
+        'bica.context': usage,
       }) as ConversationView['docs'],
     };
   };

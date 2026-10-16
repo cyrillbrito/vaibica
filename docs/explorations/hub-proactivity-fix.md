@@ -32,8 +32,8 @@ Prompt, old to new:
 
 Tool output, `src/server/sessions.ts` and `src/server/session-tools.ts`:
 
-- `prompters(id)` walks a session's prompts, newest first, up to 1,000 entries. A prompt is the user's unless it starts with `[Message from session N`, ends with the `session_start` ticket line, or is a note from Tau.
-- `session_read` adds "Last prompt from: the user / you / session N / a Tau note." and, when the user ever prompted it, "The user prompts it himself, so it is his."
+- `prompters(id)` walks a session's prompts, newest first, up to 1,000 entries. A prompt is the user's unless it starts with `[Message from session N`, ends with the `session_start` ticket line, or is a note from Bica.
+- `session_read` adds "Last prompt from: the user / you / session N / a Bica note." and, when the user ever prompted it, "The user prompts it himself, so it is his."
 - Notes say ", which the user prompts himself," or ", which you started and the user now prompts himself," instead of only ", which you started,".
 - The hub's `session_start`, `session_send`, `session_stop`, and `session_archive` descriptions add "when the user asked for it". Coding sessions' descriptions are unchanged.
 

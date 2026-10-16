@@ -131,7 +131,7 @@ export type Kept = WorkspaceRef & Open;
 
 // ponytail: per device in localStorage; move to the server if laptop and
 // phone should share them.
-const KEPT_KEY = 'tau.kept';
+const KEPT_KEY = 'bica.kept';
 const [keptHere, setKept] = createSignal<Kept[]>(
   isServer ? [] : JSON.parse(localStorage.getItem(KEPT_KEY) ?? '[]'),
   { name: 'keptFiles' },

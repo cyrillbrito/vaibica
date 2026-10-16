@@ -4,7 +4,7 @@ The hub is one long-lived session you talk to, often from the phone, about all y
 
 ## Reaching it
 
-Hub sits at the top of the sidebar, always, and in the command palette. Both open `/hub`, and so does the app icon's Hub shortcut on the phone. The first open starts it. It needs a folder first, set under Settings → Models → Hub, such as a `Hub` folder in your notes vault. There is one hub per Tau, outside any project. A link to the hub's session, such as a notification or a "Started by" line, lands on `/hub` too.
+Hub sits at the top of the sidebar, always, and in the command palette. Both open `/hub`, and so does the app icon's Hub shortcut on the phone. The first open starts it. It needs a folder first, set under Settings → Models → Hub, such as a `Hub` folder in your notes vault. There is one hub per Bica, outside any project. A link to the hub's session, such as a notification or a "Started by" line, lands on `/hub` too.
 
 ## Its page
 
@@ -16,9 +16,9 @@ The same setting picks its model. Unset, it runs Claude Sonnet 5.5 at low effort
 
 ## Memory
 
-The hub's folder holds its memory as markdown. `MEMORY.md` starts with the board, one line per open thread: session id, title, project, purpose, status, and what it waits on: whose move it is, exactly what that move is, and the hub's pick. Below it, the hub links one note per area, such as `areas/tau.md`. The board holds what Tau can't know, why a session exists and what comes next. Live status comes from `list`, and what a session waits on from reading it.
+The hub's folder holds its memory as markdown. `MEMORY.md` starts with the board, one line per open thread: session id, title, project, purpose, status, and what it waits on: whose move it is, exactly what that move is, and the hub's pick. Below it, the hub links one note per area, such as `areas/bica.md`. The board holds what Bica can't know, why a session exists and what comes next. Live status comes from `list`, and what a session waits on from reading it.
 
-Tau puts `MEMORY.md` and the list of projects with their worktrees into the hub's instructions when it starts and after each compaction, and not in between, so the prompt cache holds. Like an [assistant](./assistant-mode.md) session, it saves to its notes before Tau compacts it.
+Bica puts `MEMORY.md` and the list of projects with their worktrees into the hub's instructions when it starts and after each compaction, and not in between, so the prompt cache holds. Like an [assistant](./assistant-mode.md) session, it saves to its notes before Bica compacts it.
 
 ## What it can do
 
@@ -38,7 +38,7 @@ Its instructions also hold the coordinator rules. Every handoff prompt stands al
 
 ## Notes
 
-The hub hears from Tau when a session it started or messaged finishes a turn, and when any session asks a question or stops with an error. Notes that arrive while it works merge into one queued note, so ten workers finishing cost one turn. Workers also report to it with `session_send`, which counts the same. When a session finishes, it checks the report against the ticket, then tells you what finished, what it checked, what the session waits on, and the next step it proposes with its pick. Worker questions come to you with its pick. After a restart or an error, it tells you which sessions stopped and where, and offers to resume them.
+The hub hears from Bica when a session it started or messaged finishes a turn, and when any session asks a question or stops with an error. Notes that arrive while it works merge into one queued note, so ten workers finishing cost one turn. Workers also report to it with `session_send`, which counts the same. When a session finishes, it checks the report against the ticket, then tells you what finished, what it checked, what the session waits on, and the next step it proposes with its pick. Worker questions come to you with its pick. After a restart or an error, it tells you which sessions stopped and where, and offers to resume them.
 
 ## Sources
 

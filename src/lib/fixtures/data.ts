@@ -145,9 +145,9 @@ const terminal = (
 const chats = (workspaces: Workspace[] = []): Project => ({
   id: 'chats',
   name: 'Chats',
-  path: `${HOME}/.tau/chats`,
+  path: `${HOME}/.bica/chats`,
   git: false,
-  workspaces: [ws(`${HOME}/.tau/chats`, null, true), ...workspaces],
+  workspaces: [ws(`${HOME}/.bica/chats`, null, true), ...workspaces],
 });
 
 const change = (
@@ -185,7 +185,7 @@ const status = (s: Partial<GitStatus>): GitStatus => ({
 });
 
 // This repo's own layout, so the file tree looks like a real project.
-const TAU_FILES =
+const BICA_FILES =
   `AGENTS.md README.md package.json bun.lock vite.config.ts tsconfig.json
 docs/UI.md docs/architecture.md docs/context-usage.md docs/deploy.md docs/files.md docs/git.md
 docs/projects.md docs/providers.md docs/sessions.md docs/terminals.md docs/tools.md docs/voice.md
@@ -220,14 +220,14 @@ Each session is one conversation with an agent, in one folder.
 // What the design was drawn against: short names, a few rows, all filled in.
 // Also the screenshot data: one session tells the whole story.
 function demo(): Dataset {
-  const tau = `${HOME}/Repos/tau`;
-  const keys = `${tau}-shortcuts`;
-  const voice = `${tau}-voice`;
+  const bica = `${HOME}/Repos/vaibica`;
+  const keys = `${bica}-shortcuts`;
+  const voice = `${bica}-voice`;
   const blog = `${HOME}/Repos/blog`;
   return {
     projects: [
-      project('tau', 'tau', [
-        ws(tau, 'main', true),
+      project('vaibica', 'vaibica', [
+        ws(bica, 'main', true),
         ws(
           keys,
           'session-shortcuts',
@@ -235,26 +235,33 @@ function demo(): Dataset {
           pr(57, 'open', 'Keyboard shortcuts for sessions'),
         ),
         ws(voice, 'voice-handoff', false, pr(54, 'draft')),
-        ws(`${tau}-diffs`, 'diff-view', false, pr(49, 'merged')),
+        ws(`${bica}-diffs`, 'diff-view', false, pr(49, 'merged')),
       ]),
       project('blog', 'blog', [ws(blog, 'main', true)]),
-      chats([ws(`${HOME}/.tau/chats/2026-10-10-sourdough`, null)]),
+      chats([ws(`${HOME}/.bica/chats/2026-10-10-sourdough`, null)]),
     ],
     sessions: [
       session(null, `${HOME}/Vault/Hub`, 'Hub', 'idle', 2 * MIN, {
         id: 'demo-hub',
         profile: 'hub',
       }),
-      session('tau', keys, 'Keyboard shortcuts for sessions', 'idle', MIN, {
+      session('vaibica', keys, 'Keyboard shortcuts for sessions', 'idle', MIN, {
         id: 'demo-shortcuts',
       }),
-      session('tau', tau, 'Stream tool output in terminals', 'running', 0, {
-        id: 'demo-terminals',
-        startedBy: 'demo-hub',
-      }),
       session(
-        'tau',
-        tau,
+        'vaibica',
+        bica,
+        'Stream tool output in terminals',
+        'running',
+        0,
+        {
+          id: 'demo-terminals',
+          startedBy: 'demo-hub',
+        },
+      ),
+      session(
+        'vaibica',
+        bica,
         'Why does reconnect drop the queue?',
         'waiting',
         4 * MIN,
@@ -263,11 +270,11 @@ function demo(): Dataset {
           startedBy: 'demo-hub',
         },
       ),
-      session('tau', tau, 'Release notes for 0.9', 'idle', 2 * HOUR, {
+      session('vaibica', bica, 'Release notes for 0.9', 'idle', 2 * HOUR, {
         id: 'demo-release',
       }),
       session(
-        'tau',
+        'vaibica',
         voice,
         'Hand off a voice call to a new session',
         'running',
@@ -277,33 +284,47 @@ function demo(): Dataset {
           startedBy: 'demo-hub',
         },
       ),
-      session('tau', voice, 'Pick a calmer voice', 'done', 25 * MIN, {
+      session('vaibica', voice, 'Pick a calmer voice', 'done', 25 * MIN, {
         id: 'demo-voice',
         startedBy: 'demo-hub',
       }),
-      session('blog', blog, 'Draft: building Tau with Tau', 'done', 10 * MIN, {
-        id: 'demo-blog',
-        startedBy: 'demo-hub',
-      }),
-      session('tau', tau, 'Fix the flaky reconnect test', 'error', 40 * MIN, {
-        id: 'demo-flaky',
-        startedBy: 'demo-hub',
-      }),
+      session(
+        'blog',
+        blog,
+        'Draft: building Bica with Bica',
+        'done',
+        10 * MIN,
+        {
+          id: 'demo-blog',
+          startedBy: 'demo-hub',
+        },
+      ),
+      session(
+        'vaibica',
+        bica,
+        'Fix the flaky reconnect test',
+        'error',
+        40 * MIN,
+        {
+          id: 'demo-flaky',
+          startedBy: 'demo-hub',
+        },
+      ),
       session(
         'chats',
-        `${HOME}/.tau/chats/2026-10-10-sourdough`,
+        `${HOME}/.bica/chats/2026-10-10-sourdough`,
         'Sourdough starter schedule',
         'idle',
         DAY,
         { id: 'demo-sourdough' },
       ),
-      session('tau', tau, 'Old idea', 'idle', 2 * DAY, {
+      session('vaibica', bica, 'Old idea', 'idle', 2 * DAY, {
         archivedAt: now - DAY,
       }),
     ],
     terminals: [
-      terminal('tau', tau, 'bun run dev', null),
-      terminal('tau', keys, 'bun run check', 0),
+      terminal('vaibica', bica, 'bun run dev', null),
+      terminal('vaibica', keys, 'bun run check', 0),
     ],
     kept: [],
     chats: {
@@ -317,7 +338,7 @@ function demo(): Dataset {
       'demo-sourdough': { turns: sourdough, start: now - DAY - 3 * MIN },
     },
     git: {
-      [tau]: status({
+      [bica]: status({
         unstaged: [
           change('src/server/terminal-tools.ts', 'M', 3, 1),
           change('src/server/terminals.ts', 'M', 5, 1),
@@ -351,10 +372,10 @@ function demo(): Dataset {
         unstaged: [change('src/server/voice.ts', 'M', 61, 12)],
       }),
       [blog]: status({
-        unstaged: [change('posts/building-tau-with-tau.md', 'U', 112, 0)],
+        unstaged: [change('posts/building-bica-with-bica.md', 'U', 112, 0)],
       }),
     },
-    files: { [tau]: TAU_FILES, [keys]: TAU_FILES, [voice]: TAU_FILES },
+    files: { [bica]: BICA_FILES, [keys]: BICA_FILES, [voice]: BICA_FILES },
     texts: {
       [`${keys}/src/lib/shortcuts.ts`]: { new: SHORTCUTS_TS },
       [`${keys}/src/components/Sidebar.tsx`]: {
@@ -440,7 +461,7 @@ function worst(): Dataset {
         ),
       ]),
       project('dup', 'api', [ws(`${HOME}/Repos/api`, 'main', true)]),
-      chats([ws(`${HOME}/.tau/chats/2026-10-11-recipe-ideas`, null)]),
+      chats([ws(`${HOME}/.bica/chats/2026-10-11-recipe-ideas`, null)]),
     ],
     sessions: [
       session('nw', nw, long200, 'running', 0, { id: 'worst-long' }),
@@ -521,7 +542,7 @@ function worst(): Dataset {
       session(null, `${HOME}/somewhere`, 'hi', 'idle', 900 * DAY),
       session(
         'chats',
-        `${HOME}/.tau/chats/2026-10-11-recipe-ideas`,
+        `${HOME}/.bica/chats/2026-10-11-recipe-ideas`,
         'Recipe ideas for twelve people with nut, gluten and lactose allergies',
         'done',
         MIN,
@@ -701,17 +722,17 @@ function worst(): Dataset {
 
 // One of everything: one project, one workspace, one session, counts of 1.
 function one(): Dataset {
-  const p = `${HOME}/Repos/tau`;
+  const p = `${HOME}/Repos/vaibica`;
   return {
     projects: [
-      project('tau', 'tau', [
+      project('vaibica', 'vaibica', [
         ws(p, 'main', true),
         ws(`${p}-parked`, 'parked', false, pr(1, 'merged')),
       ]),
     ],
     sessions: [
-      session('tau', p, 'Only session', 'idle', MIN),
-      session('tau', p, 'Only archived', 'idle', DAY, { archivedAt: now }),
+      session('vaibica', p, 'Only session', 'idle', MIN),
+      session('vaibica', p, 'Only archived', 'idle', DAY, { archivedAt: now }),
     ],
     terminals: [],
     kept: [],
@@ -730,7 +751,7 @@ function one(): Dataset {
 
 // The realistic upper bound: months of daily use with nothing archived.
 function huge(): Dataset {
-  const p = `${HOME}/Repos/tau`;
+  const p = `${HOME}/Repos/vaibica`;
   const statuses: SessionStatus[] = ['idle', 'idle', 'idle', 'done', 'running'];
   const worktrees = Array.from({ length: 40 }, (_, i) =>
     ws(`${p}-feature-${i}`, `feature-${i}`, false, pr(1000 + i, 'merged')),
@@ -741,11 +762,13 @@ function huge(): Dataset {
   );
   const first = `fixture-${n + 1}`;
   return {
-    projects: [project('tau', 'tau', [ws(p, 'main', true), ...worktrees])],
+    projects: [
+      project('vaibica', 'vaibica', [ws(p, 'main', true), ...worktrees]),
+    ],
     sessions: [
       ...Array.from({ length: 1000 }, (_, i) =>
         session(
-          'tau',
+          'vaibica',
           p,
           `Session number ${i + 1}`,
           statuses[i % 5]!,
@@ -753,7 +776,7 @@ function huge(): Dataset {
         ),
       ),
       ...Array.from({ length: 1284 }, (_, i) =>
-        session('tau', p, `Archived ${i + 1}`, 'idle', i * HOUR, {
+        session('vaibica', p, `Archived ${i + 1}`, 'idle', i * HOUR, {
           archivedAt: now - i * HOUR,
         }),
       ),

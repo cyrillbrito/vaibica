@@ -7,7 +7,7 @@ This is research, not a spec. It looks at going back to a parked branch, such as
 - Conductor opens a picker with ⌘⇧N to start a workspace from a branch, a pull request, or an issue, in tabs. ⌘⇧F searches workspaces by branch, repo, or PR number. A workspace page carries its chats, diff, and PR state together.
 - Superset's new workspace dialog starts from a new branch, an existing branch, or a pull request. Its branch picker has Branch and Worktree tabs with server-side search. Each row has its own action: Check out on a branch, Open on an existing worktree. Linking a PR searches by title or number, or takes a pasted URL.
 - Superset's pull request list can, for a PR that already has a workspace, start a new agent session there, or make the workspace when there is none.
-- Tau's own model picker is already a searchable popover grouped by provider, with a bottom sheet on the phone. The same pattern fits workspaces.
+- Bica's own model picker is already a searchable popover grouped by provider, with a bottom sheet on the phone. The same pattern fits workspaces.
 
 The common thread: the branch (or PR) is the thing you look for, search is on by default, and the place you land always has a "start here" action.
 

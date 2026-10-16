@@ -74,7 +74,7 @@ export default function App() {
     <Router>
       {(props) => (
         <div class="flex h-dvh overflow-hidden">
-          <Title>τ!</Title>
+          <Title>Bica</Title>
 
           {/* Phone: drawer from the left. md+: a column. */}
           <div

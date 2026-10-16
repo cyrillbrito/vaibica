@@ -10,4 +10,4 @@ The idea to look at is sessions managed like mail: three columns of navigation, 
 - The left column picks a status, and the middle column lists those sessions.
 - The project folder shows as a chip under the prompt, not as a place you navigate to.
 
-For Tau, a "Needs review" status you set yourself would separate finished-but-unchecked work from done work.
+For Bica, a "Needs review" status you set yourself would separate finished-but-unchecked work from done work.

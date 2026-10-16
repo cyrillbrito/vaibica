@@ -4,11 +4,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const url = process.argv[2];
-if (!url || !process.env.TAU_TEST_ALLOW_PROJECTS)
+if (!url || !process.env.BICA_TEST_ALLOW_PROJECTS)
   throw new Error(
-    'Pass an isolated test WebSocket URL and TAU_TEST_ALLOW_PROJECTS=1',
+    'Pass an isolated test WebSocket URL and BICA_TEST_ALLOW_PROJECTS=1',
   );
-const cwd = await realpath(await mkdtemp(join(tmpdir(), 'tau-bun-')));
+const cwd = await realpath(await mkdtemp(join(tmpdir(), 'bica-bun-')));
 const ws = new WebSocket(url, {
   headers: { Origin: new URL(url).origin.replace(/^ws/, 'http') },
 } as never);

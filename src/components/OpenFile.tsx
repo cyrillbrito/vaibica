@@ -34,7 +34,7 @@ const [split, setSplit] = createSignal(true);
 // Rendered by default; remembered for the tab's lifetime.
 const [preview, setPreview] = createSignal(true);
 // Off by default; remembered per device.
-const WRAP_KEY = 'tau.wrap';
+const WRAP_KEY = 'bica.wrap';
 const [wrap, setWrap] = createSignal(
   typeof localStorage !== 'undefined' && localStorage.getItem(WRAP_KEY) === '1',
 );

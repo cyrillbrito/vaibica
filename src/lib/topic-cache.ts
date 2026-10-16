@@ -1,7 +1,7 @@
 // Topic values saved on this device, so a page opens with what it showed
 // last time while the live value loads. Only a cache: any of it may go.
 
-const NAME = 'tau-topics';
+const NAME = 'bica-topics';
 // Bump when a topic's value changes shape, to drop the old copies.
 const VERSION = 2;
 const STORE = 'topics';

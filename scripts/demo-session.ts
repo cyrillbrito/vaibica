@@ -18,7 +18,7 @@ import { NodeExecutionEnv } from '@earendil-works/pi-durable/env/node';
 import { openNodeSqliteStorage } from '@earendil-works/pi-durable/storage/sqlite/node';
 import { CodingTools } from '@earendil-works/pi-durable/tools';
 
-const cwd = '/tmp/tau-demo';
+const cwd = '/tmp/bica-demo';
 mkdirSync(`${cwd}/src`, { recursive: true });
 writeFileSync(
   `${cwd}/src/math.ts`,
@@ -136,7 +136,7 @@ const SessionDoc = defineDoc<{
   createdAt: number;
   projectId?: string;
 }>({
-  kind: 'humble.session',
+  kind: 'bica.session',
   version: 1,
   scope: 'conversation',
   history: 'latest',

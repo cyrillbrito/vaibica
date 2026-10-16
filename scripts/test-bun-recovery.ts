@@ -20,7 +20,7 @@ import { Type } from '@earendil-works/pi-ai';
 
 const [phase, dir] = process.argv.slice(2);
 if (!phase) {
-  const scratch = await mkdtemp(join(tmpdir(), 'tau-recovery-'));
+  const scratch = await mkdtemp(join(tmpdir(), 'bica-recovery-'));
   const child = (mode: string) =>
     Bun.spawn(['bun', import.meta.path, mode, scratch], {
       stdout: 'pipe',

@@ -19,7 +19,7 @@ export default function ProxySettings() {
   return (
     <Card
       title="CLI proxy"
-      description="A CLIProxyAPI server that holds many plan sign-ins and switches between them when one runs out. Tau lists its models as one provider."
+      description="A CLIProxyAPI server that holds many plan sign-ins and switches between them when one runs out. Bica lists its models as one provider."
       bare={
         <Show
           when={!editing() && data().proxy}

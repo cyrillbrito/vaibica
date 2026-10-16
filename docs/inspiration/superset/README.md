@@ -10,4 +10,4 @@ The idea to look at is a changes list that stays on the right while the diff fil
 - Each file has a "Viewed" checkbox, and changes are grouped by folder.
 - Agents (Claude, Codex, OpenCode) are tabs in the same strip as the changes.
 
-This is close to Tau's project page today, so it is mostly a check on details like the viewed checkbox.
+This is close to Bica's project page today, so it is mostly a check on details like the viewed checkbox.

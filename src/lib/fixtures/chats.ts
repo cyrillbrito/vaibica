@@ -407,7 +407,7 @@ export const restoreExportOfArchivedSessionsWithUnicodeTitles = async (sessions:
     ],
   },
   {
-    user: '[Note from Tau, not from the user] Context is 92% full. Compact now, or clean up old tool output first.\n\nThe last 14 answers rewrote most of their context: the prompt cache keeps expiring.',
+    user: '[Note from Bica, not from the user] Context is 92% full. Compact now, or clean up old tool output first.\n\nThe last 14 answers rewrote most of their context: the prompt cache keeps expiring.',
   },
   {
     user: '[Message from session 51715 "Benachrichtigungseinstellungenüberarbeitung: alle Zustände prüfen und Übersetzungen nachziehen"] Done with the German strings. I left `Benachrichtigungseinstellungen` untranslated in two places because the design has no room for it.',

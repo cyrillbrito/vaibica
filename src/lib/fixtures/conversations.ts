@@ -133,7 +133,7 @@ class Transcript {
           model: { provider: 'anthropic', modelId: 'claude-opus-4-5' },
           thinkingLevel: 'medium',
         },
-        'tau.context': CONTEXT,
+        'bica.context': CONTEXT,
         ...docs,
       } as never,
     };
@@ -361,7 +361,7 @@ function live(id: string, worst: boolean) {
   const words = (
     worst
       ? `${REPLY}\n\n${'Then the same again, with a much longer paragraph so the streaming text wraps over several lines and keeps going for a while. '.repeat(3)}`
-      : `I'll store the width under \`tau.sidebar\` in \`localStorage\` and read it back before the first paint, so there is no jump on load.\n\n${REPLY}`
+      : `I'll store the width under \`bica.sidebar\` in \`localStorage\` and read it back before the first paint, so there is no jump on load.\n\n${REPLY}`
   ).split(/(?<=\s)/);
   const calls = worst
     ? Array.from({ length: 7 }, (_, i) => ({
@@ -579,7 +579,7 @@ function withContext(
       const v = talk.value;
       return {
         ...v,
-        docs: { ...v.docs, 'tau.context': context.value() as never },
+        docs: { ...v.docs, 'bica.context': context.value() as never },
       };
     },
     submit: talk.submit,

@@ -1,6 +1,6 @@
 # Context usage
 
-Tau shows what fills a session's context window, what it cost, and whether the prompt cache is warm, and nudges you to compact before a session gets slow and forgetful.
+Bica shows what fills a session's context window, what it cost, and whether the prompt cache is warm, and nudges you to compact before a session gets slow and forgetful.
 
 ## What you see
 
@@ -24,7 +24,7 @@ The server computes everything from the full conversation and sends the result w
 
 ## The prompt cache
 
-Rereading a cached prompt costs about a tenth of sending it fresh. Anthropic keeps a cache for 5 minutes by default, or for 1 hour if the request asks, at a higher price for writing it. Tau asks for 1 hour by default, like Claude Code on a subscription, and Settings → Behavior switches back. Replaying past sessions showed 1 hour cost about 15% less, since every gap longer than the cache rewrites the whole context at full price.
+Rereading a cached prompt costs about a tenth of sending it fresh. Anthropic keeps a cache for 5 minutes by default, or for 1 hour if the request asks, at a higher price for writing it. Bica asks for 1 hour by default, like Claude Code on a subscription, and Settings → Behavior switches back. Replaying past sessions showed 1 hour cost about 15% less, since every gap longer than the cache rewrites the whole context at full price.
 
 The countdown shows only for models whose cache lifetime pi-ai's catalog knows, which means Anthropic's.
 

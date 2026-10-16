@@ -1,4 +1,4 @@
-// The `tau` command: Tau's production server in the terminal, with keys to
+// The `bica` command: Bica's production server in the terminal, with keys to
 // open the UI, the way Vite's dev server does. cli/build.ts compiles it into
 // one binary, with the client, skills, and codemode's files embedded.
 import { spawn, spawnSync } from 'node:child_process';
@@ -30,13 +30,13 @@ export interface Build {
   worker: string;
 }
 
-const HELP = `Usage: tau [--port <port>]
+const HELP = `Usage: bica [--port <port>]
 
   --port <port>  port to listen on, default 3141
   -v, --version  print the version
   -h, --help     show this
 
-Data lives in ~/.tau/data, or in TAU_DATA_DIR.`;
+Data lives in ~/.bica/data, or in BICA_DATA_DIR.`;
 
 const mac = platform() === 'darwin';
 const CHROME_STATE = mac
@@ -57,10 +57,10 @@ export async function run(build: Build) {
   if (!Number.isInteger(port)) return fail(`Not a port: ${values.port}`);
 
   // Set before the server loads: its modules read them once.
-  const data = (process.env.TAU_DATA_DIR ||= join(homedir(), '.tau/data'));
-  process.env.TAU_SKILLS_DIR = unpackSkills(build.skills, data);
-  process.env.TAU_CODEMODE_WASM = build.wasm;
-  process.env.TAU_CODEMODE_WORKER = build.worker;
+  const data = (process.env.BICA_DATA_DIR ||= join(homedir(), '.bica/data'));
+  process.env.BICA_SKILLS_DIR = unpackSkills(build.skills, data);
+  process.env.BICA_CODEMODE_WASM = build.wasm;
+  process.env.BICA_CODEMODE_WORKER = build.worker;
 
   const { createListener, attach } = await build.load();
   const listener = createListener({ static: false });
@@ -78,7 +78,7 @@ export async function run(build: Build) {
   );
   server.listen(port, '127.0.0.1', () => {
     const url = `http://localhost:${port}`;
-    console.log(`\n  Tau ${build.version} running\n\n  Local:  ${url}\n`);
+    console.log(`\n  Bica ${build.version} running\n\n  Local:  ${url}\n`);
     if (process.stdin.isTTY) keys(url, join(data, 'chrome.json'));
   });
 

@@ -435,7 +435,7 @@ export default function Sidebar() {
   });
   const parkedOpen = () =>
     typeof localStorage === 'undefined' ||
-    localStorage.getItem('tau.parkedOpen') !== '0';
+    localStorage.getItem('bica.parkedOpen') !== '0';
 
   const archived = createMemo(() => sessions().filter((s) => s.archivedAt), {
     name: 'archivedSessions',
@@ -1188,7 +1188,7 @@ export default function Sidebar() {
     dark: ['System theme', 'system', SystemThemeIcon],
   } as const;
 
-  // The τ! button's menu, in the place of App Shell's workspace switcher.
+  // The Bica button's menu, in the place of App Shell's workspace switcher.
   const appMenu = (): MenuEntry[] => {
     const [label, next, Icon] = THEMES[theme()];
     return [
@@ -1236,16 +1236,14 @@ export default function Sidebar() {
         <button
           class="flex h-8 min-w-0 items-center gap-2 rounded-lg pr-1.5 pl-2 transition-colors hover:bg-hover data-menu-open:bg-active touch:h-11"
           aria-haspopup="menu"
-          title="Tau menu"
+          title="Bica menu"
           onClick={(e) => {
             const r = e.currentTarget.getBoundingClientRect();
             openContextMenu(r.left, r.bottom + 4, appMenu(), e.currentTarget);
           }}
         >
           <Logo size={20} />
-          <span class="font-semibold tracking-tight">
-            Tau<span class="text-brand">!</span>
-          </span>
+          <span class="font-semibold tracking-tight">Bica</span>
           <span class="text-muted [&_svg]:size-3.5">
             <ChevronsUpDownIcon />
           </span>
@@ -1418,7 +1416,7 @@ export default function Sidebar() {
             open={parkedOpen()}
             onToggle={(e) =>
               localStorage.setItem(
-                'tau.parkedOpen',
+                'bica.parkedOpen',
                 e.currentTarget.open ? '1' : '0',
               )
             }

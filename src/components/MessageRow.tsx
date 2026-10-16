@@ -54,7 +54,7 @@ export default function MessageRow(props: {
             const head = () => note().text.split('\n', 1)[0]!;
             const rest = () => note().text.slice(head().length).trim();
             return (
-              // Sent by Tau or another session: the agent reads it as a
+              // Sent by Bica or another session: the agent reads it as a
               // prompt, but it isn't yours, so it stays out of the way.
               <details class="group/note expand border-l-2 border-line pl-3">
                 <summary

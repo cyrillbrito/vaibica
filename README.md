@@ -1,6 +1,6 @@
 <div align="center">
 
-# τ! Tau
+# Bica
 
 **A fast, polished web UI for [Pi](https://github.com/earendil-works/pi) agents, built on Pi Durable.**
 Run it on your dev machine. Use it from any browser, desktop or phone.

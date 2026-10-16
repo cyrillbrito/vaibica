@@ -12,7 +12,7 @@ The hub said "idle" where it should have said what each session waits on, and it
   - `list`: a tree of projects, workspaces, open sessions, and terminals. Status words come from `STATUS`, where `done` (finished, unread by the user) and `idle` both printed "idle". Archived sessions were left out, with no way to see them.
   - `session_read`: title, folder, status, the `ask` questions when waiting, and by default only the last reply (`messages` raises it, up to 50, without tool calls). It didn't say who started the session or that it was archived.
   - `session_send`: refuses archived sessions ("Ask the user before bringing it back"). There is no unarchive tool, though `archive(id, false)` exists in `src/server/sessions.ts`.
-- Notes, `src/server/sessions.ts`: `runChanged` sees a run end, `runEnded` builds the note ("finished its turn. Its last reply: …", the questions when waiting, the reply on error) for the starter, one-off watchers, and every hub on a question or error, and `tell` queues it as a prompt starting `[Note from Tau, not from the user]`, merging notes that wait. A session that messaged its watcher during the run sends that watcher no note, unless it asks or fails.
+- Notes, `src/server/sessions.ts`: `runChanged` sees a run end, `runEnded` builds the note ("finished its turn. Its last reply: …", the questions when waiting, the reply on error) for the starter, one-off watchers, and every hub on a question or error, and `tell` queues it as a prompt starting `[Note from Bica, not from the user]`, merging notes that wait. A session that messaged its watcher during the run sends that watcher no note, unless it asks or fails.
 - Worker reports: `session_start` appends "To report back or ask it something, use session_send" to every ticket. So workers usually report with a `[Message from session …]`, and the note is then skipped. The music session's report reached the hub this way.
 
 ## Causes, per failure
@@ -21,7 +21,7 @@ The hub said "idle" where it should have said what each session waits on, and it
    - `HUB`: "Answer from your memory files when you can. Call session_read only for the thread the user asks about, and `list` when you need live status." A question about all sessions isn't "the thread the user asks about", so it called `list` only.
    - `HUB`: "Status always comes from `list`." It treated `list` as the full answer.
    - `HUB`: "Never list every project or session: say "3 sessions wait on you, the rest are idle"…" The example is the vague reply the user complained about.
-   - `list` printed "idle" for both finished-unread and truly idle sessions, so even the state was less than Tau knew.
+   - `list` printed "idle" for both finished-unread and truly idle sessions, so even the state was less than Bica knew.
 2. The archived music session: it couldn't find it and asked which project.
    - `list` hid archived sessions and had no option to show them. With no bash, the hub had no other way to search.
    - No line told it to search before asking, or to offer its best match.
@@ -30,7 +30,7 @@ The hub said "idle" where it should have said what each session waits on, and it
    - `HUB`: "tell the user only what needs him: a question, an error, or finished work he asked for." Being asked framed its role as a relay.
    - `REPLIES` says "For a choice, give 2 to 4 options, your pick first", but a yes/no question didn't read as a choice, and its example ends on "Should I make the change?". `HUB` had no rule of its own about recommending.
 4. It waits after a session finishes, even its own.
-   - The `Notes from Tau` rules said: on a note, update the board and tell the user. Nothing said to check the result or send the next step.
+   - The `Notes from Bica` rules said: on a note, update the board and tell the user. Nothing said to check the result or send the next step.
    - Those rules spoke only of notes, while its own workers report with `session_send`, so their reports fell under no rule.
    - Notes and `session_read` didn't say whether the hub started the session, and `list` was the only place to find out.
    - The board example ("done, diff ready. Next: you review.") showed no specifics and no pick.
@@ -61,7 +61,7 @@ Memory:
 - Before: "Status always comes from `list`."
 - After: "Live status comes from `list`, and what a session waits on from its last reply, through session_read."
 
-Notes and reports (was "Notes from Tau"):
+Notes and reports (was "Notes from Bica"):
 
 - New: workers' `session_send` reports are treated the same as notes.
 - Before: "On a note, update the board, then tell the user only what needs him: a question, an error, or finished work he asked for. Anything else gets one short line."
@@ -72,7 +72,7 @@ Notes and reports (was "Notes from Tau"):
 
 Talking to the user:
 
-- New: "When he asks about sessions or work, read them first. For each one you name, say what it waits on and whose move it is, in specifics: "The palette session waits on your yes to add a search button to the top bar. I'd say yes, it's small." Never stop at "idle", "done", or "waiting on you", and don't explain Tau's states."
+- New: "When he asks about sessions or work, read them first. For each one you name, say what it waits on and whose move it is, in specifics: "The palette session waits on your yes to add a search button to the top bar. I'd say yes, it's small." Never stop at "idle", "done", or "waiting on you", and don't explain Bica's states."
 - Before: "…name at most 3 or 4 things, leading with what needs him. Never list every project or session: say "3 sessions wait on you, the rest are idle", name those 3, and offer the rest."
 - After: "Name at most 3 or 4 things, leading with what needs him, then what you are pushing. Sum up the rest in one line by what they wait on ("two more are finished and need nothing"), and offer them."
 - New: "Every question you put to him carries your pick and its reason, in one sentence. When your pick follows from what he asked for and is easy to undo, don't ask: do it and say so."
@@ -99,7 +99,7 @@ Possible conflicts, checked: "do it and say so" covers only what is easy to undo
 A script ran the old and the new hub instructions on Claude Sonnet 5.5, the hub's default model, with fake tools that return the real sessions' replies from the failing conversation. It ran once per case, so these are signs, not proof.
 
 - Session states. Old: one `list`, then "The rest are idle… Should I read the music and palette reports?", which is failure 1 again. New: `list`, then session_read on the music, palette, and hub UI sessions, and for each one what it waits on and a pick ("It waits on your yes… I'd say yes, it's small").
-- The archived music session. Old: "It isn't open anywhere in Tau, so it was probably archived" and offers a fresh session with no memory of the old one. New: `list` with `archived` finds 59418, says it can read but not message it, and recommends a new session that carries over what the old one found.
+- The archived music session. Old: "It isn't open anywhere in Bica, so it was probably archived" and offers a fresh session with no memory of the old one. New: `list` with `archived` finds 59418, says it can read but not message it, and recommends a new session that carries over what the old one found.
 - The music worker's report. Old: passes it on and ends on "Do you want the iPhone case fixed, or is a plain cutoff fine there?" with no pick. New: reads the session first, puts what it waits on on the board, and ends with "I'd merge it as is and leave the iPhone problem for later."
 
 Still weak: in the states case, the new hub skipped reading a session it didn't start that had an unopened reply with a question (the blackjack split). It named that session as unread instead of saying what it asks. One line in the prompt was tightened for this ("every one that runs, waits, or has a reply he hasn't opened"), and the rerun still skipped it. It also kept using bold labels, which `REPLIES` already forbids. With the music report, it recommended but had no clear step to send the worker, so the "push the next step" rule wasn't tested on a case that needed it.

@@ -3,7 +3,7 @@
 A project is a folder on the dev machine you want agents to work in, usually a git repo. A workspace is the exact folder a session runs in: the project's main folder, or one of its git worktrees. Worktrees exist so parallel agents never step on each other's files.
 
 ```
-Project  tau
+Project  vaibica
 ├─ main folder        ← sessions: "fix sidebar", "hi"
 ├─ worktree: projects ← sessions: "add project picker"
 └─ worktree: diffs    ← sessions: "changes panel"
@@ -28,7 +28,7 @@ The home page's workspace picker is a search over every project's folder and wor
 
 ## Chats
 
-A chat is a session with no project. Each starts in a new empty folder in `~/.tau/chats`, with its own git repo, so the agent can still write files without any project's context. Chats are a built-in project listed last in the sidebar, as one flat list. Archiving a chat keeps its folder.
+A chat is a session with no project. Each starts in a new empty folder in `~/.bica/chats`, with its own git repo, so the agent can still write files without any project's context. Chats are a built-in project listed last in the sidebar, as one flat list. Archiving a chat keeps its folder.
 
 ## Pull requests
 
@@ -38,7 +38,7 @@ Each branch shows its pull request next to it, with its number and state (open, 
 
 The sidebar starts with the [hub](./hub.md), then groups sessions by project and workspace, with each workspace's terminals and kept files above its sessions.
 
-Its header holds the τ! menu (new session, add project, settings, and the theme), the [command palette](./command-palette.md) (⌘K), and a + for a new session. The top bar's button hides the sidebar (⌘B). Under it, tabs filter the sessions; see [sessions.md](sessions.md#status).
+Its header holds the Bica menu (new session, add project, settings, and the theme), the [command palette](./command-palette.md) (⌘K), and a + for a new session. The top bar's button hides the sidebar (⌘B). Under it, tabs filter the sessions; see [sessions.md](sessions.md#status).
 
 - A workspace's header (its branch, or the project's name when it is alone) opens its page: the workspace card, files, and Git. It stays lit while that page is open.
 
@@ -46,7 +46,7 @@ Its header holds the τ! menu (new session, add project, settings, and the theme
 - Branch names drop any prefix up to the last slash, and a leading ticket key shrinks to a small tag. The tag opens the ticket when the project has a `tickets` link in `.data/projects.json`.
 - Workspaces with no open sessions or terminals drop into Parked, one line each, so a worktree waiting on review stays out of the way. Starting a session there moves it back up.
 - Archived sessions sit in a collapsed section at the bottom.
-- A worktree with no branch shows its folder without the project's name in front, so `tau-sidebar` is listed as `sidebar`. Its note (detached, folder removed) always stays visible.
+- A worktree with no branch shows its folder without the project's name in front, so `vaibica-sidebar` is listed as `sidebar`. Its note (detached, folder removed) always stays visible.
 - Kept files with the same name show the parent folders that tell them apart. Times older than a month become a date.
 
 ## Safety

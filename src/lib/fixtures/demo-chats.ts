@@ -229,7 +229,7 @@ export const voiceHandoff: { turns: Turn[]; live: Block[] } = {
       ],
     },
     {
-      user: '[Note from Tau, not from the user] Brief from the voice call: when a call ends, offer to start a new session in a new worktree with a brief of what was decided. The brief goes first in the new session.',
+      user: '[Note from Bica, not from the user] Brief from the voice call: when a call ends, offer to start a new session in a new worktree with a brief of what was decided. The brief goes first in the new session.',
     },
     {
       agent: [
@@ -323,7 +323,7 @@ export const calmerVoice: Turn[] = [
 
 export const blogDraft: Turn[] = [
   {
-    user: 'Draft a short post about building Tau with Tau: how I run several agents at once from my phone. Keep my voice: plain, no hype.',
+    user: 'Draft a short post about building Bica with Bica: how I run several agents at once from my phone. Keep my voice: plain, no hype.',
   },
   {
     agent: [
@@ -339,9 +339,9 @@ export const blogDraft: Turn[] = [
         tool: 'write',
         args: {
           summary: 'Save the draft',
-          path: 'posts/building-tau-with-tau.md',
+          path: 'posts/building-bica-with-bica.md',
           content:
-            '# Building Tau with Tau\n\nMost of Tau was written by agents running inside Tau.\n',
+            '# Building Bica with Bica\n\nMost of Bica was written by agents running inside Bica.\n',
         },
         ms: 5,
       },
@@ -350,9 +350,9 @@ export const blogDraft: Turn[] = [
   {
     agent: [
       {
-        say: `# Building Tau with Tau
+        say: `# Building Bica with Bica
 
-Most of Tau was written by agents running inside Tau. On a normal day there are four or five sessions going, each in its own worktree, and I check on them from my phone between other things.
+Most of Bica was written by agents running inside Bica. On a normal day there are four or five sessions going, each in its own worktree, and I check on them from my phone between other things.
 
 The loop is simple. I write a prompt, the agent works, and the sidebar shows a dot when it needs me. A blue dot means it's done, an outlined one means it's asking something. I open it, read the answer, look at the diff, and either reply or commit.
 
@@ -362,7 +362,7 @@ What made it work wasn't the model. It was three small things:
 2. **Full-size diffs**, so reviewing on a phone isn't squinting.
 3. **Queued messages**, so I can add "also check the phone layout" while it's still running.
 
-I wrote it at \`posts/building-tau-with-tau.md\`. It needs a screenshot after the second paragraph.`,
+I wrote it at \`posts/building-bica-with-bica.md\`. It needs a screenshot after the second paragraph.`,
       },
     ],
   },

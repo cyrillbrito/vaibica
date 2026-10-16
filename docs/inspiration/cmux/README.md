@@ -10,4 +10,4 @@ The idea to look at is attention shown on the thing that needs you, not only in 
 - Each sidebar entry shows branch, folder, ports, and the agent's latest message.
 - One shortcut jumps to the most recent unread, and a popover lists all pending ones.
 
-For Tau, a "next waiting" shortcut and the latest message under each session would make jumping between agents faster.
+For Bica, a "next waiting" shortcut and the latest message under each session would make jumping between agents faster.

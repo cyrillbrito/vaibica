@@ -1,6 +1,6 @@
 # Visual explainers
 
-Research into tools and agent skills that turn Tau's code and docs into diagrams, posters, and animated videos. The goal is content for social media and for understanding the architecture: how a prompt travels, how assistant mode works, how the front end keeps data, how tool calls run.
+Research into tools and agent skills that turn Bica's code and docs into diagrams, posters, and animated videos. The goal is content for social media and for understanding the architecture: how a prompt travels, how assistant mode works, how the front end keeps data, how tool calls run.
 
 The filter was real use. Star counts come from the GitHub API on 2026-10-12. Many skills with near-zero stars came up in searches and were dropped.
 
@@ -33,7 +33,7 @@ The Excalidraw skill gives a friendly hand-drawn look that does well on social m
 | [video-shotcraft](https://github.com/Vincentwei1021/video-shotcraft)                                           | 11k      | Product promo films on Remotion               |
 | [anything2explainer](https://github.com/Vincentwei1021/anything2explainer)                                     | 2.4k     | Narrated 2 to 8 minute explainers on Remotion |
 
-Remotion is the most mature and the one people mean by "React into videos". Every frame is a React component, so Tau's own look can be rebuilt in it. It is free for individuals and small companies only.
+Remotion is the most mature and the one people mean by "React into videos". Every frame is a React component, so Bica's own look can be rebuilt in it. It is free for individuals and small companies only.
 
 HyperFrames, from HeyGen, renders video from plain HTML with timing in data attributes. Its skills top the skills.sh leaderboard right now. It is newer and company-owned.
 
@@ -58,7 +58,7 @@ HyperFrames, from HeyGen, renders video from plain HTML with timing in data attr
 
 Three sessions each explain assistant mode with one tool, so the results can be compared side by side: Archify, diagram-design, and Remotion. Their output went to `~/tau-visuals/`, outside the repo.
 
-- diagram-design made the best still: a dark poster in Tau's tokens and fonts, ready to post. The skill is a design spec with no layout engine, so the agent places every coordinate by hand, and PNG export needs a browser screenshot.
+- diagram-design made the best still: a dark poster in Bica's tokens and fonts, ready to post. The skill is a design spec with no layout engine, so the agent places every coordinate by hand, and PNG export needs a browser screenshot.
 - Archify made the best map for understanding: 14 nodes linked to source on GitHub, with a clickable path trace. It reads as a busy dashboard in a still, its edge labels are tiny, and its finalize step needed manual Chrome setup.
 - Remotion made a 50 second 1080x1080 video in 9 scenes that animates the context bar, the cache clock, and memory files. It is the most shareable of the three. Text layout is by hand and needed frame checks, and the first render tried a slow Chrome download.
 

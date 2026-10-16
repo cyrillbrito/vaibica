@@ -1,4 +1,4 @@
-// Summarizes ~/.tau/ws-log.jsonl: where the bytes go, by topic and by path.
+// Summarizes ~/.bica/ws-log.jsonl: where the bytes go, by topic and by path.
 // bun scripts/ws-log.ts [file] [--top N]
 import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -9,7 +9,7 @@ const topAt = args.indexOf('--top');
 const top = topAt >= 0 ? Number(args[topAt + 1]) : 10;
 const file =
   args.find((a, i) => !a.startsWith('--') && i !== topAt + 1) ??
-  join(homedir(), '.tau', 'ws-log.jsonl');
+  join(homedir(), '.bica', 'ws-log.jsonl');
 
 type Line = {
   t: number;

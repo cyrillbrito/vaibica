@@ -1,16 +1,16 @@
 # Providers, models, and usage
 
-Tau reaches models and paid services through keys and sign-ins kept on the server. Settings → Providers manages them.
+Bica reaches models and paid services through keys and sign-ins kept on the server. Settings → Providers manages them.
 
 ## Keys and sign-ins
 
 A key never expires: API keys for Anthropic, OpenAI, OpenRouter, and Exa, and the year-long Claude token from `claude setup-token`. A sign-in gives short-lived tokens that someone has to renew, which is why a ChatGPT plan is signed into in the browser instead of set as an env var.
 
-Settings saves both in `.data/auth.json`, readable only by the owner, and Tau renews sign-ins there. Tau never borrows another app's login, so nothing else can log it out by renewing first. Env vars such as `OPENAI_API_KEY` work too, and a key saved in Settings wins over them.
+Settings saves both in `.data/auth.json`, readable only by the owner, and Bica renews sign-ins there. Bica never borrows another app's login, so nothing else can log it out by renewing first. Env vars such as `OPENAI_API_KEY` work too, and a key saved in Settings wins over them.
 
 Sign-in flows are pi-ai's own, and every tab sees the same one, so a sign-in started on the laptop can finish on the phone. Some send the browser back to `localhost` on the dev machine. From a phone that page won't load, so copy its address and paste it into Settings.
 
-Anthropic and OpenAI mean their plans for their own apps. Using them from Tau works, but could be refused at any time.
+Anthropic and OpenAI mean their plans for their own apps. Using them from Bica works, but could be refused at any time.
 
 ## What's listed
 
@@ -28,7 +28,7 @@ Each model in the picker shows two five-step bars from pi-ai's model data: its c
 
 ## Plan usage
 
-The sidebar's foot shows how much is left on the plans serving the open session's model. Only CLI proxy sessions have these numbers: they come from the proxy's accounts ([proxy.md](./proxy.md)). Sessions on Tau's own sign-ins or API keys show none. Each window is a thin meter that warns near 80% and at the cap.
+The sidebar's foot shows how much is left on the plans serving the open session's model. Only CLI proxy sessions have these numbers: they come from the proxy's accounts ([proxy.md](./proxy.md)). Sessions on Bica's own sign-ins or API keys show none. Each window is a thin meter that warns near 80% and at the cap.
 
 ## Sources
 

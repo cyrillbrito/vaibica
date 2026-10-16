@@ -1,15 +1,15 @@
 # UI hierarchy: what belongs to what
 
-This is exploration work. Nothing here is built. It looks at how Tau's layout should show that files and changes belong to a workspace while the transcript belongs to a session, compares how other tools handle it, and proposes four layouts.
+This is exploration work. Nothing here is built. It looks at how Bica's layout should show that files and changes belong to a workspace while the transcript belongs to a session, compares how other tools handle it, and proposes four layouts.
 
 The short answer: a panel next to a session reads as part of that session, so it should only hold things the session owns. Workspace things need a home of their own, the workspace page. The pick is option 4, two homes: a workspace page for Files, Git, and terminals, and a session panel that shows only that session's own changes, scoped the right way for plain git, GitButler, and folders without git.
 
 ## The problem
 
-Tau's objects nest like this:
+Bica's objects nest like this:
 
 ```
-Project      humble-pie (a repo, its settings, its pull requests)
+Project      vaibica (a repo, its settings, its pull requests)
 └─ Workspace main folder or a worktree (files, git status, commits, terminals)
    └─ Lane   GitButler only: a branch applied in the folder (a share of the changes, commits, a PR)
       └─ Session  a conversation (transcript, queue, model, the changes it made)
@@ -17,7 +17,7 @@ Project      humble-pie (a repo, its settings, its pull requests)
 
 Today the screen nests differently. The sidebar groups sessions under workspaces, which matches. But the center shows a session, and the right panel next to it shows the whole workspace's Files and Git. Five sessions in one worktree show the same right panel, so the panel looks like it belongs to whichever session is open, and it doesn't.
 
-The panel has no header naming its owner. On the session page in the GitButler folder, the Butler tab shows every lane, including lanes other sessions work on, right next to one session's transcript. Nothing on screen says "this is humble-pie, not this session".
+The panel has no header naming its owner. On the session page in the GitButler folder, the Butler tab shows every lane, including lanes other sessions work on, right next to one session's transcript. Nothing on screen says "this is vaibica, not this session".
 
 The scope also changes by setup, and the panel switches content without saying so:
 
@@ -30,13 +30,13 @@ The scope also changes by setup, and the panel switches content without saying s
 ### Position implies ownership
 
 - Gestalt proximity and common region say that things close together, or inside one boundary, are read as one group that shares something. NN/g puts it plainly: items within a boundary are assumed to share a characteristic or function ([common region](https://www.nngroup.com/articles/common-region/), and Stephen Palmer's 1992 paper that named it). A panel docked against the transcript, with nothing around both, is read as part of the session.
-- Apple's guidelines define an inspector as a panel that shows the details of the current selection and updates when the selection changes ([Panels](https://developer.apple.com/design/human-interface-guidelines/panels)). They contrast it with an info window, whose content stays the same when the selection changes. Tau's right panel sits where an inspector sits, but behaves like an info window for the selection's parent.
+- Apple's guidelines define an inspector as a panel that shows the details of the current selection and updates when the selection changes ([Panels](https://developer.apple.com/design/human-interface-guidelines/panels)). They contrast it with an info window, whose content stays the same when the selection changes. Bica's right panel sits where an inspector sits, but behaves like an info window for the selection's parent.
 - Figma follows the same convention. The left sidebar is structure (layers), and the right sidebar shows the properties of the selected layer. When nothing is selected, it falls back to the page ([right sidebar](https://help.figma.com/hc/en-us/articles/360039832014-Design-prototype-and-explore-layer-properties-in-the-right-sidebar)). The right side shows the parent only when no child is selected.
-- Master-detail, also called list-details or a two-panel selector, works because people learn that selecting in one pane fills the next pane with that item ([Microsoft list/details](https://learn.microsoft.com/en-us/windows/apps/develop/ui/controls/list-details), Tidwell's [Designing Interfaces](https://www.oreilly.com/library/view/designing-interfaces/0596008031/ch02s03.html)). Each pane to the right is read as a child of the selection to its left. Tau's three columns read as workspace, then session, then something inside the session.
+- Master-detail, also called list-details or a two-panel selector, works because people learn that selecting in one pane fills the next pane with that item ([Microsoft list/details](https://learn.microsoft.com/en-us/windows/apps/develop/ui/controls/list-details), Tidwell's [Designing Interfaces](https://www.oreilly.com/library/view/designing-interfaces/0596008031/ch02s03.html)). Each pane to the right is read as a child of the selection to its left. Bica's three columns read as workspace, then session, then something inside the session.
 
 ### Objects need homes
 
-- Object-oriented UX (Sophia Prater's ORCA process) starts from the objects in the user's mental model, their relationships, their actions, and their attributes, before any screen ([ORCA](https://ooux.com/resources/introducing-orca-the-third-diamond-in-your-ux-process)). Each object that has its own attributes and actions gets its own place, and relationships become navigation. For Tau, the workspace has attributes (branch, PR, changes) and actions (commit, push, clean up), so it deserves a real page. Today it has one only weakly, as the project page reached from a small icon.
+- Object-oriented UX (Sophia Prater's ORCA process) starts from the objects in the user's mental model, their relationships, their actions, and their attributes, before any screen ([ORCA](https://ooux.com/resources/introducing-orca-the-third-diamond-in-your-ux-process)). Each object that has its own attributes and actions gets its own place, and relationships become navigation. For Bica, the workspace has attributes (branch, PR, changes) and actions (commit, push, clean up), so it deserves a real page. Today it has one only weakly, as the project page reached from a small icon.
 - Actions belong at the level of the object they change. Commit, push, and pull change a workspace or a lane. Discarding a session's edits changes what that session did. A commit box next to a session suggests that commit is a session action.
 
 ### Say where you are
@@ -54,7 +54,7 @@ The common pattern is that left is navigation and containers, center is the obje
 - Cursor gives each agent its own worktree in the Agents Window, so each agent's changes are its own ([worktrees](https://cursor.com/docs/configuration/worktrees)). Session and workspace become the same thing.
 - Claude desktop does the same: by default every session gets a worktree. Its diff panel header names the scope as "main → update-packages", and the diff stats chip sits above the composer (`docs/inspiration/claude-desktop/diff-panel.png`).
 - Codex's review pane shows the repository's state, not just what Codex edited, and has a scope switch: uncommitted, staged, branch against base, a commit, or the last turn ([review](https://developers.openai.com/codex/app/review)). The scope is explicit and chosen, not implied by position.
-- OpenCode hit Tau's exact problem. Its review panel showed the whole working tree, so a clean session showed files another session in the same folder was writing. The fix scoped the panel to the session's own changes ([PR #42290](https://github.com/anomalyco/opencode/pull/42290)). OpenCode also has a project home page listing sessions (`docs/inspiration/opencode-desktop/project-sessions.png`).
+- OpenCode hit Bica's exact problem. Its review panel showed the whole working tree, so a clean session showed files another session in the same folder was writing. The fix scoped the panel to the session's own changes ([PR #42290](https://github.com/anomalyco/opencode/pull/42290)). OpenCode also has a project home page listing sessions (`docs/inspiration/opencode-desktop/project-sessions.png`).
 - Conductor makes the workspace (a worktree and its branch) the unit. Chats, diff, terminal, PR state, and archive all hang off the workspace ([workspaces](https://www.conductor.build/docs/concepts/git-worktrees)). The chats are children of the workspace in the UI as well.
 - Orca lists worktrees in the sidebar, each with its branch and latest agent message. Sessions and files open as tabs inside the worktree, and the right panel header names the worktree ("vali") and the branch against `origin/main` (`docs/inspiration/orca/`).
 - GitButler's own app shows one workspace with lanes side by side and the unassigned changes apart. Its Agents tab runs a Claude Code session inside a lane, so the session is a child of the branch ([Agents tab](https://blog.gitbutler.com/agents-tab)). Their newer UI moved lanes into vertical sections with a stack header, which is closer to a tree.
@@ -74,7 +74,7 @@ The three setups look different, but they share one shape. A workspace's changes
 
 This is the same idea as JetBrains changelists and GitButler lanes, generalized: the workspace view is always the whole, grouped by owner, and the session view is always one group. It also gives an extension's version control system a clear job: provide the groups and say which group a session owns.
 
-Provenance comes from records Tau already keeps. Lanes record which session wrote which file (`.data/lanes.json`). The shadow store records each session's snapshots. Plain git would need the same small record of the paths a session's edit and write calls touched. Changes from bash or by hand stay at workspace level, as "not by a session" or "not on a branch".
+Provenance comes from records Bica already keeps. Lanes record which session wrote which file (`.data/lanes.json`). The shadow store records each session's snapshots. Plain git would need the same small record of the paths a session's edit and write calls touched. Changes from bash or by hand stay at workspace level, as "not by a session" or "not on a branch".
 
 ## Options
 
@@ -84,8 +84,8 @@ All four keep the left sidebar as is: projects, workspaces, sessions. They diffe
 
 The right panel stays as it is, but it gets a header that names its owner: the workspace name, branch, and PR badge, like Orca and Claude desktop. When the panel shows something session-scoped (Changes in a folder without git), the header names the session instead. The open session's lane is moved to the top of the Butler tab and marked "this session". Hovering or focusing the panel highlights the workspace group in the sidebar, linking the two through similarity.
 
-- Plain worktree: the header reads "humble-pie / ui-hierarchy · #42". Little changes in practice, since usually one session works there.
-- GitButler: the header reads "humble-pie · GitButler", and the session's lane comes first.
+- Plain worktree: the header reads "vaibica / ui-hierarchy · #42". Little changes in practice, since usually one session works there.
+- GitButler: the header reads "vaibica · GitButler", and the session's lane comes first.
 - No git: the header reads the session's title, so the scope switch is said out loud.
 - Phone: the bottom sheet gets the same header.
 
@@ -96,7 +96,7 @@ Trade-offs: it's cheap and could ship this week. But proximity still beats a lab
 The hierarchy becomes nested boxes. A workspace bar spans the center and the right panel, with the workspace name, branch, PR, Files, Git, and terminals. Its sessions sit inside it as tabs. The right panel hangs off the workspace bar, not the session, so common region shows that it belongs to the workspace. This is Conductor's and Orca's model.
 
 ```
-┌ sidebar ─┐┌ humble-pie / main · GitButler ─────────── Files  Git  Terminals ┐
+┌ sidebar ─┐┌ vaibica / main · GitButler ─────────── Files  Git  Terminals ┐
 │ projects ││ [ UI hierarchy ] [ Name ] [ Pi language ] +                      │
 │ worktrees││ ┌ transcript ───────────────────┐ ┌ workspace panel ──────────┐ │
 │ sessions ││ │                               │ │ lanes, files              │ │
@@ -108,7 +108,7 @@ The hierarchy becomes nested boxes. A workspace bar spans the center and the rig
 - No git: the panel's Changes is grouped by session, with the open tab's group first.
 - Phone: the frame becomes a header with the workspace name and a session switcher, and the panel stays a sheet opened from the workspace header, not from the session.
 
-Trade-offs: it fixes the reading through structure, not words, and it maps well to slots (`workspace.bar`, `workspace.panel`, `workspace.tab`). But it adds tabs, which Tau avoided on purpose, and a second bar of chrome on every screen. Switching between sessions in different workspaces, the most frequent action in Tau, now swaps the whole frame. The sidebar and the tab row list the same sessions twice.
+Trade-offs: it fixes the reading through structure, not words, and it maps well to slots (`workspace.bar`, `workspace.panel`, `workspace.tab`). But it adds tabs, which Bica avoided on purpose, and a second bar of chrome on every screen. Switching between sessions in different workspaces, the most frequent action in Bica, now swaps the whole frame. The sidebar and the tab row list the same sessions twice.
 
 ### 3. A workspace page, no right panel
 
@@ -116,8 +116,8 @@ This is the idea from the problem statement, taken all the way. Clicking a works
 
 ```
 Session page                         Workspace page
-┌ sidebar ┐┌ transcript ──────────┐  ┌ sidebar ┐┌ humble-pie / main ─ Changes Files Commits Terminals ┐
-│         ││ humble-pie / main    │  │         ││ ┌ lanes / changes ┐ ┌ diff, full size ──────────────┐ │
+┌ sidebar ┐┌ transcript ──────────┐  ┌ sidebar ┐┌ vaibica / main ─ Changes Files Commits Terminals ┐
+│         ││ vaibica / main    │  │         ││ ┌ lanes / changes ┐ ┌ diff, full size ──────────────┐ │
 │         ││ +204 −178 ───────────┼─▶│         ││ │                 │ │                               │ │
 └─────────┘└──────────────────────┘  └─────────┘└─┴─────────────────┴─┴───────────────────────────────┴─┘
 ```
@@ -131,12 +131,12 @@ Trade-offs: it's the cleanest hierarchy and gives the fewest columns, which also
 
 ### 4. Two homes: a workspace page and a session panel (the pick)
 
-Option 3's workspace page, plus a right panel that becomes a real inspector of the session. Everything the workspace owns moves to the workspace page. Everything next to the session is about the session: its own group of changes, its lane or branch, the terminals it started, and its context use. The panel header names the session's place ("on lane ui-hierarchy in humble-pie") and links to the whole workspace.
+Option 3's workspace page, plus a right panel that becomes a real inspector of the session. Everything the workspace owns moves to the workspace page. Everything next to the session is about the session: its own group of changes, its lane or branch, the terminals it started, and its context use. The panel header names the session's place ("on lane ui-hierarchy in vaibica") and links to the whole workspace.
 
 ```
 Session page
 ┌ sidebar ──┐┌ transcript ────────────────┐┌ This session ─────────────────┐
-│ humble-pie││ UI hierarchy               ││ lane ui-hierarchy · humble-pie│
+│ vaibica││ UI hierarchy               ││ lane ui-hierarchy · vaibica│
 │  sessions ││                            ││ 3 files  +120 −30             │
 │ vault     ││                            ││ commit this lane              │
 │  sessions ││                            ││ terminals it started          │
@@ -154,7 +154,7 @@ Trade-offs: each place has one owner, so position, the header, and the actions a
 
 ## Why option 4
 
-- It follows the convention people already know from Figma, Apple's inspectors, and Linear: the right side describes the selected thing. Tau stops fighting that convention instead of labeling around it.
+- It follows the convention people already know from Figma, Apple's inspectors, and Linear: the right side describes the selected thing. Bica stops fighting that convention instead of labeling around it.
 - It answers the GitButler case without special cases: the session sees its lane, and the workspace page sees all lanes. The same grouping covers plain git and folders without git.
 - It keeps one column per object, with no tabs and no second bar. Switching sessions stays a single click that changes the center and the panel together, which matters most in an app built for many sessions at once.
 - It makes the workspace page the place for full-size review, which AGENTS.md already names as a goal. Review comments from there can go to the session that touched the file, since provenance is known.

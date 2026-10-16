@@ -1,7 +1,7 @@
-// Builds the `tau` binary into dist/tau/tau: Vite's build, bundled with
-// cli/tau.ts, with the client, skills, and codemode's wasm embedded as files.
-// Each `--target bun-<os>-<arch>` builds dist/tau/<os>-<arch>/tau instead.
-// TAU_VERSION sets the version `tau --version` prints.
+// Builds the `bica` binary into dist/bica/bica: Vite's build, bundled with
+// cli/bica.ts, with the client, skills, and codemode's wasm embedded as files.
+// Each `--target bun-<os>-<arch>` builds dist/bica/<os>-<arch>/bica instead.
+// BICA_VERSION sets the version `bica --version` prints.
 import { $, Glob } from 'bun';
 import { dirname, join, relative } from 'node:path';
 import { parseArgs } from 'node:util';
@@ -9,10 +9,10 @@ import { parseArgs } from 'node:util';
 const { values } = parseArgs({
   options: { target: { type: 'string', multiple: true } },
 });
-const version = process.env.TAU_VERSION || '0.0.0-dev';
+const version = process.env.BICA_VERSION || '0.0.0-dev';
 
 const root = join(import.meta.dir, '..');
-const out = join(root, 'dist/tau');
+const out = join(root, 'dist/bica');
 const files = (dir: string) => [
   ...new Glob('**/*').scanSync({ cwd: join(root, dir) }),
 ];
@@ -51,18 +51,18 @@ const node = await Bun.file(join(root, 'dist/server/node.js')).text();
 const guard = /^if \(process\.argv\[1\].*serve\(\);$/m;
 if (!guard.test(node))
   throw new Error('dist/server/node.js changed: check its main-module guard');
-await Bun.write(join(root, 'dist/server/node-tau.js'), node.replace(guard, ''));
+await Bun.write(join(root, 'dist/server/node-bica.js'), node.replace(guard, ''));
 
 const entry = join(out, 'entry.js');
 await Bun.write(
   entry,
   `${imports.join('\n')}
-import { run } from ${JSON.stringify(join(root, 'cli/tau.ts'))};
+import { run } from ${JSON.stringify(join(root, 'cli/bica.ts'))};
 
 await run({
   version: ${JSON.stringify(version)},
   load: async () => ({
-    ...(await import(${JSON.stringify(join(root, 'dist/server/node-tau.js'))})),
+    ...(await import(${JSON.stringify(join(root, 'dist/server/node-bica.js'))})),
     ...(await import(${JSON.stringify(join(root, 'dist/server/socket.js'))})),
   }),
   client: ${map(client)},
@@ -77,7 +77,7 @@ await run({
 // NODE_ENV picks Solid's production build: without it, Bun's bundler takes
 // the "development" export condition.
 for (const target of values.target ?? [undefined]) {
-  const outfile = join(out, target?.replace(/^bun-/, '') ?? '', 'tau');
+  const outfile = join(out, target?.replace(/^bun-/, '') ?? '', 'bica');
   const flags = target ? [`--target=${target}`] : [];
   await $`bun build ${entry} ${join(root, 'cli/codemode-worker.ts')} --compile --production ${flags} --root ${root} --outfile ${outfile}`
     .cwd(root)

@@ -11,4 +11,4 @@ The idea to look at is a queue of things that need you, across every project, th
 - You answer with a recommended option, free text, or a snooze ("Not now · 4h", "Tomorrow").
 - A bottom bar shows which agents are working, without turning that into alerts.
 
-For Tau, this could be a home view: open Tau and see what is waiting, answer quick questions in place, and open the full session only when needed.
+For Bica, this could be a home view: open Bica and see what is waiting, answer quick questions in place, and open the full session only when needed.

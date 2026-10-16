@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "jsPlugins": ["eslint-plugin-solid", "./lint/tau.js"],
+  "jsPlugins": ["eslint-plugin-solid", "./lint/bica.js"],
   "ignorePatterns": ["**/*.gen.*", "dist"],
   "settings": {
     "solid": {
@@ -40,8 +40,8 @@
     "solid/require-async-server-function": 2,
     "solid/no-invalid-server-capture": 2,
     "solid/no-browser-globals-in-server-function": 2,
-    "tau/type-tokens": "error",
-    "tau/radius-tokens": "error"
+    "bica/type-tokens": "error",
+    "bica/radius-tokens": "error"
   },
   "options": {
     "typeAware": true,
