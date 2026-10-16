@@ -1,44 +1,44 @@
 <div align="center">
 
+<img src="public/favicon.svg" alt="Bica" width="96" height="96" />
+
 # Bica
 
-**A fast, polished web UI for [Pi](https://github.com/earendil-works/pi) agents, built on Pi Durable.** Run it on your dev machine. Use it from any browser, desktop or phone.
+**A lean agent harness for coding, used from the browser.**<br /> It runs on your dev machine and works from any browser, on desktop or phone.
+
+[vaibica.com](https://vaibica.com) · [Releases](https://github.com/cyrillbrito/vaibica/releases) · [Docs](docs/architecture.md)
 
 </div>
 
-> A dev tool for one person, not a product. If a daily dev task forces a switch to another app, that's a gap worth closing.
+Bica is built for the way developers work with agents day to day:
 
-## Features
+- Remote first: sessions keep running on your machine, and you can watch, steer, or join them from the phone.
+- Git at the center: a worktree per feature, so parallel agents never collide, and a Git tab to commit and push.
+- Review that works: full-size files and diffs, not a cramped side panel.
+- Many sessions at once, with streaming transcripts, shared terminals, voice calls, and a view of context and spend.
 
-- Many live sessions at once: streaming transcripts, queue or steer while the agent works, forks, voice calls.
-- Projects and worktrees, so parallel agents never collide.
-- Review in full-size files and diffs, with a Git panel to stage, commit, push, and pull.
-- Terminals shared by you and the agents.
-- Context window, prompt cache, spend, and plan limits at a glance.
-- Remote first: use it from a phone, and reconnect or join late without losing anything.
+The agent runs on [Pi Durable](https://github.com/earendil-works/pi/tree/main/packages/durable), so a run survives a restart. Bica is its own harness on Pi Durable, not the Pi coding agent. The name is a Lisbon espresso: _Vai Bica!_ means "go, Bica!".
 
-## Quick start
+## For users
 
-Requires Bun 1.4.2 or newer, which is also the package manager.
+Bica is early. Grab the `bica` binary for your system from [Releases](https://github.com/cyrillbrito/vaibica/releases) and run it. It opens on `http://localhost:3141`. Add a provider in Settings, add a project folder, and start a session.
 
-```bash
+Bica has no login, so keep it on localhost or a private network. [docs/deploy.md](docs/deploy.md) covers reaching it from the phone over Tailscale.
+
+## For developers
+
+Requires [Bun](https://bun.sh).
+
+```sh
+git clone https://github.com/cyrillbrito/vaibica.git && cd vaibica
 bun install
-cp .env.example .env   # optional: provider keys, or add them in Settings
-bun run dev            # http://localhost:3142
+bun run dev   # http://localhost:3142, data in .data/
 ```
 
-| Command | What it does |
+| Command | Does |
 | --- | --- |
-| `bun run dev` | Dev server |
-| `bun run build` | Production build to `dist/` |
-| `bun run start` | Run the build (loads `.env`) |
-| `bun run lint` | Lint `src` with Oxlint |
-| `bun run fmt:check` | Check formatting with Oxfmt |
-| `bun run check` | Type-check the app and scripts |
-| `bun run test:bun` | Disposable Durable, recovery, codemode and image checks |
+| `bun run checks` | Types, lint, format, and Bun tests: run before each commit |
+| `bun run build:bica` | Compile the binary into `dist/bica/bica` |
+| `bun run build` / `start` | Production build, served on port 3141 |
 
-Environment variables are validated at boot in [`env.ts`](env.ts). There is no login, so use it on localhost or a private network, see [docs/deploy.md](docs/deploy.md).
-
-## Docs
-
-[AGENTS.md](AGENTS.md) has the goals, stack, what comes next, and the index of the docs. Start with [docs/architecture.md](docs/architecture.md).
+Built with Bun, [Solid 2](https://v2.solidjs.com), Tailwind v4, Pi Durable, and [Pierre](https://diffs.com). Commits follow [Conventional Commits](https://www.conventionalcommits.org/). Start with [AGENTS.md](AGENTS.md) and [docs/architecture.md](docs/architecture.md).
