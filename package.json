@@ -1,0 +1,68 @@
+{
+  "name": "tau",
+  "version": "0.0.0",
+  "description": "",
+  "type": "module",
+  "imports": {
+    "#server/*": "./src/server/*",
+    "#lib/*": "./src/lib/*"
+  },
+  "scripts": {
+    "dev": "bunx --bun vite dev",
+    "build": "bunx --bun vite build",
+    "start": "bun start.js",
+    "build:tau": "bun cli/build.ts",
+    "lint": "oxlint --config .oxlintrc.json src",
+    "fmt": "oxfmt --config .oxfmtrc.json",
+    "fmt:check": "oxfmt --config .oxfmtrc.json --check src vite.config.ts start.js lint/tau.js",
+    "check": "tsc --noEmit",
+    "test:bun": "bun scripts/test-bun-durable.ts && bun scripts/test-bun-recovery.ts && bun scripts/test-bun-image.ts"
+  },
+  "dependencies": {
+    "@dnd-kit/dom": "^0.5.0",
+    "@earendil-works/chord": "^1.0.0",
+    "@earendil-works/pi-ai": "^1.0.0",
+    "@earendil-works/pi-codemode": "^1.0.2",
+    "@earendil-works/pi-durable": "^1.0.0",
+    "@pierre/diffs": "1.5.1",
+    "@pierre/trees": "1.0.0-beta.6",
+    "@solidjs/meta": "^1.0.0-next.2",
+    "@solidjs/router": "^2.0.0-next.31",
+    "@solidjs/web": "^2.0.0-rc.11",
+    "@tanstack/markdown": "^1.0.0",
+    "ghostty-web": "^0.4.0",
+    "lucide": "^1.50.0",
+    "mermaid": "^12.1.0",
+    "solid-js": "^2.0.0-rc.11",
+    "valibot": "^1.4.2",
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "@oxlint/plugins": "^1.79.0",
+    "@solidjs/diagnostics": "^2.0.0-rc.11",
+    "@solidjs/vite-plugin": "^3.0.0-next.46",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/bun": "^1.4.2",
+    "@types/compression": "^1.8.1",
+    "@types/ws": "^8.18.2",
+    "compression": "^1.8.2",
+    "eslint-plugin-solid": "~0.18.0",
+    "filesystem-routing": "0.4.0",
+    "oxfmt": "^0.70.0",
+    "oxlint": "^1.85.0",
+    "oxlint-tsgolint": "^7.0.2003",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.2",
+    "vite": "^8.2.1"
+  },
+  "engines": {
+    "bun": ">=1.4.2"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "bun",
+      "version": ">=1.4.2",
+      "onFail": "error"
+    }
+  }
+}

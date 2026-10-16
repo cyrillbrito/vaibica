@@ -1,0 +1,213 @@
+# UI
+
+How Tau looks and is built. Read before touching UI.
+
+## Principles
+
+- Calm, dense, fast. Content first, chrome recedes. No decoration that doesn't carry meaning.
+- Mobile is first-class. Every feature works on a phone, and it's not a reduced desktop.
+- Instant. Interactions respond on the same frame, and animations are short (≤200ms) and never block.
+- Our own look, inspired by the best, not cloned from a component kit.
+
+## Stack
+
+- Tailwind v4 is configured in `src/App.css` (`@theme`), with no config file. Design tokens live there, and reusable class groups as `@utility`.
+- There is no component library. Platform features come first: `<dialog>`, `popover`, CSS anchor positioning, `<details>`, `field-sizing: content`, view transitions.
+- Components live in `src/components/`, and building blocks with no app knowledge (buttons, inputs, menus, toasts, icons) in `src/components/ui/`. Reach for those before styling a raw `<button>` or `<input>`. If two places style the same control by hand, it belongs there.
+- Moving parts ready to reuse: `RollingNumber` (a number whose digits roll when it changes), `Segmented` with `SegmentCount` and `SegmentBadge`, `ThinkingLoader` (the working pill), `Button`'s `loading`, and `toast` with `.success`, `.error`, `.info`, `.loading`, `.promise` and `.dismiss`, `CopyButton` (the icon turns into a drawn check, no toast), `Kbd` (a key hint, hidden on touch), `Breakdown` (a total split into ranked parts with a gliding bar and an optional switch, whose rows slide to their new rank), `Sparkline` (a bar per day of a month, the hovered day read out), `Switch` (an on/off pill), `Field` with `checkUrl` and `checkKey` (a labelled input whose check draws in when the value looks right and rings red with the reason when it doesn't), `Card`, `Setting`, `Toggle` (a settings section: a grey tray with the title, holding a white card of rows), `createHighlight` (a hover fill that glides from row to row in a list or menu), `createFlip` (rows that glide to their new place when a list's order changes, new ones fading in), `Empty` with `icon`, `title` and `action` for a small empty state, `ProgressRing` (one segment per part, done ones filled, a rolling number in the middle; one segment can be lifted from elsewhere), `Trend` (a change on a tinted arrow tile, up and green or down and red), `FilterMenu` with `FilterChips` and `passes` (a Filter button opening grouped checkboxes, the picks as removable chips), `Tag` with `tagClass` (a calm tinted label for a state: Waiting, Failed, Running, Open #42), `CheckMark` (the box or dot of a checkbox or radio row, its check drawing in), `createSortable` (drag to reorder on `@dnd-kit/dom`: a copy of the handle follows the pointer and the app draws a line where it lands), and `createDropZone` (handlers to spread on a positioned element and an `Overlay` that fans out little documents while files are dragged over).
+- Live timers with tenths come from `createStopwatch` and `formatLive` in `src/lib/time.ts`. The per-second `tick` is enough for anything else.
+- Button variants: `soft` for a main action that stays on screen, like commit, and `danger` to end something live, like a call.
+- Overrides go through `class` and must not fight the base (no second `h-*`, `px-*`, `gap-*`). Add a variant or size instead. Longhands like `rounded-r-none` or `pl-*` are fine, since Tailwind orders them after the shorthand.
+- Buttons, selects, summaries, tabs, menu items and checkbox labels get `cursor: pointer` from a base rule in `App.css`, since Tailwind v4 dropped it. Don't add `cursor-pointer` by hand.
+- Third-party views (`@pierre/diffs`, `@pierre/trees`) are themed through their CSS variables, not Tailwind classes.
+- Icons are [Lucide](https://lucide.dev/icons), 16px, stroke 1.75, from `ui/icons.tsx`. Never hand-draw an SVG icon: import the shape from `lucide` and add one line there. `lucide-solid` is built for Solid 1, so a small wrapper draws the shapes.
+
+## Tokens
+
+Tokens are defined once with `light-dark()`. Light and dark follow the system unless Settings → Appearance forces one (per device, `src/lib/theme.ts`). Forcing sets `data-theme` on `<html>`, which pins `color-scheme`, and an inline script in `Document.tsx` applies it before first paint. Anything themed must follow `color-scheme` (`light-dark()`), never `prefers-color-scheme` directly.
+
+### Color
+
+- Colors: `bg`, `panel`, `surface`, `hover`, `active`, `line`, `line-strong`, `fg`, `muted`, `accent` (orange), `brand` (blue, the τ! logo only), `running` (green), `warn` (yellow), `danger`, `merged` (purple, merged PRs), `thumb` (the raised thumb of a segmented control: white in light, a light veil in dark). Small colored text on a tint of its own color (a tag, the sidebar's running clock) uses the `-ink` shade: `accent-ink`, `running-ink`, `warn-ink`, `danger-ink`, `merged-ink`, darker in light mode so 12px text keeps AA contrast. Use them as `bg-panel`, `text-muted`, `border-line`.
+- Selection is tinted with the accent. Replies wrap with `text-wrap: pretty` (no lone last word), and headings with `balance`.
+
+### Radius
+
+Only these exist. Tailwind's others are removed, and the `tau/radius-tokens` lint rule fails on them and on raw values.
+
+- Controls by height: `rounded-sm` (4px) for swatches, inline code, and badges, `rounded-md` (6px) for rows and controls up to 28px, and `rounded-lg` (8px) for 32px+ controls, chips, and strips.
+- Surfaces by role: `rounded-card` (10px) for cards, menus, popovers, dialogs, and code blocks, `rounded-sheet` (16px) for the composer, your prompts, and bottom-sheet tops, and `rounded-tray` (20px) for a tray holding a sheet-round card with `p-1` (a question, the composer with queued prompts).
+- `rounded-cell` (2px) for the smallest pieces of a meter: cells of the context field, segments of a bar or a sparkline.
+- `rounded-full` for round buttons, dots, and bars.
+- Nested corners are concentric: inner radius = outer radius − the padding between them. A `rounded-card` with `p-1` holds `rounded-md` rows.
+
+### Shadows
+
+Only these exist, since Tailwind's are removed. In dark mode they get darker, and floating ones a faint light top edge, so they still read.
+
+- `shadow-raised`: resting on the page (the composer).
+- `shadow-menu`: menus, popovers, the toast.
+- `shadow-sheet`: dialogs, bottom sheets, drawers.
+- `shadow-thumb`: the thumb of a segmented control, raised in its tray.
+
+### Heights
+
+Controls and rows step 24 · 28 · 32px (`Button` sizes `sm` · `md` · `lg`; list rows are 28px), and bars (top bar, panel and dialog headers) are 48px. On touch, anything tappable grows to 44px (`touch:h-11`). Padding inside follows the height: `px-1.5` in 24–28px rows, `px-2.5` in 32px+ controls and strips.
+
+### Type
+
+Sizes are defined by role in `@theme`, and Tailwind's own sizes (`text-sm`, `text-xl`…) and families (`font-sans`, `font-serif`) are removed. Each size carries its line height. Pick by what the text is, not how big it should look.
+
+- `text-meta` (12px): times, counts, hints, small-control labels. The floor: nothing smaller.
+- `text-ui` (14px): everything you click or scan. The body default.
+- `text-code` (13px): code blocks, tool output, diffs, terminals.
+- `text-read` (16px, 1.65): the conversation (agent replies, your prompts, the composer) and touch inputs, since iOS zooms below 16px.
+- `text-display` (22px): one big number or title per screen.
+- `font-ui` (Atkinson Hyperlegible Next, built for legibility and narrower than Lexend, so rows fit more) for the app, `font-reading` (Libron, a book face) for what the agent writes (`.markdown`), and `font-mono` (Atkinson Hyperlegible Mono, the same family) for code, paths, diffs and terminals. Fonts are self-hosted in `public/fonts/`. Tables in replies stay in `font-ui`, and Markdown headings scale in `em`.
+- The `tau/type-tokens` lint rule (`lint/tau.js`) fails on removed Tailwind names and raw sizes like `text-[13px]`. A new role goes in `@theme` and here, not inline.
+
+### Motion
+
+Hover and press take about 150ms, and panels and sheets at most 200ms. `ease-out` is a strong curve (`cubic-bezier(0.23, 1, 0.32, 1)`), drawers and sheets use `ease-drawer`, and `ease-spring` overshoots a little, for things springing back, like a toast swiped too short. Entrances only: closing is instant. Fades stay under reduced motion, and movement is `motion-safe`. Don't animate what you do 100+ times a day or from the keyboard: switching sessions, shortcuts, list navigation.
+
+Text the fast model writes in place, like a session title or a commit message, fades in with an accent tint that settles over about a second (`arrive` in `src/lib/arrive.ts`). Otherwise the swap is instant and easy to miss. It plays only when the text changes, never on mount or when you switch sessions. The idea comes from [How I make apps feel premium](https://youtu.be/MXLF8b15GhQ), which starts with feedback for an AI summary.
+
+The utilities in `App.css`:
+
+- `pop`: menus, popovers, dialogs fade and grow in (from `transform-origin`; modals stay centred).
+- `sheet`: phone bottom sheets slide up (`max-md:sheet md:pop` when a surface is both).
+- `appear`: things that turn up on their own (a question, a queued prompt, a warning) fade and settle.
+- `expand`: on a `<details>`, opens smoothly instead of snapping.
+- `swap-in`: an icon replacing another in place blurs and grows in (a tool call's spinner becoming its icon). Only when you saw the change happen, not on load.
+- `roll-in` / `roll-out`: a character or label rolling in where another was, from below when a value grows and from above when it shrinks (set `--roll-from` negative). `RollingNumber` and `ThinkingLoader` use them.
+- `morph`: a box whose width JS sets to its content glides to the new size.
+- `glide`: the segmented thumb sliding between options. Its leading edge runs ahead, so it stretches a little and settles.
+- `shine`: busy content, text and icons alike, dims under a sweeping band of light (a loading `Button`). It is a mask, so the control's fill stays. It stays under reduced motion.
+- `draw`: an SVG stroke drawing itself in (give the path `pathLength="1"`), like the check of a finished toast. `DrawnCheckIcon` is Lucide's check with it.
+- `stream-in`: a block of a streaming reply fading (and unblurring) in, laid out like `contents`.
+- `cell`: a cell of a field or meter. A new fill sweeps through cell by cell (`--i` is its index), and `data-busy` makes it breathe in a wave while work runs (a fade under reduced motion, since it's progress).
+- `fold`: a part unfolding in place (grid rows from 0fr), with one child. Set `data-open`, and `inert` while closed. Closing is instant.
+- `animate-grow`: a bar growing up from its base on first view (the days of a sparkline).
+- `rise-in`: rows of a summary arriving one after another on first view. Set `--i` to the row's place.
+- `animate-chip-in`: a filter chip or a comment arriving, fading and growing in a little.
+- `animate-breathe`: a halo swelling around a dot that waits on you (a session asking a question). It is `motion-safe` only, since the ring shape already says it.
+
+Buttons sink to 97% while pressed and spring back in 150ms (`ui/Button`), but not while `loading`. Toasts slide in from the top edge, stack with the older ones peeking out below, fan into a list on hover, focus, or a tap, and swipe away sideways or up. The hover fill of menus and lists glides to the row under the pointer (`createHighlight`), while keyboard moves land at once. Sidebar rows glide to their new place when the order changes, as with a new session, one archived, or a filter picked (`createFlip`, 300ms, also the ranked rows of a `Breakdown`), but not when switching sessions.
+
+## Layout
+
+Tailwind's default breakpoints. State lives in `src/lib/layout.ts`.
+
+| Width         | Sessions             | Chat   | Files · Git           |
+| ------------- | -------------------- | ------ | --------------------- |
+| < `md` (768)  | Drawer from the left | Full   | Bottom sheet          |
+| `md`–`xl`     | Column, hideable     | Center | Drawer from the right |
+| ≥ `xl` (1280) | Column, hideable     | Center | Column, hideable      |
+
+- Toggles sit in the chat top bar. `⌘B` sessions, `⌥⌘B` files and changes, `Esc` closes overlays. Every shortcut is in the [command palette](./command-palette.md).
+- Hiding or showing a column slides it (200ms, motion-safe): a hidden column is zero wide, not removed, and its content keeps its width so it moves instead of squeezing. Only the toggle animates; dragging an edge or resizing the window stays instant (`sliding` in `layout.ts`).
+- Columns resize by dragging their inner edge (arrow keys when focused, double-click resets). Widths are bounded per column and by the window: the centre column always keeps 400px, and the rendered width is re-clamped when the window shrinks (`layout.ts`). Column wrappers are `shrink-0 min-w-0` and their contents `overflow-hidden`, so inner content can't push a column wider.
+- Overlays have a backdrop and make `main` inert. Navigating closes them.
+- Transcript and composer share one centered column (`chat-column`, max 720px; 12px side padding on phone).
+- On phone, expanded tool output, thoughts and diffs have no height cap, wrap long lines and drop the indent: the transcript is the only scroller. Desktop caps them and scrolls inside.
+- Diffs are unified on phone, split allowed on desktop.
+
+## Context menus
+
+Right click (or the menu key / Shift+F10, or a long press on touch) opens a menu on the thing under the pointer: a session row, a workspace header. One `ContextMenu` is mounted in `App.tsx`; any element opts in by spreading `contextMenu(() => items)` (`src/components/ui/ContextMenu.tsx`) and adding the `context-target` class (no iOS callout or text selection on long press).
+
+- Items are read when the menu opens, so they can look at current state. An item is `{ label, icon, onSelect, danger?, disabled?, hint?, keys? }`; `'separator'` splits groups. `disabled` can be a string, shown as the reason on hover, `hint` explains the item on hover, and `keys` shows a shortcut on the right.
+- It grows in from the pointer itself (its `transform-origin` is where you clicked), and the hover fill glides between items.
+- It is a `popover="manual"`, not `auto`: light dismiss would close it on the pointerup of the right click that opened it. Outside press, Esc, scroll and resize close it; focus returns to where it was. Arrows, Home and End move; Tab closes.
+- Touch: 450ms hold, haptic tick, and the click that the lift would cause is swallowed. Items are 44px. While held, the row sinks and darkens (after 120ms, so taps and scrolls don't flash); the row stays highlighted while its menu is open. Text inside a `context-target` can't be selected on touch.
+- A long press is hidden, so on touch the busiest rows (sessions) also show a `MenuButton` ("⋯", `hidden touch:grid`) that opens the same items. Swipe actions are deliberately not used: hard to discover.
+- Keep menus short and put the most common action first. Everything in a menu should also be reachable some other way, since touch and keyboard users may never open it.
+- File rows are Pierre trees, which draw their own "⋯" on hover (always on touch) and open this same menu.
+
+## Sound
+
+Sounds are short and synthesized with Web Audio, with no audio files: a chime when a session stops running, and a cheer for a compaction. One plays per change across open tabs. Settings → Appearance turns them off per device.
+
+## Mobile checklist
+
+- `viewport-fit=cover` and `env(safe-area-inset-*)` padding.
+- `interactive-widget=resizes-content` and `100dvh`; the composer sits on the keyboard.
+- Inputs at least 16px so iOS doesn't zoom.
+- Touch targets at least 44px; hover styles only under `@media (hover: hover)`.
+- `overscroll-behavior: contain` on scroll areas.
+- Enter inserts a newline on touch devices; send with the button. On desktop, Enter sends, Shift+Enter newlines.
+- `touch:` variant (`pointer: coarse`) for touch-only sizing.
+- `theme-color` meta matching `bg`.
+
+## Test data
+
+Screens are drawn against kind data, so check them against the worst realistic data too: long names, missing fields, huge counts, non-Latin text. In development, pick one under Settings → Test data, or open any page with `?data=worst` (or `demo`, `empty`, `one`, `huge`, or `live` for real data). A switch at the bottom of the page changes it, – hides it until a reload (for screenshots), and × turns it off. It stays on for the tab across navigation and reloads.
+
+- The test data stands in where topics are read (`useTopic`), so every screen gets it. It never reaches the server or the cache on the device.
+- The whole app has test data, in `src/lib/fixtures/`: the sidebar (sessions, projects, terminals, kept files), the transcripts, and the right panel (git status and files). In `demo` and `worst`, models (with list prices), providers, plan usage (limits near and at the cap), and each live test session's context have test data too (`usage.ts`), and Compact and Clean up play out on them. The other modes keep those live.
+- Transcripts are built as the server stores them and sent through its projection (`src/lib/projection.ts`), so opened rows load their details as on live data. `chats.ts` has the main demo exchange and the worst one, and `demo-chats.ts` one for every other demo session. Sessions without one get a short exchange from their title and status.
+- In `demo` and `worst`, a few sessions play out live instead (`conversations.ts`): the first runs on a 30s loop (thinking, parallel tools with timers, a streaming reply, a queue), another waits on a question, and another holds every finished row. Prompts sent to them land and get a short reply.
+- Demo data doubles as screenshot data: `/s/demo-shortcuts?data=demo` shows one session from prompt to answer, with its changes and diffs on the right.
+- Commands are held back while it's on: they are logged to the console and never answer. Reads with test data (step details, files and diffs in the test data) answer from it; other reads go to the server.
+
+## Debugging Solid updates
+
+When something doesn't update, updates too often, or is slow, record what happened instead of guessing. Do the same to check that a change didn't add extra updates. The reports name signals, memos, and effects by their `{ name }` option.
+
+- In tests, `captureArtifact()` from `@solidjs/diagnostics` runs a scenario and returns a record of warnings and of what re-ran and why. The matchers in `@solidjs/diagnostics/vitest` (`toHaveNoDiagnostics`, `toStayWithinRerunBudget`, `toHaveNoWaste`, and others) check that record.
+- On the dev server, `diagnostics: true` in `vite.config.ts` turns on `/__solid/diagnostics`. It needs an open page connected to the dev server, for example through `agent-browser`.
+- `GET /__solid/diagnostics` returns the status and how many pages are connected.
+- `POST` it `{"method":"begin"}` and later `{"method":"end"}` to record everything in between.
+- `{"method":"whyDidRun","params":{"name":"<scope name>"}}` lists each time one named signal, memo, or effect re-ran during the recording, and `{"method":"costs"}` returns the cost tables.
+
+## Accessibility
+
+- Semantic HTML first (`nav`, `main`, `aside`, `button`, `a`); ARIA only to fill gaps.
+- Visible `:focus-visible` everywhere; full keyboard operation.
+- Dialogs and sheets trap focus and close on Escape (native `<dialog>` does this).
+- Respect reduced motion for decorative motion. Settings → Appearance → Motion (System, Full, Reduced; per device, `src/lib/motion.ts`) can override the system setting, like the theme: it sets `data-motion` on `<html>`. So gate CSS with Tailwind's `motion-safe:` / `motion-reduce:` (redefined in `App.css` to follow it) and JS with `reducedMotion()`, never `prefers-reduced-motion` directly. Progress signals (spinner, `shimmer` on running work) stay on: they carry state, and the author runs macOS with reduced motion on.
+- Text contrast WCAG AA in both themes; status is never color-only (pair with label or shape).
+
+## Skills
+
+Emil Kowalski's design-engineering skills ([emilkowalski/skills](https://github.com/emilkowalski/skills)) set the bar for motion and polish here. Read them before motion work:
+
+- [emil-design-eng](https://github.com/emilkowalski/skills/blob/main/skills/emil-design-eng/SKILL.md): when to animate, easing, durations, press feedback, origin-aware popovers.
+- [find-animation-opportunities](https://github.com/emilkowalski/skills/blob/main/skills/find-animation-opportunities/SKILL.md): where motion helps, and the gate that rejects most candidates.
+- [improve-animations](https://github.com/emilkowalski/skills/blob/main/skills/improve-animations/SKILL.md) and [review-animations](https://github.com/emilkowalski/skills/blob/main/skills/review-animations/SKILL.md): audit and review existing motion.
+
+The repo's `frontend-design` skill (`.pi/skills/`) covers visual direction and typography.
+
+## Inspiration
+
+Use [mobbin.com](https://mobbin.com) for real app screens and flows; its [MCP server](https://docs.mobbin.com/mcp/features) lets an agent search it. [Refero](https://refero.design) covers web and SaaS.
+
+| Area                 | Look at                        | Take                                                                        |
+| -------------------- | ------------------------------ | --------------------------------------------------------------------------- |
+| Chat                 | ChatGPT, Claude, Codex, Cursor | Prose replies without bubbles, user message as a pill, composer as the hero |
+| Navigation & density | Linear                         | Quiet sidebar, keyboard-first, subtle active states                         |
+| Panels & diffs       | Zed, Conductor, GitHub         | Collapsible panes, compact file tree, readable mobile diffs                 |
+| Polish               | Raycast, v0                    | Motion restraint, typography, empty states                                  |
+| AI components        | affectUI                       | Rolling numbers, gliding pills, morphs, shimmer, agent cards (see below)    |
+
+### affectUI
+
+[affectUI](https://www.affectui.com) is a React kit of components for AI products: tool calls, approvals, agent inboxes, context windows, model pickers, usage meters, toasts. It is the closest match to what Tau shows, and its motion is calm and exact. Much of Tau's current finish comes from it: `RollingNumber`, the gliding `Segmented` thumb, `Button loading`, the toast stack, `ThinkingLoader`, the Activity header, question cards, the context field, the model picker bars, ⌘K, the sidebar tabs and clocks, and the workspace card. [explorations/affectui-polish.md](explorations/affectui-polish.md) lists each piece, its commit, and the item it came from.
+
+Look there first when designing a new agent surface:
+
+- Every item is one `.tsx` file with its CSS inside. The 40 free ones are MIT, and their source comes from `https://www.affectui.com/r/<name>.json` (the shadcn registry format). Read their keyframes, easing, and durations.
+- Pro items have no source, but their demo pages do the real thing. Open them with `agent-browser`, interact, and read computed styles and `document.getAnimations()`.
+- `https://www.affectui.com/llms-full.txt` holds every item's docs. The Motion, Accessibility, and "When not to use" sections are worth more than the props.
+- Port the idea, never the code: it is React, Tau is Solid. Tau's tokens, radii, type roles, and motion rules above win over affectUI's.
+- Not taken: big flashy illustrations, and pills where a word does. The working state is a shimmering word, not a capsule.
+
+Mobbin references:
+
+- Patterns: [mobile chat](https://mobbin.com/explore/mobile/screens/chat-bot) · [web side navigation](https://mobbin.com/explore/web/ui-elements/side-navigation) · [sidebar guide](https://mobbin.com/glossary/sidebar) · [bottom sheets](https://mobbin.com/explore/mobile/ui-elements/bottom-sheet) and [guide](https://mobbin.com/glossary/bottom-sheet)
+- Linear web: [dark mode, sidebar + list](https://mobbin.com/explore/screens/cc5d476b-5ba1-4bc2-bcf3-d6dcc9a636a3) · [issue detail](https://mobbin.com/explore/screens/4e50fabd-fab7-487c-83cf-040de77ee7ea)
+- Hidden sidebar: [Remote](https://mobbin.com/explore/screens/a9a54b12-e5fd-4c9a-bb94-e9a63d22111d)
+- GitHub: [web line diff](https://mobbin.com/explore/screens/0e44aacc-efb0-496b-bcbb-7ccefd99889e) · [iOS PR list](https://mobbin.com/explore/screens/8f217bec-b611-4027-ab0f-f6d089a0b322) (row density for sessions) · [iOS code options](https://mobbin.com/explore/screens/32510bf7-affc-4b83-9046-36ba624914a9)
+- Cursor web: [home](https://mobbin.com/explore/screens/7f26354a-020b-4f86-9d9b-790abc3fe053) · [chat](https://mobbin.com/explore/screens/fef89c8a-bc7c-4167-9471-104efee61a6e)
+
+Add links here as we find good references.

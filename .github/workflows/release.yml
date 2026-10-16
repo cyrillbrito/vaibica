@@ -1,0 +1,70 @@
+# Builds `tau` and creates a draft release, see docs/deploy.md.
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Which part of the version to raise
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    # macOS, so the darwin binaries can be signed with codesign. Bun
+    # cross-compiles the Linux ones.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute the version
+        id: version
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: |
+          prev=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n 1)
+          IFS=. read -r major minor patch <<< "${prev:-v0.0.0}"
+          major=${major#v}
+          case $BUMP in
+            major) next="$((major + 1)).0.0" ;;
+            minor) next="$major.$((minor + 1)).0" ;;
+            patch) next="$major.$minor.$((patch + 1))" ;;
+          esac
+          echo "prev=$prev" >> "$GITHUB_OUTPUT"
+          echo "next=$next" >> "$GITHUB_OUTPUT"
+
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+
+      - name: Build
+        env:
+          TAU_VERSION: ${{ steps.version.outputs.next }}
+        run: |
+          bun cli/build.ts --target bun-darwin-arm64 --target bun-darwin-x64 --target bun-linux-x64 --target bun-linux-arm64
+          cd dist/tau
+          for dir in darwin-*; do codesign --force --sign - "$dir/tau"; done
+          for dir in */; do tar -czf "tau-${dir%/}.tar.gz" -C "$dir" tau; done
+          shasum -a 256 tau-*.tar.gz > SHA256SUMS
+          test "$(darwin-arm64/tau --version)" = "$TAU_VERSION"
+
+      - name: Tag and create the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREV: ${{ steps.version.outputs.prev }}
+          TAG: v${{ steps.version.outputs.next }}
+        run: |
+          if [ -n "$PREV" ]; then
+            git log --format='- %s' "$PREV..HEAD" > notes.md
+            printf '\nhttps://github.com/%s/compare/%s...%s\n' "$GITHUB_REPOSITORY" "$PREV" "$TAG" >> notes.md
+          else
+            git log --format='- %s' > notes.md
+          fi
+          git tag "$TAG"
+          git push origin "$TAG"
+          gh release create "$TAG" --draft --title "$TAG" --notes-file notes.md dist/tau/tau-*.tar.gz dist/tau/SHA256SUMS

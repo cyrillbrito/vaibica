@@ -1,0 +1,97 @@
+import 'server-only';
+import { TAU_HOME } from '#server/paths';
+import { readdir, readFile } from 'node:fs/promises';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+
+// Agent Skills (https://agentskills.io): folders holding a SKILL.md with a
+// name and description. Only those two go into the instructions; the agent
+// reads the file itself when a task matches, so unused skills cost little.
+
+export interface Skill {
+  name: string;
+  description: string;
+  path: string;
+}
+
+/** Earlier folders win when two skills share a name: project over user over Tau's own. */
+function skillDirs(cwd: string) {
+  const home = homedir();
+  return [
+    join(cwd, '.agents/skills'),
+    join(cwd, '.claude/skills'),
+    join(cwd, '.tau/skills'),
+    join(home, '.agents/skills'),
+    join(home, '.claude/skills'),
+    join(TAU_HOME, 'skills'),
+    // Shipped with Tau; the server runs from the repo root, like `.data`,
+    // except the `tau` binary, which unpacks its own copy.
+    process.env.TAU_SKILLS_DIR || join(process.cwd(), 'skills'),
+  ];
+}
+
+/** The keys of a SKILL.md frontmatter block; block scalars (`>`, `|`) are folded to one line. */
+function frontmatter(text: string) {
+  const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  const fields: Record<string, string> = {};
+  if (!match) return fields;
+  let key: string | null = null;
+  for (const line of match[1].split(/\r?\n/)) {
+    const field = line.match(/^([\w-]+):\s*(.*)$/);
+    if (field) {
+      key = field[1];
+      fields[key] = /^[>|][-+]?$/.test(field[2]) ? '' : field[2];
+    } else if (key && /^\s/.test(line)) {
+      fields[key] = `${fields[key]} ${line.trim()}`.trim();
+    }
+  }
+  for (const [k, v] of Object.entries(fields))
+    fields[k] = v.replace(/^(['"])(.*)\1$/, '$2');
+  return fields;
+}
+
+async function readSkill(path: string): Promise<Skill | null> {
+  const text = await readFile(path, 'utf8').catch(() => null);
+  if (!text) return null;
+  const fields = frontmatter(text);
+  // The user invokes these by name; the model never picks them.
+  if (fields['disable-model-invocation'] === 'true') return null;
+  if (!fields.name || !fields.description) return null;
+  return { name: fields.name, description: fields.description, path };
+}
+
+/** The skills visible to a session working in `cwd`. Re-read each prompt, so edits apply live. */
+export async function findSkills(cwd: string): Promise<Skill[]> {
+  const found = await Promise.all(
+    skillDirs(cwd).map(async (dir) => {
+      const entries = await readdir(dir).catch(() => []);
+      return Promise.all(
+        entries.map((entry) => readSkill(join(dir, entry, 'SKILL.md'))),
+      );
+    }),
+  );
+  const byName = new Map<string, Skill>();
+  for (const skill of found.flat())
+    if (skill && !byName.has(skill.name)) byName.set(skill.name, skill);
+  return [...byName.values()];
+}
+
+const escape = (s: string) =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+/** The skills section of the instructions, or null when there are none. */
+export async function skillsSection(cwd: string) {
+  const skills = await findSkills(cwd);
+  if (!skills.length) return null;
+  const list = skills
+    .map(
+      (s) =>
+        `<skill>\n<name>${escape(s.name)}</name>\n<description>${escape(s.description)}</description>\n<location>${escape(s.path)}</location>\n</skill>`,
+    )
+    .join('\n');
+  return `Skills are instructions the user wants followed for certain kinds of work. Check this list before every task, follow-ups included. If a skill's description fits or might fit the work, even when the user doesn't name it, read its SKILL.md with the read tool before doing anything else. Read it again once it is gone from your context. Resolve relative paths in a skill against its folder.
+
+<available_skills>
+${list}
+</available_skills>`;
+}

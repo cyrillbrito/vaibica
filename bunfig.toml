@@ -1,0 +1,17 @@
+[install]
+# Strict layout like pnpm: packages see only what they declare.
+linker = "isolated"
+# Skip versions younger than a day. The Solid family releases in lockstep
+# during the 2.0 prerelease, so it is exempt until Solid 2.0 is stable.
+minimumReleaseAge = 86400
+minimumReleaseAgeExcludes = [
+  "solid-js",
+  "@solidjs/meta",
+  "@solidjs/router",
+  "@solidjs/web",
+  "@solidjs/diagnostics",
+  "@solidjs/vite-plugin",
+  "@solidjs/compiler",
+  "filesystem-routing",
+  "@earendil-works/pi-codemode",
+]

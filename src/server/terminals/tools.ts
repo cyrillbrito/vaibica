@@ -1,0 +1,217 @@
+import 'server-only';
+import { Type } from '@earendil-works/pi-ai';
+import { defineExtension, defineTool } from '@earendil-works/pi-durable';
+import type { ToolRegistration } from '@earendil-works/pi-durable';
+import type { TerminalInfo } from '#lib/protocol';
+import { sessionWorkspace, tell } from '#server/sessions';
+import { withSummary } from '#server/agent/tools/summary';
+import {
+  commandDone,
+  createTerminal,
+  interruptTerminal,
+  removeTerminal,
+  restartTerminal,
+  settle,
+  tail,
+  terminalInfo,
+  terminalsIn,
+  writeTerminal,
+} from './terminals';
+
+// Like Codex's exec_command / write_stdin and Claude Code's background bash,
+// but each terminal is a shell the user sees in the sidebar, can type into,
+// restart, and stop. Output comes back as plain text, the tail only.
+// Starting a name again reruns it in the same terminal, as Zed's tasks do,
+// so restarting a dev server never leaves a dead one behind.
+
+const MAX_WAIT = 120;
+const seconds = (value: number | undefined, fallback: number) =>
+  Math.min(Math.max(value ?? fallback, 0), MAX_WAIT) * 1000;
+
+/** What a terminal is doing, in a few words; `list` uses it too. */
+export function terminalState(t: TerminalInfo) {
+  if (t.status === 'exited') return `shell exited with code ${t.exitCode}`;
+  if (t.busy) return 'running a command';
+  if (t.busy === false)
+    return t.lastExit === null
+      ? 'at the prompt'
+      : `at the prompt, last exit ${t.lastExit}`;
+  return 'running';
+}
+
+function report(id: string, lines?: number) {
+  const t = terminalInfo(id);
+  const output = tail(id, lines);
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: `Terminal ${id} "${t.title}": ${terminalState(t)}.\n\n${output || '(no output yet)'}`,
+      },
+    ],
+    details: { terminalId: id },
+  };
+}
+
+/** The session hears when the terminal's command finishes. */
+async function notifyWhenDone(id: string, session: string) {
+  const code = await commandDone(id);
+  // Read now: a terminal being closed is gone a moment later, and closing
+  // one needs no note.
+  let note: string;
+  try {
+    const t = terminalInfo(id);
+    note = `${
+      code === null
+        ? `The shell in terminal ${id} "${t.title}" ended.`
+        : `In terminal ${id} "${t.title}", the command finished with exit code ${code}.`
+    }\n\n${tail(id, 20)}`;
+  } catch {
+    return;
+  }
+  // Nothing awaits this, so a throw here would take the server down, e.g.
+  // after a Vite restart closed the module runner this import goes through.
+  try {
+    await tell(session, note);
+  } catch (error) {
+    console.error('[terminal]', error);
+  }
+}
+
+const notify = (fallback: string) =>
+  Type.Optional(
+    Type.Boolean({
+      description: `true: when the command finishes (or someone stops it), you get a note with its exit code and last lines, even if you are idle by then. ${fallback}`,
+    }),
+  );
+
+const terminalStart = defineTool({
+  name: 'terminal_start',
+  description:
+    'Open a shell in a terminal in your folder, optionally running a command first: a dev server, watcher, game server, REPL. The user sees it in the sidebar and can type into it. Use this instead of `&`, nohup, or a long bash call for anything that keeps running. Starting a name again reuses that terminal: whatever it runs stops, and the new command starts in its place. So to restart a dev server, start it again with the same name. Check `list` first: one may already run. Returns once output settles (or after `wait` seconds) with the latest output.',
+  parameters: Type.Object({
+    command: Type.Optional(
+      Type.String({ description: 'A shell command to run first' }),
+    ),
+    name: Type.Optional(
+      Type.String({
+        description:
+          'A short name for the sidebar, e.g. "dev server". Default: the command',
+      }),
+    ),
+    notify: notify('Default: true when you give a command.'),
+    wait: Type.Optional(
+      Type.Number({
+        description: `Most seconds to wait for output to settle (default 10, max ${MAX_WAIT})`,
+      }),
+    ),
+  }),
+  execute: async ({ command, name, notify, wait }, api) => {
+    const session = String(api.conversationId);
+    const workspace = await sessionWorkspace(api.conversationId);
+    const title = name?.trim() || command?.trim().slice(0, 60);
+    const same = title
+      ? terminalsIn(workspace.cwd).find((t) => t.title === title)
+      : undefined;
+    if (same && same.status !== 'exited' && same.startedBy !== session)
+      throw new Error(
+        `Terminal ${same.id} "${title}" is already open here and isn't yours. Read it with terminal_read, or pick another name.`,
+      );
+    const id =
+      same?.id ??
+      (await createTerminal(workspace, {
+        command,
+        title: name,
+        startedBy: session,
+      }));
+    if (same) await restartTerminal(id, { command, startedBy: session });
+    if (command?.trim() && notify !== false) void notifyWhenDone(id, session);
+    await settle(id, seconds(wait, 10));
+    return report(id);
+  },
+});
+
+const terminalRead = defineTool({
+  name: 'terminal_read',
+  description:
+    "Read a terminal's latest output and state: running a command, at the prompt, or exited. `list` shows all terminals.",
+  parameters: Type.Object({
+    id: Type.String({ description: 'The terminal id' }),
+    lines: Type.Optional(
+      Type.Number({ description: 'How many last lines (default 100)' }),
+    ),
+    wait: Type.Optional(
+      Type.Number({
+        description: `Seconds to wait first for new output to settle or the shell to exit (default 0, max ${MAX_WAIT})`,
+      }),
+    ),
+  }),
+  execute: async ({ id, lines, wait }) => {
+    if (wait) await settle(id, seconds(wait, 0));
+    return report(id, lines);
+  },
+});
+
+const terminalSend = defineTool({
+  name: 'terminal_send',
+  description:
+    'Type into a terminal: a command, input for a REPL or server console, or keys. Include "\\n" to press Enter. With `interrupt`, Ctrl-C stops what runs first, e.g. to run something else where a dev server ran. Only use terminals you started or the user named. Returns the output once it settles.',
+  parameters: Type.Object({
+    id: Type.String({ description: 'The terminal id' }),
+    input: Type.String({
+      description: 'The text to type; may be empty with `interrupt`',
+    }),
+    interrupt: Type.Optional(
+      Type.Boolean({
+        description:
+          'true: press Ctrl-C first and wait for the prompt, with no note about the stopped command',
+      }),
+    ),
+    notify: notify('Default: false.'),
+    wait: Type.Optional(
+      Type.Number({
+        description: `Most seconds to wait for output to settle (default 3, max ${MAX_WAIT})`,
+      }),
+    ),
+  }),
+  execute: async ({ id, input, interrupt, notify, wait }, api) => {
+    if (terminalInfo(id).status === 'exited')
+      throw new Error(
+        'The terminal has exited. terminal_start with its name opens it again.',
+      );
+    if (interrupt) await interruptTerminal(id);
+    if (notify) void notifyWhenDone(id, String(api.conversationId));
+    if (input) writeTerminal(id, input);
+    await settle(id, seconds(wait, 3), 500);
+    return report(id, 50);
+  },
+});
+
+const terminalStop = defineTool({
+  name: 'terminal_stop',
+  description:
+    'Close a terminal when you are done with it: its shell and whatever runs in it end (SIGTERM, then SIGKILL after 3 seconds), and it leaves the sidebar. Returns its last lines. To restart what runs in it, use terminal_start with its name instead; to stop only the command, terminal_send with `interrupt`.',
+  parameters: Type.Object({
+    id: Type.String({ description: 'The terminal id' }),
+  }),
+  execute: async ({ id }) => {
+    const { title } = terminalInfo(id);
+    const last = tail(id, 20);
+    await removeTerminal(id);
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: `Closed terminal ${id} "${title}". Its last lines:\n\n${last || '(no output)'}`,
+        },
+      ],
+    };
+  },
+});
+
+export const TerminalTools = defineExtension({
+  name: 'terminal-tools',
+  tools: [terminalStart, terminalRead, terminalSend, terminalStop].map((tool) =>
+    withSummary(tool as unknown as ToolRegistration),
+  ),
+});

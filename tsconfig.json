@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    // General
+    "jsx": "preserve",
+    "jsxImportSource": "@solidjs/web",
+    "target": "ESNext",
+
+    // Modules
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    // The same aliases as "imports" in package.json, which Vite and Bun read.
+    // TypeScript needs them here too to find a folder's index.ts.
+    "paths": {
+      "#server/*": ["./src/server/*"],
+      "#lib/*": ["./src/lib/*"]
+    },
+
+    // Type Checking & Safety
+    "strict": true,
+    "skipLibCheck": true,
+    "types": ["vite/client", "bun"]
+  }
+}

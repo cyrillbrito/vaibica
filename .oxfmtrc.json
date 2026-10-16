@@ -1,0 +1,5 @@
+{
+  "singleQuote": true,
+  "printWidth": 80,
+  "ignorePatterns": ["file-routes.d.ts", "solid-env.d.ts"]
+}
