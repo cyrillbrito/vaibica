@@ -226,7 +226,7 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
         throw new Error(
           `Session ${id} is archived. Ask the user before bringing it back.`,
         );
-      noteMessage(api.conversationId, id);
+      await noteMessage(api.conversationId, id);
       await submit(
         id,
         `[Message from session ${me.id} "${me.title}"] ${message}`,

@@ -32,6 +32,12 @@ export const SessionDoc = defineDoc<{
   // before the field, so a session the user started counts as his.
   userPrompted?: boolean;
   voice?: VoiceSettings;
+  // Sessions that asked to hear when its current or next run ends
+  // (session_send's `notify`). Stored, so a restart doesn't lose them.
+  watchers?: string[];
+  // Sessions it messaged during its current run: they need no note that
+  // repeats what it told them.
+  messaged?: string[];
   // The memory index as the agent sees it (loadMemory), '' for none. Unset:
   // taken again on the next prompt, as after a compaction.
   memory?: string;

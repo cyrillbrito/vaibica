@@ -7,36 +7,27 @@ import { queued, submit, type QueuedInput } from './prompts';
 import { prompters, readSession, recentMessages } from './read';
 import { SessionDoc, getConversation, listSessions, load } from './store';
 
-// When a run ends, its starter (`startedBy`) hears of it, and so do these:
-// sessions that messaged it with `notify`, for that run only. The last run
-// state seen of every session tells when a run ends.
+// When a run ends, its starter (`startedBy`) hears of it, and so do the
+// sessions in its `watchers`, for that run only. The last run state seen of
+// every session tells when a run ends.
 export const runState = new Map<ConversationId, boolean>();
-const onceWatchers = new Map<ConversationId, Set<string>>();
-// Who each running session messaged this run: a watcher it already
-// messaged needs no note that repeats it.
-const messaged = new Map<ConversationId, Set<string>>();
 
-/** Session `from` messaged `to` during its current run. */
-export function noteMessage(from: ConversationId, to: string) {
-  let set = messaged.get(from);
-  if (!set) messaged.set(from, (set = new Set()));
-  set.add(to);
-}
-
-export function runChanged(id: ConversationId | undefined, running: boolean) {
-  if (id === undefined) return;
-  const was = runState.get(id);
-  runState.set(id, running);
-  if (running) return;
-  const told = messaged.get(id) ?? new Set<string>();
-  messaged.delete(id);
-  if (!was) return;
-  const once = onceWatchers.get(id) ?? new Set<string>();
-  onceWatchers.delete(id);
-  void runEnded(id, once, told).catch((error) =>
-    console.error('[note]', error),
+function addTo(
+  id: ConversationId,
+  field: 'watchers' | 'messaged',
+  who: string,
+) {
+  return getHarness().then((harness) =>
+    harness.commit(async (tx) => {
+      const doc = await tx.doc(SessionDoc, id);
+      if (!doc[field]?.includes(who)) doc[field] = [...(doc[field] ?? []), who];
+    }, context),
   );
 }
+
+/** Session `from` messaged `to` during its current run. */
+export const noteMessage = (from: ConversationId, to: string) =>
+  addTo(from, 'messaged', to);
 
 /**
  * `watcher` hears when the current or next run of this session ends. The
@@ -44,10 +35,15 @@ export function runChanged(id: ConversationId | undefined, running: boolean) {
  */
 export async function notifyWhenIdle(id: string, watcher: ConversationId) {
   await load();
-  const conversationId = Number(id) as ConversationId;
-  let set = onceWatchers.get(conversationId);
-  if (!set) onceWatchers.set(conversationId, (set = new Set()));
-  set.add(String(watcher));
+  await addTo(Number(id) as ConversationId, 'watchers', String(watcher));
+}
+
+export function runChanged(id: ConversationId | undefined, running: boolean) {
+  if (id === undefined) return;
+  const was = runState.get(id);
+  runState.set(id, running);
+  if (running || !was) return;
+  void runEnded(id).catch((error) => console.error('[note]', error));
 }
 
 /**
@@ -55,17 +51,26 @@ export async function notifyWhenIdle(id: string, watcher: ConversationId) {
  * it asks or fails, to every hub too (docs/hub.md). A watcher it already
  * messaged this run hears only of a question or an error.
  */
-async function runEnded(
-  id: ConversationId,
-  once: Set<string>,
-  told: Set<string>,
-) {
+async function runEnded(id: ConversationId) {
+  // Taken and cleared at once: these were for the run that just ended.
+  let once: string[] = [];
+  let told: string[] = [];
+  let quiet: boolean | undefined;
+  await (
+    await getHarness()
+  ).commit(async (tx) => {
+    const doc = await tx.doc(SessionDoc, id);
+    once = doc.watchers ?? [];
+    told = doc.messaged ?? [];
+    quiet = doc.quiet;
+    if (doc.watchers) delete doc.watchers;
+    if (doc.messaged) delete doc.messaged;
+  }, context);
   const s = await readSession(String(id)).catch(() => undefined);
   // Archived: done with, so it doesn't report.
   if (!s || s.archivedAt) return;
-  const meta = await (await getHarness()).snapshot(SessionDoc, id, context);
   const watchers = new Set(once);
-  if (s.startedBy && !meta?.quiet) watchers.add(s.startedBy);
+  if (s.startedBy && !quiet) watchers.add(s.startedBy);
   const alert = s.status === 'error' || s.status === 'waiting';
   if (alert)
     for (const other of await listSessions())

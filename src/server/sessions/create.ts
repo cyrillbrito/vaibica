@@ -205,6 +205,8 @@ export async function fork(id: string, at?: number) {
         doc.forkedAt = entry;
         doc.startedBy = '';
         doc.seenEntry = entry;
+        delete doc.watchers;
+        delete doc.messaged;
       },
     },
     context,
