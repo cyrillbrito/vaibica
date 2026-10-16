@@ -74,14 +74,14 @@ export function clockTime(timestamp: number) {
 
 /**
  * Reactive: the time, ticking every `ms` while `on()` holds, for live
- * stopwatches with tenths. Off, it keeps the last value and costs nothing.
+ * stopwatches. Off, it keeps the last value and costs nothing.
  */
-export function createStopwatch(on: () => boolean, ms = 100) {
+export function createStopwatch(on: () => boolean, ms = 1000) {
   const [time, setTime] = createSignal(Date.now(), { name: 'stopwatch' });
   // A memo, so an `on` that reruns with the same answer (a streaming
   // message) doesn't restart the interval before it ever fires. No write
   // when it starts: that would rerun every reader a second time in the same
-  // frame. Callers clamp at 0, so the first 100ms read as 0.0s.
+  // frame. Callers clamp at 0.
   const running = createMemo(on, { name: 'stopwatchOn' });
   createEffect(running, (running) => {
     if (!running) return;
@@ -100,8 +100,10 @@ export function formatClock(ms: number) {
   return `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, '0')}m`;
 }
 
-/** A live timer: "0.4s", "12.3s", then like `formatClock`. Tenths say it's moving. */
+/**
+ * A live timer like `formatClock`, or nothing for the first 10s: most steps
+ * end by then, and a count only helps once a wait gets long.
+ */
 export function formatLive(ms: number) {
-  if (ms < 60_000) return `${(Math.floor(ms / 100) / 10).toFixed(1)}s`;
-  return formatClock(ms);
+  return ms < 10_000 ? undefined : formatClock(ms);
 }

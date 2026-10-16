@@ -15,10 +15,10 @@ The home page's composer picks a workspace, a [profile](./profiles.md), and a mo
 Images are pasted, picked, or dropped on the composer. The transcript shows your prompts with their images, the agent's replies as Markdown, its thinking, tool calls, errors, and compactions.
 
 - Thinking and tool calls between two replies fold into one activity list. Each call opens to its command and output, its diff, or its arguments.
-- Past one step, the list gets a header that sums it up: "Working" with a live timer while it runs, then "Worked for 18s · 6 tools, 1 thought" and how many failed. It folds the list; finished lists of four or more steps load folded.
-- Running calls show a spinner and a live timer, a call you watch finish draws a check, slow ones keep their time, and failures say "Failed" in red. The server stamps the times, so every tab agrees.
+- Past one step, the list gets a header that sums it up: "Working" while it runs, with a timer once it passes 10 seconds, then "Worked for 18s · 6 tools, 1 thought" and how many failed. It folds the list; finished lists of four or more steps load folded.
+- Running calls show a spinner, and a timer past 10 seconds; a call you watch finish draws a check, slow ones keep their time, and failures say "Failed" in red. The server stamps the times, so every tab agrees.
 - An opened call shows its parts (command, arguments, output, error) each with a copy button. JSON is highlighted, and long blocks stop at a fade with "Show all".
-- Before the first token streams, a "Working" pill with a timer sits at the bottom; a provider error waiting to retry shows there too, with the countdown.
+- Before the first token streams, a "Working" pill sits at the bottom, with a timer past 10 seconds; a provider error waiting to retry shows there too, with the countdown.
 - New paragraphs of a streaming reply fade in. Code blocks in replies get a copy button on hover.
 - Under an answer, copy and fork appear on hover; copy turns into a check instead of a toast. Your prompts copy the same way, next to their time.
 - Notes and messages from other sessions show as a quiet row with the sender, not as your prompt.

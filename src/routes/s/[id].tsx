@@ -77,12 +77,10 @@ function Working(props: {
       <Show
         when={props.retry}
         fallback={
-          <Show when={props.since}>
-            {(since) => (
-              <span class="tabular-nums">
-                {formatLive(Math.max(0, now() - since()))}
-              </span>
-            )}
+          <Show
+            when={props.since && formatLive(Math.max(0, now() - props.since))}
+          >
+            {(t) => <span class="tabular-nums">{t()}</span>}
           </Show>
         }
       >

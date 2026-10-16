@@ -154,9 +154,13 @@ function Header(props: { activity: ActivityData; seen: boolean }) {
         labelClass="font-medium"
       />
       <span class="flex min-w-0 items-baseline gap-1.5 truncate text-meta tabular-nums">
-        <Show when={props.activity.active && time() !== undefined}>
-          <span class="text-muted">{formatLive(time()!)}</span>
-          <span aria-hidden="true">·</span>
+        <Show when={props.activity.active && formatLive(time() ?? 0)}>
+          {(t) => (
+            <>
+              <span class="text-muted">{t()}</span>
+              <span aria-hidden="true">·</span>
+            </>
+          )}
         </Show>
         <span class="truncate">{counts()}</span>
         <Show when={failed()}>
