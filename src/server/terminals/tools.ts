@@ -4,7 +4,6 @@ import { defineExtension, defineTool } from '@earendil-works/pi-durable';
 import type { ToolRegistration } from '@earendil-works/pi-durable';
 import type { TerminalInfo } from '#lib/protocol';
 import { sessionWorkspace, tell } from '#server/sessions';
-import { withSummary } from '#server/agent/tools/summary';
 import {
   commandDone,
   createTerminal,
@@ -211,7 +210,10 @@ const terminalStop = defineTool({
 
 export const TerminalTools = defineExtension({
   name: 'terminal-tools',
-  tools: [terminalStart, terminalRead, terminalSend, terminalStop].map((tool) =>
-    withSummary(tool as unknown as ToolRegistration),
-  ),
+  tools: [
+    terminalStart,
+    terminalRead,
+    terminalSend,
+    terminalStop,
+  ] as unknown as ToolRegistration[],
 });

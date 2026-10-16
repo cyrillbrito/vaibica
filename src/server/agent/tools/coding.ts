@@ -9,7 +9,6 @@ import {
   createWriteTool,
 } from '@earendil-works/pi-durable/tools';
 import { bunImages } from './fit-image';
-import { withSummary } from './summary';
 
 /** Whether `path` lies inside `cwd`; the edit tools strip a leading @. */
 function inside(cwd: string, path: string) {
@@ -44,7 +43,7 @@ export const HubFileTools = defineExtension({
     read(),
     ownFolder(any(createWriteTool())),
     ownFolder(any(createEditTool())),
-  ].map(withSummary),
+  ],
 });
 
 export const CodingTools = defineExtension({
@@ -54,5 +53,5 @@ export const CodingTools = defineExtension({
     any(createWriteTool()),
     any(createEditTool()),
     any(createBashTool()),
-  ].map(withSummary),
+  ],
 });

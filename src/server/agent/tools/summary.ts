@@ -1,28 +1,56 @@
 import 'server-only';
-import { Type } from '@earendil-works/pi-ai';
-import type { ToolRegistration } from '@earendil-works/pi-durable';
+import {
+  defineExtension,
+  GenerationTask,
+  hook,
+  ToolTask,
+} from '@earendil-works/pi-durable';
+import type { JsonObject } from '@earendil-works/pi-durable';
+import type { Message } from '@earendil-works/pi-ai';
 
 // The transcript shows `summary` next to the tool name, so a call reads at a
-// glance instead of only as a raw bash command, path, or URL. Optional so
-// codemode scripts, whose calls show no summary, can leave it out.
-const summary = Type.Optional(
-  Type.String({
-    description:
-      'Always set it when you call the tool yourself: what this call does and why, in plain words, shown to the user next to the tool name. At most ~10 words, no trailing period. E.g. "Find where sessions are created", "Run the type checker", "Add summary param to tools".',
-  }),
-);
+// glance instead of only as a raw bash command, path, or URL. Only the model's
+// copy of each tool gets the field: tools stay as registered, so codemode lists
+// them unchanged, where calls show no summary anyway.
+const summary = {
+  type: 'string',
+  description:
+    'What this call does and why, in plain words, shown to the user next to the tool name. At most ~10 words, no trailing period. E.g. "Find where sessions are created", "Run the type checker", "Add summary param to tools".',
+};
 
-export function withSummary(tool: ToolRegistration): ToolRegistration {
-  // Optional properties carry their own marker, so they stay optional.
-  const { properties } = tool.parameters as {
-    properties: Record<string, typeof summary>;
-  };
+function withSummary(message: Message): Message {
+  if (message.role !== 'system' || !message.toolsAdded) return message;
   return {
-    ...tool,
-    parameters: Type.Object({ summary, ...properties }),
-    execute: (args, api, context) => {
-      const { summary: _summary, ...rest } = args as Record<string, unknown>;
-      return tool.execute(rest, api, context);
-    },
+    ...message,
+    toolsAdded: message.toolsAdded.map((tool) => {
+      const { properties } = tool.parameters as { properties?: object };
+      return {
+        ...tool,
+        parameters: {
+          ...tool.parameters,
+          properties: { summary, ...properties },
+        },
+      };
+    }),
   };
 }
+
+export const ToolSummary = defineExtension({
+  name: 'bica-tool-summary',
+  hooks: [
+    // Tool declarations travel in the transcript's system messages, so adding
+    // the field per request keeps the stored ones as Durable made them.
+    hook(GenerationTask, {
+      beforeRequest: ({ messages }) => ({
+        messages: messages.map(withSummary),
+      }),
+    }),
+    hook(ToolTask, {
+      beforeTool: ({ arguments: args }) => {
+        if (!('summary' in args)) return undefined;
+        const { summary: _summary, ...rest } = args;
+        return { arguments: rest as JsonObject };
+      },
+    }),
+  ],
+});

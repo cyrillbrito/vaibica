@@ -1,13 +1,11 @@
 import 'server-only';
 import { CodemodeSandbox, loadQuickJSWasm } from '@earendil-works/pi-codemode';
-import type { ToolRegistration } from '@earendil-works/pi-durable';
 import { createCodemodeExtension } from '@earendil-works/pi-durable/codemode';
-import { withSummary } from './summary';
 
 // Durable's codemode: scripts call the conversation's tools as nested calls
 // and survive a restart. Tools that orchestrate or ask (session tools, list,
 // ask) set `callers: ['model']`, so scripts can't reach them.
-const extension = createCodemodeExtension({
+export const Codemode = createCodemodeExtension({
   sandbox: new CodemodeSandbox({
     // A runaway script must not grow to wasm32's 4 GiB inside the server process.
     memoryLimitBytes: 256 * 1024 * 1024,
@@ -18,8 +16,3 @@ const extension = createCodemodeExtension({
     }),
   }),
 });
-
-export const Codemode = {
-  ...extension,
-  tools: extension.tools?.map((tool) => withSummary(tool as ToolRegistration)),
-};

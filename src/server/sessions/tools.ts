@@ -6,7 +6,6 @@ import type {
   ToolRegistration,
 } from '@earendil-works/pi-durable';
 import type { SessionStatus } from '#lib/protocol';
-import { withSummary } from '#server/agent/tools/summary';
 import { CHATS_ID, getProject, listProjects } from '#server/projects';
 import { allTerminals, terminalState } from '#server/terminals';
 import { spawnSession } from './create';
@@ -323,7 +322,7 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
     sessionArchive,
     list,
   ].map((tool) => ({
-    ...withSummary(tool as unknown as ToolRegistration),
+    ...(tool as unknown as ToolRegistration),
     // Orchestration stays with the model: codemode scripts can't reach it.
     callers: ['model' as const],
   }));

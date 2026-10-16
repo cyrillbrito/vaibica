@@ -11,6 +11,7 @@ import { CodingTools, HubFileTools } from './tools/coding';
 import { cacheRetention, exaKey, models, proxyReady } from '#server/providers';
 import { HubSessionTools, SessionTools } from '#server/sessions/tools';
 import { TerminalTools } from '#server/terminals';
+import { ToolSummary } from './tools/summary';
 import { timeTools } from './tools/tool-time';
 import { createWebTools } from './tools/web';
 import { dataFile } from '#server/paths';
@@ -24,6 +25,7 @@ export const HUB_EXTENSIONS: Extension[] = [
   HubSessionTools,
   AskTool,
   BicaReplies,
+  ToolSummary,
 ];
 
 // Web tools read the Exa key per call, so adding one needs no restart.
@@ -36,6 +38,7 @@ const defaults: Extension[] = [
   AskTool,
   Codemode,
   BicaReplies,
+  ToolSummary,
 ];
 
 // One process owns the storage. Editing vite.config.ts restarts Vite in this
