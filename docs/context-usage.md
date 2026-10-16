@@ -6,20 +6,20 @@ Bica shows what fills a session's context window, what it cost, and whether the 
 
 A chip in the session's top bar shows how full the window is. While idle, it counts down the prompt cache's last minutes and shows a snowflake once it has expired. It turns yellow, then red, as the window fills or the session passes a size where models get slower, pricier, and more forgetful, whichever comes first.
 
-- Past that size, a nag above the composer pushes you to compact, getting ruder with every 100k. Later hides it until the next 100k.
+- Past that size, a nag above the composer pushes you to compact, getting ruder as the session grows. Later hides it until the next step up.
 - When the cache has expired on a big session, a line above the composer offers Clean up instead, with what it would save.
 - A compaction or clean up you watch land shows how much it dropped, with a cheer.
 
-The chip's menu offers fork from here, compact, clean up, a switch to another [profile](./profiles.md), and the details.
+The chip's menu offers fork from here, compact, clean up, a switch to another [profile](./profiles.md), and the details. [Assistant mode](./assistant-mode.md) compacts and cleans up on its own.
 
-The details open on the window as a field of 240 cells, filled in order by the system prompt, tools, the conversation, and tool output, with the room kept for the answer outlined at the end. Pointing at a row or its cells lights them and rolls the big number to that part, and a row opens to its parts. The conversation row has Compact and the tool output row has Clean up. Pointing at Clean up lights the cells it would clear, the cells breathe while either runs, and a check and a "freed" line follow. Below are the biggest prompts, replies, and tool results (tap one to jump to it), the cache hit rate, and the spend per model, by cost or by tokens.
+The details open on the window as a field of cells, filled in order by the system prompt, tools, the conversation, and tool output, with the room kept for the answer outlined at the end. Pointing at a row or its cells lights them and rolls the big number to that part, and a row opens to its parts. The conversation row has Compact and the tool output row has Clean up. Pointing at Clean up lights the cells it would clear, the cells breathe while either runs, and a check and a "freed" line follow. Below are the biggest prompts, replies, and tool results (tap one to jump to it), the cache hit rate, and the spend per model, by cost or by tokens.
 
 ## Where the numbers come from
 
 The server computes everything from the full conversation and sends the result with it, since the browser only gets a slim copy ([realtime-communication.md](./realtime-communication.md)).
 
 - The total is measured: the newest answer reports its request size. The parts are rough counts, scaled to add up to that total, which covers what we can't see, such as the real tokenizer.
-- Spend comes from Pi Durable's usage tracking, at API prices even on a subscription.
+- Spend comes from Pi Durable's usage tracking, per model from [providers.md](./providers.md), at API prices even on a subscription.
 - Before the first answer or right after a compaction, nothing is measured yet, and the details say "estimated".
 
 ## The prompt cache

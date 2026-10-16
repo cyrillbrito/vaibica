@@ -18,7 +18,7 @@ Browser (one socket per tab)                  Server (dev machine)
   changes     (sub, n, ops)        ◀──
 ```
 
-A request asks once and gets one reply. A subscription gives a full snapshot, then numbered changes, for anything that changes while you look at it. The wire types are in `src/lib/protocol.ts`.
+A request asks once and gets one reply. A subscription gives a full snapshot, then numbered changes, for anything that changes while you look at it. The wire types are in `src/lib/protocol.ts`. [architecture.md](./architecture.md#how-a-prompt-travels) follows one prompt through it.
 
 ## Where live data comes from
 
@@ -29,7 +29,7 @@ The browser doesn't get the conversation as Pi Durable stores it, but a slimmer 
 - A tool call keeps its name, status, timing, and its short arguments cut to one line, such as the summary, path, or command. Its full input and output stay on the server.
 - A thought keeps only that it exists and how long it took. Signatures and the system prompt never leave the server.
 - Opening a tool call or a thought asks for its contents with `session.detail`. An open call asks again when its status changes.
-- The context breakdown needs everything, so the server works it out and sends it with the conversation.
+- The context breakdown ([context-usage.md](./context-usage.md)) needs everything, so the server works it out and sends it with the conversation.
 
 Streamed tool output and thinking therefore cost nothing until you open them. This follows [Pi Pocket's projection](https://github.com/TannerMidd/pi-pocket/blob/main/src/lib/projection.ts).
 
@@ -57,7 +57,7 @@ There is no loading UI. Each area shows the last copy the browser has, or stays 
 
 The browser keeps what it has shown, so going back to a page or reopening the app starts from the last copy instead of a blank area.
 
-- A topic no view uses any more is unsubscribed but keeps its value in memory, for the most recent dozen or so. Going back shows it at once and subscribes again.
+- A topic no view uses any more is unsubscribed but keeps its value in memory, for a few of the most recent. Going back shows it at once and subscribes again.
 - Topics are also saved in IndexedDB on this device, when a view leaves them and when the page hides, up to a fixed number of copies. Terminal output isn't saved. A version number in `src/lib/topic-cache.ts` drops old copies when a value changes shape.
 - A conversation tells the server which entries it holds. Saved entries never change, and the active ones run in id order, so if the first and last ids still match, the snapshot leaves those entries out and sends only newer ones and the documents. A compaction changes the first entry, and the whole view comes again.
 

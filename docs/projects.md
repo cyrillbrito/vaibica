@@ -15,7 +15,7 @@ Add project opens a folder browser on the server, starting at the home folder, w
 
 ## Where a session starts
 
-The home page's workspace picker is a search over every project's folder and worktrees, with its pull request badge and when a session last ran there. A branch, folder, ticket key, or pull request number finds it in any project. With the field empty, the four most recently used places come first. Under Projects, each project's row is its main folder, and its worktrees hang under it on a guide line, newest first. The + Worktree on a project's row, or ⌘Enter on it, starts in a new worktree instead. A matching worktree keeps its project's row above it while searching. On the phone it is a bottom sheet. Pages and menus that open a workspace also offer a new session there: the project page's composer, New session in… in the [command palette](./command-palette.md), and the + on its sidebar row.
+The home page's workspace picker is a search over every project's folder and worktrees, with its pull request badge and when a session last ran there. A branch, folder, ticket key, or pull request number finds it in any project. With the field empty, the most recently used places come first. Under Projects, each project's row is its main folder, and its worktrees hang under it on a guide line, newest first. The + Worktree on a project's row, or ⌘Enter on it, starts in a new worktree instead. A matching worktree keeps its project's row above it while searching. On the phone it is a bottom sheet. Pages and menus that open a workspace also offer a new session there: the project page's composer, New session in… in the [command palette](./command-palette.md), and the + on its sidebar row.
 
 ## Worktrees
 
@@ -32,7 +32,7 @@ A chat is a session with no project. Each starts in a new empty folder in `~/.bi
 
 ## Pull requests
 
-Each branch shows its pull request next to it, with its number and state (open, draft, merged, or closed). A click opens it on GitHub. The server asks the GitHub CLI (`gh`) for your own recent pull requests in the background, at most once a minute, and matches them by branch name. Only yours count, since someone else's branch named `main` would be a false match. Without `gh`, nothing shows and nothing breaks.
+Each branch shows its pull request next to it, with its number and state (open, draft, merged, or closed). A click opens it on GitHub. The server asks the GitHub CLI (`gh`) for your own recent pull requests in the background, throttled, and matches them by branch name. Only yours count, since someone else's branch named `main` would be a false match. Without `gh`, nothing shows and nothing breaks.
 
 ## The sidebar
 
@@ -41,13 +41,12 @@ The sidebar starts with the [hub](./hub.md), then groups sessions by project and
 Its header holds the Bica menu (new session, add project, settings, and the theme), the [command palette](./command-palette.md) (⌘K), and a + for a new session. The top bar's button hides the sidebar (⌘B). Under it, tabs filter the sessions; see [sessions.md](sessions.md#status).
 
 - A workspace's header (its branch, or the project's name when it is alone) opens its page: the workspace card, files, and Git. It stays lit while that page is open.
-
 - Drag a project's header to reorder projects: with the mouse right away, on touch after the long press that opens its menu. While dragging, every project shrinks to its header and a line shows where it lands. The order is saved in `.data/projects.json`. Chats stays last. Sessions stay sorted by time and don't drag.
 - Branch names drop any prefix up to the last slash, and a leading ticket key shrinks to a small tag. The tag opens the ticket when the project has a `tickets` link in `.data/projects.json`.
 - Workspaces with no open sessions or terminals drop into Parked, one line each, so a worktree waiting on review stays out of the way. Starting a session there moves it back up.
 - Archived sessions sit in a collapsed section at the bottom.
 - A worktree with no branch shows its folder without the project's name in front, so `vaibica-sidebar` is listed as `sidebar`. Its note (detached, folder removed) always stays visible.
-- Kept files with the same name show the parent folders that tell them apart. Times older than a month become a date.
+- Kept files with the same name show the parent folders that tell them apart. Old times become a date.
 
 ## Safety
 

@@ -15,10 +15,10 @@ The home page's composer picks a workspace, a [profile](./profiles.md), and a mo
 Images are pasted, picked, or dropped on the composer. The transcript shows your prompts with their images, the agent's replies as Markdown, its thinking, tool calls, errors, and compactions.
 
 - Thinking and tool calls between two replies fold into one activity list. Each call opens to its command and output, its diff, or its arguments.
-- Past one step, the list gets a header that sums it up: "Working" while it runs, with a timer once it passes 10 seconds, then "Worked for 18s · 6 tools, 1 thought" and how many failed. It folds the list; finished lists of four or more steps load folded.
-- Running calls show a spinner, and a timer past 10 seconds; a call you watch finish draws a check, slow ones keep their time, and failures say "Failed" in red. The server stamps the times, so every tab agrees.
+- Past one step, the list gets a header that sums it up: "Working" while it runs, with a timer once the run gets long, then "Worked for 18s · 6 tools, 1 thought" and how many failed. It folds the list, and long finished lists load folded.
+- Running calls show a spinner, and a timer once they get slow. A call you watch finish draws a check, slow ones keep their time, and failures say "Failed" in red. The server stamps the times, so every tab agrees.
 - An opened call shows its parts (command, arguments, output, error) each with a copy button. JSON is highlighted, and long blocks stop at a fade with "Show all".
-- Before the first token streams, a "Working" pill sits at the bottom, with a timer past 10 seconds; a provider error waiting to retry shows there too, with the countdown.
+- Before the first token streams, a "Working" pill sits at the bottom, with a timer once the wait gets long. A provider error waiting to retry shows there too, with the countdown.
 - New paragraphs of a streaming reply fade in. Code blocks in replies get a copy button on hover.
 - Under an answer, copy and fork appear on hover; copy turns into a check instead of a toast. Your prompts copy the same way, next to their time.
 - Notes and messages from other sessions show as a quiet row with the sender, not as your prompt.
@@ -37,8 +37,8 @@ While the agent works, sending queues the prompt for the next run, and the send 
 ## Composer
 
 - Each session keeps its own draft, and so do the home page and each workspace page. Drafts are kept on the device, so they survive a reload. Attached images stay only until the page reloads.
-- ↑ with the caret at the very start steps back through the prompts this browser sent, from every session, and leaves the caret at the start, so the next ↑ goes further back. ↓ at the very end steps forward the same way, and past the newest brings back what you had typed. Anywhere else, the arrows just move between lines. A held arrow never crosses from moving lines into the history: it stops at the first or last line, and the next press goes on. The last 200 prompts are kept on the device.
-- A paste over 15 lines or 2,000 characters folds into a marker like `[Pasted text #1 · 40 lines]`, and goes out in full when you send. Pi Pocket does the same.
+- ↑ with the caret at the very start steps back through the prompts this browser sent, from every session, and leaves the caret at the start, so the next ↑ goes further back. ↓ at the very end steps forward the same way, and past the newest brings back what you had typed. Anywhere else, the arrows just move between lines. A held arrow never crosses from moving lines into the history: it stops at the first or last line, and the next press goes on. The history is kept on the device.
+- A long paste folds into a marker like `[Pasted text #1 · 40 lines]`, and goes out in full when you send. Pi Pocket does the same.
 
 ## Forks
 
@@ -55,7 +55,7 @@ Each session in the sidebar shows its status with shape and color together:
 - Unread: finished with an answer you haven't opened.
 - Idle: everything else.
 
-The right end of a row says what matters about it: a live clock while it runs (since the prompt that started the run), a tinted tag when it waits for you, failed, or is retrying, and otherwise how long ago it last moved. A status you watch change pops its new shape in. Tabs on top of the sidebar filter the list to All or Needs you (waiting for an answer, failed, unread, running, or active in the last 10 minutes), with a rolling count. Pointing at a tab fades the rows it would leave out. The open session stays listed under any filter.
+The right end of a row says what matters about it: a live clock while it runs (since the prompt that started the run), a tinted tag when it waits for you, failed, or is retrying, and otherwise how long ago it last moved. A status you watch change pops its new shape in. Tabs on top of the sidebar filter the list to All or Needs you (waiting for an answer, failed, unread, running, or recently active), with a rolling count. Pointing at a tab fades the rows it would leave out. The open session stays listed under any filter.
 
 The home page stacks the sessions that need you under the composer, most urgent in front: waiting, then failed, then unread. × on a finished one marks it read, and on the others it hides the card until the session changes. With nothing in progress, a few first steps show there instead, until closed.
 

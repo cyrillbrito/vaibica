@@ -4,7 +4,7 @@ Terminals are shells in a workspace, for commands and long-running processes suc
 
 ## What you see
 
-- A terminal belongs to a workspace, not a session. The sidebar lists them above the workspace's sessions, and the workspace's terminal button opens a new one.
+- A terminal belongs to a workspace ([projects.md](./projects.md)), not a session. The sidebar lists them above the workspace's sessions, and the workspace's terminal button opens a new one.
 - A terminal is always an interactive login shell. It can type a first command for you, such as `bun run dev`, and anyone can Ctrl-C it and run something else. Restart opens a fresh shell and types the first command again.
 - When the shell exits, the terminal stays with its output and exit code until you close it. Terminals an agent closes, and a worktree's Setup terminal once it succeeds, leave on their own.
 - Archiving a session closes the terminals it started.

@@ -6,9 +6,9 @@ During the call, the composer becomes the call panel: a level meter (green while
 
 ## Hold music
 
-While the agent works in silence, Groove Salad plays: a calm internet radio station from [SomaFM](https://somafm.com), free and listener-supported. Background music in the Voice dialog sets how loud it plays on this device, for every session: Off, Low, Medium (the default), High, or Loud, from 0.5% to 3% of full volume. A change applies the next time the music fades in. Turning off Sounds in Settings → Appearance silences it too, along with the chimes.
+While the agent works in silence, Groove Salad plays: a calm internet radio station from [SomaFM](https://somafm.com), free and listener-supported. Background music in the Voice dialog sets how loud it plays on this device, for every session: from Off to Loud, all a small fraction of full volume, since the stream is mastered loud. A change applies the next time the music fades in. Turning off Sounds in Settings → Appearance silences it too, along with the chimes.
 
-- The stream starts muted in the tap that starts the call, since iOS only lets audio start from a tap. It runs for the whole call and is only muted while someone talks, because restarting a stream takes seconds. It fades in over 1.5 seconds and out over 0.8 seconds, and when the call ends it fades out before it stops.
+- The stream starts muted in the tap that starts the call, since iOS only lets audio start from a tap. It runs for the whole call and is only muted while someone talks, because restarting a stream takes seconds. It fades in and out, and when the call ends it fades out before it stops.
 - It follows the session's status, not the page, so it keeps playing while you look at another session or page, as a sign the agent is still working.
 - It plays through an `<audio>` element like the voice, so it keeps going when the phone locks. Web Audio, which the chimes use, is suspended in the background on iOS.
 - It is muted rather than turned down, because iOS ignores an element's volume. On a computer it plays at the Background music level, and the fades are smooth. On iOS it plays at the phone's volume whatever the level, unless it is Off, and only goes silent at the end of the fade out.
@@ -21,13 +21,13 @@ While the agent works in silence, Groove Salad plays: a calm internet radio stat
      ◀─speech──                     ◀── result ───             ◀─ reply ──
 ```
 
-GPT-Live is only the voice. It listens, talks, can be interrupted, and decides when something needs the agent. The session does the work with its own model, tools, and instructions. Hand-offs arrive as ordinary prompts, queued if the session is busy, so everything said and done stays in the transcript.
+GPT-Live is only the voice. It listens, talks, can be interrupted, and decides when something needs the agent. The session does the work with its own model, tools, and instructions. Hand-offs arrive as ordinary prompts, queued if the session is busy ([sessions.md](./sessions.md#queue-push-stop)), so everything said and done stays in the transcript.
 
 - The browser owns the mic and speaker over WebRTC, so audio never passes through the server. The server keeps its own line into the call for hand-offs and results.
 - Progress goes to the voice as quiet commentary, and the final reply as the result to speak. Long runs never time out: the voice regularly hears "still working".
-- A result that is ready while you are talking waits until you finish, or until your words stop arriving for 3 seconds, so the voice doesn't answer over you. GPT-Live has no silence or turn settings: its instructions ask it to let you finish and to ignore music and background noise.
+- A result that is ready while you are talking waits until you finish, or until your words stop arriving for a few seconds, so the voice doesn't answer over you. GPT-Live has no silence or turn settings: its instructions ask it to let you finish and to ignore music and background noise.
 - The recent conversation goes into the voice's instructions, so "continue" makes sense.
-- So do the branch and the project's file and folder names (up to about 3,000 characters). That way the voice can catch names like "CommitBox" and pass them to the agent spelled right.
+- So do the branch and the project's file and folder names, up to a size limit. That way the voice can catch names like "CommitBox" and pass them to the agent spelled right.
 - "How's it going" gets a status answer, and "stop" aborts the run.
 
 What was said is saved in the session for the transcript, but the agent never reads it, and a call doesn't mark a session unread.

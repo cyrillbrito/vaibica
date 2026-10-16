@@ -53,7 +53,7 @@ There is no time to prove every idea here, so borrow from people who already bui
 
 ## Next
 
-- Line comments sent to the agent, and quick edits in Pierre's edit mode.
+- Line comments past the prototype in [files.md](docs/files.md), and quick edits in Pierre's edit mode.
 - Opening pull requests, and comparing a worktree against its branch base.
 - Installing as an app on the phone.
 - A file watcher instead of polling.
@@ -72,30 +72,41 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 
 ## Docs
 
-`docs/` is a short user manual of what exists, one doc per feature, written as [docs/writing.md](docs/writing.md) describes. This list is the index: add new docs here.
+`docs/` is a short user manual of what exists, one doc per feature, written as [docs/writing.md](docs/writing.md) describes. Read the doc for the area before changing it, and follow its links to related docs. This list is the index: add new docs here.
 
-- [architecture.md](docs/architecture.md): concepts, how a prompt travels, where data lives.
-- [sessions.md](docs/sessions.md): sessions on Pi Durable, the transcript, queue, forks, status, archive.
-- [tools.md](docs/tools.md): the agent's tools, codemode, `ask`, and working with other sessions.
-- [instructions.md](docs/instructions.md): the agent's instructions and skills.
-- [context-usage.md](docs/context-usage.md): context window, prompt cache, spend, compaction, clean up.
-- [profiles.md](docs/profiles.md): coding, assistant, and hub sessions: their tools, instructions, and panels.
+- [architecture.md](docs/architecture.md): concepts, server modules, how a prompt travels, where data lives. Start here for anything that crosses areas.
+- [sessions.md](docs/sessions.md): the transcript, queue, composer, forks, status, archive. Read for transcript or composer work.
+- [tools.md](docs/tools.md): the agent's tools, codemode, `ask`, and the session tools. Read before adding or changing a tool.
+- [instructions.md](docs/instructions.md): the prompt sections, skills, and reply rules. Read before changing what the agent is told.
+- [context-usage.md](docs/context-usage.md): the context chip, prompt cache, spend, compaction, clean up.
+- [profiles.md](docs/profiles.md): coding, assistant, and hub sessions, and what each one gets.
 - [assistant-mode.md](docs/assistant-mode.md): sessions that run for months, with memory in files.
 - [hub.md](docs/hub.md): the one session that coordinates the others.
-- [voice.md](docs/voice.md): voice calls with a session, and how they sound.
+- [voice.md](docs/voice.md): voice calls, hand-offs, and hold music.
 - [projects.md](docs/projects.md): projects, worktrees, chats, pull requests, the sidebar.
-- [files.md](docs/files.md): the project page, file and diff views, file lists.
-- [command-palette.md](docs/command-palette.md): ⌘K search and actions, and the keyboard shortcuts.
-- [git.md](docs/git.md): the Git tab, commit messages, and `git init` for new folders.
-- [terminals.md](docs/terminals.md): shared shells for you and the agents.
-- [providers.md](docs/providers.md): keys, sign-ins, models, plan usage.
+- [files.md](docs/files.md): the project page, file and diff views, diff comments, file lists.
+- [git.md](docs/git.md): the Git tab and commit messages.
+- [command-palette.md](docs/command-palette.md): ⌘K and every keyboard shortcut. Read before adding a shortcut.
+- [terminals.md](docs/terminals.md): shared shells and the agent's terminal tools.
+- [providers.md](docs/providers.md): keys, sign-ins, models, the fast model, plan usage.
 - [proxy.md](docs/proxy.md): the CLIProxyAPI provider.
-- [realtime-communication.md](docs/realtime-communication.md): the WebSocket protocol.
-- [deploy.md](docs/deploy.md): running Bica, reaching it over Tailscale, the `bica` binary, and releases.
-- [UI.md](docs/UI.md): design rules and tokens. Read before UI work.
+- [realtime-communication.md](docs/realtime-communication.md): the WebSocket protocol, projection, and caching. Read before adding a topic or request.
+- [deploy.md](docs/deploy.md): running Bica, Tailscale, the `bica` binary, releases.
+- [UI.md](docs/UI.md): design rules, tokens, components, test data. Read before any UI work.
 - [writing.md](docs/writing.md): how to write docs, comments, and commit messages.
 
-`docs/explorations/` holds research and ideas for what isn't built, and has no index. Write one only when the user asks for it. `docs/inspiration/` holds screenshots of other agent UIs, as ideas, not specs.
+`docs/explorations/` holds research and plans for what isn't built. Read the matching one before building in its area, and delete or trim it once the feature's doc takes over. Write one only when the user asks for it.
+
+- [data-sync.md](docs/explorations/data-sync.md): sending only what the browser lacks.
+- [fast-loading.md](docs/explorations/fast-loading.md): opening and switching faster on the phone.
+- [distribution.md](docs/explorations/distribution.md): installing and updating `bica`.
+- [extensions.md](docs/explorations/extensions.md): agent and UI extensions.
+- [self-hosted-auth.md](docs/explorations/self-hosted-auth.md): a token for the socket, and the DNS rebinding hole.
+- [themes.md](docs/explorations/themes.md): editor color themes.
+- [ui-hierarchy.md](docs/explorations/ui-hierarchy.md): what the side panel next to a session belongs to.
+- [work-lifecycle.md](docs/explorations/work-lifecycle.md): from a first question to a merged pull request.
+
+`docs/inspiration/` holds screenshots of other agent UIs, as ideas, not specs.
 
 ## Rules
 

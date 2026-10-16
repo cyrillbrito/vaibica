@@ -22,13 +22,13 @@ Anthropic, ChatGPT, OpenAI, and Exa are always listed, each with a short guide. 
 
 ## Models
 
-Settings holds the default model for new sessions and the fast model for side jobs such as titles and commit messages. `PI_MODEL` and `PI_FAST_MODEL` only fill in until you pick one. The model pickers fold big catalogs per provider and show only your chosen models until you search.
+Settings holds the default model for new sessions and the fast model for side jobs such as titles and [commit messages](./git.md#commit-messages). `PI_MODEL` and `PI_FAST_MODEL` only fill in until you pick one. The model pickers fold big catalogs per provider and show only your chosen models until you search.
 
-Each model in the picker shows two five-step bars from pi-ai's model data: its context window and its list price (input weighed three to one over output, since an agent mostly reads). Pointing at a model fills its bars and the tray under the menu rolls to its price per million tokens and its window. There are no speed or quality bars: pi-ai has no such numbers. Models that can stop thinking get a Thinking switch, and the effort unfolds under it.
+Each model in the picker shows two five-step bars from pi-ai's model data: its context window and its list price (input weighed over output, since an agent mostly reads). Pointing at a model fills its bars and the tray under the menu rolls to its price per million tokens and its window. There are no speed or quality bars: pi-ai has no such numbers. Models that can stop thinking get a Thinking switch, and the effort unfolds under it.
 
 ## Plan usage
 
-The sidebar's foot shows how much is left on the plans serving the open session's model. Only CLI proxy sessions have these numbers: they come from the proxy's accounts ([proxy.md](./proxy.md)). Sessions on Bica's own sign-ins or API keys show none. Each window is a thin meter that warns near 80% and at the cap.
+The sidebar's foot shows how much is left on the plans serving the open session's model. Only CLI proxy sessions have these numbers: they come from the proxy's accounts ([proxy.md](./proxy.md)). Sessions on Bica's own sign-ins or API keys show none. Each window is a thin meter that warns near the cap and at it.
 
 ## Sources
 

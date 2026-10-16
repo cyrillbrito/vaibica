@@ -1,6 +1,6 @@
 # Files and diffs
 
-Every workspace has a project page for reviewing the agent's work: one file or diff full size in the centre, with Files and Git in the right panel. The same right panel sits next to every session, for that session's workspace.
+Every workspace ([projects.md](./projects.md)) has a project page for reviewing the agent's work: one file or diff full size in the centre, with Files and Git ([git.md](./git.md)) in the right panel. The same right panel sits next to every session, for that session's workspace.
 
 The files stay on the dev machine. The browser never reads the disk: it asks the server, and the server answers.
 
@@ -35,7 +35,7 @@ The Files tab shows the whole tree with git colors and a name search. Every file
 
 ## Staying live
 
-There is no file watcher. While someone looks at a workspace, the server polls git status and the file list and sends only real changes to every open tab. An open diff re-reads itself when its file changes, and keeps the old one on screen until the new one is ready. Polling never takes git's locks, so it can't block the agent's own git commands.
+There is no file watcher. While someone looks at a workspace ([realtime-communication.md](./realtime-communication.md)), the server polls git status and the file list and sends only real changes to every open tab. An open diff re-reads itself when its file changes, and keeps the old one on screen until the new one is ready. Polling never takes git's locks, so it can't block the agent's own git commands.
 
 ## Safety
 

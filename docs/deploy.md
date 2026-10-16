@@ -14,7 +14,7 @@ The serve config survives reboots, so only the dev server has to be running. The
 
 ## Why tailscale serve
 
-It gives HTTPS with a real certificate, which the installed app and the microphone need, proxies WebSockets, and stays inside the tailnet. Never use `funnel`: there is no login, and the tailnet is the only protection.
+It gives HTTPS with a real certificate, which the installed app and the microphone ([voice.md](./voice.md)) need, proxies WebSockets, and stays inside the tailnet. Never use `funnel`: there is no login, and the tailnet is the only protection.
 
 ## Installing as an app
 
@@ -26,7 +26,7 @@ An installed app runs in the browser profile it was installed from, with that pr
 
 `bun run build` and `bun run start` run a built copy on port 3141, localhost only. It starts through the same entry as the `bica` binary below, so it takes the same `--port` flag and keys. `BICA_PORT` picks another port for a second dev server.
 
-Data lives in `.data/`, relative to where the server starts. Never run two servers against the same `.data/`, since only one process may own the harness.
+Data lives in `.data/`, relative to where the server starts ([architecture.md](./architecture.md#where-data-lives)). Never run two servers against the same `.data/`, since only one process may own the harness.
 
 ## The `bica` binary
 

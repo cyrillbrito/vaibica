@@ -10,9 +10,9 @@ Hub sits at the top of the sidebar, always, and in the command palette. Both ope
 
 The hub has its own page, not the session page. On top is a board of its threads: the sessions it started, and any session that asks a question or failed, since the hub hears of those too. What needs you comes first, a question, then a failure, then a new reply, then what runs, then what sits idle. Each row shows its status and how long ago it changed, and opens that session. The board folds away, and stays folded on that device.
 
-Below it is the chat, with a composer and a voice call button. The settings button in the top bar opens the hub's voice settings, since you talk to it by voice most, and its folder and model in Settings. There is no Git, files, or terminal panel, no model picker, since Settings sets the hub's model, and no fork, manual compaction, or profile switch: the hub is one session that keeps its own memory and compacts on its own.
+Below it is the chat, with a composer and a [voice call](./voice.md) button. The settings button in the top bar opens the hub's voice settings, since you talk to it by voice most, and its folder and model in Settings. There is no Git, files, or terminal panel, no model picker, since Settings sets the hub's model, and no fork, manual compaction, or profile switch: the hub is one session that keeps its own memory and compacts on its own.
 
-The same setting picks its model. Unset, it runs Claude Sonnet 5.5 at low effort through the Anthropic provider, or the default model at low effort when Anthropic has no key. Most turns turn a rambling dictated message into a prompt, which needs a smart model more than deep reasoning, and the CLI proxy would add seconds to every reply.
+The same setting picks its model. Unset, it runs a mid-size Claude model at low effort through the Anthropic provider, or the default model at low effort when Anthropic has no key. Most turns turn a rambling dictated message into a prompt, which needs a smart model more than deep reasoning, and the CLI proxy would add seconds to every reply.
 
 ## Memory
 
@@ -22,7 +22,7 @@ Bica puts `MEMORY.md` and the list of projects with their worktrees into the hub
 
 ## What it can do
 
-- `list` and the session tools, with no "leave others alone" limit. Sessions it starts are normal coding sessions on your default model, in the folder or new worktree it names.
+- `list` and the session tools ([tools.md](./tools.md#other-sessions)), with no "leave others alone" limit. Sessions it starts are normal coding sessions on your default model, in the folder or new worktree it names.
 - `read` anywhere, and `write` and `edit` only inside its folder.
 - `ask`.
 
@@ -34,7 +34,7 @@ It is proactive with information, never with changes. It reads, checks, explains
 
 A session you have prompted yourself is yours, whoever started it. `session_read` and notes say so, from its prompts: a prompt with no `[Message from session …]` mark that isn't a `session_start` ticket or a note is yours. The hub only reports on such a session, and never messages it, steers it, or starts follow-ups from its results unless you ask.
 
-Its instructions also hold the coordinator rules. Every handoff prompt stands alone like a ticket, with the goal, the boundaries, what done looks like, and the report format. Its tickets tell workers not to merge, push, or commit to main unless you asked. Workers end with a short report and put long output in files. One session per thread, reused with `session_send`. Its notes say why a session exists, but it reads the session before it says where that session stands, and after a compaction it calls `list` once to reconcile the board. Before asking you where something is, it searches its notes and the open and archived sessions, and offers its best match. Replies name at most 3 or 4 things, say for each what it waits on and whose move it is, lead with what needs you, and never spell out full paths, since you often listen by voice. Every question it asks you comes with its pick.
+Its instructions also hold the coordinator rules. Every handoff prompt stands alone like a ticket, with the goal, the boundaries, what done looks like, and the report format. Its tickets tell workers not to merge, push, or commit to main unless you asked. Workers end with a short report and put long output in files. One session per thread, reused with `session_send`. Its notes say why a session exists, but it reads the session before it says where that session stands, and after a compaction it calls `list` once to reconcile the board. Before asking you where something is, it searches its notes and the open and archived sessions, and offers its best match. Replies name only a few things, say for each what it waits on and whose move it is, lead with what needs you, and never spell out full paths, since you often listen by voice. Every question it asks you comes with its pick.
 
 ## Notes
 

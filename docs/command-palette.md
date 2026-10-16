@@ -6,12 +6,12 @@ The command palette is one search box for going anywhere and doing anything in B
 
 Opened empty, it answers "what needs me?" first:
 
-- Needs you: sessions waiting on an answer, then unread answers, then failures, newest first in each.
+- Needs you: sessions waiting on an answer, then unread answers, then failures, newest first in each ([sessions.md](./sessions.md#status)).
 - Recent: the other sessions, by their last message.
 - This session: the open session's own actions, like Rename, Fork, Stop, Mark as unread, and Archive.
 - Actions: everything else Bica can do from anywhere.
 
-Typing searches sessions (archived ones last), projects and worktrees, terminals, and actions together, best match first. Letters can be out of place, so "nwe sess" still finds New session, and actions have extra words, so "chat" finds it too. Files aren't listed, since there are too many.
+Typing searches sessions (archived ones last), projects and worktrees ([projects.md](./projects.md)), terminals, and actions together, best match first. Letters can be out of place, so "nwe sess" still finds New session, and actions have extra words, so "chat" finds it too. Files aren't listed, since there are too many.
 
 ## Second pages
 
@@ -36,4 +36,3 @@ The palette lives in `src/components/CommandPalette.tsx`, shortcuts included.
 - [Superhuman, How to build a remarkable command palette](https://blog.superhuman.com/how-to-build-a-remarkable-command-palette/): one shortcut for everything, typo-tolerant search with extra words per command, and a shortcut shown on every row.
 - [Linear's command menu](https://linear.app/now/invisible-details): actions for what you're looking at, and lists that open from an action, like Open project.
 - [Raycast's search bar](https://manual.raycast.com/search-bar): recent and frequent items first when the box is empty, and Esc to step back.
-- [GitHub's command palette](https://docs.github.com/en/get-started/accessibility/github-command-palette): `/` for files, the planned file mode.

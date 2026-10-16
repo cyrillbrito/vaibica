@@ -1,6 +1,6 @@
 # CLI proxy
 
-Bica can send model requests to a CLIProxyAPI server, which holds many plan sign-ins and switches between them when one runs out. It shows in Bica as one provider, set up in Settings → CLI proxy.
+Bica can send model requests to a CLIProxyAPI server, which holds many plan sign-ins and switches between them when one runs out. It shows in Bica as one provider ([providers.md](./providers.md)), set up in Settings → CLI proxy.
 
 ## Why a proxy
 
@@ -18,7 +18,7 @@ Settings asks for the proxy's URL, one of its API keys, and optionally its manag
 
 The proxy only lists model names, so Bica looks each one up in pi-ai's catalog to learn its context size, thinking levels, image input, and price. The match also picks the API to speak, since the proxy serves Anthropic's, OpenAI's, and the generic chat format on one port. A Claude model too new for pi-ai borrows the newest one of its kind. Names with an account prefix, like `work/claude-opus-5-5`, keep it.
 
-The list loads when the server starts and on every save. If the proxy is down at start, Bica tries again each minute while a tab is open.
+The list loads when the server starts and on every save. If the proxy is down at start, Bica keeps trying while a tab is open.
 
 ## Accounts and limits
 

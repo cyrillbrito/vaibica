@@ -19,23 +19,23 @@ The server runs on Bun, which gives terminals a native PTY with no addon, loads 
 ## Concepts
 
 - A project is a folder on the dev machine, usually a git repo, added by hand.
-- A workspace is the exact folder work happens in: the project folder or one of its worktrees.
-- A session is one agent conversation in one workspace, with its own model, transcript, queue, and status.
+- A workspace is the exact folder work happens in: the project folder or one of its worktrees. See [projects.md](./projects.md).
+- A session is one agent conversation in one workspace, with its own model, transcript, queue, and status. See [sessions.md](./sessions.md).
 - A run is the agent working on a prompt, through model calls and tool calls, until it answers.
-- A terminal is a shell in a workspace, shared by you and the agents.
+- A terminal is a shell in a workspace, shared by you and the agents. See [terminals.md](./terminals.md).
 - The harness is Pi Durable's engine inside the server. It runs every session and saves each step before anyone sees it.
-- The fast model is an optional small model for side jobs such as titles and commit messages. Without it, those fall back to simple defaults.
+- The fast model is an optional small model for side jobs such as titles and commit messages. Without it, those fall back to simple defaults. See [providers.md](./providers.md).
 
 ## Server modules
 
 `src/server` is grouped into modules. Each module is a folder with one `index.ts`, and code outside the folder imports only that file. Cross-module imports use the `#server/...` and `#lib/...` aliases from `package.json`, and files inside a module import each other with relative paths.
 
-- `agent/`: the Pi Durable harness and the agent's own tools (files, bash, web, codemode, `ask`).
-- `providers/`: models, keys, sign-ins, the CLI proxy, and the fast model.
-- `sessions/`: everything Bica adds to a conversation: titles, projects, notes between sessions, prompts and the queue, voice turns, and the session tools.
-- `profiles/`: what a coding, assistant, or hub session runs with: tools, model, instructions, skills, and the upkeep of long-lived sessions.
-- `git/`: status, diffs, staging, commits, and commit messages.
-- `terminals/`: shells and the agent's terminal tools.
+- `agent/`: the Pi Durable harness and the agent's own tools (files, bash, web, codemode, `ask`), see [tools.md](./tools.md).
+- `providers/`: models, keys, sign-ins, the CLI proxy, and the fast model, see [providers.md](./providers.md) and [proxy.md](./proxy.md).
+- `sessions/`: everything Bica adds to a conversation: titles, projects, notes between sessions, prompts and the queue, voice turns, and the session tools, see [sessions.md](./sessions.md).
+- `profiles/`: what a coding, assistant, or hub session runs with: tools, model, instructions, skills, and the upkeep of long-lived sessions, see [profiles.md](./profiles.md) and [instructions.md](./instructions.md).
+- `git/`: status, diffs, staging, commits, and commit messages, see [git.md](./git.md).
+- `terminals/`: shells and the agent's terminal tools, see [terminals.md](./terminals.md).
 
 `socket.ts`, `live.ts`, `projects.ts`, `github.ts`, `voice.ts`, `paths.ts`, and `ws-log.ts` stay flat files: each is one job with a small surface. `socket.ts` is the one table of calls and topics, and it starts the upkeep loop when the first socket connects.
 
@@ -69,7 +69,7 @@ Your own files for Bica live in `~/.bica/`: an `AGENTS.md` and skills for every 
 
 - Home starts a session in a chosen workspace.
 - A session shows the transcript and composer in the centre, the session list on the left, and its workspace's Files and Git on the right.
-- A terminal, or a workspace's project page with a file or diff, takes the centre the same way, with the same side panels.
+- A terminal, or a workspace's project page with a file or diff ([files.md](./files.md)), takes the centre the same way, with the same side panels.
 - Settings holds appearance, providers, the CLI proxy, models, the prompt cache, and git habits.
 
 On a phone, the side columns become drawers and sheets. See [UI.md](./UI.md).

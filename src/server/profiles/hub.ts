@@ -5,7 +5,7 @@ import { checkChoice, modelSettings, models } from '#server/providers';
 /** The hub's folder from Settings, or null before one is picked. */
 export const hubFolder = async () => (await modelSettings()).hubFolder;
 
-// The hub's default (docs/explorations/hub-model.md): smart enough to turn
+// The hub's default (docs/hub.md): smart enough to turn
 // dictation into good prompts at low effort, and direct, since the CLI proxy
 // adds seconds to every request.
 const HUB_MODEL: ModelChoice = {

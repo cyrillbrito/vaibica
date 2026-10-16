@@ -18,20 +18,20 @@ Bica looks after the session while it sits idle, so it never interrupts you in t
 - When the session is still big after that, it asks the agent to save anything worth keeping to the memory files, and then compacts the older turns into a summary. It does this just before the cache expires, while rereading the conversation is still cheap.
 - When a session gets very big during heavy use, it does the same at the first idle minute instead of waiting for a long pause.
 
-"Big" means 120k tokens, and "very big" means 200k. Both are tunable constants, not rules.
+Both sizes are constants in `upkeep.ts`, tuned by use.
 
 The agent also gets a few extra instructions in assistant mode. It writes decisions, preferences, and open tasks down in the same reply they come up in. It keeps only what will still be true and useful in a few months, and what the user said or it checked, not its guesses. It replaces a fact that changed instead of adding a second line, and splits a note that grows too long. It says so when memory holds nothing on a topic, rather than guess. And it says in its replies what it learned from tools, since that output will be cleared later.
 
 ## The memory index
 
-Every session, assistant or not, starts with the memory index in its instructions, so the agent doesn't have to remember to read it. The index is `MEMORY.md` or, failing that, `PROFILE.md` in the session's folder. Bica takes a copy when the session starts and keeps it until the next compaction, even when the agent edits the file. Reloading it on every change would break the prompt cache each time. An index over 8,000 characters is cut, and the agent is told it was cut, so it can read the rest and shorten the file. The context meter shows the index as its own line.
+Every session, assistant or not, starts with the memory index in its instructions, so the agent doesn't have to remember to read it. The index is `MEMORY.md` or, failing that, `PROFILE.md` in the session's folder. Bica takes a copy when the session starts and keeps it until the next compaction, even when the agent edits the file. Reloading it on every change would break the prompt cache each time. A long index is cut, and the agent is told it was cut, so it can read the rest and shorten the file. The context meter shows the index as its own line.
 
 ## Why it works this way
 
 - Rereading from the prompt cache is cheap ([context-usage.md](./context-usage.md)), and every change to old context breaks the cache once. So Bica changes it rarely, in large steps, and only when the cache is expired or about to be.
 - Clearing old tool output keeps nearly all the value of a summary at no cost, so it comes first, and compaction only follows when that isn't enough.
 - A summary of a summary of a summary forgets more each time. Saving to files before each compaction means the summary never has to carry what matters most.
-- Compacting costs about as much as rereading what it removes twenty times. Below the first threshold, a compaction during a pause you may not come back from is often wasted money.
+- Compacting costs as much as rereading what it removes many times over. Below the first size, a compaction during a pause you may not come back from is often wasted money.
 
 ## Sources
 
