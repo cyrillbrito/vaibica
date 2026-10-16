@@ -273,7 +273,7 @@ export default function Session(props: RouteProps<'/s/:id'>) {
         </>
       }
     >
-      <Title>{`${title()} · Bica`}</Title>
+      <Title>{title()}</Title>
       <TopBar
         actions={
           <Ready>

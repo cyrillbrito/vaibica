@@ -60,7 +60,7 @@ export default function TerminalPage(props: RouteProps<'/t/:id'>) {
     >
       {(t) => (
         <>
-          <Title>{`${t().title} · Bica`}</Title>
+          <Title>{t().title}</Title>
           <TopBar
             actions={
               <>

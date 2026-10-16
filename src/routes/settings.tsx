@@ -87,7 +87,7 @@ export default function Settings() {
 
   return (
     <>
-      <Title>Settings · Bica</Title>
+      <Title>Settings</Title>
       <TopBar>
         <h1 class="truncate font-semibold">Settings</h1>
       </TopBar>
