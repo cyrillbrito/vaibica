@@ -215,6 +215,8 @@ export function useCurrentWorkspace() {
     },
     {
       name: 'currentWorkspace',
+      // Built from socket topics, which only exist in the browser.
+      ssrSource: 'client',
       // Keep the panel mounted while the same workspace stays open.
       equals: (a, b) =>
         a?.ref.projectId === b?.ref.projectId &&
