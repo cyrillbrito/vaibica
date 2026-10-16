@@ -1,10 +1,13 @@
-// Production entry: run Solid's generated Node-compatible server on Bun,
-// with the same WebSocket module used in development.
-// Localhost only: remote access goes through `tailscale serve` (docs/deploy.md).
-process.env.PORT ??= '3141';
-process.env.HOST ??= '127.0.0.1';
+// `bun run start`: the built copy from the repo, through the same entry as the
+// `bica` binary, but with its data in the repo's .data/.
+process.env.BICA_DATA_DIR ||= '.data';
 
-const { serve } = await import('./dist/server/node.js');
-const { attach } = await import('./dist/server/socket.js');
+const { run } = await import('./cli/bica.ts');
 
-attach(serve());
+await run({
+  version: '0.0.0-dev',
+  load: async () => ({
+    ...(await import('./dist/server/node.js')),
+    ...(await import('./dist/server/socket.js')),
+  }),
+});

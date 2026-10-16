@@ -24,7 +24,7 @@ An installed app runs in the browser profile it was installed from, with that pr
 
 ## A built copy
 
-`bun run build` and `bun run start` run a built copy on port 3141, localhost only. `BICA_PORT` and `PORT` pick other ports for a second dev or built server.
+`bun run build` and `bun run start` run a built copy on port 3141, localhost only. It starts through the same entry as the `bica` binary below, so it takes the same `--port` flag and keys. `BICA_PORT` picks another port for a second dev server.
 
 Data lives in `.data/`, relative to where the server starts. Never run two servers against the same `.data/`, since only one process may own the harness.
 
@@ -39,7 +39,7 @@ In a terminal it prints its address and a few keys, the way Vite does:
 - `p` picks the Chrome profile from Chrome's `Local State`, saved in `chrome.json` in the data folder.
 - `q` and Ctrl-C stop it, which ends its shells. Pi Durable resumes agent runs on the next start.
 
-Without a terminal, as a background service, it only logs. See [cli/bica.ts](../cli/bica.ts) and [cli/build.ts](../cli/build.ts).
+Without a terminal, as a background service, it only logs. See [cli/bica.ts](../cli/bica.ts), the entry both start through, and [cli/build.ts](../cli/build.ts), which embeds the files and compiles it.
 
 `bica --version` prints the version, which comes from `BICA_VERSION` at build time. A local build without it says `0.0.0-dev`. `bun run build:bica --target bun-linux-x64` cross-compiles, into `dist/bica/linux-x64/bica`, and takes several `--target` flags at once.
 

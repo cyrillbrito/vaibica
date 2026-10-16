@@ -1,6 +1,7 @@
-// The `bica` command: Bica's production server in the terminal, with keys to
-// open the UI, the way Vite's dev server does. cli/build.ts compiles it into
-// one binary, with the client and codemode's files embedded.
+// Bica's production server in the terminal, with keys to open the UI, the way
+// Vite's dev server does. Both ways to run a build start here: start.js from
+// the repo, and the `bica` binary that cli/build.ts compiles with the client
+// and codemode's files embedded.
 import { spawn, spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import {
@@ -15,17 +16,17 @@ import { parseArgs } from 'node:util';
 
 type Listener = (req: IncomingMessage, res: ServerResponse) => Promise<void>;
 
-/** What the generated entry hands over: the built server and embedded file paths. */
+/** The built server, and in the binary the paths of its embedded files. */
 export interface Build {
   version: string;
   load: () => Promise<{
     createListener: (options: { static: boolean }) => Listener;
     attach: (server: Server) => void;
   }>;
-  /** URL path, such as `/assets/app.js`, to its embedded file. */
-  client: Record<string, string>;
-  wasm: string;
-  worker: string;
+  /** URL path, such as `/assets/app.js`, to its embedded file. Without it, the server reads `dist/client`. */
+  client?: Record<string, string>;
+  wasm?: string;
+  worker?: string;
 }
 
 const HELP = `Usage: bica [--port <port>]
@@ -56,14 +57,15 @@ export async function run(build: Build) {
 
   // Set before the server loads: its modules read them once.
   const data = (process.env.BICA_DATA_DIR ||= join(homedir(), '.bica/data'));
-  process.env.BICA_CODEMODE_WASM = build.wasm;
-  process.env.BICA_CODEMODE_WORKER = build.worker;
+  if (build.wasm) process.env.BICA_CODEMODE_WASM = build.wasm;
+  if (build.worker) process.env.BICA_CODEMODE_WORKER = build.worker;
 
   const { createListener, attach } = await build.load();
-  const listener = createListener({ static: false });
+  const { client } = build;
+  const listener = createListener({ static: !client });
   const server = createServer(
     (req, res) =>
-      void (sendEmbedded(build.client, req, res) || listener(req, res)),
+      void ((client && sendEmbedded(client, req, res)) || listener(req, res)),
   );
   attach(server);
   server.on('error', (error: NodeJS.ErrnoException) =>

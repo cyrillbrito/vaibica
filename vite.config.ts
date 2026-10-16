@@ -9,7 +9,7 @@ import { SOCKET_PATH } from './src/lib/socket-path.ts';
 const SOCKET_MODULE = './src/server/socket.ts';
 
 // In dev, upgrades run through Vite's SSR module graph; in production,
-// emit the socket module for start.js to attach to the built server.
+// emit the socket module for cli/bica.ts to attach to the built server.
 function socket(): Plugin {
   return {
     name: 'bica:socket',
@@ -75,7 +75,7 @@ function compress(): Plugin {
 export default defineConfig({
   // No index.html or entry files: the plugin generates them around
   // src/App.tsx, wrapped in src/Document.tsx. `vite build` emits dist/client,
-  // dist/server, and the Node server (dist/server/node.js) start.js runs.
+  // dist/server, and the Node server (dist/server/node.js) cli/bica.ts runs.
   plugins: [
     solid({
       start: { node: true },
@@ -95,7 +95,7 @@ export default defineConfig({
     socket(),
     compress(),
   ],
-  // Own ports so other projects never collide (live is 3141, see start.js);
+  // Own ports so other projects never collide (live is 3141, see cli/bica.ts);
   // fail instead of hopping so the tailscale serve mapping stays right.
   server: {
     port: Number(process.env.BICA_PORT || 3142),

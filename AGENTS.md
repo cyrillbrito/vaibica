@@ -63,7 +63,8 @@ There is no time to prove every idea here, so borrow from people who already bui
 
 Pi Durable, Solid 2, and Pierre are new and change often, and the web may describe a newer version than the one installed. Read the installed copy first.
 
-- Pi Durable: `node_modules/@earendil-works/pi-durable/README.md` and `CHANGELOG.md`, plus the READMEs of `pi-ai` and `chord` next to it. Examples: https://github.com/earendil-works/pi/tree/main/packages/durable, and a small coding agent on it: https://github.com/earendil-works/pi/tree/main/packages/coding-agent/src/experimental/durable
+- Pi Durable: `node_modules/@earendil-works/pi-durable/README.md` and `CHANGELOG.md`, plus the READMEs of `pi-ai` and `chord` next to it. Examples: https://github.com/earendil-works/pi/tree/main/packages/durable.
+- Pi packages as inspiration: https://github.com/earendil-works/pi/tree/main/packages. Before building or changing an agent tool, prompt, or session feature, look at how Pi does it, mostly `coding-agent` (its tools in `src/core/tools`, and `examples`), `agent`, and `ai`. Bica never runs that code, but the APIs are close, so borrow the ideas and adapt them to Pi Durable.
 - Solid 2: `node_modules/solid-js/CHEATSHEET.md` and the skills under SolidJS 2 below. Full docs for agents: https://v2.solidjs.com/llms.txt
 - Markdown: the skills in `node_modules/@tanstack/markdown/skills/` (the React ones don't apply).
 - Pierre: https://diffs.com/llms.txt and https://trees.software/llms.txt.
