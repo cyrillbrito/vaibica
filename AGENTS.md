@@ -33,7 +33,7 @@ There is no time to prove every idea here, so borrow from people who already bui
 
 ## Stack
 
-- Bun runs the server, installs packages, and runs Vite in development.
+- Bun 1.4.3 or newer runs the server, installs packages, type-checks, and runs Vite in development.
 - Solid 2 (release candidate) through `@solidjs/vite-plugin` in start mode. This is not SolidStart.
 - Pi Durable, with `pi-ai` for models, runs the agent and stores it in SQLite.
 - Tailwind v4 with no component library, see [docs/UI.md](docs/UI.md).
@@ -44,7 +44,8 @@ There is no time to prove every idea here, so borrow from people who already bui
 
 ## Commands
 
-- `bun run check` type-checks, `bun run lint` lints, and `bun run fmt` formats.
+- `bun run checks` runs every check: types, lint, the format check, and `test:bun`. Run it before every commit, and fix what fails.
+- `bun run typecheck` type-checks with `bun check`, Bun's built-in checker, so `typescript` is not a dependency. `bun run lint` lints, and `bun run fmt` formats.
 - `bun run test:bun` runs the Bun checks for Pi Durable, restart recovery, and images. There is no Vitest suite.
 - `bun run dev` is the dev server on port 3142. It usually runs already, see Verifying UI below.
 - `bun run build` and `bun run start` run a built copy, see [docs/deploy.md](docs/deploy.md).

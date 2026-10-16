@@ -15,26 +15,27 @@
     "lint": "oxlint src",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
-    "check": "tsc --noEmit",
-    "test:bun": "bun scripts/test-bun-durable.ts && bun scripts/test-bun-recovery.ts && bun scripts/test-bun-image.ts"
+    "test:bun": "bun scripts/test-bun-durable.ts && bun scripts/test-bun-recovery.ts && bun scripts/test-bun-image.ts",
+    "typecheck": "bun check",
+    "checks": "bun run typecheck && bun run lint && bun run fmt:check && bun run test:bun"
   },
   "dependencies": {
-    "@dnd-kit/dom": "^0.5.0",
+    "@dnd-kit/dom": "^0.5.1",
     "@earendil-works/chord": "^1.0.0",
     "@earendil-works/pi-ai": "^1.0.0",
     "@earendil-works/pi-codemode": "^1.0.2",
     "@earendil-works/pi-durable": "^1.0.0",
-    "@pierre/diffs": "1.5.1",
+    "@pierre/diffs": "1.5.2",
     "@pierre/trees": "1.0.0-beta.6",
     "@solidjs/meta": "^1.0.0-next.2",
     "@solidjs/router": "^2.0.0-next.40",
     "@solidjs/web": "^2.0.0-rc.15",
     "@tanstack/markdown": "^1.0.0",
     "ghostty-web": "^0.4.0",
-    "lucide": "^1.50.0",
-    "mermaid": "^12.1.0",
+    "lucide": "^1.57.0",
+    "mermaid": "^12.2.0",
     "solid-js": "^2.0.0-rc.15",
-    "valibot": "^1.4.2",
+    "valibot": "^1.5.0",
     "ws": "^8.22.0"
   },
   "devDependencies": {
@@ -42,27 +43,26 @@
     "@solidjs/diagnostics": "^2.0.0-rc.15",
     "@solidjs/vite-plugin": "^3.0.0-next.50",
     "@tailwindcss/vite": "^4.3.3",
-    "@types/bun": "^1.4.2",
+    "@types/bun": "^1.4.3",
     "@types/compression": "^1.8.1",
     "@types/ws": "^8.18.2",
     "compression": "^1.8.2",
-    "eslint-plugin-solid": "~0.18.0",
+    "eslint-plugin-solid": "~0.18.1",
     "filesystem-routing": "0.4.0",
-    "oxfmt": "^0.70.0",
+    "oxfmt": "^0.73.0",
     "oxlint": "^1.88.0",
     "oxlint-tsgolint": "^7.0.2004",
     "tailwindcss": "^4.3.3",
-    "typescript": "^5.9.2",
     "vite": "^8.3.4"
   },
   "devEngines": {
     "packageManager": {
       "name": "bun",
-      "version": ">=1.4.2",
+      "version": ">=1.4.3",
       "onFail": "error"
     }
   },
   "engines": {
-    "bun": ">=1.4.2"
+    "bun": ">=1.4.3"
   }
 }
