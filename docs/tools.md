@@ -2,13 +2,13 @@
 
 The agent works through tools. Every call carries a short summary, so the transcript reads as a list of intentions.
 
-- Read, write, edit, and bash work in the session's folder. Read also shows images to the model, shrunk when they are too big for the API.
+- Read, write, edit, and bash work in the session's folder. Read also shows images to the model, shrunk or converted with Bun's image library when they are too big for the API or in a format it doesn't take.
 - Web search and fetch go through Exa, when its key is set.
 - Terminal tools share the workspace's terminals with you, see [terminals.md](./terminals.md).
 
 ## Codemode
 
-Codemode lets the model write a short JavaScript script that calls the other tools, so it can run them in parallel, chain them, and filter big output. Only what the script prints reaches the model. It is a port of the Pi coding agent's tool. Scripts can't call the tools that need the model itself: `ask`, `list`, and the session tools.
+Codemode lets the model write a short JavaScript script that calls the other tools, so it can run them in parallel, chain them, and filter big output. Only what the script prints reaches the model. It is Pi Durable's codemode, which matches the Pi coding agent's: each call a script makes is a tool call of its own, and a script survives a restart, picking up where it was without running finished calls again. The prompt lists the tools scripts can call. Scripts can't call the tools that need the model itself: `ask`, `list`, and the session tools. While a script runs, its row lists the calls it made so far.
 
 Scripts can also call classifier models. A classifier doesn't chat: it answers typed yes/no, choice, or score questions about JSON, in well under a second and for a fraction of a cent. That makes it cheap to label many items, such as the steps of past agent runs, and read only the flagged ones. Any provider with a key that offers classifiers works.
 
@@ -34,4 +34,4 @@ Bica has no hidden subagents. Every helper is a normal session you can open, rea
 ## Sources
 
 - Claude Code's `SendMessage` with `notify_when_idle`, and Codex's `send_input` and `wait_agent`, which the session tools follow.
-- The Pi coding agent's codemode tool, on the [`pi-codemode`](https://github.com/earendil-works/pi) sandbox.
+- Pi Durable's [`codemode`](https://github.com/earendil-works/pi/tree/main/packages/durable), on the `pi-codemode` sandbox.

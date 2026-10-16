@@ -2,12 +2,7 @@ import 'server-only';
 import { mkdir } from 'node:fs/promises';
 
 import { context, getHarness } from '#server/agent';
-import {
-  serverProfile,
-  loadMemory,
-  hubChoice,
-  hubFolder,
-} from '#server/profiles';
+import { serverProfile, hubChoice, hubFolder } from '#server/profiles';
 import { SessionDoc, getConversation, listSessions, sessions } from './store';
 
 /** The hub (docs/hub.md): the newest open hub session outside any project. */
@@ -25,11 +20,7 @@ export async function openHub() {
   if (!folder) throw new Error('Pick a folder for the hub in Settings first');
   await mkdir(folder, { recursive: true });
   const hub = serverProfile('hub');
-  const [choice, memory, projects] = await Promise.all([
-    hub.choice(),
-    loadMemory(folder),
-    hub.projects(),
-  ]);
+  const choice = await hub.choice();
   const conversation = await (
     await getHarness()
   ).createConversation(
@@ -39,11 +30,6 @@ export async function openHub() {
         ...choice,
         cwd: folder,
         extensions: hub.extensions,
-        instructions: await hub.instructions({
-          cwd: folder,
-          memory,
-          projects,
-        }),
       },
       init: async (tx, id) => {
         const doc = await tx.doc(SessionDoc, id);
@@ -51,8 +37,6 @@ export async function openHub() {
         doc.createdAt = Date.now();
         doc.seenEntry = 0;
         doc.profile = 'hub';
-        doc.memory = memory;
-        doc.projects = projects;
       },
     },
     context,

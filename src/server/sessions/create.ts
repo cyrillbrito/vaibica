@@ -8,7 +8,7 @@ import {
 import type { ProfileId } from '#lib/profiles';
 import type { ModelChoice, PromptImage } from '#lib/protocol';
 import { context, getHarness } from '#server/agent';
-import { serverProfile, loadMemory } from '#server/profiles';
+import { serverProfile } from '#server/profiles';
 import {
   CHATS_ID,
   createChatFolder,
@@ -20,7 +20,7 @@ import {
 import { checkChoice, fastModelId } from '#server/providers';
 import { commandDone, createTerminal, removeTerminal } from '#server/terminals';
 import { VOICE_TITLE, nameSession, promptTitle, retitle } from './names';
-import { input } from './prompts';
+import { submit } from './prompts';
 import {
   SessionDoc,
   getConversation,
@@ -87,8 +87,6 @@ export async function createSession({
     : await serverProfile(profile).choice();
   const harness = await getHarness();
   const workdir = cwd ?? project.path;
-  const memory = await loadMemory(workdir);
-  const projects = await serverProfile(profile).projects();
   const conversation = await harness.createConversation(
     {
       ownership: { kind: 'ownerless' },
@@ -96,11 +94,6 @@ export async function createSession({
         model,
         thinkingLevel,
         cwd: workdir,
-        instructions: await serverProfile(profile).instructions({
-          cwd: workdir,
-          memory,
-          projects,
-        }),
         ...(serverProfile(profile).extensions && {
           extensions: serverProfile(profile).extensions,
         }),
@@ -117,12 +110,9 @@ export async function createSession({
         doc.createdAt = Date.now();
         doc.projectId = projectId;
         doc.seenEntry = 0;
-        doc.memory = memory;
         doc.profile = profile;
-        if (projects) doc.projects = projects;
         if (startedBy) doc.startedBy = startedBy;
         if (quiet) doc.quiet = true;
-        if (prompt || images.length) doc.lastFrom = startedBy ?? 'user';
         doc.userPrompted = !startedBy;
       },
     },
@@ -130,9 +120,12 @@ export async function createSession({
   );
   // Nothing to send: started for a voice call, whose first hand-off names it.
   if (prompt || images.length)
-    await conversation.submit(
-      { type: 'input', content: input(prompt, images), requestId },
-      context,
+    await submit(
+      String(conversation.id),
+      prompt,
+      images,
+      requestId,
+      startedBy ?? 'user',
     );
   // Not awaited: the session opens now and the title swaps in when ready.
   if (prompt && !worktree) void retitle(conversation.id, prompt);

@@ -37,7 +37,7 @@ registry.install(
         replay: 'safe',
         async execute() {
           tools++;
-          return { content: [{ type: 'text', text: 'checked' }] };
+          return { output: [{ type: 'text', text: 'checked' }] };
         },
       }),
     ],

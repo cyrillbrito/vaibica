@@ -1,5 +1,5 @@
 import 'server-only';
-import { isAbsolute, join, relative, resolve } from 'node:path';
+import { isAbsolute, relative, resolve } from 'node:path';
 import { defineExtension } from '@earendil-works/pi-durable';
 import type { ToolRegistration } from '@earendil-works/pi-durable';
 import {
@@ -8,48 +8,8 @@ import {
   createReadTool,
   createWriteTool,
 } from '@earendil-works/pi-durable/tools';
-import { fitImage } from './fit-image';
+import { bunImages } from './fit-image';
 import { withSummary } from './summary';
-
-/**
- * Workaround: Pi Durable's read refuses images ("not supported yet" in its
- * README, pi-durable 1.0.4), so this sends them to the model the way the Pi
- * coding agent's read does. Too big ones are shrunk (src/server/agent/tools/fit-image.ts),
- * since a session holding one would fail every later request. Delete it once
- * Durable's read takes images.
- */
-function readingImages(tool: ToolRegistration): ToolRegistration {
-  return {
-    ...tool,
-    description:
-      'Read the contents of a file. Supports text files and images (jpg, png, gif, webp). Images are sent as attachments. For text files, output is truncated to 2000 lines or 50KB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete.',
-    execute: async (args, api, context) => {
-      const result = await tool.execute(args, api, context);
-      const refusal = result.diagnostics?.find(
-        (d) => d.code === 'unsupported_image',
-      );
-      const mimeType = refusal?.message.match(/\((image\/[\w+.-]+)\)/)?.[1];
-      const env = api.env;
-      if (!mimeType || !env) return result;
-      const { path } = args as { path: string };
-      const read = await env.readBinaryFile(
-        isAbsolute(path) ? path : join(env.cwd, path),
-        context,
-      );
-      if (!read.ok) throw read.error;
-      const image = await fitImage(read.value, mimeType);
-      return {
-        content: [
-          {
-            type: 'image',
-            data: Buffer.from(image.bytes).toString('base64'),
-            mimeType: image.mimeType,
-          },
-        ],
-      };
-    },
-  };
-}
 
 /** Whether `path` lies inside `cwd`; the edit tools strip a leading @. */
 function inside(cwd: string, path: string) {
@@ -73,22 +33,26 @@ function ownFolder(tool: ToolRegistration): ToolRegistration {
   };
 }
 
+// Durable's tools are typed by their own schemas; extensions take any.
+const any = (tool: unknown) => tool as ToolRegistration;
+const read = () => any(createReadTool({ images: bunImages }));
+
 // Only the hub profile selects it (src/server/profiles/definitions.ts).
 export const HubFileTools = defineExtension({
   name: 'hub-file-tools',
   tools: [
-    readingImages(createReadTool() as unknown as ToolRegistration),
-    ownFolder(createWriteTool() as unknown as ToolRegistration),
-    ownFolder(createEditTool() as unknown as ToolRegistration),
+    read(),
+    ownFolder(any(createWriteTool())),
+    ownFolder(any(createEditTool())),
   ].map(withSummary),
 });
 
 export const CodingTools = defineExtension({
   name: 'coding-tools',
   tools: [
-    readingImages(createReadTool() as unknown as ToolRegistration),
-    createWriteTool() as unknown as ToolRegistration,
-    createEditTool() as unknown as ToolRegistration,
-    createBashTool() as unknown as ToolRegistration,
-  ].map((tool) => withSummary(tool as unknown as ToolRegistration)),
+    read(),
+    any(createWriteTool()),
+    any(createEditTool()),
+    any(createBashTool()),
+  ].map(withSummary),
 });

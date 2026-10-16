@@ -40,9 +40,10 @@ const ask = defineTool({
     ),
   }),
   replay: 'safe',
+  callers: ['model'],
   async execute() {
     return {
-      content: [
+      output: [
         {
           type: 'text',
           text: "Shown to the user. Their answer arrives as the user's next message.",

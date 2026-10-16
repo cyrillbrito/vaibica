@@ -113,7 +113,7 @@ export interface ToolCall {
   details?: unknown;
   /** Lines a write or edit added and removed. */
   stats?: { added: number; removed: number };
-  /** Stamped by the server (src/server/agent/tools/tool-time.ts); absent on older calls. */
+  /** While it runs, stamped by the server (src/server/agent/tools/tool-time.ts). */
   startedAt?: number;
   durationMs?: number;
 }
@@ -156,7 +156,8 @@ export function toMessages(
       output: result ? textOf(result.content) : slot?.output,
       details,
       startedAt: num(time.startedAt),
-      durationMs: num(time.durationMs),
+      // Durable times results; older ones carry it in their details.
+      durationMs: num(result?.durationMs ?? time.durationMs),
       stats: time.stats ?? (block as { stats?: ToolCall['stats'] }).stats,
     };
   };

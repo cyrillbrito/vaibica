@@ -118,11 +118,11 @@ export function createWebTools(apiKey: () => Promise<string | undefined>) {
       );
       const results = data.results ?? [];
       if (!results.length)
-        return { content: [{ type: 'text', text: 'No results.' }] };
+        return { output: [{ type: 'text', text: 'No results.' }] };
       const text = results
         .map((r) => `${heading(r)}\n\n${(r.highlights ?? []).join('\n\n')}`)
         .join('\n\n');
-      return { content: [{ type: 'text', text }] };
+      return { output: [{ type: 'text', text }] };
     },
   });
 
@@ -170,7 +170,7 @@ export function createWebTools(apiKey: () => Promise<string | undefined>) {
         ? (result.highlights ?? []).join('\n\n')
         : (result.text ?? '');
       return {
-        content: [{ type: 'text', text: `${heading(result)}\n\n${body}` }],
+        output: [{ type: 'text', text: `${heading(result)}\n\n${body}` }],
       };
     },
   });

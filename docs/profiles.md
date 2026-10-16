@@ -10,4 +10,4 @@ Bica ships three, defined in code:
 
 You pick the profile in the home page's composer, next to the workspace. The context chip's menu switches an open session to another one. The tools and instructions are part of the prompt cache, so a switch rebuilds it once. Sessions from before profiles count as Coding.
 
-There is no profile editor. A profile is a small object in `src/lib/profiles.ts`, and its server half (tools, instructions, model) is in `src/server/profiles/definitions.ts`.
+There is no profile editor. A profile is a small object in `src/lib/profiles.ts`, its server half (tools, model) is in `src/server/profiles/definitions.ts`, and its instructions are the prompt sections in `src/server/profiles/instructions.ts`.

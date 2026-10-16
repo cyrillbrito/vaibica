@@ -26,7 +26,7 @@ export async function submit(
   whenBusy: 'followUp' | 'steer' = 'followUp',
 ) {
   const conversation = await getConversation(id);
-  await refreshInstructions(conversation);
+  await keepCopies(conversation.id);
   await recordSender(conversation.id, from);
   // Pi Durable returns the existing submission for a repeated requestId.
   await conversation.submit(
@@ -47,38 +47,33 @@ export async function recordSender(id: ConversationId, from: Sender) {
 }
 
 /**
- * Picks up AGENTS.md edits and the profile, and gives older sessions
- * instructions at all. Every prompt path calls it, voice included.
- * Pi Durable only patches the system prompt when the text changed.
+ * Takes the memory index and the hub's project list when the session holds
+ * no copy: at its first prompt and after a compaction. The prompt sections
+ * show the copies (src/server/profiles/instructions.ts), since the agent
+ * edits memory mid-session and every change would be sent again. Every
+ * prompt path calls it, voice included.
  */
-export async function refreshInstructions(
-  conversation: Awaited<ReturnType<typeof getConversation>>,
-) {
+export async function keepCopies(id: ConversationId) {
   const harness = await getHarness();
   const [agent, meta] = await Promise.all([
-    harness.snapshot(AgentDoc, conversation.id, context),
-    harness.snapshot(SessionDoc, conversation.id, context),
+    harness.snapshot(AgentDoc, id, context),
+    harness.snapshot(SessionDoc, id, context),
   ]);
   if (!agent?.cwd) return;
-  const profile = profileOf(meta);
-  let memory = meta?.memory;
-  let projects = meta?.projects;
-  if (memory === undefined || projects === undefined) {
-    const taken = {
-      memory: (memory ??= await loadMemory(agent.cwd)),
-      projects: (projects ??= await serverProfile(profile).projects()),
-    };
-    await harness.commit(async (tx) => {
-      Object.assign(await tx.doc(SessionDoc, conversation.id), taken);
-    }, context);
-  }
-  const instructions = await serverProfile(profile).instructions({
-    cwd: agent.cwd,
-    memory,
-    projects,
-  });
-  if (instructions !== agent.instructions)
-    await conversation.configure({ instructions }, context);
+  // Sessions from before the prompt sections stored their instructions.
+  if (agent.instructions !== undefined)
+    await (
+      await getConversation(String(id))
+    ).configure({ instructions: null }, context);
+  if (meta?.memory !== undefined && meta.projects !== undefined) return;
+  const taken = {
+    memory: meta?.memory ?? (await loadMemory(agent.cwd)),
+    projects:
+      meta?.projects ?? (await serverProfile(profileOf(meta)).projects()),
+  };
+  await harness.commit(async (tx) => {
+    Object.assign(await tx.doc(SessionDoc, id), taken);
+  }, context);
 }
 
 export type QueuedInput = Extract<InboxItem, { content: unknown }>;

@@ -17,7 +17,7 @@ import { prompters, readSession, recentMessages } from './read';
 import { listSessions } from './store';
 
 const text = (value: string) => ({
-  content: [{ type: 'text' as const, text: value }],
+  output: [{ type: 'text' as const, text: value }],
 });
 
 const STATUS: Record<SessionStatus, string> = {
@@ -322,7 +322,11 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
     sessionStop,
     sessionArchive,
     list,
-  ].map((tool) => withSummary(tool as unknown as ToolRegistration));
+  ].map((tool) => ({
+    ...withSummary(tool as unknown as ToolRegistration),
+    // Orchestration stays with the model: codemode scripts can't reach it.
+    callers: ['model' as const],
+  }));
 };
 
 export const SessionTools = defineExtension({

@@ -84,6 +84,8 @@ function slimLive(live: LiveState): LiveState {
       ...slot,
       details: timing(details) as never,
     })),
+    // Their arguments can hold whole files; an opened row loads them.
+    nestedTools: undefined,
   }) as LiveState;
 }
 
@@ -248,6 +250,31 @@ export function stepDetail(
           .flatMap((b) => (b.type === 'text' && b.text ? [b.text] : []))
           .join('\n')
       : slot?.output,
-    details: (result?.details ?? slot?.details) as unknown,
+    details: result?.details ?? withNested(slot?.details, live, key),
+  };
+}
+
+/**
+ * A running codemode call lists its script's calls only in `pi.live`; its
+ * result's details list them once it ends, in the same shape.
+ */
+function withNested(
+  details: unknown,
+  live: LiveState | undefined,
+  key: string,
+) {
+  const nested = live?.nestedTools?.filter((n) => n.parentCallId === key);
+  if (!nested?.length) return details;
+  return {
+    ...(details as Json),
+    calls: nested.map((n) =>
+      defined({
+        name: n.name,
+        args: JSON.stringify(n.arguments).slice(0, ARG_CHARS),
+        status: !n.summary ? 'running' : n.summary.isError ? 'error' : 'ok',
+        durationMs: n.summary?.durationMs,
+        error: n.summary?.error,
+      }),
+    ),
   };
 }

@@ -1,13 +1,20 @@
 import 'server-only';
 import { readFile } from 'node:fs/promises';
+import type { Context } from '@earendil-works/chord';
+import {
+  defineExtension,
+  section,
+  type PromptInput,
+} from '@earendil-works/pi-durable';
 import { dirname, join } from 'node:path';
 import { BICA_HOME } from '#server/paths';
 import { CHATS_ID, listProjects } from '#server/projects';
+import { SessionDoc, profileOf } from '#server/sessions/session-doc';
 import { skillsSection } from './skills';
 
 // Follows the Pi coding agent's default prompt (preamble, tools, rules with
 // its tool guidelines, project context, cwd), plus a few Bica rules. Pi Durable
-// renders this after the provider's own preamble, which for subscription
+// renders it after the provider's own preamble, which for subscription
 // logins claims Claude Code.
 
 const PREAMBLE = `You are an expert coding assistant operating inside Bica, a web UI for coding agents. You help users by reading files, executing commands, editing code, and writing new files. The user may be on a phone and may run several sessions in parallel.
@@ -210,46 +217,61 @@ export async function hubProjects() {
   return `Bica's projects as they were when this session started or last compacted. Pass one of these paths as session_start's \`folder\`. \`list\` shows what changed since, and every session's status.\n\n${lines.join('\n')}`;
 }
 
-/** The hub's instructions; `memory` and `projects` are taken by sessions.ts. */
-export async function buildHubInstructions(
-  cwd: string,
-  memory: string,
-  projects: string,
-) {
-  return render(HUB_PREAMBLE, [
-    ['tools', HUB_TOOLS],
-    ['hub', HUB],
-    ['project_context', await projectContext(cwd)],
-    ['memory', memory || null],
-    ['projects', projects || null],
-    ['cwd', cwd],
-    ['replies', REPLIES],
-  ]);
+/** What every section reads: the session's profile, folder, and kept copies. */
+async function session(input: PromptInput, context: Context) {
+  const meta = await input.read.snapshot(
+    SessionDoc,
+    input.conversationId,
+    context,
+  );
+  return {
+    profile: profileOf(meta),
+    cwd: input.agent.cwd ?? '',
+    memory: meta?.memory || undefined,
+    projects: meta?.projects || undefined,
+  };
 }
 
-const render = (preamble: string, sections: [string, string | null][]) =>
-  [
-    preamble,
-    ...sections
-      .filter(([, text]) => text)
-      .map(([tag, text]) => `<${tag}>\n${text}\n</${tag}>`),
-  ].join('\n\n');
+const on = (
+  key: string,
+  render: (
+    s: Awaited<ReturnType<typeof session>>,
+  ) => string | null | undefined | Promise<string | null | undefined>,
+  options?: { tag: boolean },
+) =>
+  section(
+    key,
+    async (input, context) =>
+      (await render(await session(input, context))) ?? undefined,
+    options,
+  );
 
-/** The agent instructions for a session working in `cwd`. */
-export async function buildInstructions(
-  cwd: string,
-  assistant?: boolean,
-  memory?: string,
-) {
-  const sections: [string, string | null][] = [
-    ['tools', TOOLS],
-    ['rules', RULES],
-    ['project_context', await projectContext(cwd)],
-    ['memory', memory || null],
-    ['skills', await skillsSection(cwd)],
-    ['cwd', cwd],
-    ['assistant', assistant ? ASSISTANT : null],
-    ['replies', REPLIES],
-  ];
-  return render(PREAMBLE, sections);
-}
+/**
+ * The instructions, as sections Pi Durable renders before every request. It
+ * sends only the sections that changed, so AGENTS.md and skill edits apply
+ * from the next request without breaking the prompt cache. Memory and the
+ * hub's project list are copies kept in SessionDoc (src/server/sessions/prompts.ts).
+ */
+export const BicaPrompt = defineExtension({
+  name: 'bica-prompt',
+  sections: [
+    on('preamble', (s) => (s.profile === 'hub' ? HUB_PREAMBLE : PREAMBLE), {
+      tag: false,
+    }),
+    on('tools', (s) => (s.profile === 'hub' ? HUB_TOOLS : TOOLS)),
+    on('rules', (s) => (s.profile === 'hub' ? null : RULES)),
+    on('hub', (s) => (s.profile === 'hub' ? HUB : null)),
+    on('project_context', (s) => projectContext(s.cwd)),
+    on('memory', (s) => s.memory),
+    on('projects', (s) => (s.profile === 'hub' ? s.projects : null)),
+    on('skills', (s) => (s.profile === 'hub' ? null : skillsSection(s.cwd))),
+    on('cwd', (s) => s.cwd),
+    on('assistant', (s) => (s.profile === 'assistant' ? ASSISTANT : null)),
+  ],
+});
+
+/** Its own extension, selected last, so it renders after every other section. */
+export const BicaReplies = defineExtension({
+  name: 'bica-replies',
+  sections: [section('replies', () => REPLIES)],
+});

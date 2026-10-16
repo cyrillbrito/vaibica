@@ -8,40 +8,23 @@ export const timeTools = (extension: Extension): Extension => ({
 });
 
 /**
- * Pi Durable doesn't record how long a call ran, so stamp it on the call's
- * details: `startedAt` while it runs (the live row counts up from it), then
- * `durationMs` on the result. Details are for the UI; the model never sees them.
+ * Stamps `startedAt` on a running call's details, so its live row counts up.
+ * Durable's live slots carry no start time; the finished result has its own
+ * `durationMs`. Details are for the UI; the model never sees them.
  */
-export function timed(tool: ToolRegistration): ToolRegistration {
+function timed(tool: ToolRegistration): ToolRegistration {
   return {
     ...tool,
     execute: async (args, api, context) => {
       const startedAt = Date.now();
-      let last: JsonValue | undefined;
-      const stamp = (details: JsonValue | undefined, extra: object) =>
-        ({
-          ...(isObject(details) ? details : {}),
-          startedAt,
-          ...extra,
-        }) as JsonValue;
-      await api.details(stamp(undefined, {}), context);
-      const result = await tool.execute(
+      const stamp = (details: JsonValue | undefined) =>
+        ({ ...(isObject(details) ? details : {}), startedAt }) as JsonValue;
+      await api.details(stamp(undefined), context);
+      return tool.execute(
         args,
-        {
-          ...api,
-          details: (value, context) => {
-            last = value;
-            return api.details(stamp(value, {}), context);
-          },
-        },
+        { ...api, details: (value, c) => api.details(stamp(value), c) },
         context,
       );
-      return {
-        ...result,
-        details: stamp(result.details ?? last, {
-          durationMs: Date.now() - startedAt,
-        }),
-      };
     },
   };
 }

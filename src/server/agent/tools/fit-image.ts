@@ -1,25 +1,52 @@
-/** Anthropic refuses images over 5 MB, and over 2000px once a request holds more than 20. */
-const MAX_IMAGE_BYTES = 4.5 * 1024 * 1024;
-const MAX_IMAGE_SIDE = 2000;
+import type { ImageProcessor } from '@earendil-works/pi-durable/tools';
 
-/** The image as is when it fits the limits, else a smaller PNG, or a JPEG if that is still too big. */
-export async function fitImage(bytes: Uint8Array, mimeType: string) {
-  const { width, height } = await new Bun.Image(bytes).metadata();
-  if (
-    bytes.byteLength <= MAX_IMAGE_BYTES &&
-    Math.max(width, height) <= MAX_IMAGE_SIDE
-  )
-    return { bytes, mimeType };
-  const small = () =>
-    new Bun.Image(bytes).resize(MAX_IMAGE_SIDE, MAX_IMAGE_SIDE, {
-      fit: 'inside',
-      withoutEnlargement: true,
-    });
-  const png = await small().png().bytes();
-  if (png.byteLength <= MAX_IMAGE_BYTES)
-    return { bytes: png, mimeType: 'image/png' };
-  return {
-    bytes: await small().jpeg({ quality: 85 }).bytes(),
-    mimeType: 'image/jpeg',
-  };
-}
+const INLINE = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp']);
+// Limits count base64, which is 4/3 of the bytes.
+const bytesOf = (base64Bytes: number) => Math.floor((base64Bytes * 3) / 4);
+
+/**
+ * `read`'s image processor on Bun.Image, so the binary needs no Photon wasm:
+ * an image that fits goes as is, else a smaller PNG, or a JPEG if that is
+ * still too big. Other formats, like BMP, become PNG.
+ */
+export const bunImages: ImageProcessor = {
+  async prepare(bytes, mimeType, limits) {
+    try {
+      const { width, height } = await new Bun.Image(bytes).metadata();
+      const maxBytes = bytesOf(limits.maxBytes);
+      const fits = width <= limits.maxWidth && height <= limits.maxHeight;
+      if (fits && INLINE.has(mimeType) && bytes.byteLength <= maxBytes)
+        return { data: base64(bytes), mimeType };
+      const small = () =>
+        new Bun.Image(bytes).resize(limits.maxWidth, limits.maxHeight, {
+          fit: 'inside',
+          withoutEnlargement: true,
+        });
+      let out = await small().png().bytes();
+      let type = 'image/png';
+      if (out.byteLength > maxBytes) {
+        out = await small().jpeg({ quality: 85 }).bytes();
+        type = 'image/jpeg';
+      }
+      if (out.byteLength > maxBytes) return undefined;
+      const to = await new Bun.Image(out).metadata();
+      return {
+        data: base64(out),
+        mimeType: type,
+        ...(fits
+          ? {}
+          : {
+              resized: {
+                from: { width, height },
+                to: { width: to.width, height: to.height },
+              },
+            }),
+        ...(type !== mimeType && { convertedFrom: mimeType }),
+      };
+    } catch {
+      return undefined;
+    }
+  },
+};
+
+const base64 = (bytes: Uint8Array) => Buffer.from(bytes).toString('base64');

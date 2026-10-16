@@ -156,9 +156,7 @@ export function contextUsage(
     if (message.role === 'system') {
       add('system', 'Base prompt', 'system', textLength(message.content));
       for (const [name, text] of Object.entries(message.sections ?? {})) {
-        if (!text) continue;
-        if (name === 'instructions') instructions(text);
-        else add(`section:${name}`, name, 'system', text.length);
+        if (text) section(name, text);
       }
       for (const tool of message.toolsAdded ?? [])
         add(
@@ -239,34 +237,22 @@ export function contextUsage(
     }
   }
 
-  // Our instructions are one section; AGENTS.md and the skills list are worth
-  // their own lines, the skills by name so it's easy to see which loaded.
-  // Reads the tags buildInstructions (src/server/profiles/instructions.ts) writes; if
-  // they change, these lines fold back into "Instructions".
-  function instructions(text: string) {
-    add('instructions', 'Instructions', 'system', text.length);
-    const split = (key: string, label: string, chars: number) => {
-      parts.get('instructions')!.tokens -= tokensOf(chars);
-      add(key, label, 'system', chars);
-    };
-    const project = /<project_context>[\s\S]*?<\/project_context>/.exec(text);
-    if (project) {
-      const file = /path="[^"]*?([^/"]+)"/.exec(project[0])?.[1];
-      split('project', file ?? 'Project file', project[0].length);
-    }
-    const memory = /<memory>[\s\S]*?<\/memory>/.exec(text);
-    if (memory) {
-      const file = /path="[^"]*?([^/"]+)"/.exec(memory[0])?.[1];
-      split('memory', file ?? 'Memory', memory[0].length);
-    }
-    const skills = /<skills>[\s\S]*?<\/skills>/.exec(text);
-    if (skills) {
-      const names = [...skills[0].matchAll(/<name>([^<]*)<\/name>/g)].map(
+  // AGENTS.md, memory, and skills get their own lines, the skills by name
+  // so it's easy to see which loaded; the rest of the prompt is one line.
+  // Section keys are src/server/profiles/instructions.ts's.
+  function section(name: string, text: string) {
+    const file = /path="[^"]*?([^/"]+)"/.exec(text)?.[1];
+    if (name === 'project_context')
+      add('project', file ?? 'Project file', 'system', text.length);
+    else if (name === 'memory')
+      add('memory', file ?? 'Memory', 'system', text.length);
+    else if (name === 'skills') {
+      const names = [...text.matchAll(/<name>([^<]*)<\/name>/g)].map(
         (m) => m[1],
       );
-      split('skills', `Skills (${names.length})`, skills[0].length);
+      add('skills', `Skills (${names.length})`, 'system', text.length);
       parts.get('skills')!.detail = names.join(', ');
-    }
+    } else add('instructions', 'Instructions', 'system', text.length);
   }
 
   // Scale every part so they add up to the measured size, plus the estimates

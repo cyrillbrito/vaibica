@@ -1,5 +1,6 @@
 import { strict as assert } from 'node:assert';
-import { fitImage } from '#server/agent/tools/fit-image';
+import { DEFAULT_IMAGE_LIMITS } from '@earendil-works/pi-durable/tools';
+import { bunImages } from '#server/agent/tools/fit-image';
 
 // A noisy 24-bit BMP: Bun decodes BMP, and noise defeats PNG compression.
 function bmp(width: number, height: number) {
@@ -21,13 +22,19 @@ function bmp(width: number, height: number) {
   return bytes;
 }
 
-const small = bmp(100, 80);
-assert.equal((await fitImage(small, 'image/bmp')).bytes, small);
+const limits = DEFAULT_IMAGE_LIMITS;
+const png = await new Bun.Image(bmp(100, 80)).png().bytes();
+const kept = await bunImages.prepare(png, 'image/png', limits);
+assert.equal(kept?.data, Buffer.from(png).toString('base64'));
 
-const big = await fitImage(bmp(4000, 3000), 'image/png');
-const size = await new Bun.Image(big.bytes).metadata();
-assert.equal(Math.max(size.width, size.height), 2000);
-assert.ok(big.bytes.byteLength <= 4.5 * 1024 * 1024);
+const converted = await bunImages.prepare(bmp(100, 80), 'image/bmp', limits);
+assert.equal(converted?.mimeType, 'image/png');
+assert.equal(converted?.convertedFrom, 'image/bmp');
+
+const big = await bunImages.prepare(bmp(4000, 3000), 'image/bmp', limits);
+assert.ok(big);
+assert.equal(Math.max(big.resized!.to.width, big.resized!.to.height), 2000);
+assert.ok(big.data.length <= limits.maxBytes);
 console.log(
-  `Bun.Image: small kept, 4000px noise shrunk to ${size.width}x${size.height} ${big.mimeType}`,
+  `Bun.Image: small kept, BMP converted, 4000px noise shrunk to ${big.resized!.to.width}x${big.resized!.to.height} ${big.mimeType}`,
 );

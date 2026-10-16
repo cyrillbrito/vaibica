@@ -397,7 +397,7 @@ function StartedSession(props: { call: ToolCall }) {
   );
 }
 
-/** A tool call a codemode script made (src/server/agent/tools/codemode.ts). */
+/** A tool call a codemode script made (stepDetail in src/lib/projection.ts). */
 type NestedCall = {
   name: string;
   args: string;

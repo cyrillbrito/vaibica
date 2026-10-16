@@ -43,7 +43,7 @@ function report(id: string, lines?: number) {
   const t = terminalInfo(id);
   const output = tail(id, lines);
   return {
-    content: [
+    output: [
       {
         type: 'text' as const,
         text: `Terminal ${id} "${t.title}": ${terminalState(t)}.\n\n${output || '(no output yet)'}`,
@@ -199,7 +199,7 @@ const terminalStop = defineTool({
     const last = tail(id, 20);
     await removeTerminal(id);
     return {
-      content: [
+      output: [
         {
           type: 'text' as const,
           text: `Closed terminal ${id} "${title}". Its last lines:\n\n${last || '(no output)'}`,

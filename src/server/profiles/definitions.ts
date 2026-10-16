@@ -6,11 +6,7 @@ import type { ProfileId } from '#lib/profiles';
 import { HUB_EXTENSIONS } from '#server/agent';
 import { defaultChoice } from '#server/providers';
 import { hubChoice } from './hub';
-import {
-  buildHubInstructions,
-  buildInstructions,
-  hubProjects,
-} from './instructions';
+import { hubProjects } from './instructions';
 
 /** What a session runs with under a profile (src/lib/profiles.ts). */
 export interface ServerProfile {
@@ -20,11 +16,6 @@ export interface ServerProfile {
   choice(): Promise<ModelChoice>;
   /** The project list for its instructions, '' for none. */
   projects(): Promise<string>;
-  instructions(s: {
-    cwd: string;
-    memory: string;
-    projects: string;
-  }): Promise<string>;
   // Sessions it starts take its model. The hub's is picked for routing.
   passesModel: boolean;
   // Hears when any session asks or fails, not only its own (docs/hub.md).
@@ -38,7 +29,6 @@ const PROFILES: Record<ProfileId, ServerProfile> = {
     extensions: null,
     choice: defaultChoice,
     projects: none,
-    instructions: (s) => buildInstructions(s.cwd, false, s.memory),
     passesModel: true,
     hearsAlerts: false,
   },
@@ -46,7 +36,6 @@ const PROFILES: Record<ProfileId, ServerProfile> = {
     extensions: null,
     choice: defaultChoice,
     projects: none,
-    instructions: (s) => buildInstructions(s.cwd, true, s.memory),
     passesModel: true,
     hearsAlerts: false,
   },
@@ -54,7 +43,6 @@ const PROFILES: Record<ProfileId, ServerProfile> = {
     extensions: HUB_EXTENSIONS,
     choice: hubChoice,
     projects: hubProjects,
-    instructions: (s) => buildHubInstructions(s.cwd, s.memory, s.projects),
     passesModel: false,
     hearsAlerts: true,
   },

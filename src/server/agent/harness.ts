@@ -6,7 +6,7 @@ import { NodeExecutionEnv } from '@earendil-works/pi-durable/env/node';
 import { openNodeSqliteStorage } from '@earendil-works/pi-durable/storage/sqlite/node';
 
 import { AskTool } from './tools/ask';
-import { createCodemode } from './tools/codemode';
+import { Codemode } from './tools/codemode';
 import { CodingTools, HubFileTools } from './tools/coding';
 import { cacheRetention, exaKey, models, proxyReady } from '#server/providers';
 import { HubSessionTools, SessionTools } from '#server/sessions/tools';
@@ -14,24 +14,28 @@ import { TerminalTools } from '#server/terminals';
 import { timeTools } from './tools/tool-time';
 import { createWebTools } from './tools/web';
 import { dataFile } from '#server/paths';
+import { BicaPrompt, BicaReplies } from '#server/profiles/instructions';
 
 export const context = BACKGROUND_CONTEXT;
 
 export const HUB_EXTENSIONS: Extension[] = [
-  timeTools(HubFileTools),
-  timeTools(HubSessionTools),
+  BicaPrompt,
+  HubFileTools,
+  HubSessionTools,
   AskTool,
+  BicaReplies,
 ];
 
 // Web tools read the Exa key per call, so adding one needs no restart.
-const tools: Extension[] = [CodingTools, TerminalTools, createWebTools(exaKey)];
-// Scripts may call the tools above, not the orchestrating or interactive
-// ones (session tools, list, ask): Pi's `model-only` tools.
 const defaults: Extension[] = [
-  ...tools.map(timeTools),
-  timeTools(SessionTools),
+  BicaPrompt,
+  CodingTools,
+  TerminalTools,
+  createWebTools(exaKey),
+  SessionTools,
   AskTool,
-  timeTools(createCodemode(tools, models)),
+  Codemode,
+  BicaReplies,
 ];
 
 // One process owns the storage. Editing vite.config.ts restarts Vite in this
@@ -43,8 +47,8 @@ async function open(): Promise<Harness> {
   await proxyReady.catch(() => {});
   const registry = createRegistry();
   // Profiles that pick their own tools select the hub's (src/server/profiles).
-  for (const extension of [...defaults, ...HUB_EXTENSIONS])
-    registry.install(extension);
+  for (const extension of new Set([...defaults, ...HUB_EXTENSIONS]))
+    registry.install(timeTools(extension));
   const harness = await Harness.open(
     await openNodeSqliteStorage(dataFile('harness.sqlite')),
     {

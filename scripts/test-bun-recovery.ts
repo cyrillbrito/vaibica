@@ -66,7 +66,7 @@ if (!phase) {
     const n = Number(await readFile(file, 'utf8').catch(() => '0')) + 1;
     await writeFile(file, String(n));
     if (phase === 'begin') await Bun.sleep(60000);
-    return { content: [{ type: 'text' as const, text: name }] };
+    return { output: [{ type: 'text' as const, text: name }] };
   };
   registry.install(
     defineExtension({
