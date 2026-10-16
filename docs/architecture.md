@@ -55,12 +55,12 @@ A server restart resumes unfinished runs, and a dropped phone reconnects to fres
 
 Bica's own data sits in `.data/`, relative to where the server starts. The browser keeps small preferences per device, such as the theme, and a cache of what it last showed, so pages open at once (see [realtime-communication.md](./realtime-communication.md)).
 
-| What                               | Where                             |
-| ---------------------------------- | --------------------------------- |
-| Sessions, transcripts, queues      | `harness.sqlite`                  |
-| Projects                           | `projects.json`                   |
-| Defaults and git habits            | `settings.json`                   |
-| Keys and sign-ins from Settings    | `auth.json`                       |
+| What | Where |
+| --- | --- |
+| Sessions, transcripts, queues | `harness.sqlite` |
+| Projects | `projects.json` |
+| Defaults and git habits | `settings.json` |
+| Keys and sign-ins from Settings | `auth.json` |
 | Worktrees, branches, file contents | git and the disk, read when asked |
 
 Your own files for Bica live in `~/.bica/`: an `AGENTS.md` and skills for every session ([instructions.md](./instructions.md)), the chat folders ([projects.md](./projects.md)), and the socket log ([realtime-communication.md](./realtime-communication.md)).

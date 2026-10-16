@@ -2,8 +2,7 @@
 
 # Bica
 
-**A fast, polished web UI for [Pi](https://github.com/earendil-works/pi) agents, built on Pi Durable.**
-Run it on your dev machine. Use it from any browser, desktop or phone.
+**A fast, polished web UI for [Pi](https://github.com/earendil-works/pi) agents, built on Pi Durable.** Run it on your dev machine. Use it from any browser, desktop or phone.
 
 </div>
 
@@ -28,15 +27,15 @@ cp .env.example .env   # optional: provider keys, or add them in Settings
 bun run dev            # http://localhost:3142
 ```
 
-| Command             | What it does                                            |
-| ------------------- | ------------------------------------------------------- |
-| `bun run dev`       | Dev server                                              |
-| `bun run build`     | Production build to `dist/`                             |
-| `bun run start`     | Run the build (loads `.env`)                            |
-| `bun run lint`      | Lint `src` with Oxlint                                  |
-| `bun run fmt:check` | Check formatting with Oxfmt                             |
-| `bun run check`     | Type-check the app and scripts                          |
-| `bun run test:bun`  | Disposable Durable, recovery, codemode and image checks |
+| Command | What it does |
+| --- | --- |
+| `bun run dev` | Dev server |
+| `bun run build` | Production build to `dist/` |
+| `bun run start` | Run the build (loads `.env`) |
+| `bun run lint` | Lint `src` with Oxlint |
+| `bun run fmt:check` | Check formatting with Oxfmt |
+| `bun run check` | Type-check the app and scripts |
+| `bun run test:bun` | Disposable Durable, recovery, codemode and image checks |
 
 Environment variables are validated at boot in [`env.ts`](env.ts). There is no login, so use it on localhost or a private network, see [docs/deploy.md](docs/deploy.md).
 

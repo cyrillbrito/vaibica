@@ -76,39 +76,39 @@ Three things in today's code would get in an extension's way:
 
 The Pi coding agent's extension API (`pi-coding-agent/docs/extensions.md`) is the bar for openness. Most of its agent side has a Durable equivalent. Its UI side (commands, shortcuts, flags, `ctx.ui`, widgets, footers, themes) is Bica's to design and is out of scope here.
 
-| Pi                                                                    | Durable                                                                                  | Fit                                                                         |
-| --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `registerTool`                                                        | `tools`, `defineTool`                                                                    | Same                                                                        |
-| Overriding a built-in tool                                            | A same-name tool in a later extension, or `wrapTool`                                     | Same                                                                        |
-| `tool_call`: block or mutate input                                    | `beforeTool`                                                                             | Same                                                                        |
-| `tool_result`: replace result                                         | `afterTool`                                                                              | Same                                                                        |
-| `before_agent_start`: prompt sections and guidelines                  | `sections`, `wrapSection`, `instructions`                                                | Same, once Bica's prompt is made of sections                                 |
-| `before_agent_start`: force the whole system prompt                   | Host sets `instructions` and drops the other sections                                    | Host only                                                                   |
-| `context`: transform messages per request                             | `beforeRequest`                                                                          | Same                                                                        |
-| `context_edit` entries                                                | Entry `edits`                                                                            | Durable has it, but hooks can't write it                                    |
-| `agent_before_settle`: continue once more                             | `onYield` returning `continue`                                                           | Same                                                                        |
-| `turn_end`: append entries and continue                               | `afterTools`, observe only                                                               | Missing                                                                     |
-| `message_end`: replace a finished message                             | `afterResponse`, observe only                                                            | Missing                                                                     |
-| `session_before_compact`: cancel or own summary                       | `beforeCompact`: decline or summary                                                      | Mostly. The cut point is Durable's.                                         |
-| `session_compact`, `session_compact_failed`                           | `pi.live.compactions` and the compaction entry, in the watched view                      | No hook, but observable                                                     |
-| `appendEntry`, tool `details` for state                               | Documents, `write` entries without `model`, tool `details`                               | Better: documents fork and rewind                                           |
-| `sendUserMessage`, `sendMessage`                                      | Host `conversation.submit` (input or write), tool `control.handoff`                      | Host only; hooks can't submit                                               |
-| `setActiveTools`, loader tools                                        | `configure({ tools })`, `control.addTools`                                               | Same                                                                        |
-| `setModel`, `setThinkingLevel`                                        | `configure({ model, thinkingLevel })`                                                    | Same                                                                        |
-| Tool `exposure` (`model-only`, `codemode`, `deferred`), `tool_search` | None                                                                                     | Missing                                                                     |
-| Tool `annotations` (read-only, destructive)                           | None                                                                                     | Missing; extra fields on the tool object would do                           |
-| `ctx.executeTool`: nested calls through the hooks                     | None                                                                                     | Missing                                                                     |
-| `ctx.modelRegistry` for nested model calls                            | None in hooks or tools                                                                   | Missing; the host has `models`                                              |
-| `registerProvider`, virtual models                                    | None; the host owns pi-ai `Models`                                                       | Host only                                                                   |
-| `before_provider_request`, headers, `provider_stream_event`           | None; the host can wrap `Models`, as Bica already does for plan usage and thinking time   | Host only                                                                   |
-| `registerMcpServer`                                                   | None; an extension can build tools from a server when it loads                           | Partial                                                                     |
-| `session_start`, `session_shutdown`, reload lifecycle                 | None; an extension is a plain object                                                     | Missing                                                                     |
-| `pi.events` between extensions                                        | None; shared documents or plain imports                                                  | Partial                                                                     |
-| Subagent packages (`pi-subagents` and others)                         | Owned conversations, child tasks, background tasks                                       | Better: durable, abortable, restart-safe                                    |
-| Nothing                                                               | Durable `tasks`                                                                          | Durable only                                                                |
-| `project_trust`                                                       | None                                                                                     | Host only                                                                   |
-| `registerToolRenderer`, `renderCall`, `renderResult`                  | None                                                                                     | Host UI: Bica's `transcript.tool`                                            |
-| Prompt templates, commands, `input` event                             | None                                                                                     | Host UI, out of scope                                                       |
+| Pi | Durable | Fit |
+| --- | --- | --- |
+| `registerTool` | `tools`, `defineTool` | Same |
+| Overriding a built-in tool | A same-name tool in a later extension, or `wrapTool` | Same |
+| `tool_call`: block or mutate input | `beforeTool` | Same |
+| `tool_result`: replace result | `afterTool` | Same |
+| `before_agent_start`: prompt sections and guidelines | `sections`, `wrapSection`, `instructions` | Same, once Bica's prompt is made of sections |
+| `before_agent_start`: force the whole system prompt | Host sets `instructions` and drops the other sections | Host only |
+| `context`: transform messages per request | `beforeRequest` | Same |
+| `context_edit` entries | Entry `edits` | Durable has it, but hooks can't write it |
+| `agent_before_settle`: continue once more | `onYield` returning `continue` | Same |
+| `turn_end`: append entries and continue | `afterTools`, observe only | Missing |
+| `message_end`: replace a finished message | `afterResponse`, observe only | Missing |
+| `session_before_compact`: cancel or own summary | `beforeCompact`: decline or summary | Mostly. The cut point is Durable's. |
+| `session_compact`, `session_compact_failed` | `pi.live.compactions` and the compaction entry, in the watched view | No hook, but observable |
+| `appendEntry`, tool `details` for state | Documents, `write` entries without `model`, tool `details` | Better: documents fork and rewind |
+| `sendUserMessage`, `sendMessage` | Host `conversation.submit` (input or write), tool `control.handoff` | Host only; hooks can't submit |
+| `setActiveTools`, loader tools | `configure({ tools })`, `control.addTools` | Same |
+| `setModel`, `setThinkingLevel` | `configure({ model, thinkingLevel })` | Same |
+| Tool `exposure` (`model-only`, `codemode`, `deferred`), `tool_search` | None | Missing |
+| Tool `annotations` (read-only, destructive) | None | Missing; extra fields on the tool object would do |
+| `ctx.executeTool`: nested calls through the hooks | None | Missing |
+| `ctx.modelRegistry` for nested model calls | None in hooks or tools | Missing; the host has `models` |
+| `registerProvider`, virtual models | None; the host owns pi-ai `Models` | Host only |
+| `before_provider_request`, headers, `provider_stream_event` | None; the host can wrap `Models`, as Bica already does for plan usage and thinking time | Host only |
+| `registerMcpServer` | None; an extension can build tools from a server when it loads | Partial |
+| `session_start`, `session_shutdown`, reload lifecycle | None; an extension is a plain object | Missing |
+| `pi.events` between extensions | None; shared documents or plain imports | Partial |
+| Subagent packages (`pi-subagents` and others) | Owned conversations, child tasks, background tasks | Better: durable, abortable, restart-safe |
+| Nothing | Durable `tasks` | Durable only |
+| `project_trust` | None | Host only |
+| `registerToolRenderer`, `renderCall`, `renderResult` | None | Host UI: Bica's `transcript.tool` |
+| Prompt templates, commands, `input` event | None | Host UI, out of scope |
 
 ## What's missing
 

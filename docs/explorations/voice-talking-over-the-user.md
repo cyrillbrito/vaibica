@@ -28,14 +28,14 @@ A third likely cause is the hold music reaching the mic, mostly on iPhone. That 
 
 What we send into the call, all from `src/server/voice.ts`:
 
-| Trigger                                       | Channel                                                             | When                       | Can it make the voice speak?                                                            |
-| --------------------------------------------- | ------------------------------------------------------------------- | -------------------------- | --------------------------------------------------------------------------------------- |
-| Agent's final reply (`"Agent Final Message"`) | speakable (no channel = speakable on this wire, per Codex's source) | when the run settles       | Yes, by design. **Was sent with no regard for the user talking.**                       |
-| Status reply (`[[live:status]]`)              | speakable                                                           | right after the delegation | Yes. Delegation can come mid-utterance.                                                 |
-| Cancel reply (`[[live:cancel-current]]`)      | speakable                                                           | right after the abort      | Yes, same.                                                                              |
-| Error reply                                   | speakable                                                           | when the hand-off throws   | Yes, same.                                                                              |
-| Step text between tool calls                  | commentary                                                          | each `toolUse` entry       | Meant to be silent. Codex sends the same thing as "QuietReasoningStatus" on commentary. |
-| "Still working (N s so far)"                  | commentary                                                          | every 20 s                 | Meant to be silent.                                                                     |
+| Trigger | Channel | When | Can it make the voice speak? |
+| --- | --- | --- | --- |
+| Agent's final reply (`"Agent Final Message"`) | speakable (no channel = speakable on this wire, per Codex's source) | when the run settles | Yes, by design. **Was sent with no regard for the user talking.** |
+| Status reply (`[[live:status]]`) | speakable | right after the delegation | Yes. Delegation can come mid-utterance. |
+| Cancel reply (`[[live:cancel-current]]`) | speakable | right after the abort | Yes, same. |
+| Error reply | speakable | when the hand-off throws | Yes, same. |
+| Step text between tool calls | commentary | each `toolUse` entry | Meant to be silent. Codex sends the same thing as "QuietReasoningStatus" on commentary. |
+| "Still working (N s so far)" | commentary | every 20 s | Meant to be silent. |
 
 Not found: no response per transcript chunk, no retries, no "agent finished" notification spoken separately, no second sender. The browser's data channel only draws captions; only the server answers delegations. `startCall` in the browser ends any previous call first.
 

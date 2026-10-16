@@ -1,5 +1,22 @@
 {
   "singleQuote": true,
   "printWidth": 80,
-  "ignorePatterns": ["file-routes.d.ts", "solid-env.d.ts"]
+  "ignorePatterns": [
+    "file-routes.d.ts",
+    "solid-env.d.ts",
+    "skills",
+    ".agents/skills",
+    ".pi/skills",
+    "docs/explorations/*.html"
+  ],
+  "overrides": [
+    {
+      "files": ["**/*.md"],
+      "options": {
+        "proseWrap": "never",
+        "printWidth": 1,
+        "embeddedLanguageFormatting": "off"
+      }
+    }
+  ]
 }

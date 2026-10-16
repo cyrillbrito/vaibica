@@ -12,9 +12,9 @@
     "build": "bunx --bun vite build",
     "start": "bun start.js",
     "build:bica": "bun cli/build.ts",
-    "lint": "oxlint --config .oxlintrc.json src",
-    "fmt": "oxfmt --config .oxfmtrc.json",
-    "fmt:check": "oxfmt --config .oxfmtrc.json --check src vite.config.ts start.js lint/bica.js",
+    "lint": "oxlint src",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
     "check": "tsc --noEmit",
     "test:bun": "bun scripts/test-bun-durable.ts && bun scripts/test-bun-recovery.ts && bun scripts/test-bun-image.ts"
   },
@@ -27,20 +27,20 @@
     "@pierre/diffs": "1.5.1",
     "@pierre/trees": "1.0.0-beta.6",
     "@solidjs/meta": "^1.0.0-next.2",
-    "@solidjs/router": "^2.0.0-next.31",
-    "@solidjs/web": "^2.0.0-rc.11",
+    "@solidjs/router": "^2.0.0-next.40",
+    "@solidjs/web": "^2.0.0-rc.15",
     "@tanstack/markdown": "^1.0.0",
     "ghostty-web": "^0.4.0",
     "lucide": "^1.50.0",
     "mermaid": "^12.1.0",
-    "solid-js": "^2.0.0-rc.11",
+    "solid-js": "^2.0.0-rc.15",
     "valibot": "^1.4.2",
     "ws": "^8.22.0"
   },
   "devDependencies": {
-    "@oxlint/plugins": "^1.79.0",
-    "@solidjs/diagnostics": "^2.0.0-rc.11",
-    "@solidjs/vite-plugin": "^3.0.0-next.46",
+    "@oxlint/plugins": "^1.88.0",
+    "@solidjs/diagnostics": "^2.0.0-rc.15",
+    "@solidjs/vite-plugin": "^3.0.0-next.50",
     "@tailwindcss/vite": "^4.3.3",
     "@types/bun": "^1.4.2",
     "@types/compression": "^1.8.1",
@@ -49,14 +49,11 @@
     "eslint-plugin-solid": "~0.18.0",
     "filesystem-routing": "0.4.0",
     "oxfmt": "^0.70.0",
-    "oxlint": "^1.85.0",
-    "oxlint-tsgolint": "^7.0.2003",
+    "oxlint": "^1.88.0",
+    "oxlint-tsgolint": "^7.0.2004",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.2",
-    "vite": "^8.2.1"
-  },
-  "engines": {
-    "bun": ">=1.4.2"
+    "vite": "^8.3.4"
   },
   "devEngines": {
     "packageManager": {
@@ -64,5 +61,8 @@
       "version": ">=1.4.2",
       "onFail": "error"
     }
+  },
+  "engines": {
+    "bun": ">=1.4.2"
   }
 }

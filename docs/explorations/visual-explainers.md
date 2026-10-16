@@ -6,14 +6,14 @@ The filter was real use. Star counts come from the GitHub API on 2026-10-12. Man
 
 ## Diagrams and posters
 
-| Tool                                                                                          | Stars | Output                                                |
-| --------------------------------------------------------------------------------------------- | ----- | ----------------------------------------------------- |
-| [Archify](https://github.com/tt-a1i/archify)                                                  | 82k   | Interactive HTML diagram of a repo or idea            |
-| [diagram-design](https://github.com/cathrynlavery/diagram-design)                             | 50k   | HTML and SVG diagrams, 44 types, in your brand        |
-| [visual-explainer](https://github.com/nicobailon/visual-explainer)                            | 10k   | HTML explainer pages and slide decks                  |
-| [drawio-skill](https://github.com/Agents365-ai/drawio-skill)                                  | 10k   | Editable draw.io diagrams from code                   |
-| [architecture-diagram-generator](https://github.com/Cocoon-AI/architecture-diagram-generator) | 7k    | Dark HTML architecture diagrams with PNG export       |
-| [excalidraw-diagram-skill](https://github.com/coleam00/excalidraw-diagram-skill)              | 5k    | Hand-drawn Excalidraw diagrams, checks its own render |
+| Tool | Stars | Output |
+| --- | --- | --- |
+| [Archify](https://github.com/tt-a1i/archify) | 82k | Interactive HTML diagram of a repo or idea |
+| [diagram-design](https://github.com/cathrynlavery/diagram-design) | 50k | HTML and SVG diagrams, 44 types, in your brand |
+| [visual-explainer](https://github.com/nicobailon/visual-explainer) | 10k | HTML explainer pages and slide decks |
+| [drawio-skill](https://github.com/Agents365-ai/drawio-skill) | 10k | Editable draw.io diagrams from code |
+| [architecture-diagram-generator](https://github.com/Cocoon-AI/architecture-diagram-generator) | 7k | Dark HTML architecture diagrams with PNG export |
+| [excalidraw-diagram-skill](https://github.com/coleam00/excalidraw-diagram-skill) | 5k | Hand-drawn Excalidraw diagrams, checks its own render |
 
 Archify maps a codebase, links nodes to source, and traces paths, which makes it the best for personal understanding. It is interactive, so for social media it needs a screen recording.
 
@@ -25,13 +25,13 @@ The Excalidraw skill gives a friendly hand-drawn look that does well on social m
 
 ## Video
 
-| Tool                                                                                                           | Stars    | Output                                        |
-| -------------------------------------------------------------------------------------------------------------- | -------- | --------------------------------------------- |
-| [Remotion](https://github.com/remotion-dev/remotion) with [its skills](https://github.com/remotion-dev/skills) | 63k / 5k | MP4 from React components                     |
-| [HyperFrames](https://github.com/heygen-com/hyperframes)                                                       | 61k      | MP4 from HTML compositions                    |
-| [/brag](https://github.com/latent-spaces/brag)                                                                 | 15k      | 20 second launch video, built on HyperFrames  |
-| [video-shotcraft](https://github.com/Vincentwei1021/video-shotcraft)                                           | 11k      | Product promo films on Remotion               |
-| [anything2explainer](https://github.com/Vincentwei1021/anything2explainer)                                     | 2.4k     | Narrated 2 to 8 minute explainers on Remotion |
+| Tool | Stars | Output |
+| --- | --- | --- |
+| [Remotion](https://github.com/remotion-dev/remotion) with [its skills](https://github.com/remotion-dev/skills) | 63k / 5k | MP4 from React components |
+| [HyperFrames](https://github.com/heygen-com/hyperframes) | 61k | MP4 from HTML compositions |
+| [/brag](https://github.com/latent-spaces/brag) | 15k | 20 second launch video, built on HyperFrames |
+| [video-shotcraft](https://github.com/Vincentwei1021/video-shotcraft) | 11k | Product promo films on Remotion |
+| [anything2explainer](https://github.com/Vincentwei1021/anything2explainer) | 2.4k | Narrated 2 to 8 minute explainers on Remotion |
 
 Remotion is the most mature and the one people mean by "React into videos". Every frame is a React component, so Bica's own look can be rebuilt in it. It is free for individuals and small companies only.
 

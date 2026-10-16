@@ -98,11 +98,11 @@ Buttons sink to 97% while pressed and spring back in 150ms (`ui/Button`), but no
 
 Tailwind's default breakpoints. State lives in `src/lib/layout.ts`.
 
-| Width         | Sessions             | Chat   | Files · Git           |
-| ------------- | -------------------- | ------ | --------------------- |
-| < `md` (768)  | Drawer from the left | Full   | Bottom sheet          |
-| `md`–`xl`     | Column, hideable     | Center | Drawer from the right |
-| ≥ `xl` (1280) | Column, hideable     | Center | Column, hideable      |
+| Width | Sessions | Chat | Files · Git |
+| --- | --- | --- | --- |
+| < `md` (768) | Drawer from the left | Full | Bottom sheet |
+| `md`–`xl` | Column, hideable | Center | Drawer from the right |
+| ≥ `xl` (1280) | Column, hideable | Center | Column, hideable |
 
 - Toggles sit in the chat top bar. `⌘B` sessions, `⌥⌘B` files and changes, `Esc` closes overlays. Every shortcut is in the [command palette](./command-palette.md).
 - Hiding or showing a column slides it (200ms, motion-safe): a hidden column is zero wide, not removed, and its content keeps its width so it moves instead of squeezing. Only the toggle animates; dragging an edge or resizing the window stays instant (`sliding` in `layout.ts`).
@@ -182,13 +182,13 @@ The repo's `frontend-design` skill (`.pi/skills/`) covers visual direction and t
 
 Use [mobbin.com](https://mobbin.com) for real app screens and flows; its [MCP server](https://docs.mobbin.com/mcp/features) lets an agent search it. [Refero](https://refero.design) covers web and SaaS.
 
-| Area                 | Look at                        | Take                                                                        |
-| -------------------- | ------------------------------ | --------------------------------------------------------------------------- |
-| Chat                 | ChatGPT, Claude, Codex, Cursor | Prose replies without bubbles, user message as a pill, composer as the hero |
-| Navigation & density | Linear                         | Quiet sidebar, keyboard-first, subtle active states                         |
-| Panels & diffs       | Zed, Conductor, GitHub         | Collapsible panes, compact file tree, readable mobile diffs                 |
-| Polish               | Raycast, v0                    | Motion restraint, typography, empty states                                  |
-| AI components        | affectUI                       | Rolling numbers, gliding pills, morphs, shimmer, agent cards (see below)    |
+| Area | Look at | Take |
+| --- | --- | --- |
+| Chat | ChatGPT, Claude, Codex, Cursor | Prose replies without bubbles, user message as a pill, composer as the hero |
+| Navigation & density | Linear | Quiet sidebar, keyboard-first, subtle active states |
+| Panels & diffs | Zed, Conductor, GitHub | Collapsible panes, compact file tree, readable mobile diffs |
+| Polish | Raycast, v0 | Motion restraint, typography, empty states |
+| AI components | affectUI | Rolling numbers, gliding pills, morphs, shimmer, agent cards (see below) |
 
 ### affectUI
 

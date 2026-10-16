@@ -51,7 +51,10 @@ const node = await Bun.file(join(root, 'dist/server/node.js')).text();
 const guard = /^if \(process\.argv\[1\].*serve\(\);$/m;
 if (!guard.test(node))
   throw new Error('dist/server/node.js changed: check its main-module guard');
-await Bun.write(join(root, 'dist/server/node-bica.js'), node.replace(guard, ''));
+await Bun.write(
+  join(root, 'dist/server/node-bica.js'),
+  node.replace(guard, ''),
+);
 
 const entry = join(out, 'entry.js');
 await Bun.write(

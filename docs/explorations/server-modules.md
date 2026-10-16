@@ -22,19 +22,19 @@ The migration starts with step 0, the removals, then nine steps. Steps 1 to 4 ar
 
 The line counts come from `wc -l`. Fan-in is how many other server files import the file.
 
-| Concept              | Files (lines)                                                                                                                                                                      | Fan-in              | Notes                                                                                          |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | ---------------------------------------------------------------------------------------------- |
-| Agent runtime        | `harness` (92)                                                                                                                                                                     | 9                   | Opens Pi Durable, owns `models` (the pi-ai registry), installs every tool, and keeps `context` |
-| Sessions             | `sessions` (1,325), `projection` (253), `long-lived` (85)                                                                                                                          | 9, 2, 0             | `SessionDoc`, the list, create, fork, queue, notes, titles, lanes, hub                         |
-| Profiles             | `profiles` (43), `instructions` (253), `skills` (98), `lib/profiles` (29)                                                                                                          | 1, 2, 2             | The server half is a table plus two forwarders                                                 |
-| Agent tools          | `coding-tools` (115), `session-tools` (304), `terminal-tools` (217), `web-tools` (184), `codemode-tool` (484), `ask-tool` (56), `summary` (25), `tool-time` (50), `fit-image` (25) | 1 to 5              | All are Durable extensions, and all are wired in `harness.ts`                                  |
-| Providers and models | `models` (219), `credentials` (70), `accounts` (255), `proxy` (389), `plan-usage` (325), `fast-model` (46), `thinking-time` (53)                                                   | 8, 3, 1, 4, 2, 2, 1 | `models.ts` also owns `settings.json`                                                          |
-| Git and files        | `workspace` (750), `butler` (412), `session-changes` (226), `commit-message` (151), `editor` (14)                                                                                  | 5, 4, 2, 1, 1       | Plain git, GitButler lanes, shadow git for folders without git                                 |
-| Projects             | `projects` (300), `github` (88)                                                                                                                                                    | 7, 1                | Projects, worktrees, chats, PRs                                                                |
-| Terminals            | `terminals` (451)                                                                                                                                                                  | 4                   | PTYs; state on `globalThis`                                                                    |
-| Notifications        | `notify` (142), `push` (160)                                                                                                                                                       | 2, 2                | Presence, run-end pushes; `push` is pure Web Push                                              |
-| Voice                | `voice` (409)                                                                                                                                                                      | 1                   | GPT-Live calls on a session                                                                    |
-| Transport            | `socket` (705), `ws-log` (30), `live` (53)                                                                                                                                         | 1, 1, 8             | One router; `live` is the watch primitive                                                      |
+| Concept | Files (lines) | Fan-in | Notes |
+| --- | --- | --- | --- |
+| Agent runtime | `harness` (92) | 9 | Opens Pi Durable, owns `models` (the pi-ai registry), installs every tool, and keeps `context` |
+| Sessions | `sessions` (1,325), `projection` (253), `long-lived` (85) | 9, 2, 0 | `SessionDoc`, the list, create, fork, queue, notes, titles, lanes, hub |
+| Profiles | `profiles` (43), `instructions` (253), `skills` (98), `lib/profiles` (29) | 1, 2, 2 | The server half is a table plus two forwarders |
+| Agent tools | `coding-tools` (115), `session-tools` (304), `terminal-tools` (217), `web-tools` (184), `codemode-tool` (484), `ask-tool` (56), `summary` (25), `tool-time` (50), `fit-image` (25) | 1 to 5 | All are Durable extensions, and all are wired in `harness.ts` |
+| Providers and models | `models` (219), `credentials` (70), `accounts` (255), `proxy` (389), `plan-usage` (325), `fast-model` (46), `thinking-time` (53) | 8, 3, 1, 4, 2, 2, 1 | `models.ts` also owns `settings.json` |
+| Git and files | `workspace` (750), `butler` (412), `session-changes` (226), `commit-message` (151), `editor` (14) | 5, 4, 2, 1, 1 | Plain git, GitButler lanes, shadow git for folders without git |
+| Projects | `projects` (300), `github` (88) | 7, 1 | Projects, worktrees, chats, PRs |
+| Terminals | `terminals` (451) | 4 | PTYs; state on `globalThis` |
+| Notifications | `notify` (142), `push` (160) | 2, 2 | Presence, run-end pushes; `push` is pure Web Push |
+| Voice | `voice` (409) | 1 | GPT-Live calls on a session |
+| Transport | `socket` (705), `ws-log` (30), `live` (53) | 1, 1, 8 | One router; `live` is the watch primitive |
 
 ### Who imports whom
 

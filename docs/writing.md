@@ -19,6 +19,7 @@ How to write docs, comments, and commit messages in this repo. The code is reada
 - Link one or two main files at most. Don't walk through code.
 - A feature borrowed from other apps or studies ends with its sources.
 - Add new docs to the index in `AGENTS.md`.
+- Write tables unpadded, `| a | b |` and `| --- | --- |`. Agents read these files, and aligned columns spend tokens on spaces. Oxfmt keeps them so: its Markdown override (`proseWrap: "never"` with `printWidth: 1`) makes every aligned table too wide, and too-wide tables print compact.
 
 `docs/explorations/` is the opposite: research, brainstorms, comparisons, and prototypes for what is not built yet. It can be long and open-ended, and has no index. Write one only when asked: a question gets its answer in the reply. When an idea gets built, its doc in `docs/` describes what was built and links the sources that inspired it, and the exploration is deleted.
 
