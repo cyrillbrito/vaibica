@@ -1,6 +1,7 @@
 import { useNavigate } from '@solidjs/router';
+import { createSignal } from 'solid-js';
 
-import { updateSettings, useModels } from '#lib/models';
+import { useModels } from '#lib/models';
 import type { ProfileId } from '#lib/profiles';
 import type { PromptImage } from '#lib/protocol';
 import { startSession } from '#lib/sessions';
@@ -33,11 +34,15 @@ export default function StartComposer(props: {
 }) {
   const navigate = useNavigate();
   const models = useModels();
-  // New sessions start with the saved defaults; picking here changes them.
-  const choice = () => ({
-    model: models().settings.model,
-    thinkingLevel: models().settings.thinkingLevel,
-  });
+  // Picking here sets only the session about to start; Settings holds the
+  // default, so one session's pick never leaks into the next.
+  const [choice, setChoice] = createSignal(
+    () => ({
+      model: models().settings.model,
+      thinkingLevel: models().settings.thinkingLevel,
+    }),
+    { name: 'startChoice' },
+  );
 
   const create = async (prompt: string, images: PromptImage[]) => {
     const t = props.target;
@@ -76,7 +81,7 @@ export default function StartComposer(props: {
           <VoiceIcon />
         </IconButton>
       }
-      controls={<ModelPicker value={choice()} onChange={updateSettings} />}
+      controls={<ModelPicker value={choice()} onChange={setChoice} />}
     />
   );
 }
