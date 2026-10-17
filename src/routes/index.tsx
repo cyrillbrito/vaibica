@@ -1,4 +1,4 @@
-import { For, Show, createMemo, createSignal } from 'solid-js';
+import { Show, createMemo, createSignal } from 'solid-js';
 
 import HomeTips from '../components/HomeTips';
 import NeedsYou from '../components/NeedsYou';
@@ -6,7 +6,7 @@ import { openProjectPicker } from '../components/ProjectPicker';
 import StartComposer from '../components/StartComposer';
 import TopBar from '../components/TopBar';
 import { Button } from '../components/ui/Button';
-import Select from '../components/ui/Select';
+import { AssistantIcon } from '../components/ui/icons';
 import WorkspacePicker from '../components/WorkspacePicker';
 import {
   currentTarget,
@@ -14,7 +14,7 @@ import {
   setCurrentTarget,
   useProjects,
 } from '#lib/projects';
-import { PROFILES, isProfile, type ProfileId } from '#lib/profiles';
+import { ASSISTANT_HINT } from '#lib/profiles';
 import { useSessions } from '#lib/sessions';
 
 export default function Home() {
@@ -23,8 +23,8 @@ export default function Home() {
   const target = createMemo(() => resolveTarget(projects(), currentTarget()), {
     name: 'homeTarget',
   });
-  const [profile, setProfile] = createSignal<ProfileId>('coding', {
-    name: 'homeProfile',
+  const [assistant, setAssistant] = createSignal(false, {
+    name: 'homeAssistant',
   });
   let call = () => {};
 
@@ -57,21 +57,21 @@ export default function Home() {
                   onChange={setCurrentTarget}
                   onAdd={openProjectPicker}
                 />
-                <Select
-                  controlSize="lg"
-                  class="shrink-0 self-start"
-                  aria-label="Profile"
-                  title={PROFILES[profile()].about}
-                  value={profile()}
-                  onChange={(e) => {
-                    const value = e.currentTarget.value;
-                    if (isProfile(value)) setProfile(value);
-                  }}
+                <Button
+                  size="lg"
+                  class="self-start aria-pressed:bg-active aria-pressed:text-fg"
+                  title={ASSISTANT_HINT}
+                  aria-pressed={assistant() ? 'true' : 'false'}
+                  onClick={() => setAssistant(!assistant())}
                 >
-                  <For each={Object.keys(PROFILES) as ProfileId[]}>
-                    {(p) => <option value={p}>{PROFILES[p].label}</option>}
-                  </For>
-                </Select>
+                  <AssistantIcon />
+                  Assistant
+                </Button>
+                <Show when={assistant()}>
+                  <span class="min-w-0 self-center truncate text-meta text-muted">
+                    Long-running, with memory
+                  </span>
+                </Show>
               </div>
               <StartComposer
                 target={{
@@ -79,7 +79,7 @@ export default function Home() {
                   cwd: t().workspace.path,
                   worktree: t().worktree,
                 }}
-                profile={profile()}
+                profile={assistant() ? 'assistant' : 'coding'}
                 draft="new"
                 ref={(api) => (call = api.call)}
               />

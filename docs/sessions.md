@@ -8,7 +8,7 @@ Sessions run on Pi Durable, inside the server. Every step the agent takes is sav
 
 ## Starting one
 
-The home page's composer picks a workspace, a [profile](./profiles.md), and a model, then starts the session with your first prompt. The fast model names it in the background, or the prompt's first words do. Renaming by hand wins. Model and effort can change at any time, and new sessions start from the defaults in Settings.
+The home page's composer picks a workspace, a model, and whether to turn on [assistant mode](./assistant-mode.md), then starts the session with your first prompt. The fast model names it in the background, or the prompt's first words do. Renaming by hand wins. Model and effort can change at any time, and new sessions start from the defaults in Settings.
 
 ## The transcript
 

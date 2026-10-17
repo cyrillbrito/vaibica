@@ -2,7 +2,7 @@
 
 Assistant mode is for a session you never close. Most sessions are a task: you start one, finish the work, and move on. Some are a companion instead, like a notes vault you talk to every day, ask to keep track of things, and come back to for months. Assistant mode lets that kind of session keep going without you thinking about context size, cost, or when to start over.
 
-Assistant is a [profile](./profiles.md): pick it when you start a session, or switch to it from the context chip's menu. The chip then shows an infinity sign. The [hub](./hub.md) is kept small the same way.
+Assistant is a [profile](./profiles.md) you turn on as a toggle: the Assistant button next to the workspace when you start a session, or "Turn on assistant mode" in the context chip's menu. The chip then shows an infinity sign. The [hub](./hub.md) is kept small the same way.
 
 ## The idea
 
@@ -19,6 +19,8 @@ Bica looks after the session while it sits idle, so it never interrupts you in t
 - When a session gets very big during heavy use, it does the same at the first idle minute instead of waiting for a long pause.
 
 Both sizes are constants in `upkeep.ts`, tuned by use.
+
+Its instructions open differently from a coding session's. They say it is a long-running helper for one project, there for notes, planning, research, answers, and quick fixes, and that a bigger coding task goes to a session of its own. It can coordinate a few sessions like that, with the same handoff rules as the [hub](./hub.md), but only inside its own project: `session_start` refuses another project, and `list` shows only its own. Coordinating across projects is the hub's job.
 
 The agent also gets a few extra instructions in assistant mode. It writes decisions, preferences, and open tasks down in the same reply they come up in. It keeps only what will still be true and useful in a few months, and what the user said or it checked, not its guesses. It replaces a fact that changed instead of adding a second line, and splits a note that grows too long. It says so when memory holds nothing on a topic, rather than guess. And it says in its replies what it learned from tools, since that output will be cleared later.
 

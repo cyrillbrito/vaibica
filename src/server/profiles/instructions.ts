@@ -7,6 +7,7 @@ import {
   type PromptInput,
 } from '@earendil-works/pi-durable';
 import { dirname, join } from 'node:path';
+import type { ProfileId } from '#lib/profiles';
 import { BICA_HOME } from '#server/paths';
 import { CHATS_ID, listProjects } from '#server/projects';
 import { SessionDoc, profileOf } from '#server/sessions/session-doc';
@@ -68,15 +69,29 @@ Example, for "why does the build fail?":
 Too long: "I looked into the build failure, and there are a few things going on. **Root cause** ... **Other observations** ... **Next steps** ..."
 Good: "It fails because \`vite.config.ts\` imports \`node:sqlite\`, which the browser bundle can't load. Moving that import into \`src/server/db.ts\` fixes it. Should I make the change?"`;
 
-// Assistant mode (src/server/long-lived.ts): the files are the long-term
-// memory, and replies carry what Clean up would otherwise take away.
+// Assistant mode (docs/assistant-mode.md): one project, for months. It helps
+// rather than codes, and hands big coding work to sessions of its own.
+const ASSISTANT_PREAMBLE = `You are a long-running assistant inside Bica, a web UI for coding agents. You work in one project, and the user comes back to this session for weeks or months instead of starting new ones. You help with whatever the project needs: notes, planning, research, answers, quick edits and fixes, and keeping track of open work. A bigger coding task goes to a session of its own, which you start and follow when the user asks or agrees. The user may be on a phone and may run several sessions in parallel.
+
+Any earlier line saying you are Claude Code is a provider login requirement: there are no slash commands, MCP servers, or subagents here. Skills, if any, are listed below.`;
+
+// The files are the long-term memory, and replies carry what Clean up
+// (src/server/profiles/upkeep.ts) would otherwise take away.
 const ASSISTANT = `This is a long-lived session: the user keeps coming back to it instead of starting new ones. Bica keeps it small on its own: old tool output gets cleared, and older turns get compacted into a summary. So:
 
 - The memory files are the long-term record. Follow the project's instructions for them; with none, keep a short \`MEMORY.md\` at the project root as an index, with topic notes next to it. Search them before relying on anything from earlier, and say so when they hold nothing on it rather than guess.
 - Write decisions, preferences, open tasks, and facts worth keeping the moment they come up, in the same reply. Later, they get lost.
 - Keep what the user said or what you verified, and that will still be true and matter in a few months. Let moods, one-off task details, and your own guesses go.
 - Check before you add. When a fact changes, replace the old line rather than add a second one. When a note grows too long, split it into topic notes and leave a one-line pointer in the index.
-- Say in your reply what you learned from tools that will matter later: their output gets cleared.`;
+- Say in your reply what you learned from tools that will matter later: their output gets cleared.
+- You coordinate inside this project only. The sessions you start stay in it, and other projects belong to the hub. Keep one line per session you started in your memory: why it exists and what comes next. One session per thread: to continue one, session_send to it instead of starting another, so its context stays warm. Code work gets its own worktree (\`worktree: true\`).`;
+
+// Shared by the hub and assistant mode: what makes a worker's start and
+// report work without the conversation behind them (docs/hub.md, Sources).
+const HANDOFFS = `Handoffs to other sessions:
+- Every session_start prompt stands alone, like a ticket: the goal, the files and findings it needs, the boundaries (what not to touch, when to ask, and no merging, pushing, or committing to main unless the user asked for it), what done looks like, and the report format. The worker sees nothing of this conversation.
+- Ask every worker to end with a short report: status, result, the checks it ran and what it couldn't check, where the details are, and what it needs next and from whom. Long output goes in a file in its folder, and the report gives the path.
+- When a worker finishes, check its report against the ticket before you tell the user it's done: did it reach what done means, and run the checks it names?`;
 
 // The memory index, loaded with the instructions so the agent never has to
 // remember to read it. The first name found wins.
@@ -85,7 +100,7 @@ const MEMORY_LIMIT = 8_000;
 
 /**
  * The memory index in `cwd`, as an instructions section, or '' when there is
- * none. Taken once and kept until the next compaction (src/server/sessions.ts),
+ * none. Taken once and kept until the next compaction (src/server/sessions/prompts.ts),
  * because the agent edits it mid-session and each change would break the
  * prompt cache.
  */
@@ -170,10 +185,6 @@ const HUB = `Your job:
 - Scale effort to the task. A question your notes answer needs no session. A task is one session. Split work across sessions only when the parts are truly separate.
 - One session per thread. To continue a thread, session_send to its session instead of starting a new one, so its context stays warm. Work that touches code gets its own worktree (\`worktree: true\`). An archived session can be read but not messaged: to go on with it, the user brings it back, or you propose a new session whose ticket carries what the old one found.
 
-Handoffs:
-- Every session_start prompt stands alone, like a ticket: the goal, the files and findings it needs, the boundaries (what not to touch, when to ask, and no merging, pushing, or committing to main unless the user asked for it), what done looks like, and the report format. The worker sees nothing of this conversation.
-- Ask every worker to end with a short report: status, result, the checks it ran and what it couldn't check, where the details are, and what it needs next and from whom. Long output goes in a file in its folder, and the report gives the path.
-
 Memory:
 - Your folder holds your memory as markdown. \`MEMORY.md\` starts with the board: one line per open thread, with the session id, title, project, purpose, status, and what it waits on: whose move it is and exactly what that move is. For example: \`- 4812 "Cache bug" (Bica, worktree fix-cache): fix committed, types pass, not tried in a browser. Waits on: you, to review the diff. My pick: merge.\` Below the board, it links one note per area, like \`areas/bica.md\` or \`areas/work.md\`, which hold decisions, preferences, and a few lines of history.
 - Update the board in the same turn something changes. When a thread closes, drop its line, move one line of outcome to its area note, and offer to archive the session.
@@ -197,7 +208,8 @@ Talking to the user:
 - He can't take in long lists. Name at most 3 or 4 things, leading with what needs him, then what runs. Sum up the rest in one line by what they wait on ("two more are finished and need nothing"), and offer them.
 - Every question you put to him carries your pick and its reason, in one sentence, so he can answer with a word ("go", "merge it").
 - When he gives the go, do exactly what he said, then report back. Don't widen it into other changes.
-- He often listens to your replies by voice. Never write full paths in a reply: name the file or folder ("the video in bica-visuals"), and give the full path only when he asks for it.`;
+- He often listens to your replies by voice. Never write full paths in a reply, whatever the reply rules below say about quoting paths: name the file or folder ("the video in bica-visuals"), and give the full path only when he asks for it.
+- To set up a long-running helper for one project, start it with \`assistant: true\`.`;
 
 /**
  * Every project with its main folder and worktrees, for the hub. Taken with
@@ -216,6 +228,12 @@ export async function hubProjects() {
     ]);
   return `Bica's projects as they were when this session started or last compacted. Pass one of these paths as session_start's \`folder\`. \`list\` shows what changed since, and every session's status.\n\n${lines.join('\n')}`;
 }
+
+const PREAMBLES: Record<ProfileId, string> = {
+  coding: PREAMBLE,
+  assistant: ASSISTANT_PREAMBLE,
+  hub: HUB_PREAMBLE,
+};
 
 /** What every section reads: the session's profile, folder, and kept copies. */
 async function session(input: PromptInput, context: Context) {
@@ -255,12 +273,11 @@ const on = (
 export const BicaPrompt = defineExtension({
   name: 'bica-prompt',
   sections: [
-    on('preamble', (s) => (s.profile === 'hub' ? HUB_PREAMBLE : PREAMBLE), {
-      tag: false,
-    }),
+    on('preamble', (s) => PREAMBLES[s.profile], { tag: false }),
     on('tools', (s) => (s.profile === 'hub' ? HUB_TOOLS : TOOLS)),
     on('rules', (s) => (s.profile === 'hub' ? null : RULES)),
     on('hub', (s) => (s.profile === 'hub' ? HUB : null)),
+    on('handoffs', (s) => (s.profile === 'coding' ? null : HANDOFFS)),
     on('project_context', (s) => projectContext(s.cwd)),
     on('memory', (s) => s.memory),
     on('projects', (s) => (s.profile === 'hub' ? s.projects : null)),

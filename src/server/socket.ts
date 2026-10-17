@@ -103,7 +103,8 @@ const calls: Handlers = {
     createSession({
       ...args,
       prompt: args.prompt.trim(),
-      profile: args.profile ?? 'coding',
+      // Only the hub's own page makes a hub (openHub).
+      profile: args.profile === 'assistant' ? 'assistant' : 'coding',
     }),
   'session.configure': async ({ id, ...choice }) => {
     await configure(id, choice);
@@ -151,6 +152,7 @@ const calls: Handlers = {
   },
   'hub.open': async () => openHub(),
   'session.profile': async ({ id, profile }) => {
+    if (profile === 'hub') throw new Error('Only the hub is a hub session');
     await setProfile(id, profile);
     return null;
   },

@@ -10,7 +10,7 @@ A chip in the session's top bar shows how full the window is. While idle, it cou
 - When the cache has expired on a big session, a line above the composer offers Clean up instead, with what it would save.
 - A compaction or clean up you watch land shows how much it dropped, with a cheer.
 
-The chip's menu offers fork from here, compact, clean up, a switch to another [profile](./profiles.md), and the details. [Assistant mode](./assistant-mode.md) compacts and cleans up on its own.
+The chip's menu offers fork from here, compact, clean up, turning [assistant mode](./assistant-mode.md) on or off, and the details. [Assistant mode](./assistant-mode.md) compacts and cleans up on its own.
 
 The details open on the window as a field of cells, filled in order by the system prompt, tools, the conversation, and tool output, with the room kept for the answer outlined at the end. Pointing at a row or its cells lights them and rolls the big number to that part, and a row opens to its parts. The conversation row has Compact and the tool output row has Clean up. Pointing at Clean up lights the cells it would clear, the cells breathe while either runs, and a check and a "freed" line follow. Below are the biggest prompts, replies, and tool results (tap one to jump to it), the cache hit rate, and the spend per model, by cost or by tokens.
 

@@ -24,7 +24,7 @@ export interface StartTarget {
 export default function StartComposer(props: {
   target: StartTarget | undefined;
   // Absent: coding.
-  profile?: ProfileId;
+  profile?: Exclude<ProfileId, 'hub'>;
   // Where the typed draft is kept, e.g. "new" on the home page.
   draft: string;
   placeholder?: string;
@@ -42,16 +42,14 @@ export default function StartComposer(props: {
   const create = async (prompt: string, images: PromptImage[]) => {
     const t = props.target;
     if (!t) throw new Error('No project');
-    const profile = props.profile ?? 'coding';
     const id = await startSession(
       t.projectId,
       t.cwd,
       prompt,
       images,
-      // The hub has its own default model, set in Settings.
-      profile === 'hub' ? undefined : choice(),
+      choice(),
       t.worktree || undefined,
-      profile,
+      props.profile ?? 'coding',
     );
     navigate(paths.s(id));
     return id;

@@ -22,7 +22,7 @@ Scripts can also call classifier models. A classifier doesn't chat: it answers t
 Agents can see everything open in Bica and work with other sessions the way they work with terminals: start, read, send, and stop.
 
 - `list` shows every project, workspace, open session, and terminal as a tree, with their status and which one is the caller. With `archived`, it lists the most recent archived sessions instead. The agent is told to leave the rest alone unless you name it. The [hub](./hub.md) has no such limit, but waits for your go before it changes anything.
-- `session_start` starts a normal session with the same model and a prompt that stands on its own, in any workspace or in a new worktree.
+- `session_start` starts a normal session with the same model and a prompt that stands on its own, in any workspace or in a new worktree. With `assistant`, the new session runs in [assistant mode](./assistant-mode.md). An assistant session starts sessions only in its own project, and its `list` shows only that project.
 - `session_read` returns a session's status, who started it, who sent its last prompt (you, another session, a note, or the user), whether the user ever prompted it himself, the `ask` questions it waits on, and its last reply, or with `messages` its last few prompts and replies.
 - `session_send` sends a signed message, so the receiver can answer. It waits for the current turn, or joins it with `steer`.
 - `session_stop` stops a session's turn. The session stays.

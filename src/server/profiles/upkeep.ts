@@ -31,7 +31,7 @@ const SAVE_NOTE = '[Note from Bica, not from the user] Memory save:';
 const SAVE_PROMPT = `${SAVE_NOTE} this session is about to be compacted, and older turns will shrink to a summary. Save what should outlast it to the memory files, the way the project's instructions and skills say: decisions, preferences, open tasks, and facts you will need later. Look for what was said but never written down. Replace lines that are now wrong instead of adding next to them, and keep the files short. Then reply with one line. Start nothing else.`;
 
 // Taelin's compaction rules (OptChat), trimmed.
-const SUMMARY_RULES = `This is a long-lived assistant session. Keep the user's words close to verbatim: orders, decisions, corrections, preferences, and their reasons. Then what has lasting effect, and what failed and why. Copy names, numbers, ids, paths, and errors exactly. Name a minor item in a few words rather than drop it. Never make work look further along than it was. The memory files hold the long-term record: name the ones that matter instead of repeating them.`;
+const SUMMARY_RULES = `This is a long-lived session. Keep the user's words close to verbatim: orders, decisions, corrections, preferences, and their reasons. Then what has lasting effect, and what failed and why. Copy names, numbers, ids, paths, and errors exactly. Name a minor item in a few words rather than drop it. Never make work look further along than it was. The memory files hold the long-term record: name the ones that matter instead of repeating them.`;
 
 const busy = new Set<string>();
 

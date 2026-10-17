@@ -19,7 +19,7 @@ import {
   forkSession,
   setProfile,
 } from '#lib/sessions';
-import { PROFILES, type ProfileId } from '#lib/profiles';
+import { ASSISTANT_HINT, PROFILES, type ProfileId } from '#lib/profiles';
 import type { VoiceSettings as Voice } from '#lib/protocol';
 import { paths } from '../router';
 import ContextField, { percent } from './ContextField';
@@ -106,17 +106,23 @@ export default function ContextMeter(props: {
           : usage().cleanable < MIN_CLEANUP && 'Nothing old to clean up',
         onSelect: () => void cleanupSession(props.id),
       },
-      ...(Object.keys(PROFILES) as ProfileId[])
-        .filter((p) => p !== props.profile)
-        .map((p) => {
-          const Icon = PROFILE_ICON[p];
-          return {
-            label: `Switch to ${PROFILES[p].label}`,
-            hint: `${PROFILES[p].about}.${PROFILES[p].longLived ? ` ${LONG_LIVED_HINT}` : ''} Rebuilds the prompt cache once.`,
-            icon: <Icon />,
-            onSelect: () => void setProfile(props.id, p),
-          };
-        }),
+      ...(props.profile === 'hub'
+        ? []
+        : [
+            props.profile === 'assistant'
+              ? {
+                  label: 'Turn off assistant mode',
+                  hint: 'Back to a coding session. Rebuilds the prompt cache once.',
+                  icon: <CodeIcon />,
+                  onSelect: () => void setProfile(props.id, 'coding'),
+                }
+              : {
+                  label: 'Turn on assistant mode',
+                  hint: `${ASSISTANT_HINT} ${LONG_LIVED_HINT} Rebuilds the prompt cache once.`,
+                  icon: <AssistantIcon />,
+                  onSelect: () => void setProfile(props.id, 'assistant'),
+                },
+          ]),
       {
         label: 'Voice settings',
         icon: <VoiceIcon />,

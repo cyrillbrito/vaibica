@@ -22,7 +22,7 @@ Bica puts `MEMORY.md` and the list of projects with their worktrees into the hub
 
 ## What it can do
 
-- `list` and the session tools ([tools.md](./tools.md#other-sessions)), with no "leave others alone" limit. Sessions it starts are normal coding sessions on your default model, in the folder or new worktree it names.
+- `list` and the session tools ([tools.md](./tools.md#other-sessions)), with no "leave others alone" limit. Sessions it starts are coding sessions on your default model, in the folder or new worktree it names, or assistant sessions when it sets up a long-running helper for one project.
 - `read` anywhere, and `write` and `edit` only inside its folder.
 - `ask`.
 
@@ -34,7 +34,7 @@ It is proactive with information, never with changes. It reads, checks, explains
 
 A session you have prompted yourself is yours, whoever started it. `session_read` and notes say so, from its prompts: a prompt with no `[Message from session …]` mark that isn't a `session_start` ticket or a note is yours. The hub only reports on such a session, and never messages it, steers it, or starts follow-ups from its results unless you ask.
 
-Its instructions also hold the coordinator rules. Every handoff prompt stands alone like a ticket, with the goal, the boundaries, what done looks like, and the report format. Its tickets tell workers not to merge, push, or commit to main unless you asked. Workers end with a short report and put long output in files. One session per thread, reused with `session_send`. Its notes say why a session exists, but it reads the session before it says where that session stands, and after a compaction it calls `list` once to reconcile the board. Before asking you where something is, it searches its notes and the open and archived sessions, and offers its best match. Replies name only a few things, say for each what it waits on and whose move it is, lead with what needs you, and never spell out full paths, since you often listen by voice. Every question it asks you comes with its pick.
+Its instructions also hold the coordinator rules, and assistant sessions share the handoff part. Every handoff prompt stands alone like a ticket, with the goal, the boundaries, what done looks like, and the report format. Its tickets tell workers not to merge, push, or commit to main unless you asked. Workers end with a short report and put long output in files. One session per thread, reused with `session_send`. Its notes say why a session exists, but it reads the session before it says where that session stands, and after a compaction it calls `list` once to reconcile the board. Before asking you where something is, it searches its notes and the open and archived sessions, and offers its best match. Replies name only a few things, say for each what it waits on and whose move it is, lead with what needs you, and never spell out full paths, since you often listen by voice. Every question it asks you comes with its pick.
 
 ## Notes
 
