@@ -53,7 +53,7 @@ export async function suggestCommitMessage(
       `<recent_commits>\n${pending.recentSubjects.join('\n')}\n</recent_commits>`,
     // Said outright: models drift back to plain subjects otherwise.
     conventional(pending.recentSubjects) &&
-      'This repository uses Conventional Commits. Start with a type and, if the recent commits use one, a scope: "feat(scope): ", "fix: ", "docs: ", "chore: ".',
+      'This repository uses Conventional Commits. Start with a type and, if the recent commits use one, a scope: "feat(scope): ", "fix: ", "docs: ", "chore: ".\nPick the type from the main change: feat adds or changes behavior, fix repairs a bug, refactor restructures code without changing behavior, docs only when every changed file is documentation, test only touches tests, chore covers tooling, config, and dependencies.',
     requests.length &&
       `<agent_requests>\n${requests
         .map(
