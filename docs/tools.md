@@ -1,6 +1,6 @@
 # Agent tools
 
-The agent works through tools. Every call the model makes carries a short summary, so the transcript reads as a list of intentions. Bica adds the field only to the copy of each tool sent to the model, and removes it before the tool runs.
+The agent works through tools. Every call the model makes carries a short summary, so the transcript reads as a list of intentions. Bica adds the field only to the copy of each tool sent to the model, marked required so the model rarely skips it, and removes it before the tool runs. A call without one still runs, since Pi Durable checks it against the tool as registered, and its row shows the command or path instead.
 
 - Read, write, edit, and bash work in the session's folder. Read also shows images to the model, shrunk or converted with Bun's image library when they are too big for the API or in a format it doesn't take.
 - Web search and fetch go through Exa, when its key is set.

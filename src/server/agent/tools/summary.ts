@@ -11,7 +11,9 @@ import type { Message } from '@earendil-works/pi-ai';
 // The transcript shows `summary` next to the tool name, so a call reads at a
 // glance instead of only as a raw bash command, path, or URL. Only the model's
 // copy of each tool gets the field: tools stay as registered, so codemode lists
-// them unchanged, where calls show no summary anyway.
+// them unchanged, where calls show no summary anyway. It's required because
+// models skip optional fields; a call without one still runs, since Durable
+// validates against the registered tool.
 const summary = {
   type: 'string',
   description:
@@ -23,12 +25,16 @@ function withSummary(message: Message): Message {
   return {
     ...message,
     toolsAdded: message.toolsAdded.map((tool) => {
-      const { properties } = tool.parameters as { properties?: object };
+      const { properties, required = [] } = tool.parameters as {
+        properties?: object;
+        required?: string[];
+      };
       return {
         ...tool,
         parameters: {
           ...tool.parameters,
           properties: { summary, ...properties },
+          required: ['summary', ...required],
         },
       };
     }),
