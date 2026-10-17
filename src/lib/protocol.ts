@@ -84,6 +84,9 @@ export interface ModelSettings extends ModelChoice {
   enabled: string[];
   // The small model for titles and commit messages; null: none.
   fastModel: ModelRef | null;
+  // Answers yes or no questions, such as which old tool output Clean up
+  // keeps: a decision model like Jev, or a chat model; null: none.
+  decisionModel: ModelRef | null;
   // Opening a file's diff under Changes stages it: staged means reviewed.
   stageOnView: boolean;
   // Ask for the long prompt cache: 1 hour on Claude, 24 hours on some OpenAI
@@ -111,6 +114,14 @@ export interface ModelCatalog {
     images: boolean;
     // Prompt cache lifetimes in seconds; absent: unknown or no cache.
     cacheTtl: { short?: number; long?: number };
+  }[];
+  // Decision models (docs/providers.md): typed answers, no chat.
+  classifiers: {
+    provider: string;
+    id: string;
+    name: string;
+    contextWindow: number;
+    cost: { input: number };
   }[];
   settings: ModelSettings;
   // Which defaults still come from the server's env (PI_MODEL, PI_FAST_MODEL)

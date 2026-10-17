@@ -2,7 +2,7 @@
 
 Assistant mode is for a session you never close. Most sessions are a task: you start one, finish the work, and move on. Some are a companion instead, like a notes vault you talk to every day, ask to keep track of things, and come back to for months. Assistant mode lets that kind of session keep going without you thinking about context size, cost, or when to start over.
 
-Assistant is a [profile](./profiles.md) you turn on as a toggle: the Assistant button next to the workspace when you start a session, or "Turn on assistant mode" in the context chip's menu. The chip then shows an infinity sign. The [hub](./hub.md) is kept small the same way.
+Assistant is a [profile](./profiles.md) you pick when you start a session, with the Assistant button next to the workspace. "Turn off assistant mode" in the context chip's menu makes it a coding session again. The chip then shows an infinity sign. The [hub](./hub.md) is kept small the same way.
 
 ## The idea
 

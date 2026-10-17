@@ -285,8 +285,13 @@ export default function ContextMenu() {
                 role="menuitem"
                 class={[
                   'relative flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left transition-colors outline-none touch:py-3',
-                  'focus-visible:bg-active disabled:pointer-events-none disabled:opacity-40',
-                  item().danger ? 'text-danger' : 'text-fg',
+                  'focus-visible:bg-active disabled:pointer-events-none',
+                  // A disabled item with a reason shows it; one without fades.
+                  typeof item().disabled === 'string'
+                    ? 'text-muted'
+                    : 'disabled:opacity-40',
+                  !item().disabled &&
+                    (item().danger ? 'text-danger' : 'text-fg'),
                 ]}
                 disabled={!!item().disabled}
                 title={
@@ -300,7 +305,19 @@ export default function ContextMenu() {
                 <span class="grid size-4 place-items-center text-muted">
                   {item().icon}
                 </span>
-                <span class="flex-1 truncate">{item().label}</span>
+                <span class="flex min-w-0 flex-1 flex-col">
+                  <span class="truncate">{item().label}</span>
+                  <Show
+                    when={
+                      typeof item().disabled === 'string' &&
+                      (item().disabled as string)
+                    }
+                  >
+                    {(reason) => (
+                      <span class="text-meta text-muted">{reason()}</span>
+                    )}
+                  </Show>
+                </span>
                 <Show when={item().keys}>
                   {(keys) => <Kbd class="-mr-1">{keys()}</Kbd>}
                 </Show>

@@ -52,7 +52,11 @@ function parts(shape: Shape, worst: boolean): Part[] {
     part('tool:read', 'read', 'tools', 1_200),
     part('tool:ask', 'ask', 'tools', 700),
   ];
-  const scale = { running: 1, finished: 1.7, asking: 0.32 }[shape];
+  // Worst case: the asking one is big and its cache nearly cold, the moment
+  // to compact.
+  const scale = { running: 1, finished: 1.7, asking: worst ? 1.9 : 0.32 }[
+    shape
+  ];
   const talk = [
     part('result:read', 'read results', 'conversation', 61_000 * scale),
     part('result:bash', 'bash results', 'conversation', 38_000 * scale),
@@ -81,7 +85,8 @@ function usage(shape: Shape, worst: boolean): ContextUsage {
   const all = parts(shape, worst);
   const used = all.reduce((n, p) => n + p.tokens, 0);
   // The finished one sits on a 1M window, so it can grow past 200k.
-  const window = shape === 'finished' ? 1_000_000 : 200_000;
+  const window =
+    shape === 'finished' || (worst && shape === 'asking') ? 1_000_000 : 200_000;
   const compactAt = window - RESERVE;
   const results = all.filter((p) => p.key.startsWith('result:'));
   return {
@@ -324,11 +329,21 @@ export function fixtureCatalog(worst: boolean): ModelCatalog {
       { id: 'openrouter', name: 'OpenRouter', source: 'OPENROUTER_API_KEY' },
     ],
     models,
+    classifiers: [
+      {
+        provider: 'openrouter',
+        id: 'typesafe/jev-1.14',
+        name: 'TypeSafe: Jev 1.14',
+        contextWindow: 262_144,
+        cost: { input: 0.042 },
+      },
+    ],
     settings: {
       model: { provider: 'anthropic', modelId: 'claude-opus-4-5' },
       thinkingLevel: 'medium',
       enabled: [],
       fastModel: { provider: 'anthropic', modelId: 'claude-haiku-4-5' },
+      decisionModel: null,
       stageOnView: false,
       longCache: true,
       hubFolder: null,

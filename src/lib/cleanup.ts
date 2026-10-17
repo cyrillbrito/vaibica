@@ -20,8 +20,20 @@ export const IMAGE_CHARS = 4800;
 
 // Outputs and arguments this short stay as they are: they cost little and
 // often carry the point ("Edited 2 files", a path, a short command).
-const KEEP_OUTPUT = 300;
+export const KEEP_OUTPUT = 300;
 const KEEP_ARG = 120;
+// A cleared output keeps its start and end: on replays of real sessions no
+// selector kept the lines the agent needed later better than these
+// (docs/context-usage.md). Below PREVIEW_FROM the note alone is enough.
+const PREVIEW_FROM = 1500;
+const HEAD = 160;
+const TAIL = 80;
+const NOTE = '[Old output cleared to save context';
+
+/** Whether a result is already a Clean up note, so it isn't cleared again. */
+export const isCleared = (message: ToolResultMessage) =>
+  message.content[0]?.type === 'text' &&
+  message.content[0].text.startsWith(NOTE);
 
 /** Characters a message adds to the context, as context-usage.ts counts them. */
 export function chars(message: Message): number {
@@ -41,54 +53,99 @@ export function chars(message: Message): number {
   );
 }
 
+// The newest messages stay whole, as in fast-jev-compaction: the answer and
+// its last steps are what a follow-up refers to. Older steps clear even
+// inside a long turn.
+export const KEEP_RECENT = 6;
+
 /**
- * Edits that clean up every turn before the last prompt: tool output and
- * images give way to a note, and long tool arguments shrink to their summary
- * and first line. Prompts, thinking and replies stay. `current` is what each
- * entry adds to the context now, after earlier edits.
+ * The ids of the tool calls Clean up may touch: all but the newest
+ * KEEP_RECENT messages. A call counts as recent when its call or its output is.
+ */
+export function oldCalls(
+  entries: readonly EntryRecord[],
+  current: (entry: EntryRecord) => readonly Message[] | undefined,
+): Set<string> {
+  const messages = entries.flatMap((e) => current(e) ?? []);
+  const recent = new Set<string>();
+  for (const m of messages.slice(-KEEP_RECENT)) {
+    if (m.role === 'toolResult') recent.add(m.toolCallId);
+    if (m.role === 'assistant')
+      for (const b of m.content) if (b.type === 'toolCall') recent.add(b.id);
+  }
+  const old = new Set<string>();
+  for (const m of messages.slice(0, -KEEP_RECENT))
+    if (m.role === 'toolResult' && !recent.has(m.toolCallId))
+      old.add(m.toolCallId);
+  return old;
+}
+
+/**
+ * Edits that clean up all but the newest messages (KEEP_RECENT): tool output
+ * and images give way to a note, and long tool arguments shrink to their
+ * summary and first line. Prompts, thinking and replies stay. `current` is
+ * what each entry adds to the context now, after earlier edits. Outputs whose
+ * tool call id is in `keep` stay verbatim (src/server/sessions/cleanup-judge.ts).
  */
 export function cleanupEdits(
   entries: readonly EntryRecord[],
   current: (entry: EntryRecord) => readonly Message[] | undefined,
+  keep: ReadonlySet<string> = new Set(),
 ): ContextEdit[] {
-  const last = entries.findLastIndex((e) => e.kind === 'pi.user');
+  const old = oldCalls(entries, current);
   const edits: ContextEdit[] = [];
-  for (const entry of entries.slice(0, Math.max(0, last))) {
+  for (const entry of entries) {
     const messages = current(entry);
     if (!messages) continue;
-    const cleaned = messages.map(clean);
+    const cleaned = messages.map((m) => {
+      if (m.role === 'toolResult')
+        return old.has(m.toolCallId) && !keep.has(m.toolCallId)
+          ? cleanResult(m)
+          : m;
+      if (m.role === 'assistant') return cleanCalls(m, old);
+      return m;
+    });
     if (cleaned.some((m, i) => m !== messages[i]))
       edits.push({ target: entry.id, action: 'replace', messages: cleaned });
   }
   return edits;
 }
 
-function clean(message: Message): Message {
-  if (message.role === 'toolResult') return cleanResult(message);
-  if (message.role === 'assistant') return cleanCalls(message);
-  return message;
-}
-
 function cleanResult(message: ToolResultMessage): ToolResultMessage {
   const size = chars(message);
   const image = message.content.some((b) => b.type === 'image');
-  if (size <= KEEP_OUTPUT && !image) return message;
+  if ((size <= KEEP_OUTPUT && !image) || isCleared(message)) return message;
   const { details: _details, nestedCalls: _nested, ...rest } = message;
+  const text = message.content
+    .flatMap((b) => (b.type === 'text' ? b.text : []))
+    .join('\n')
+    .trim();
+  const note = `${NOTE}, ~${Math.round(size / 4)} tokens. Run the tool again if you need it.]`;
   return {
     ...rest,
     content: [
       {
         type: 'text',
-        text: `[Old output cleared to save context, ~${Math.round(size / 4)} tokens. Run the tool again if you need it.]`,
+        text:
+          text.length < PREVIEW_FROM
+            ? note
+            : `${note} Its start and end:\n${whole(text.slice(0, HEAD))}\n[…]\n${whole(text.slice(-TAIL))}`,
       },
     ],
   };
 }
 
-function cleanCalls(message: AssistantMessage): AssistantMessage {
+// A cut can split an emoji's surrogate pair, and providers reject the half.
+const whole = (text: string) =>
+  text.replace(/^[\uDC00-\uDFFF]|[\uD800-\uDBFF]$/g, '');
+
+function cleanCalls(
+  message: AssistantMessage,
+  old: ReadonlySet<string>,
+): AssistantMessage {
   let changed = false;
   const content = message.content.map((block) => {
-    if (block.type !== 'toolCall') return block;
+    if (block.type !== 'toolCall' || !old.has(block.id)) return block;
     const args = slim(block.arguments);
     if (!args) return block;
     changed = true;

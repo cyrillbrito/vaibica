@@ -1,4 +1,3 @@
-import { useNavigate } from '@solidjs/router';
 import type { ConversationView, LiveState } from '@earendil-works/pi-durable';
 import { Dynamic, type JSX } from '@solidjs/web';
 import { For, Show, createMemo, createSignal } from 'solid-js';
@@ -13,15 +12,15 @@ import {
 } from '#lib/context-usage';
 import { tick } from '#lib/time';
 import { CLEANUP_HINT } from '#lib/cleanup';
+import { toast } from './ui/Toast';
 import {
   cleanupSession,
   compactSession,
-  forkSession,
+  isCleaning,
   setProfile,
 } from '#lib/sessions';
-import { ASSISTANT_HINT, PROFILES, type ProfileId } from '#lib/profiles';
+import { PROFILES, type ProfileId } from '#lib/profiles';
 import type { VoiceSettings as Voice } from '#lib/protocol';
-import { paths } from '../router';
 import ContextField, { percent } from './ContextField';
 import { Breakdown } from './ui/Breakdown';
 import { RollingNumber } from './ui/RollingNumber';
@@ -41,7 +40,6 @@ import {
   ColdIcon,
   CompactIcon,
   ExpiringIcon,
-  ForkIcon,
   InfoIcon,
   VoiceIcon,
 } from './ui/icons';
@@ -81,16 +79,9 @@ export default function ContextMeter(props: {
   const spent = () => usage().spend.reduce((n, s) => n + s.cost, 0);
 
   let dialog: HTMLDialogElement | undefined;
-  const navigate = useNavigate();
   const menu = (e: MouseEvent) => {
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
     openContextMenu(r.right - 200, r.bottom + 4, [
-      {
-        label: 'Fork from here',
-        icon: <ForkIcon />,
-        onSelect: () =>
-          void forkSession(props.id).then((id) => navigate(paths.s(id)())),
-      },
       {
         label: usage().compacting ? 'Compacting…' : 'Compact now',
         icon: <CompactIcon />,
@@ -98,31 +89,30 @@ export default function ContextMeter(props: {
         onSelect: () => void compactSession(props.id),
       },
       {
-        label: 'Clean up old output',
+        label: isCleaning(props.id) ? 'Cleaning up…' : 'Clean up old output',
         hint: CLEANUP_HINT,
         icon: <CleanUpIcon />,
-        disabled: running()
-          ? 'Wait for the agent to finish'
-          : usage().cleanable < MIN_CLEANUP && 'Nothing old to clean up',
-        onSelect: () => void cleanupSession(props.id),
+        disabled: isCleaning(props.id)
+          ? 'Already cleaning up'
+          : usage().compacting
+            ? 'Once compaction finishes'
+            : usage().cleanable < MIN_CLEANUP &&
+              'No long output past the last few steps',
+        onSelect: () =>
+          void cleanupSession(props.id).catch((e) =>
+            toast(e instanceof Error ? e.message : String(e)),
+          ),
       },
-      ...(props.profile === 'hub'
-        ? []
-        : [
-            props.profile === 'assistant'
-              ? {
-                  label: 'Turn off assistant mode',
-                  hint: 'Back to a coding session. Rebuilds the prompt cache once.',
-                  icon: <CodeIcon />,
-                  onSelect: () => void setProfile(props.id, 'coding'),
-                }
-              : {
-                  label: 'Turn on assistant mode',
-                  hint: `${ASSISTANT_HINT} ${LONG_LIVED_HINT} Rebuilds the prompt cache once.`,
-                  icon: <AssistantIcon />,
-                  onSelect: () => void setProfile(props.id, 'assistant'),
-                },
-          ]),
+      ...(props.profile === 'assistant'
+        ? [
+            {
+              label: 'Turn off assistant mode',
+              hint: 'Back to a coding session. Rebuilds the prompt cache once.',
+              icon: <CodeIcon />,
+              onSelect: () => void setProfile(props.id, 'coding'),
+            },
+          ]
+        : []),
       {
         label: 'Voice settings',
         icon: <VoiceIcon />,

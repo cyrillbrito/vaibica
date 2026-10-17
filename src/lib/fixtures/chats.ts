@@ -406,6 +406,7 @@ export const restoreExportOfArchivedSessionsWithUnicodeTitles = async (sessions:
       },
     ],
   },
+  { cleaned: 48_000 },
   {
     user: '[Note from Bica, not from the user] Context is 92% full. Compact now, or clean up old tool output first.\n\nThe last 14 answers rewrote most of their context: the prompt cache keeps expiring.',
   },

@@ -11,7 +11,17 @@ import { RollingNumber } from './ui/RollingNumber';
 import { Segmented, segmentClass } from './ui/Segmented';
 import { Switch } from './ui/Switch';
 
-type Model = ModelCatalog['models'][number];
+type Model = ModelCatalog['models'][number] & { decision?: boolean };
+
+// A decision model in the picker's shape: no thinking, no output price.
+const asModel = (m: ModelCatalog['classifiers'][number]): Model => ({
+  ...m,
+  levels: [],
+  images: false,
+  cost: { input: m.cost.input, output: 0, cacheRead: 0 },
+  cacheTtl: {},
+  decision: true,
+});
 
 // Five steps each, from pi-ai's real numbers: there are no speed or quality
 // scores to show, so the bars are the window and the price.
@@ -52,9 +62,10 @@ function levelFor(m: Model, want: ThinkingLevel): ThinkingLevel {
 
 const describe = (m: Model) =>
   [
+    m.decision && 'decision model',
     `${formatTokens(m.contextWindow)} context`,
     m.images && 'images',
-    !m.levels.filter((l) => l !== 'off').length && 'no thinking',
+    !m.decision && !m.levels.filter((l) => l !== 'off').length && 'no thinking',
   ]
     .filter(Boolean)
     .join(' · ');
@@ -109,27 +120,43 @@ export default function ModelPicker(props: {
   effort?: boolean;
   // Name the provider on the chip: the same model can come through several.
   provider?: boolean;
+  // Offer decision models first, then chat models that can stand in.
+  decision?: boolean;
 }) {
   const id = `model-picker-${++nextId}`;
   let popover: HTMLDivElement | undefined;
   const catalog = useModels();
-  const options = createMemo(() => pickable(catalog(), props.value), {
-    name: 'modelOptions',
-  });
+  const options = createMemo<Model[]>(
+    () => [
+      // Absent from a server that predates decision models.
+      ...(props.decision ? (catalog().classifiers ?? []).map(asModel) : []),
+      ...pickable(catalog(), props.value),
+    ],
+    {
+      name: 'modelOptions',
+    },
+  );
   const [query, setQuery] = createSignal('', { name: 'modelQuery' });
   const groups = createMemo(
     () => {
       const words = query().toLowerCase().split(/\s+/).filter(Boolean);
-      const byProvider = new Map<string, ModelCatalog['models']>();
+      const byProvider = new Map<string, Model[]>();
       for (const m of options().filter((m) =>
         words.every((w) => `${m.name} ${m.id}`.toLowerCase().includes(w)),
-      ))
-        byProvider.set(m.provider, [...(byProvider.get(m.provider) ?? []), m]);
-      return [...byProvider].map(([id, models]) => ({
-        id,
-        name: catalog().providers.find((p) => p.id === id)?.name ?? id,
-        models,
-      }));
+      )) {
+        const key = `${m.decision ? 'decision:' : ''}${m.provider}`;
+        byProvider.set(key, [...(byProvider.get(key) ?? []), m]);
+      }
+      return [...byProvider].map(([id, models]) => {
+        const provider = models[0]!.provider;
+        const name =
+          catalog().providers.find((p) => p.id === provider)?.name ?? provider;
+        return {
+          id,
+          name: models[0]!.decision ? `Decision models · ${name}` : name,
+          models,
+        };
+      });
     },
     { name: 'modelGroups' },
   );

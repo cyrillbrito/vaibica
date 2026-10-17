@@ -22,7 +22,9 @@ Anthropic, ChatGPT, OpenAI, and Exa are always listed, each with a short guide. 
 
 ## Models
 
-Settings holds the default model for new sessions and the fast model for side jobs such as titles and [commit messages](./git.md#commit-messages). `PI_MODEL` and `PI_FAST_MODEL` only fill in until you pick one. The model pickers fold big catalogs per provider and show only your chosen models until you search.
+Settings holds the default model for new sessions and the fast model for side jobs such as titles and [commit messages](./git.md#commit-messages). `PI_MODEL` and `PI_FAST_MODEL` only fill in until you pick one.
+
+The decision model answers quick yes or no questions for Bica itself, such as which old tool output [Clean up](./context-usage.md#compaction-and-clean-up) keeps. Its picker lists the real decision models first, such as Jev, Clef, or Luna Decisions: they don't chat, answer in well under a second, cost a fraction of a cent, and return probabilities. Any chat model can stand in, such as Haiku: it gets the same questions and replies in JSON, in a second or two, at chat prices, with only yes or no and no probability. The code is `src/server/providers/decision-model.ts`. The model pickers fold big catalogs per provider and show only your chosen models until you search.
 
 Each model in the picker shows two five-step bars from pi-ai's model data: its context window and its list price (input weighed over output, since an agent mostly reads). Pointing at a model fills its bars and the tray under the menu rolls to its price per million tokens and its window. There are no speed or quality bars: pi-ai has no such numbers. Models that can stop thinking get a Thinking switch, and the effort unfolds under it.
 

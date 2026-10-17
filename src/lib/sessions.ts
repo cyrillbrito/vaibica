@@ -1,4 +1,4 @@
-import { createMemo } from 'solid-js';
+import { createMemo, createSignal } from 'solid-js';
 import type { ProfileId } from './profiles';
 import type { ModelChoice, PromptImage, VoiceSettings } from './protocol';
 import { request, requestId, useTopic, useTopicWhenReady } from './socket';
@@ -75,8 +75,26 @@ export const stopSession = (id: string) => request('session.stop', { id });
 export const compactSession = (id: string, instructions?: string) =>
   request('session.compact', { id, instructions });
 
-export const cleanupSession = (id: string) =>
-  request('session.cleanup', { id });
+const [cleaning, setCleaning] = createSignal<ReadonlySet<string>>(new Set(), {
+  name: 'cleaning',
+});
+
+/** A clean up asked for here that hasn't landed yet. */
+export const isCleaning = (id: string) => cleaning().has(id);
+
+export async function cleanupSession(id: string) {
+  if (isCleaning(id)) return;
+  setCleaning((s) => new Set(s).add(id));
+  try {
+    await request('session.cleanup', { id });
+  } finally {
+    setCleaning((s) => {
+      const next = new Set(s);
+      next.delete(id);
+      return next;
+    });
+  }
+}
 
 export const setProfile = (id: string, profile: ProfileId) =>
   request('session.profile', { id, profile });

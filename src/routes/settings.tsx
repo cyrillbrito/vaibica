@@ -225,6 +225,36 @@ export default function Settings() {
                 </Button>
               </Show>
             </Setting>
+            <Setting
+              label="Decision model"
+              hint="Answers quick yes or no questions, such as which old tool output Clean up keeps. A decision model like Jev answers in a fraction of a second for a fraction of a cent. A chat model like Haiku works too, slower and pricier. Without one, Clean up clears every old output."
+            >
+              <ModelPicker
+                provider
+                decision
+                effort={false}
+                empty="None"
+                value={
+                  catalog().settings.decisionModel
+                    ? {
+                        model: catalog().settings.decisionModel!,
+                        thinkingLevel: 'off',
+                      }
+                    : undefined
+                }
+                onChange={(c) =>
+                  void updateSettings({ decisionModel: c.model })
+                }
+              />
+              <Show when={catalog().settings.decisionModel}>
+                <Button
+                  size="sm"
+                  onClick={() => void updateSettings({ decisionModel: null })}
+                >
+                  Clear
+                </Button>
+              </Show>
+            </Setting>
             <div id="hub">
               <Setting
                 label="Hub"

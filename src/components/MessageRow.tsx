@@ -7,6 +7,7 @@ import { IconButton } from './ui/Button';
 import { CopyButton } from './ui/CopyButton';
 import {
   ChevronIcon,
+  CleanUpIcon,
   CompactIcon,
   CopyIcon,
   ForkIcon,
@@ -255,27 +256,61 @@ export default function MessageRow(props: {
           when={props.message.kind === 'compaction' ? props.message : undefined}
         >
           {(c) => (
-            <details class="group/row expand">
-              <summary
-                class={[RULE, 'cursor-pointer list-none hover:text-fg']}
-                title={`${c().before ? `${formatTokens(c().before!)} tokens of context summarized into` : 'Summarized into'} about ${formatTokens(c().after)}. Click to read the summary.`}
+            <div class="flex items-start gap-1">
+              <details class="group/row expand min-w-0 flex-1">
+                <summary
+                  class={[RULE, 'h-6 cursor-pointer list-none hover:text-fg']}
+                  title={`${c().before ? `${formatTokens(c().before!)} tokens of context summarized into` : 'Summarized into'} about ${formatTokens(c().after)}. Click to read the summary.`}
+                >
+                  <div class="h-px flex-1 bg-line" />
+                  <CompactIcon />
+                  {c().auto ? 'Auto-compacted' : 'Compacted'}
+                  <span class="tabular-nums">
+                    · {c().before ? `${formatTokens(c().before!)} → ` : ''}
+                    {formatTokens(c().after)}
+                  </span>
+                  <span class="transition-transform group-open/row:rotate-90">
+                    <ChevronIcon />
+                  </span>
+                  <div class="h-px flex-1 bg-line" />
+                </summary>
+                <div class="mt-3 rounded-card border border-line bg-panel/50 px-4 py-3">
+                  <Markdown text={c().summary} />
+                </div>
+              </details>
+              <RuleFork
+                onFork={props.onFork}
+                at={c().at}
+                title="Fork from here, with the summary"
+              />
+            </div>
+          )}
+        </Match>
+        <Match
+          when={props.message.kind === 'cleanup' ? props.message : undefined}
+        >
+          {(c) => (
+            <div class="flex items-center gap-1">
+              <div
+                class={[RULE, 'h-6 min-w-0 flex-1']}
+                title="Old tool output was cleared from what the model reads. The transcript keeps all of it."
               >
                 <div class="h-px flex-1 bg-line" />
-                <CompactIcon />
-                {c().auto ? 'Auto-compacted' : 'Compacted'}
-                <span class="tabular-nums">
-                  · {c().before ? `${formatTokens(c().before!)} → ` : ''}
-                  {formatTokens(c().after)}
-                </span>
-                <span class="transition-transform group-open/row:rotate-90">
-                  <ChevronIcon />
-                </span>
+                <CleanUpIcon />
+                Cleaned up old output
+                <Show when={c().freed}>
+                  {(freed) => (
+                    <span class="tabular-nums">· −{formatTokens(freed())}</span>
+                  )}
+                </Show>
                 <div class="h-px flex-1 bg-line" />
-              </summary>
-              <div class="mt-3 rounded-card border border-line bg-panel/50 px-4 py-3">
-                <Markdown text={c().summary} />
               </div>
-            </details>
+              <RuleFork
+                onFork={props.onFork}
+                at={c().at}
+                title="Fork from here, cleaned up"
+              />
+            </div>
           )}
         </Match>
         <Match
@@ -300,11 +335,49 @@ export default function MessageRow(props: {
             </div>
           )}
         </Match>
+        <Match
+          when={props.message.kind === 'cleaning' ? props.message : undefined}
+        >
+          {(c) => (
+            <div class={RULE} role="status">
+              <div class="h-px flex-1 bg-line" />
+              <SpinnerIcon />
+              <span class="shimmer">
+                {c().running
+                  ? 'Cleaning up old output at the next step…'
+                  : 'Cleaning up old output…'}
+              </span>
+              <div class="h-px flex-1 bg-line" />
+            </div>
+          )}
+        </Match>
         <Match when={props.message.kind === 'error'}>
           <ErrorReply text={text()} />
         </Match>
       </Switch>
     </div>
+  );
+}
+
+// A fork button at the end of a rule, quiet until the row is hovered.
+function RuleFork(props: {
+  onFork?: (at: number) => void;
+  at: number;
+  title: string;
+}) {
+  return (
+    <Show when={props.onFork}>
+      {(fork) => (
+        <IconButton
+          size="sm"
+          class="shrink-0 text-muted opacity-0 transition-opacity duration-200 ease-out group-data-show/row:opacity-100 focus-visible:opacity-100 touch:opacity-100"
+          title={props.title}
+          onClick={() => fork()(props.at)}
+        >
+          <ForkIcon />
+        </IconButton>
+      )}
+    </Show>
   );
 }
 

@@ -6,6 +6,7 @@ import { isServer } from '@solidjs/web';
 import { createSignal } from 'solid-js';
 
 import type { StepDetail } from '../protocol';
+import { CLEANUP_ENTRY } from '../cleanup';
 import { fixtureContext } from './usage';
 
 const MIN = 60_000;
@@ -46,6 +47,31 @@ class Transcript {
       kind,
       model,
     });
+  }
+  write(kind: string, data: unknown) {
+    this.entries.push({
+      id: ++this.id,
+      conversationId: this.session,
+      kind,
+      data,
+    });
+    return this;
+  }
+  compaction(summary: string) {
+    this.push('pi.compaction', [
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'text',
+            text: `The conversation so far was summarized:\n<summary>\n${summary}\n</summary>`,
+          },
+        ],
+        timestamp: this.later(MIN),
+      },
+    ]);
+    this.entries.at(-1)!.data = { reason: 'manual' };
+    return this;
   }
   private later(ms: number) {
     this.at += ms;
@@ -565,6 +591,8 @@ type Talk = {
   submit?: (text: string) => void;
   compact?: () => Promise<void>;
   cleanup?: () => Promise<void>;
+  write?: (kind: string, data: unknown) => void;
+  compacted?: (summary: string) => void;
 };
 
 /** The talk with its own context, which compact and clean up change. */
@@ -583,8 +611,22 @@ function withContext(
       };
     },
     submit: talk.submit,
-    compact: context.compact,
-    cleanup: context.cleanup,
+    compact: async () => {
+      await context.compact();
+      // The summary lands when the fixture's compaction ends.
+      setTimeout(
+        () =>
+          talk.compacted?.(
+            '## Goal\nFix the sidebar overflow.\n\n## Done so far\n- Clamped the width.',
+          ),
+        3200,
+      );
+    },
+    cleanup: async () => {
+      const freed = context.value().cleanable;
+      await context.cleanup();
+      talk.write?.(CLEANUP_ENTRY, { freed });
+    },
   };
 }
 
@@ -599,6 +641,12 @@ function answering(t: Transcript): Talk {
   return {
     get value() {
       return view();
+    },
+    write(kind, data) {
+      setView(t.write(kind, data).view());
+    },
+    compacted(summary) {
+      setView(t.compaction(summary).view());
     },
     submit(text) {
       // The run starts; nothing streams for a moment, then the reply lands.

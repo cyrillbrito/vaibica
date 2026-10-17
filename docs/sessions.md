@@ -44,6 +44,8 @@ While the agent works, sending queues the prompt for the next run, and the send 
 
 A fork is a new session with another one's history up to a chosen answer. It runs in the same folder, so files are shared, not rolled back.
 
+Compaction and clean up lines in the transcript have a fork button of their own, which starts with the context as it is after them. The answer just above keeps its own, which forks the context from before.
+
 ## Status
 
 Each session in the sidebar shows its status with shape and color together:

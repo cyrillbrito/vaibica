@@ -40,6 +40,7 @@ import { sessionChoice, setOpenModel } from '#lib/models';
 import {
   configureSession,
   forkSession,
+  isCleaning,
   markSeen,
   sendPrompt,
   stopSession,
@@ -162,13 +163,18 @@ export default function Session(props: RouteProps<'/s/:id'>) {
     () => sessions().find((s) => s.id === summary()?.startedBy),
     { name: 'starter' },
   );
-  // Hovering any part of an answer shows the fork button at its end.
+  // Hovering any part of an answer shows the fork button at its end, or the
+  // next compaction or clean up line, which has its own.
   let shown: Element | undefined;
+  const forks = ['end', 'compaction', 'cleanup'];
   const showFork = (e?: PointerEvent) => {
     let row = (e?.target as Element | undefined)?.closest('[data-kind]');
-    while (row && !['end', 'user'].includes(row.getAttribute('data-kind')!))
+    while (row && ![...forks, 'user'].includes(row.getAttribute('data-kind')!))
       row = row.nextElementSibling ?? undefined;
-    const end = row?.getAttribute('data-kind') === 'end' ? row : undefined;
+    const end =
+      row && forks.includes(row.getAttribute('data-kind') ?? '')
+        ? row
+        : undefined;
     if (end === shown) return;
     shown?.removeAttribute('data-show');
     end?.setAttribute('data-show', '');
@@ -193,6 +199,22 @@ export default function Session(props: RouteProps<'/s/:id'>) {
     const v = view();
     return v ? toMessages(v, forkedAt(), { thinking: !hideThinking() }) : [];
   });
+  // A clean up asked for here shows as a line until it lands.
+  const rows = createMemo(
+    () => {
+      const list = messages();
+      if (!isCleaning(props.params.id!)) return list;
+      return [
+        ...list,
+        {
+          key: 'cleaning',
+          kind: 'cleaning' as const,
+          running: !!(view()?.docs['pi.live'] as LiveState | undefined)?.run,
+        },
+      ];
+    },
+    { name: 'transcriptRows' },
+  );
   // The run started but nothing streamed yet, or the provider failed and a
   // retry waits: a pill at the bottom says it's on it.
   const waiting = createMemo(
@@ -228,6 +250,13 @@ export default function Session(props: RouteProps<'/s/:id'>) {
           m.kind === 'compaction',
       ),
     { name: 'lastCompaction' },
+  );
+  const lastCleanup = createMemo(
+    () =>
+      messages().findLast(
+        (m): m is Extract<Message, { kind: 'cleanup' }> => m.kind === 'cleanup',
+      ),
+    { name: 'lastCleanup' },
   );
 
   // From the list, not the transcript: the composer is ready before it loads.
@@ -367,7 +396,7 @@ export default function Session(props: RouteProps<'/s/:id'>) {
                   <SessionId value={() => props.params.id!}>
                     {/* Every change derives fresh objects; the key keeps rows. */}
                     <For
-                      each={messages()}
+                      each={rows()}
                       keyed={(m) => m.key}
                       fallback={
                         <div class="text-center text-muted">
@@ -434,6 +463,7 @@ export default function Session(props: RouteProps<'/s/:id'>) {
                             id={props.params.id!}
                             usage={usage()!}
                             compaction={lastCompaction()}
+                            cleanup={lastCleanup()}
                           />
                           <Queue
                             id={props.params.id!}

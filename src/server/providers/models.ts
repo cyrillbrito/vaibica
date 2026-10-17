@@ -51,12 +51,15 @@ let fast: ModelSettings['fastModel'] = parseRef(env.PI_FAST_MODEL);
 // Long by default, like Claude Code on a subscription: pauses of 5 to 60
 // minutes are rare, but each one rewrites the whole context.
 let longCache = true;
+let decision: ModelSettings['decisionModel'] = null;
 void load().then((saved) => {
   if (saved.fastModel !== undefined) fast = saved.fastModel;
+  if (saved.decisionModel !== undefined) decision = saved.decisionModel;
   if (saved.longCache !== undefined) longCache = saved.longCache;
 });
 
 export const fastModel = () => fast;
+export const decisionModel = () => decision;
 
 /** Read by the harness on every request, so a change applies at once. */
 export const cacheRetention = () =>
@@ -100,6 +103,7 @@ export async function modelSettings(): Promise<ModelSettings> {
     ...checked,
     enabled: saved.enabled ?? [],
     fastModel: saved.fastModel === undefined ? fast : saved.fastModel,
+    decisionModel: saved.decisionModel ?? null,
     stageOnView: saved.stageOnView ?? false,
     longCache: saved.longCache ?? true,
     hubFolder: saved.hubFolder ?? null,
@@ -117,6 +121,9 @@ export async function getCatalog(): Promise<ModelCatalog> {
     )
   ).filter((p) => !!p);
   const available = await models.getAvailable();
+  const classifiers = await models
+    .getAvailableOfType('classifier')
+    .catch(() => []);
   return {
     providers,
     models: available.map((m) => ({
@@ -132,6 +139,13 @@ export async function getCatalog(): Promise<ModelCatalog> {
       },
       images: m.input.includes('image'),
       cacheTtl: { ...m.promptCache },
+    })),
+    classifiers: classifiers.map((m) => ({
+      provider: m.provider,
+      id: m.id,
+      name: m.name,
+      contextWindow: m.contextWindow,
+      cost: { input: m.cost.input },
     })),
     settings: await modelSettings(),
     fromEnv: {
@@ -169,6 +183,17 @@ export async function updateSettings(change: Partial<ModelSettings>) {
       throw new Error(`Unknown model ${key(ref.provider, ref.modelId)}`);
     next.fastModel = ref;
     fast = ref;
+  }
+  if (change.decisionModel !== undefined) {
+    const ref = change.decisionModel;
+    if (
+      ref &&
+      !models.getModelOfType('classifier', ref.provider, ref.modelId) &&
+      !models.getModel(ref.provider, ref.modelId)
+    )
+      throw new Error(`Unknown model ${key(ref.provider, ref.modelId)}`);
+    next.decisionModel = ref;
+    decision = ref;
   }
   if (change.stageOnView !== undefined) next.stageOnView = !!change.stageOnView;
   if (change.longCache !== undefined) {

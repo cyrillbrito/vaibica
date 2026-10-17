@@ -20,7 +20,7 @@ import File from 'lucide/dist/esm/icons/file.mjs';
 import FilePen from 'lucide/dist/esm/icons/file-pen.mjs';
 import FilePlus from 'lucide/dist/esm/icons/file-plus.mjs';
 import FileText from 'lucide/dist/esm/icons/file-text.mjs';
-import FoldVertical from 'lucide/dist/esm/icons/fold-vertical.mjs';
+import ChevronsDownUp from 'lucide/dist/esm/icons/chevrons-down-up.mjs';
 import Folder from 'lucide/dist/esm/icons/folder.mjs';
 import GitBranch from 'lucide/dist/esm/icons/git-branch.mjs';
 import GitFork from 'lucide/dist/esm/icons/git-fork.mjs';
@@ -153,7 +153,7 @@ export const PullRequestClosedIcon = icon(GitPullRequestClosed);
 export const MergedIcon = icon(GitMerge);
 export const InfoIcon = icon(Info);
 export const AlertIcon = icon(CircleAlert);
-export const CompactIcon = icon(FoldVertical);
+export const CompactIcon = icon(ChevronsDownUp);
 export const CleanUpIcon = icon(Eraser);
 /** Voice calls. */
 export const VoiceIcon = icon(AudioLines);

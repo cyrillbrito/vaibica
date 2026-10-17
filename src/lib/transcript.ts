@@ -30,8 +30,10 @@ export type Message = { key: string } & (
   | { kind: 'forked' }
   // Everything above was swapped for this summary.
   // `before`: the last measured request size; `after`: the summary's estimate.
+  // `at`: the entry, so a fork from here starts with the summary.
   | {
       kind: 'compaction';
+      at: number;
       summary: string;
       auto: boolean;
       before?: number;
@@ -39,6 +41,10 @@ export type Message = { key: string } & (
     }
   // A summary is being written; `retry` after a failed attempt.
   | { kind: 'compacting'; auto: boolean; retry?: string }
+  // Old tool output was cleared from here back; `freed` is missing on older ones.
+  | { kind: 'cleanup'; at: number; freed?: number }
+  // A clean up asked for in this tab, until it lands.
+  | { kind: 'cleaning'; running: boolean }
   | { kind: 'text' | 'error'; text: string }
   // Questions for the user; `open` while the session waits for the answer.
   | { kind: 'ask'; questions: Question[]; open: boolean }
@@ -244,7 +250,9 @@ export function toMessages(
       at === undefined ||
       !last ||
       last.kind === 'user' ||
-      last.kind === 'end'
+      last.kind === 'end' ||
+      last.kind === 'compaction' ||
+      last.kind === 'cleanup'
     )
       return;
     let text: string | undefined;
@@ -272,7 +280,26 @@ export function toMessages(
       else messages.push({ key: `${entry.id}`, kind: 'call', lines: [line] });
       return;
     }
+    // A finished answer ends before a compaction or clean up, so forking it
+    // keeps the context as it was; the row's own fork takes the new one.
+    const settle = () => {
+      const prev = view.entries[n - 1];
+      const last = prev?.model?.at(-1);
+      if (last?.role === 'assistant' && last.stopReason !== 'toolUse')
+        end(prev!.id);
+    };
+    if (entry.kind === CLEANUP_ENTRY) {
+      settle();
+      messages.push({
+        key: `${entry.id}`,
+        kind: 'cleanup',
+        at: entry.id,
+        freed: (entry.data as { freed?: number } | undefined)?.freed,
+      });
+      return;
+    }
     if (entry.kind === 'pi.compaction') {
+      settle();
       const text = textOf(
         (entry.model?.[0]?.content ?? []) as { type: string }[],
       );
@@ -282,6 +309,7 @@ export function toMessages(
       messages.push({
         key: `${entry.id}`,
         kind: 'compaction',
+        at: entry.id,
         summary,
         before: measured,
         // pi-ai's estimate: four characters a token.
