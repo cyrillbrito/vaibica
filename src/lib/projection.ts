@@ -115,7 +115,7 @@ function slimMessage(m: Message): Message {
           durationMs: (b as { durationMs?: number }).durationMs,
         }) as never;
       if (b.type !== 'toolCall') return b;
-      const { partialJson: _partial, ...call } = b as typeof b & {
+      const { partialJson, ...call } = b as typeof b & {
         partialJson?: string;
       };
       return call.name === ASK
@@ -124,6 +124,8 @@ function slimMessage(m: Message): Message {
             ...call,
             arguments: slimArgs(call.arguments),
             stats: statsOf(undefined, call),
+            // pi-ai drops the buffer once the arguments are complete.
+            streaming: partialJson !== undefined || undefined,
           });
     }),
   } as Message;

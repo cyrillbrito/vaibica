@@ -81,8 +81,10 @@ function ToolRow(props: { call: ToolCall }) {
         <Show
           when={summary()}
           fallback={
+            // Models often write the summary after the path or command, so
+            // the target would flash and then be swapped for it.
             <span class="min-w-0 flex-1 truncate font-mono text-meta">
-              {targetOf(props.call)}
+              {props.call.streaming ? '' : targetOf(props.call)}
             </span>
           }
         >
