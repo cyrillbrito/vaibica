@@ -20,13 +20,19 @@ import ContextNag from '../../components/ContextNag';
 import MessageRow, { RULE } from '../../components/MessageRow';
 import ModelPicker from '../../components/ModelPicker';
 import OpenFile from '../../components/OpenFile';
+import ParentStrip from '../../components/ParentStrip';
 import Queue from '../../components/Queue';
 import StatusDot from '../../components/StatusDot';
 import TitleInput from '../../components/TitleInput';
 import TopBar from '../../components/TopBar';
 import { IconButton } from '../../components/ui/Button';
 import Empty from '../../components/ui/Empty';
-import { CloseIcon, SessionIcon, VoiceIcon } from '../../components/ui/icons';
+import {
+  CloseIcon,
+  ParentIcon,
+  SessionIcon,
+  VoiceIcon,
+} from '../../components/ui/icons';
 import { drawer, setNoPanels } from '#lib/layout';
 import { PROFILES } from '#lib/profiles';
 import {
@@ -42,6 +48,7 @@ import {
   forkSession,
   isCleaning,
   markSeen,
+  handBack,
   sendPrompt,
   stopSession,
   useConversation,
@@ -163,6 +170,8 @@ export default function Session(props: RouteProps<'/s/:id'>) {
     () => sessions().find((s) => s.id === summary()?.startedBy),
     { name: 'starter' },
   );
+  const drives = () => !!summary()?.parentDrives;
+  // "Keep parent in charge", for the open session only.
   // Hovering any part of an answer shows the fork button at its end, or the
   // next compaction or clean up line, which has its own.
   let shown: Element | undefined;
@@ -199,19 +208,31 @@ export default function Session(props: RouteProps<'/s/:id'>) {
     const v = view();
     return v ? toMessages(v, forkedAt(), { thinking: !hideThinking() }) : [];
   });
-  // A clean up asked for here shows as a line until it lands.
+  // Each change of driver as a line, before the first prompt sent after it.
   const rows = createMemo(
     () => {
       const list = messages();
-      if (!isCleaning(props.params.id!)) return list;
-      return [
-        ...list,
-        {
+      const handoffs = summary()?.handoffs ?? [];
+      const cleaning = isCleaning(props.params.id!);
+      if (!handoffs.length && !cleaning) return list;
+      const out = [...list];
+      for (const h of handoffs.toSorted((a, b) => b.at - a.at)) {
+        const i = out.findIndex(
+          (m) => m.kind === 'user' && m.timestamp >= h.at,
+        );
+        out.splice(i === -1 ? out.length : i, 0, {
+          key: `handoff:${h.at}`,
+          kind: 'handoff',
+          to: h.to,
+        });
+      }
+      if (cleaning)
+        out.push({
           key: 'cleaning',
-          kind: 'cleaning' as const,
+          kind: 'cleaning',
           running: !!(view()?.docs['pi.live'] as LiveState | undefined)?.run,
-        },
-      ];
+        });
+      return out;
     },
     { name: 'transcriptRows' },
   );
@@ -347,6 +368,18 @@ export default function Session(props: RouteProps<'/s/:id'>) {
             class="-mx-1.5 max-w-120 py-0.5 font-semibold"
           />
         </Show>
+        <Show when={drives() && starter()}>
+          {(parent) => (
+            <a
+              class="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-meta text-accent-ink transition-colors hover:bg-hover [&_svg]:size-3.5"
+              href={paths.s(parent().id)}
+              title="Its parent session is in charge. Open the parent."
+            >
+              <ParentIcon />
+              <span class="max-md:hidden">Parent in charge</span>
+            </a>
+          )}
+        </Show>
       </TopBar>
       <div class="relative flex min-h-0 flex-1 flex-col">
         <div
@@ -410,7 +443,10 @@ export default function Session(props: RouteProps<'/s/:id'>) {
                           onFork={forkAt}
                           onAnswer={(text) => {
                             stick.follow();
-                            return sendPrompt(props.params.id!, text, []);
+                            // Answering what it asks leaves it with its parent.
+                            return sendPrompt(props.params.id!, text, [], {
+                              keep: true,
+                            });
                           }}
                           parent={parent()}
                           cwd={summary()?.cwd ?? undefined}
@@ -441,11 +477,16 @@ export default function Session(props: RouteProps<'/s/:id'>) {
               <div hidden={call()?.sessionId === props.params.id}>
                 <Composer
                   draft={props.params.id!}
-                  onSend={(prompt, images, steer) => {
+                  onSend={(prompt, images, steer, alternate) => {
                     // Sending means wanting to see the reply.
                     stick.follow();
-                    return sendPrompt(props.params.id!, prompt, images, steer);
+                    return sendPrompt(props.params.id!, prompt, images, {
+                      steer,
+                      keep: drives() && alternate,
+                    });
                   }}
+                  sendLabel={drives() ? 'Take over' : undefined}
+                  alternate={drives() ? 'Send' : undefined}
                   busy={busy()}
                   // The stop drops queued prompts; give them back to edit.
                   onStop={() =>
@@ -459,6 +500,13 @@ export default function Session(props: RouteProps<'/s/:id'>) {
                     <Ready>
                       {(v) => (
                         <>
+                          <Show when={summary()?.startedBy}>
+                            <ParentStrip
+                              parent={starter()}
+                              parentDrives={drives()}
+                              onHandBack={() => handBack(props.params.id!)}
+                            />
+                          </Show>
                           <ContextNag
                             id={props.params.id!}
                             usage={usage()!}

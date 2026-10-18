@@ -137,6 +137,8 @@ export async function summarize(
     forkedFrom: meta?.forkedFrom ?? null,
     forkedAt: meta?.forkedAt ?? null,
     startedBy: meta?.startedBy || null,
+    parentDrives: !!meta?.startedBy && !meta.userPrompted,
+    handoffs: meta?.handoffs ?? [],
     cleanedUp: meta?.cleanedUp ?? null,
     profile: profileOf(meta),
     voice: meta?.voice ?? null,

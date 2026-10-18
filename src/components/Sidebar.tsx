@@ -78,6 +78,7 @@ import {
   PlusIcon,
   ReadIcon,
   RestoreIcon,
+  ParentIcon,
   SessionIcon,
   SettingsIcon,
   StopIcon,
@@ -91,6 +92,7 @@ import PlanUsage from './PlanUsage';
 import PullRequestBadge from './PullRequestBadge';
 import { openPalette } from './CommandPalette';
 import { openProjectPicker } from './ProjectPicker';
+import { archiveWithChildren } from './ArchiveDialog';
 import { Logo } from './ui/Logo';
 import StatusDot, { StatusTag } from './StatusDot';
 import Divider, { dividerClass } from './ui/Divider';
@@ -308,6 +310,7 @@ export default function Sidebar() {
         }
         group.sessions.push(s);
       }
+      for (const g of groups.values()) g.sessions = underParents(g.sessions);
       return [...groups.values()];
     },
     { name: 'sidebarGroups' },
@@ -452,11 +455,12 @@ export default function Sidebar() {
     return s.cwd ? workspaceName(project, s.cwd) : project.name;
   };
 
-  const archive = async (s: SessionSummary) => {
-    // Leave a session that's about to vanish from the list.
-    if (location.pathname === paths.s(s.id)()) navigate(paths());
-    await archiveSession(s.id);
-  };
+  const archive = (s: SessionSummary) =>
+    archiveWithChildren(s, sessions(), (ids) => {
+      // Leave a session that's about to vanish from the list.
+      if (ids.some((id) => location.pathname === paths.s(id)()))
+        navigate(paths());
+    });
 
   // Sessions picked with ⌘ or shift click, for acting on many at once.
   const [selectedIds, setSelectedIds] = createSignal<string[]>([], {
@@ -1113,6 +1117,14 @@ export default function Sidebar() {
                 >
                   {s().title || '…'}
                 </span>
+                <Show when={!p.archived && s().parentDrives}>
+                  <span
+                    class="text-accent-ink [&_svg]:size-3.5"
+                    title="Its parent session is in charge"
+                  >
+                    <ParentIcon />
+                  </span>
+                </Show>
                 <Show when={p.archived && s().cleanedUp?.pr}>
                   {(pr) => <PullRequestBadge pr={pr()} plain />}
                 </Show>
@@ -1507,4 +1519,24 @@ export default function Sidebar() {
       <PlanUsage />
     </nav>
   );
+}
+
+/**
+ * Sessions in their order, except that one another session started sits
+ * right under it, when both work in the same folder.
+ */
+function underParents(list: SessionSummary[]) {
+  const here = new Set(list.map((s) => s.id));
+  const children = new Map<string, SessionSummary[]>();
+  for (const s of list)
+    if (s.startedBy && here.has(s.startedBy))
+      children.set(s.startedBy, [...(children.get(s.startedBy) ?? []), s]);
+  if (!children.size) return list;
+  const out: SessionSummary[] = [];
+  const add = (s: SessionSummary) => {
+    out.push(s);
+    for (const c of children.get(s.id) ?? []) add(c);
+  };
+  for (const s of list) if (!s.startedBy || !here.has(s.startedBy)) add(s);
+  return out;
 }

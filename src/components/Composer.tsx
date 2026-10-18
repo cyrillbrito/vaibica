@@ -4,10 +4,12 @@ import { For, Show, createEffect, createSignal, untrack } from 'solid-js';
 import { imageUrl, toPromptImage } from '#lib/images';
 import type { PromptImage } from '#lib/protocol';
 import Alert from './ui/Alert';
+import { openContextMenu } from './ui/ContextMenu';
 import { createDropZone } from './ui/DropZone';
-import { IconButton } from './ui/Button';
+import { Button, IconButton } from './ui/Button';
 import {
   ArrowUpIcon,
+  ChevronIcon,
   CloseIcon,
   ImageIcon,
   QueueIcon,
@@ -67,11 +69,17 @@ export interface ComposerApi {
 
 export default function Composer(props: {
   // steer: join the current run after its step, instead of queuing.
+  // alternate: sent with the `alternate` send instead of the main one.
   onSend: (
     prompt: string,
     images: PromptImage[],
     steer: boolean,
+    alternate: boolean,
   ) => Promise<unknown>;
+  // Words on the send button, when sending does more than send.
+  sendLabel?: string;
+  // A second way to send, in a menu on the send button's side.
+  alternate?: string;
   // Where the draft is kept, e.g. the session id.
   draft: string;
   placeholder?: string;
@@ -193,7 +201,7 @@ export default function Composer(props: {
     }
   };
 
-  const send = async (steer: boolean) => {
+  const send = async (steer: boolean, alternate = false) => {
     const key = props.draft;
     const typed = textarea.value.trim();
     const sentPastes = [...pastes];
@@ -211,6 +219,7 @@ export default function Composer(props: {
         prompt,
         sent.map(({ mimeType, data }) => ({ mimeType, data })),
         steer,
+        alternate,
       );
       if (prompt) remember(prompt);
       if (props.draft === key && !textarea.value.includes('[Pasted text #'))
@@ -439,9 +448,58 @@ export default function Composer(props: {
               </Show>
             </IconButton>
           </Show>
+          <Show when={props.sendLabel}>
+            {(label) => (
+              <Button
+                class={[
+                  'ml-1 pr-2.5 pl-3 [&_svg]:size-3.5 [&_svg]:stroke-[2.5]',
+                  props.alternate && 'rounded-r-none pr-2',
+                  empty() && 'opacity-30',
+                ]}
+                variant="primary"
+                size="md"
+                round
+                type="submit"
+                title={props.busy ? `${label()}, after this run` : label()}
+                aria-disabled={empty() ? 'true' : undefined}
+              >
+                {label()}
+                <Show when={props.busy && !empty()} fallback={<ArrowUpIcon />}>
+                  <QueueIcon />
+                </Show>
+              </Button>
+            )}
+          </Show>
+          <Show when={props.sendLabel && props.alternate}>
+            <IconButton
+              class={[
+                'rounded-l-none border-l border-bg/25 [&_svg]:size-3.5 [&_svg]:rotate-90',
+                empty() && 'opacity-30',
+              ]}
+              variant="primary"
+              size="md"
+              round
+              title="More ways to send"
+              aria-haspopup="menu"
+              onClick={(e) => {
+                const r = e.currentTarget.getBoundingClientRect();
+                openContextMenu(r.right - 240, r.top - 52, [
+                  {
+                    label: props.alternate!,
+                    icon: <ArrowUpIcon />,
+                    disabled: empty() ? 'Type a message first' : undefined,
+                    onSelect: () => void send(false, true),
+                  },
+                ]);
+              }}
+            >
+              <ChevronIcon />
+            </IconButton>
+          </Show>
           {/* Faded while there's nothing to send, solid once there is; while
             the agent works, the arrow turns into "queue". */}
           <IconButton
+            hidden={!!props.sendLabel}
             class={[
               'ml-1 [&_svg]:size-3.5 [&_svg]:stroke-[2.5]',
               empty() && 'opacity-30 motion-safe:scale-90',

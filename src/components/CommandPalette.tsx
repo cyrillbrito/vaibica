@@ -34,6 +34,7 @@ import { age } from '#lib/time';
 import { useCurrentWorkspace, workspaceHref } from '#lib/workspace';
 import { paths } from '../router';
 import { openProjectPicker } from './ProjectPicker';
+import { archiveWithChildren } from './ArchiveDialog';
 import StatusDot from './StatusDot';
 import { Button } from './ui/Button';
 import {
@@ -451,10 +452,10 @@ export default function CommandPalette() {
                 words: 'hide done close',
                 icon: ArchiveIcon,
                 group,
-                run: () => {
-                  navigate(paths());
-                  void archiveSession(s.id);
-                },
+                run: () =>
+                  void archiveWithChildren(s, sessions(), () =>
+                    navigate(paths()),
+                  ),
               },
             ]),
     ];

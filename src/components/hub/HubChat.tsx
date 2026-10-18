@@ -90,7 +90,7 @@ export default function HubChat(props: { id: string }) {
             placeholder="Tell the hub…"
             onSend={(prompt, images, steer) => {
               stick.follow();
-              return sendPrompt(props.id, prompt, images, steer);
+              return sendPrompt(props.id, prompt, images, { steer });
             }}
             busy={busy()}
             // The stop drops queued prompts; give them back to edit.

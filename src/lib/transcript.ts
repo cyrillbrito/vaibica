@@ -28,6 +28,8 @@ export type Message = { key: string } & (
   | { kind: 'end'; at: number; text?: string }
   // Where a forked session's own messages start.
   | { kind: 'forked' }
+  // Who drives a session another one started changed here.
+  | { kind: 'handoff'; to: 'you' | 'parent' }
   // Everything above was swapped for this summary.
   // `before`: the last measured request size; `after`: the summary's estimate.
   // `at`: the entry, so a fork from here starts with the summary.

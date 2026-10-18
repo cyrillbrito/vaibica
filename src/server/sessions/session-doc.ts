@@ -2,7 +2,7 @@ import 'server-only';
 import { defineDoc } from '@earendil-works/pi-durable';
 
 import type { ProfileId } from '#lib/profiles';
-import type { PullRequest, VoiceSettings } from '#lib/protocol';
+import type { Handoff, PullRequest, VoiceSettings } from '#lib/protocol';
 
 // App metadata stored next to each conversation; Pi Durable has no titles.
 export const SessionDoc = defineDoc<{
@@ -28,9 +28,12 @@ export const SessionDoc = defineDoc<{
   quiet?: boolean;
   // Who sent the newest prompt: "user", "bica" for a note, or a session id.
   lastFrom?: string;
-  // The user prompted it himself, so it is his (docs/hub.md). Unset: from
-  // before the field, so a session the user started counts as his.
+  // The user drives it: he started it, or took it over from the session that
+  // did, until he hands it back (docs/sessions.md). Unset: from before the
+  // field, so a session the user started counts as his.
   userPrompted?: boolean;
+  // Each time the user took it over or handed it back.
+  handoffs?: Handoff[];
   voice?: VoiceSettings;
   // Sessions that asked to hear when its current or next run ends
   // (session_send's `notify`). Stored, so a restart doesn't lose them.

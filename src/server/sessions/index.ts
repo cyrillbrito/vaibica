@@ -20,7 +20,7 @@ export {
   setProfile,
   setVoice,
 } from './meta';
-export { tell } from './notes';
+export { fromUser, handBack, tell } from './notes';
 export { recentPrompts } from './read';
 export { openHub, updateHub } from './hub';
 export { HubSessionTools, SessionTools } from './tools';

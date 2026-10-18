@@ -35,6 +35,28 @@ function other(id: string, self: ConversationId) {
   return id;
 }
 
+const USER_ASKED = Type.Optional(
+  Type.Boolean({
+    description:
+      'true: the user told you to, in a session of yours he took over. Only then',
+  }),
+);
+
+/** A parent backs off from a session the user took over, unless he says so. */
+function checkDriver(
+  target: { id: string; startedBy: string | null; parentDrives: boolean },
+  me: string,
+  userAsked: boolean | undefined,
+  action: 'archive' | 'message' = 'message',
+) {
+  if (target.startedBy !== me || target.parentDrives || userAsked) return;
+  throw new Error(
+    action === 'archive'
+      ? `The user took over session ${target.id}, so it's his, and he may still want it. Leave it open, or ask him in your reply. Pass \`user_asked\` only if he told you to archive it.`
+      : `The user took over session ${target.id}, so he drives it now. Leave it to him: tell him what you wanted it to know instead. Pass \`user_asked\` only if he told you to do this.`,
+  );
+}
+
 /** The session tools; the hub's descriptions drop the "leave others alone" limits. */
 const sessionTools = (hub: boolean): ToolRegistration[] => {
   const sessionStart = defineTool({
@@ -77,7 +99,7 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
       if (!prompt.trim()) throw new Error('The prompt is empty');
       const id = await spawnSession(
         api.conversationId,
-        `${prompt}\n\n(Session ${api.conversationId} started this session. To report back or ask it something, use session_send.)`,
+        `${prompt}\n\n(Session ${api.conversationId} started this session and drives it: to report back or ask it something, use session_send. If the user writes to you himself, he has taken you over: from then on, answer him in your replies, not session ${api.conversationId}.)`,
         `start_session:${api.callId}`,
         folder,
         worktree,
@@ -121,9 +143,11 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
         from.last === undefined
           ? ''
           : ` Last prompt from: ${from.last === 'user' ? 'the user' : from.last === 'bica' ? 'a Bica note' : from.last === me ? 'you' : `session ${from.last}`}.`;
-      const whose = from.user
-        ? ' The user prompts it himself, so it is his.'
-        : '';
+      const whose = !from.user
+        ? ''
+        : s.startedBy
+          ? ' The user took it over, so it is his.'
+          : ' The user prompts it himself, so it is his.';
       const parts = [
         `Session ${s.id} "${s.title}" in ${s.cwd}: ${s.archivedAt ? 'archived' : STATUS[s.status]}.${by}${last}${whose}`,
       ];
@@ -162,7 +186,7 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
 
   const sessionArchive = defineTool({
     name: 'session_archive',
-    description: `Archive another session once its work is done: it leaves the session list (the user can bring it back), and the terminals it started close. With \`remove_worktree\`, its worktree folder and local branch go too, unless another open session works there, or it has uncommitted files or commits no other branch has.${hub ? ' Only when the user asked for it.' : ' Only archive sessions you started or the user named.'}`,
+    description: `Archive another session once its work is done: it leaves the session list (the user can bring it back), and the terminals it started close. With \`remove_worktree\`, its worktree folder and local branch go too, unless another open session works there, or it has uncommitted files or commits no other branch has.${hub ? ' Only when the user asked for it.' : " Only archive sessions you started or the user named. Archive one you started once its result is in your reply and the user wouldn't want to open it himself: a lookup, a check, one worker of many. Keep it when he might want to read or continue it: he asked for it, it holds a decision, a long back and forth, unmerged work, or a question for him. Name what you archived in your reply, so he can bring it back. A session he took over is his: archive it only if he told you to."}`,
     parameters: Type.Object({
       id: Type.String({ description: 'The session id' }),
       remove_worktree: Type.Optional(
@@ -171,10 +195,12 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
             "true: also remove the session's worktree, if it is merged and clean",
         }),
       ),
+      user_asked: USER_ASKED,
     }),
-    execute: async ({ id, remove_worktree }, api) => {
+    execute: async ({ id, remove_worktree, user_asked }, api) => {
       other(id, api.conversationId);
       const s = await readSession(id);
+      checkDriver(s, String(api.conversationId), user_asked, 'archive');
       if (s.status === 'running' || s.status === 'retrying')
         throw new Error(
           `Session ${id} is still running. Wait for it, or stop it first.`,
@@ -219,11 +245,12 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
         Type.Boolean({
           description: hub
             ? 'false: no note with its reply when it finishes the turn. Default: true'
-            : 'true: get a note with its reply when it finishes the turn. Sessions you started notify you anyway',
+            : 'true: get a note with its reply when it finishes the turn. Sessions you started notify you anyway, until the user takes them over',
         }),
       ),
+      user_asked: USER_ASKED,
     }),
-    execute: async ({ id, message, steer, notify }, api) => {
+    execute: async ({ id, message, steer, notify, user_asked }, api) => {
       other(id, api.conversationId);
       const [me, target] = await Promise.all([
         readSession(String(api.conversationId)),
@@ -233,6 +260,7 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
         throw new Error(
           `Session ${id} is archived. Ask the user before bringing it back.`,
         );
+      checkDriver(target, me.id, user_asked);
       await noteMessage(api.conversationId, id);
       await submit(
         id,
@@ -253,9 +281,16 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
     description: `Stop the turn another session is running, and drop its queued messages. The session stays, and a later session_send starts it again.${hub ? ' Only when the user asked for it.' : ' Only stop sessions you started or the user named.'}`,
     parameters: Type.Object({
       id: Type.String({ description: 'The session id' }),
+      user_asked: USER_ASKED,
     }),
-    execute: async ({ id }, api) => {
-      await stop(other(id, api.conversationId));
+    execute: async ({ id, user_asked }, api) => {
+      other(id, api.conversationId);
+      checkDriver(
+        await readSession(id),
+        String(api.conversationId),
+        user_asked,
+      );
+      await stop(id);
       return text(`Stopped session ${id}.`);
     },
   });

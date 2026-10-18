@@ -34,6 +34,18 @@ While the agent works, sending queues the prompt for the next run, and the send 
 - Edit takes a prompt back into the composer, and Remove drops it.
 - Stop ends the run at once, and queued prompts come back into the composer. Esc twice in the composer stops too. Twice, so an Esc meant to close something can't stop a run.
 
+## Who drives a session
+
+A session another session started is in its parent's charge at first: the parent hears of every turn, and answers and messages it. In the sidebar it sits right under its parent when both work in the same folder. A strip above the composer says "Parent in charge", with the parent's title as a separate link, and the header and the sidebar row show the same icon. Titles stay out of sentences and buttons, since they run long.
+
+- Sending takes over, so the send button reads "Take over". From then on you're in charge: the parent hears of the take over once, then of no more turns, and `session_send` and `session_stop` refuse it unless you told the parent to act.
+- The arrow on the send button's side, like Slack's scheduled send, holds a plain "Send", which leaves the parent in charge. The parent gets a copy of your words, so it knows what you said.
+- Answering a question the session asks doesn't take it over.
+- Hand back, in the strip once you're in charge, gives the session back to the parent, which gets its last reply.
+- Each change shows as a line in the transcript: "You took over" or "Handed back to the parent session".
+
+Who is in charge is stored with the session (`userPrompted` and `handoffs` in `SessionDoc`), so it survives restarts. The ticket `session_start` sends tells the worker that when you write to it yourself, it answers you, not its parent.
+
 ## Composer
 
 - Each session keeps its own draft, and so do the home page and each workspace page. Drafts are kept on the device, so they survive a reload. Attached images stay only until the page reloads.
@@ -68,6 +80,8 @@ The installed app's icon shows a badge with the sessions the sidebar marks as wa
 ## Archiving
 
 Archive hides a session in the sidebar's Archived section, and unarchive brings it back. Nothing is deleted. A running session can't be archived, since hiding something that still spends tokens would be a surprise.
+
+Archiving a session that started others, which are still open, first asks which of them go with it. The finished ones it's still in charge of come checked, and the ones you took over don't. Running ones can't be picked.
 
 To archive many at once, pick sessions in the sidebar with ⌘ click (or Ctrl click) to add one, and shift click to take every row between it and the last one clicked. A bar at the bottom of the sidebar then archives or unarchives them all, and so does right click on any picked row. Running sessions are skipped. A plain click or Esc clears the pick.
 

@@ -11,6 +11,7 @@ import Toaster from './components/ui/Toast';
 import Failed from './components/ui/Failed';
 import Inspector from './components/Inspector';
 import ProjectPicker from './components/ProjectPicker';
+import ArchiveDialog from './components/ArchiveDialog';
 import Resizer from './components/ui/Resizer';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
@@ -163,6 +164,7 @@ export default function App() {
           </Show>
 
           <ProjectPicker />
+          <ArchiveDialog />
           <CommandPalette />
           <ContextMenu />
           <Toaster />

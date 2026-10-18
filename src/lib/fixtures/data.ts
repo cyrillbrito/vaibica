@@ -116,6 +116,8 @@ const session = (
   forkedFrom: null,
   forkedAt: null,
   startedBy: null,
+  parentDrives: false,
+  handoffs: [],
   cleanedUp: null,
   profile: 'coding',
   voice: null,
@@ -257,6 +259,7 @@ function demo(): Dataset {
         {
           id: 'demo-terminals',
           startedBy: 'demo-hub',
+          parentDrives: true,
         },
       ),
       session(
@@ -268,10 +271,13 @@ function demo(): Dataset {
         {
           id: 'demo-reconnect',
           startedBy: 'demo-hub',
+          parentDrives: true,
         },
       ),
       session('vaibica', bica, 'Release notes for 0.9', 'idle', 2 * HOUR, {
         id: 'demo-release',
+        startedBy: 'demo-shortcuts',
+        parentDrives: true,
       }),
       session(
         'vaibica',
@@ -282,11 +288,15 @@ function demo(): Dataset {
         {
           id: 'demo-handoff',
           startedBy: 'demo-hub',
+          parentDrives: true,
         },
       ),
       session('vaibica', voice, 'Pick a calmer voice', 'done', 25 * MIN, {
         id: 'demo-voice',
-        startedBy: 'demo-hub',
+        startedBy: 'demo-shortcuts',
+        // You took over before your follow-up, the fourth turn (20s apart).
+        parentDrives: false,
+        handoffs: [{ at: now - 26 * MIN + 70_000, to: 'you' }],
       }),
       session(
         'blog',
@@ -308,6 +318,7 @@ function demo(): Dataset {
         {
           id: 'demo-flaky',
           startedBy: 'demo-hub',
+          parentDrives: true,
         },
       ),
       session(
@@ -473,6 +484,8 @@ function worst(): Dataset {
         'Benachrichtigungseinstellungenüberarbeitung',
         'error',
         1 * HOUR,
+        // Its parent's title runs to 200 characters.
+        { startedBy: 'worst-long', parentDrives: true },
       ),
       session(
         'nw',
@@ -488,7 +501,12 @@ function worst(): Dataset {
         'idle',
         400 * DAY,
         // Started by another session, and forked from the long one.
-        { forkedFrom: 'worst-long', forkedAt: 6, startedBy: 'worst-ask' },
+        {
+          forkedFrom: 'worst-long',
+          forkedAt: 6,
+          startedBy: 'worst-ask',
+          parentDrives: true,
+        },
       ),
       session(
         'nw',

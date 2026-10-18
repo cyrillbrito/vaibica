@@ -35,7 +35,8 @@ import {
   setProfile,
   setVoice,
   stop,
-  submit,
+  fromUser,
+  handBack,
   withdraw,
   conversationDetail,
   watchConversation,
@@ -125,14 +126,18 @@ const calls: Handlers = {
     cleanUpWorktree(args.projectId, args.cwd, args.force === true),
   'fs.dirs': async ({ path }) => listDirs(path),
   'session.submit': async (args) => {
-    await submit(
+    await fromUser(
       args.id,
       args.prompt.trim(),
       args.images ?? [],
       args.requestId,
-      'user',
       args.whenBusy,
+      args.keep === true,
     );
+    return null;
+  },
+  'session.handBack': async ({ id }) => {
+    await handBack(id);
     return null;
   },
   'session.withdraw': async ({ id, submission }) => withdraw(id, submission),

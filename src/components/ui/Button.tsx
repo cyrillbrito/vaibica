@@ -25,9 +25,15 @@ const PRESS =
 
 // Heights step up to 44px hit areas on touch.
 const SIZE: Record<Size, string> = {
-  sm: 'h-6 gap-1 rounded-md px-1.5 text-meta touch:h-9 touch:px-2.5',
-  md: 'h-7 gap-1.5 rounded-md px-1.5 touch:h-10',
-  lg: 'h-8 gap-1.5 rounded-lg px-3 touch:h-11',
+  sm: 'h-6 gap-1 px-1.5 text-meta touch:h-9 touch:px-2.5',
+  md: 'h-7 gap-1.5 px-1.5 touch:h-10',
+  lg: 'h-8 gap-1.5 px-3 touch:h-11',
+};
+
+const RADIUS: Record<Size, string> = {
+  sm: 'rounded-md',
+  md: 'rounded-md',
+  lg: 'rounded-lg',
 };
 
 const ICON_SIZE: Record<Size, string> = {
@@ -41,12 +47,16 @@ const DISABLED_PRIMARY = 'disabled:opacity-100';
 
 type Look = { variant?: Variant; size?: Size };
 
-/** Classes for a button with text; also for links that look like one. */
-export const buttonClass = (look: Look = {}) =>
+/**
+ * Classes for a button with text; also for links that look like one.
+ * `round`: a pill, to sit next to round icon buttons.
+ */
+export const buttonClass = (look: Look & { round?: boolean } = {}) =>
   [
     'flex shrink-0 items-center justify-center',
     VARIANT[look.variant ?? 'ghost'],
     SIZE[look.size ?? 'lg'],
+    look.round ? 'rounded-full' : RADIUS[look.size ?? 'lg'],
     PRESS,
     look.variant === 'primary' ? DISABLED_PRIMARY : DISABLED,
   ].join(' ');
@@ -73,11 +83,14 @@ type ButtonProps = Look & JSX.ButtonHTMLAttributes<HTMLButtonElement>;
  * (affectUI's Button), and swallows clicks without greying the button out
  * the way `disabled` does. Focus stays, so a keyboard user isn't dropped.
  */
-export function Button(props: ButtonProps & { loading?: boolean }) {
+export function Button(
+  props: ButtonProps & { loading?: boolean; round?: boolean },
+) {
   const rest = omit(
     props,
     'variant',
     'size',
+    'round',
     'class',
     'loading',
     'children',

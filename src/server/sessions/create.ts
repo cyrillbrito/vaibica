@@ -213,6 +213,7 @@ export async function fork(id: string, at?: number) {
         doc.seenEntry = entry;
         delete doc.watchers;
         delete doc.messaged;
+        delete doc.handoffs;
       },
     },
     context,

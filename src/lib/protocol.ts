@@ -39,6 +39,11 @@ export interface SessionSummary {
   forkedAt: number | null;
   // The session whose agent started it; null: started by the user.
   startedBy: string | null;
+  // The session that started it still drives it: the user hasn't taken it
+  // over, or handed it back.
+  parentDrives: boolean;
+  // Each time the user took it over or handed it back.
+  handoffs: Handoff[];
   // Its worktree was cleaned up: the branch and PR it had then; null: not.
   cleanedUp: { branch: string | null; pr: PullRequest | null } | null;
   // What kind of session it is: its tools, instructions, and panels
@@ -47,6 +52,9 @@ export interface SessionSummary {
   // How its voice calls sound; null: the defaults.
   voice: VoiceSettings | null;
 }
+
+/** A change of who drives a session another one started. */
+export type Handoff = { at: number; to: 'you' | 'parent' };
 
 /** A session's voice calls (docs/voice.md). */
 // A type, not an interface: session docs only take plain JSON shapes.
@@ -393,9 +401,14 @@ export interface Calls {
       // While a run works: wait for it to answer (default), or join it after
       // the current step.
       whenBusy?: 'followUp' | 'steer';
+      // In a session its parent drives: leave it with the parent instead of
+      // taking it over.
+      keep?: boolean;
     };
     result: null;
   };
+  // Gives a session the user took over back to the session that started it.
+  'session.handBack': { args: { id: string }; result: null };
   // Takes a queued prompt back; null: it was already sent.
   'session.withdraw': {
     args: { id: string; submission: number };

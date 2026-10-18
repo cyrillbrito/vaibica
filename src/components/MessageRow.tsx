@@ -12,8 +12,10 @@ import {
   CopyIcon,
   ForkIcon,
   InfoIcon,
+  ParentIcon,
   SessionIcon,
   SpinnerIcon,
+  TakeOverIcon,
   VoiceIcon,
 } from './ui/icons';
 import { copyText } from '#lib/clipboard';
@@ -251,6 +253,28 @@ export default function MessageRow(props: {
             </Show>
             <div class="h-px flex-1 bg-line" />
           </div>
+        </Match>
+        <Match
+          when={props.message.kind === 'handoff' ? props.message : undefined}
+        >
+          {(h) => (
+            <div class={RULE}>
+              <div class="h-px flex-1 bg-line" />
+              <Show
+                when={h().to === 'you'}
+                fallback={
+                  <>
+                    <ParentIcon />
+                    Handed back to the parent session
+                  </>
+                }
+              >
+                <TakeOverIcon />
+                You took over
+              </Show>
+              <div class="h-px flex-1 bg-line" />
+            </div>
+          )}
         </Match>
         <Match
           when={props.message.kind === 'compaction' ? props.message : undefined}

@@ -3,6 +3,7 @@ import type { ConversationId } from '@earendil-works/pi-durable';
 
 import { context, getHarness } from '#server/agent';
 import { serverProfile } from '#server/profiles';
+import type { PromptImage } from '#lib/protocol';
 import { queued, submit, type QueuedInput } from './prompts';
 import { prompters, readSession, recentMessages } from './read';
 import { SessionDoc, getConversation, listSessions, load } from './store';
@@ -70,7 +71,8 @@ async function runEnded(id: ConversationId) {
   // Archived: done with, so it doesn't report.
   if (!s || s.archivedAt) return;
   const watchers = new Set(once);
-  if (s.startedBy && !quiet) watchers.add(s.startedBy);
+  // A parent backs off from a session the user took over.
+  if (s.parentDrives && !quiet) watchers.add(s.startedBy!);
   const alert = s.status === 'error' || s.status === 'waiting';
   if (alert)
     for (const other of await listSessions())
@@ -98,6 +100,62 @@ async function runEnded(id: ConversationId) {
         : '';
     await tell(w, `Session ${id} "${s.title}"${whose} ${what}`);
   }
+}
+
+/**
+ * A prompt the user typed. When it takes the session over, its parent hears
+ * that it should back off; with `keep`, a parent that still drives gets a
+ * copy, so it knows what he said.
+ */
+export async function fromUser(
+  id: string,
+  prompt: string,
+  images: PromptImage[],
+  requestId: string,
+  whenBusy: 'followUp' | 'steer' | undefined,
+  keep: boolean,
+) {
+  const parent = await submit(
+    id,
+    prompt,
+    images,
+    requestId,
+    'user',
+    whenBusy,
+    keep,
+  );
+  const s = await readSession(id);
+  if (parent)
+    await tell(
+      parent,
+      `The user took over session ${id} "${s.title}", which you started. He drives it now, so leave it to him: don't message, steer, or stop it unless he asks you to. You hear no more of its turns unless he hands it back.`,
+    );
+  else if (keep && s.parentDrives && prompt)
+    await tell(
+      s.startedBy!,
+      `The user wrote to session ${id} "${s.title}", which you started, and left it in your charge. His words:\n\n${prompt}`,
+    );
+}
+
+/** The user gives a session he took over back to the session that started it. */
+export async function handBack(id: string) {
+  const conversation = await getConversation(id);
+  let parent: string | undefined;
+  await (
+    await getHarness()
+  ).commit(async (tx) => {
+    const doc = await tx.doc(SessionDoc, conversation.id);
+    if (!doc.startedBy || !doc.userPrompted) return;
+    parent = doc.startedBy;
+    doc.userPrompted = false;
+    doc.handoffs = [...(doc.handoffs ?? []), { at: Date.now(), to: 'parent' }];
+  }, context);
+  if (!parent) return;
+  const s = await readSession(id);
+  await tell(
+    parent,
+    `The user handed session ${id} "${s.title}" back to you. You drive it again and hear of its turns. Its last reply:\n\n${s.reply || '(none)'}`,
+  );
 }
 
 const NOTE = '[Note from Bica, not from the user]';

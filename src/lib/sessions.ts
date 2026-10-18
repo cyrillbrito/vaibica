@@ -50,19 +50,23 @@ export const markSeen = (id: string, seen = true) =>
 export const renameSession = (id: string, title: string) =>
   request('session.rename', { id, title });
 
+// keep: in a session its parent drives, leave it with the parent.
 export const sendPrompt = (
   id: string,
   prompt: string,
   images: PromptImage[],
-  steer = false,
+  opts: { steer?: boolean; keep?: boolean } = {},
 ) =>
   request('session.submit', {
     id,
     prompt,
     images,
     requestId: requestId(),
-    whenBusy: steer ? 'steer' : undefined,
+    whenBusy: opts.steer ? 'steer' : undefined,
+    keep: opts.keep || undefined,
   });
+
+export const handBack = (id: string) => request('session.handBack', { id });
 
 export const withdrawQueued = (id: string, submission: number) =>
   request('session.withdraw', { id, submission });

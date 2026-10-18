@@ -2,13 +2,13 @@ import 'server-only';
 import {
   AgentDoc,
   type ConversationId,
+  type EntryRecord,
   InboxDoc,
   type InboxItem,
   LiveDoc,
-  type EntryRecord,
 } from '@earendil-works/pi-durable';
-import type { Message } from '@earendil-works/pi-ai';
 
+import type { Message } from '@earendil-works/pi-ai';
 import { CLEANUP_ENTRY, chars, cleanupEdits } from '#lib/cleanup';
 import type { ModelChoice, PromptImage } from '#lib/protocol';
 import { context, getHarness } from '#server/agent';
@@ -20,6 +20,10 @@ import { SessionDoc, getConversation, profileOf } from './store';
 /** Who sends a prompt: the user, Bica's own notes, or another session's id. */
 export type Sender = 'user' | 'bica' | (string & {});
 
+/**
+ * Resolves to the session that started it when this prompt took it over
+ * from there. `keep`: a prompt from the user that leaves it with its parent.
+ */
 export async function submit(
   id: string,
   prompt: string,
@@ -27,26 +31,42 @@ export async function submit(
   requestId: string,
   from: Sender,
   whenBusy: 'followUp' | 'steer' = 'followUp',
+  keep = false,
 ) {
   const conversation = await getConversation(id);
   await keepCopies(conversation.id);
-  await recordSender(conversation.id, from);
+  const parent = await recordSender(conversation.id, from, keep);
   // Pi Durable returns the existing submission for a repeated requestId.
   await conversation.submit(
     { type: 'input', content: input(prompt, images), requestId, whenBusy },
     context,
   );
+  return parent;
 }
 
-/** Notes who sent the newest prompt, for session_read and notes. */
-export async function recordSender(id: ConversationId, from: Sender) {
+/**
+ * Notes who sent the newest prompt, for session_read and notes. The user's
+ * prompts make the session his, unless `keep`; returns its parent when that
+ * just took it over.
+ */
+export async function recordSender(
+  id: ConversationId,
+  from: Sender,
+  keep = false,
+) {
+  let parent: string | undefined;
   await (
     await getHarness()
   ).commit(async (tx) => {
     const doc = await tx.doc(SessionDoc, id);
     doc.lastFrom = from;
-    if (from === 'user') doc.userPrompted = true;
+    if (from !== 'user' || keep || doc.userPrompted) return;
+    doc.userPrompted = true;
+    if (!doc.startedBy) return;
+    parent = doc.startedBy;
+    doc.handoffs = [...(doc.handoffs ?? []), { at: Date.now(), to: 'you' }];
   }, context);
+  return parent;
 }
 
 /**
