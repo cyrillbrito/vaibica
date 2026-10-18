@@ -176,6 +176,7 @@ export default function MessageRow(props: {
             <AskCard
               questions={ask().questions}
               open={ask().open}
+              answer={ask().answer?.text}
               onAnswer={props.onAnswer}
             />
           )}

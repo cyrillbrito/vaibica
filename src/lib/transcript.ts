@@ -49,7 +49,13 @@ export type Message = { key: string } & (
   | { kind: 'cleaning'; running: boolean }
   | { kind: 'text' | 'error'; text: string }
   // Questions for the user; `open` while the session waits for the answer.
-  | { kind: 'ask'; questions: Question[]; open: boolean }
+  // `answer`: the prompt that came next, shown in the card instead of a row.
+  | {
+      kind: 'ask';
+      questions: Question[];
+      open: boolean;
+      answer?: { text: string; timestamp: number };
+    }
   // What was said in a voice call, back to back.
   | { kind: 'call'; lines: VoiceLine[] }
   | Activity
@@ -187,10 +193,28 @@ export function toMessages(
                 ? [{ mimeType: b.mimeType, data: b.data }]
                 : [],
             );
+      const sender = senderOf(text);
+      // Whatever you send next answers the questions, card or composer. It
+      // moves past the answer's end, so the prompt row's place stays the same.
+      const end = messages.at(-1);
+      const ask = messages.at(-2);
+      if (
+        !sender.from &&
+        !images.length &&
+        end?.kind === 'end' &&
+        ask?.kind === 'ask' &&
+        !ask.answer
+      ) {
+        messages.splice(-2, 2, end, {
+          ...ask,
+          answer: { text, timestamp: message.timestamp },
+        });
+        return;
+      }
       messages.push({
         key,
         kind: 'user',
-        ...senderOf(text),
+        ...sender,
         images,
         timestamp: message.timestamp,
       });
@@ -251,7 +275,7 @@ export function toMessages(
     if (
       at === undefined ||
       !last ||
-      last.kind === 'user' ||
+      promptAt(last) !== undefined ||
       last.kind === 'end' ||
       last.kind === 'compaction' ||
       last.kind === 'cleanup'
@@ -260,7 +284,7 @@ export function toMessages(
     let text: string | undefined;
     for (let i = messages.length - 1; i >= 0 && !text; i--) {
       const m = messages[i]!;
-      if (m.kind === 'user') break;
+      if (promptAt(m) !== undefined) break;
       if (m.kind === 'text') text = m.text;
     }
     messages.push({ key: `end:${at}`, kind: 'end', at, text });
@@ -361,6 +385,13 @@ export function toMessages(
   const last = grouped.at(-1);
   if (last?.kind === 'activity' && live?.run) last.active = true;
   return grouped;
+}
+
+/** When a row was sent as a prompt: yours, a note, or an answer in a card. */
+export function promptAt(m: { kind: string }): number | undefined {
+  const row = m as Message;
+  if (row.kind === 'user') return row.timestamp;
+  if (row.kind === 'ask') return row.answer?.timestamp;
 }
 
 const num = (v: unknown) => (typeof v === 'number' ? v : undefined);

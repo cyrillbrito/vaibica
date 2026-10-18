@@ -15,7 +15,7 @@ Scripts can also call classifier models. A classifier doesn't chat: it answers t
 
 ## Asking you
 
-`ask` puts one to four multiple-choice questions to you and ends the run. Nothing waits, so a question survives restarts and can be answered hours later from another device. Your answer is an ordinary prompt, so typing in the composer answers too. Number keys pick the options of the question you're on and ⌘↵ sends, also with nothing focused. Once answered, the card folds into one row that opens to the questions.
+`ask` puts one to four multiple-choice questions to you and ends the run. Nothing waits, so a question survives restarts and can be answered hours later from another device. Your answer is an ordinary prompt, so typing in the composer answers too. Number keys pick the options of the question you're on and ⌘↵ sends, also with nothing focused. Once answered, the card folds into one row that opens to the questions and your answers. The answer shows there instead of as a prompt of its own, and one typed in the composer shows whole under the questions.
 
 ## Other sessions
 

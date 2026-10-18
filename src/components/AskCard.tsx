@@ -28,11 +28,13 @@ const MAC = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform);
  * While the session waits, each question takes picks, a written answer, or
  * both, and any can be skipped. Send goes back as a normal prompt; typing in
  * the composer answers too. Once answered, the card glides down into one
- * row, which opens to the questions again.
+ * row, which opens to the questions and the answers.
  */
 export default function AskCard(props: {
   questions: Question[];
   open: boolean;
+  // The prompt that answered, from the card or the composer.
+  answer?: string;
   onAnswer: (text: string) => Promise<unknown>;
 }) {
   // Per question: picked option labels, and what was written.
@@ -159,7 +161,13 @@ export default function AskCard(props: {
     >
       <Show
         when={props.open}
-        fallback={<Resolved questions={props.questions} seen={!settled()} />}
+        fallback={
+          <Resolved
+            questions={props.questions}
+            answer={props.answer}
+            seen={!settled()}
+          />
+        }
       >
         <div class="flex h-8 items-center gap-1.5 px-2.5 text-meta text-muted">
           <QuestionIcon />
@@ -267,8 +275,13 @@ export default function AskCard(props: {
   );
 }
 
-/** The answered card, folded to one row that opens to its questions. */
-function Resolved(props: { questions: Question[]; seen: boolean }) {
+/** The answered card, folded to one row that opens to the questions and answers. */
+function Resolved(props: {
+  questions: Question[];
+  answer?: string;
+  seen: boolean;
+}) {
+  const answers = () => answersOf(props.questions, props.answer);
   const first = () => props.questions[0]?.question ?? '';
   const more = () => props.questions.length - 1;
   return (
@@ -302,18 +315,44 @@ function Resolved(props: { questions: Question[]; seen: boolean }) {
       </summary>
       <div class="flex flex-col gap-3 px-3 pt-3 pb-2">
         <For each={props.questions} keyed={false}>
-          {(q) => (
+          {(q, i) => (
             <div class="flex flex-col gap-1">
               <div class="text-meta font-medium text-muted">{q().header}</div>
-              <div class="text-pretty">{q().question}</div>
-              <div class="text-meta text-muted">
-                {q()
-                  .options.map((o) => o.label)
-                  .join(' · ')}
-              </div>
+              <div class="text-pretty text-muted">{q().question}</div>
+              <Show
+                when={answers()}
+                fallback={
+                  <div class="text-meta text-muted">
+                    {q()
+                      .options.map((o) => o.label)
+                      .join(' · ')}
+                  </div>
+                }
+              >
+                {(list) => (
+                  <Show
+                    when={list()[i] !== SKIPPED && list()[i]}
+                    fallback={<div class="text-muted italic">Skipped</div>}
+                  >
+                    {(answer) => (
+                      <div class="whitespace-pre-wrap wrap-anywhere">
+                        {answer()}
+                      </div>
+                    )}
+                  </Show>
+                )}
+              </Show>
             </div>
           )}
         </For>
+        <Show when={!answers() && props.answer}>
+          {(text) => (
+            <div class="flex flex-col gap-1 border-t border-line pt-3">
+              <div class="text-meta font-medium text-muted">Your answer</div>
+              <div class="whitespace-pre-wrap wrap-anywhere">{text()}</div>
+            </div>
+          )}
+        </Show>
       </div>
     </details>
   );
@@ -329,10 +368,30 @@ function answerText(questions: Question[], picks: string[][], notes: string[]) {
       .map((l) => l.replace(/\s*\(Recommended\)$/, ''))
       .join(', ');
     const note = notes[i]?.trim() ?? '';
-    return [chosen, note].filter(Boolean).join(' — ') || '(skipped)';
+    return [chosen, note].filter(Boolean).join(' — ') || SKIPPED;
   };
   if (questions.length === 1) return answer(0);
   return questions
     .map((q, i) => `${q.header || q.question}: ${answer(i)}`)
     .join('\n');
+}
+
+const SKIPPED = '(skipped)';
+
+/**
+ * Each question's answer, read back from answerText's lines. Undefined for
+ * a prompt typed in the composer that doesn't follow them, shown whole.
+ */
+function answersOf(questions: Question[], text: string | undefined) {
+  if (text === undefined) return undefined;
+  if (questions.length === 1) return [text];
+  const labels = questions.map((q) => `${q.header || q.question}: `);
+  const answers: string[] = [];
+  for (const line of text.split('\n')) {
+    const next = labels[answers.length];
+    if (next && line.startsWith(next)) answers.push(line.slice(next.length));
+    else if (answers.length) answers[answers.length - 1] += `\n${line}`;
+    else return undefined;
+  }
+  return answers.length === questions.length ? answers : undefined;
 }

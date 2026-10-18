@@ -62,7 +62,12 @@ import { type ContextUsage } from '#lib/context-usage';
 import { SessionId } from '#lib/step-detail';
 import { hideThinking } from '#lib/thinking';
 import { call, startCall } from '#lib/voice';
-import { toMessages, viewStatus, type Message } from '#lib/transcript';
+import {
+  promptAt,
+  toMessages,
+  viewStatus,
+  type Message,
+} from '#lib/transcript';
 
 /**
  * The agent is on it but nothing has streamed yet: a shimmering word and a
@@ -217,9 +222,7 @@ export default function Session(props: RouteProps<'/s/:id'>) {
       if (!handoffs.length && !cleaning) return list;
       const out = [...list];
       for (const h of handoffs.toSorted((a, b) => b.at - a.at)) {
-        const i = out.findIndex(
-          (m) => m.kind === 'user' && m.timestamp >= h.at,
-        );
+        const i = out.findIndex((m) => (promptAt(m) ?? -1) >= h.at);
         out.splice(i === -1 ? out.length : i, 0, {
           key: `handoff:${h.at}`,
           kind: 'handoff',
@@ -244,9 +247,10 @@ export default function Session(props: RouteProps<'/s/:id'>) {
       if (!live?.run) return undefined;
       const retry = live.generation?.retry;
       const last = messages().at(-1);
-      if (!retry && last && last.kind !== 'user') return undefined;
+      const since = last && promptAt(last);
+      if (!retry && last && since === undefined) return undefined;
       return {
-        since: last?.kind === 'user' ? last.timestamp : undefined,
+        since,
         retry,
       };
     },
