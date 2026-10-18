@@ -9,7 +9,7 @@ import { live } from '#server/live';
 import { refreshModels } from './models';
 import { onProxyChange, PROXY_ID, proxyStatus } from './proxy';
 
-// Always listed, with a guide; other providers show once they have a key.
+// Listed first, with a guide; every other pi-ai provider follows by name.
 const GUIDES: Record<
   string,
   Pick<Account, 'about' | 'link' | 'env'> & {
@@ -73,11 +73,10 @@ async function status(id: string): Promise<Account['status']> {
 async function accounts(): Promise<Account[]> {
   const list = await Promise.all(
     models.getProviders().map(async (p): Promise<Account | undefined> => {
-      // Settings has its own section for the proxy.
+      // Settings shows the proxy from `proxy` instead.
       if (p.id === PROXY_ID) return undefined;
       const guide = GUIDES[p.id];
       const current = await status(p.id);
-      if (!guide && !current) return undefined;
       const methods: Account['methods'] = [];
       if (p.auth.oauth && !guide?.noSignIn)
         methods.push({
@@ -98,8 +97,13 @@ async function accounts(): Promise<Account[]> {
     }),
   );
   const featured = Object.keys(GUIDES);
+  // Exa isn't a model provider, so it goes after them.
   const rank = (a: Account) =>
-    featured.includes(a.id) ? featured.indexOf(a.id) : featured.length - 1.5;
+    a.id === 'exa'
+      ? Infinity
+      : featured.includes(a.id)
+        ? featured.indexOf(a.id)
+        : featured.length;
   const exa: Account = {
     id: 'exa',
     name: 'Exa',

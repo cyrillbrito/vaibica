@@ -4,7 +4,7 @@ The hub is one long-lived session you talk to, often from the phone, about all y
 
 ## Reaching it
 
-Hub sits at the top of the sidebar, always, and in the command palette. Both open `/hub`, and so does the app icon's Hub shortcut on the phone. The first open starts it. It needs a folder first, set under Settings → Models → Hub, such as a `Hub` folder in your notes vault. There is one hub per Bica, outside any project. A link to the hub's session, such as a notification or a "Started by" line, lands on `/hub` too.
+Hub sits at the top of the sidebar, always, and in the command palette. Both open `/hub`, and so does the app icon's Hub shortcut on the phone. The first open starts it. It needs a folder first, set under Settings → Hub, such as a `Hub` folder in your notes vault. There is one hub per Bica, outside any project. A link to the hub's session, such as a notification or a "Started by" line, lands on `/hub` too.
 
 ## Its page
 

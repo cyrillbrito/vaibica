@@ -1,6 +1,6 @@
 # CLI proxy
 
-Bica can send model requests to a CLIProxyAPI server, which holds many plan sign-ins and switches between them when one runs out. It shows in Bica as one provider ([providers.md](./providers.md)), set up in Settings → CLI proxy.
+Bica can send model requests to a CLIProxyAPI server, which holds many plan sign-ins and switches between them when one runs out. It shows in Bica as one provider ([providers.md](./providers.md)), added under Settings → Providers.
 
 ## Why a proxy
 
@@ -12,7 +12,7 @@ Anthropic's terms don't allow plan sign-ins in third-party apps, and the proxy p
 
 ## Setting it up
 
-Settings asks for the proxy's URL, one of its API keys, and optionally its management key. Saving checks them against the proxy first, and stores them in `.data/auth.json` like any other key.
+Settings asks for the proxy's URL, one of its API keys, and optionally its management key. Saving checks them against the proxy first, and stores them in `.data/auth.json` like any other key. Until then, a half-filled form is kept on that device, so leaving the page or reloading doesn't lose it, and Discard drops it.
 
 ## Models
 
