@@ -100,9 +100,18 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
             "true: hold it for tonight's night run, when the user asks for work to run overnight. It starts at the night start time from Settings, one at a time, with no `ask`, and ends with a morning report. Write the prompt so it can finish alone: the goal, the scope, and the command that proves it done",
         }),
       ),
+      effort: Type.Optional(
+        Type.Union(
+          [Type.Literal('low'), Type.Literal('medium'), Type.Literal('high')],
+          {
+            description:
+              'How hard it thinks, only when the user asked for an effort. Default: yours',
+          },
+        ),
+      ),
     }),
     execute: async (
-      { prompt, folder, worktree, notify, assistant, tonight },
+      { prompt, folder, worktree, notify, assistant, tonight, effort },
       api,
     ) => {
       if (!prompt.trim()) throw new Error('The prompt is empty');
@@ -115,6 +124,7 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
         notify === false,
         assistant ? 'assistant' : 'coding',
         tonight,
+        effort,
       );
       return {
         ...text(

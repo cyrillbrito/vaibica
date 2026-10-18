@@ -6,7 +6,7 @@ import {
 } from '@earendil-works/pi-durable';
 
 import type { ProfileId } from '#lib/profiles';
-import type { ModelChoice, PromptImage } from '#lib/protocol';
+import type { ModelChoice, PromptImage, ThinkingLevel } from '#lib/protocol';
 import { context, getHarness } from '#server/agent';
 import { nightChoice, serverProfile } from '#server/profiles';
 import {
@@ -147,7 +147,8 @@ export async function createSession({
  * A session started by another session's agent: a normal, ownerless coding
  * session in the parent's folder, another workspace of any project, or a new
  * worktree of that project. It takes the parent's model, except from a hub,
- * whose fast model is picked for routing, not for the work.
+ * whose fast model is picked for routing, not for the work. `effort`
+ * overrides the effort; a level the model lacks is clamped.
  */
 export async function spawnSession(
   parent: ConversationId,
@@ -158,6 +159,7 @@ export async function spawnSession(
   quiet?: boolean,
   profile: Exclude<ProfileId, 'hub'> = 'coding',
   tonight?: boolean,
+  effort?: ThinkingLevel,
 ) {
   const harness = await getHarness();
   const [meta, agent] = await Promise.all([
@@ -178,12 +180,16 @@ export async function spawnSession(
   }
   if (!projectId || !cwd)
     throw new Error('Pass `folder`: a project folder or worktree');
-  const choice =
+  let choice: ModelChoice | undefined =
     serverProfile(profileOf(meta)).passesModel &&
     agent?.model &&
     agent.thinkingLevel
       ? { model: agent.model, thinkingLevel: agent.thinkingLevel }
       : undefined;
+  if (effort) {
+    const base = choice ?? (await serverProfile(profile).choice());
+    choice = checkChoice({ ...base, thinkingLevel: effort });
+  }
   return createSession({
     projectId,
     cwd,
