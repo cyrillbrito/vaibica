@@ -80,7 +80,7 @@ export async function recordSender(
 /**
  * Takes the memory index and the hub's project list when the session holds
  * no copy: at its first prompt and after a compaction. The prompt sections
- * show the copies (src/server/profiles/instructions.ts), since the agent
+ * show the copies (src/server/profiles/registry.ts), since the agent
  * edits memory mid-session and every change would be sent again. Every
  * prompt path calls it, voice included.
  */

@@ -11,4 +11,4 @@ Bica ships four, defined in code:
 
 A session is Coding unless you start it in assistant mode, with the Assistant toggle next to the workspace on the home page, or hold it for tonight. The context chip's menu can turn it off again. The tools and instructions are part of the prompt cache, so a switch rebuilds it once. Hub is not a choice anywhere: only the hub's own page makes the hub session, and the server refuses to make or switch any other session into one. A session with no profile counts as Coding.
 
-There is no profile editor. A profile is a small object in `src/lib/profiles.ts`, its server half (tools, model) is in `src/server/profiles/definitions.ts`, and its instructions are the prompt sections in `src/server/profiles/instructions.ts`.
+There is no profile editor. Each profile is one file in `src/server/profiles/` with its tools, model, and instructions, and it can reuse parts of Coding or of `common.ts`. Its instructions fill named prompt sections, which render in one fixed order for every profile, so the prompt cache holds up. The page's half, its label and panels, is in `src/lib/profiles.ts`.

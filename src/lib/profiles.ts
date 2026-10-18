@@ -1,5 +1,6 @@
 // A session's profile (docs/profiles.md): what kind of session it is. The
-// server adds each one's tools, instructions, and model (src/server/profiles/definitions.ts).
+// server adds each one's tools, instructions, and model, one file per profile
+// in src/server/profiles/.
 // A session is Coding or, as a toggle, Assistant. Only the hub's own page
 // makes a Hub session (src/server/sessions/hub.ts). Night is a session held
 // for tonight's run, and turns back into Coding once it ran (docs/night-runs.md).

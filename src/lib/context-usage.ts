@@ -239,7 +239,7 @@ export function contextUsage(
 
   // AGENTS.md, memory, and skills get their own lines, the skills by name
   // so it's easy to see which loaded; the rest of the prompt is one line.
-  // Section keys are src/server/profiles/instructions.ts's.
+  // Section keys are those in src/server/profiles/common.ts.
   function section(name: string, text: string) {
     const file = /path="[^"]*?([^/"]+)"/.exec(text)?.[1];
     if (name === 'project_context')

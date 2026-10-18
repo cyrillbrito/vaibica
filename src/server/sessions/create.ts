@@ -173,10 +173,6 @@ export async function spawnSession(
     );
     if (!owner)
       throw new Error(`${path} is not a folder or worktree of any project`);
-    if (profileOf(meta) === 'assistant' && owner.id !== meta?.projectId)
-      throw new Error(
-        'An assistant session starts sessions in its own project only',
-      );
     projectId = owner.id;
     cwd = path;
   }

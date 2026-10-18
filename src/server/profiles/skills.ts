@@ -76,17 +76,24 @@ export async function findSkills(cwd: string): Promise<Skill[]> {
 const escape = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-/** The skills section of the instructions, or null when there are none. */
+/**
+ * The skills section of the instructions, or null when there are none: the
+ * Pi coding agent's text and format, plus a line for the old tool output Bica
+ * clears.
+ */
 export async function skillsSection(cwd: string) {
   const skills = await findSkills(cwd);
   if (!skills.length) return null;
   const list = skills
     .map(
       (s) =>
-        `<skill>\n<name>${escape(s.name)}</name>\n<description>${escape(s.description)}</description>\n<location>${escape(s.path)}</location>\n</skill>`,
+        `  <skill>\n    <name>${escape(s.name)}</name>\n    <description>${escape(s.description)}</description>\n    <location>${escape(s.path)}</location>\n  </skill>`,
     )
     .join('\n');
-  return `Skills are instructions the user wants followed for certain kinds of work. Check this list before every task, follow-ups included. If a skill's description fits or might fit the work, even when the user doesn't name it, read its SKILL.md with the read tool before doing anything else. Read it again once it is gone from your context. Resolve relative paths in a skill against its folder.
+  return `The following skills provide specialized instructions for specific tasks.
+Use the read tool to load a skill's file when the task matches its description.
+When a skill file references a relative path, resolve it against the skill directory (parent of SKILL.md / dirname of the path) and use that absolute path in tool commands.
+Read a skill's file again once it is gone from your context.
 
 <available_skills>
 ${list}

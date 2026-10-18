@@ -14,7 +14,7 @@ Other sessions can hold one too, through `session_start` with `tonight` ([tools.
 
 A held session is a Night [profile](./profiles.md). It is a coding session without `ask`, since nobody can answer, and at high effort or more. Its rules tell it to push on to the goal instead of stopping to ask, to take easy-to-undo choices and note them, to prove the work with commands and never claim a check it didn't run, and to stay out of push, merge, and deploy. It commits only when the prompt asks, as any coding session does. It writes files when the task calls for one, such as a research report.
 
-Its reply rules are swapped for a morning report: the status (done, partly done, or blocked) first, then what changed, the checks and their results, what it couldn't check, decisions it took alone, open questions, and the next step. Once the run ends, the session turns back into a coding session, so you continue it in the morning like any other, with `ask` back.
+Its short replies are swapped for a morning report, in the same writing style: the status (done, partly done, or blocked) first, then what changed, the checks and their results, what it couldn't check, decisions it took alone, open questions, and the next step. Once the run ends, the session turns back into a coding session, so you continue it in the morning like any other, with `ask` back.
 
 ## When it runs
 

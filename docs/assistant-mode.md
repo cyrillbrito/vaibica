@@ -20,9 +20,9 @@ Bica looks after the session while it sits idle, so it never interrupts you in t
 
 Both sizes are constants in `upkeep.ts`, tuned by use.
 
-Its instructions open differently from a coding session's. They say it is a long-running helper for one project, there for notes, planning, research, answers, and quick fixes, and that a bigger coding task goes to a session of its own. It can coordinate a few sessions like that, with the same handoff rules as the [hub](./hub.md), but only inside its own project: `session_start` refuses another project, and `list` shows only its own. Coordinating across projects is the hub's job.
+Its instructions open like a coding session's, so turning assistant mode on keeps most of the prompt cache, and then add its role. They say it is a long-running helper for one project, there for notes, planning, research, answers, and quick fixes, and that a bigger coding task goes to a session of its own. It can coordinate a few sessions like that, with the same handoff rules as the [hub](./hub.md). Its instructions lean toward its own project, but nothing stops it from starting a session in another project when you ask.
 
-The agent also gets a few extra instructions in assistant mode. It writes decisions, preferences, and open tasks down in the same reply they come up in. It keeps only what will still be true and useful in a few months, and what the user said or it checked, not its guesses. It replaces a fact that changed instead of adding a second line, and splits a note that grows too long. It says so when memory holds nothing on a topic, rather than guess. And it says in its replies what it learned from tools, since that output will be cleared later.
+It also gets the memory rules for long-lived sessions, which the [hub](./hub.md) shares. It writes decisions, preferences, and open tasks down in the same reply they come up in. It keeps only what will still be true and useful in a few months, and what the user said or it checked, not its guesses. It replaces a fact that changed instead of adding a second line, and splits a note that grows too long. It says so when memory holds nothing on a topic, rather than guess. And it says in its replies what it learned from tools, since that output will be cleared later.
 
 ## The memory index
 
@@ -51,4 +51,4 @@ Left out on purpose: model-driven folding, as in [billion-context](https://pi.de
 
 ## Where it lives
 
-The behavior is in `src/server/profiles/upkeep.ts`, and the memory index in `loadMemory` in `src/server/profiles/instructions.ts`. Assistant mode needs a model with a known cache lifetime, which means Anthropic's, and works best with the 1-hour prompt cache that Bica uses by default. See [context-usage.md](./context-usage.md) for the cache, Clean up, and compaction themselves.
+The behavior is in `src/server/profiles/upkeep.ts`, and the memory index in `loadMemory` in `src/server/profiles/common.ts`. Assistant mode needs a model with a known cache lifetime, which means Anthropic's, and works best with the 1-hour prompt cache that Bica uses by default. See [context-usage.md](./context-usage.md) for the cache, Clean up, and compaction themselves.

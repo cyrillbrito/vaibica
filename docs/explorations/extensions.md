@@ -16,7 +16,7 @@ The test is whether these could be built: a custom file tree, another version co
 
 Pi Durable's extensions already cover most of it: tools (a same-name tool replaces the built-in), prompt sections, hooks (`beforeTool` blocks or rewrites a call, `afterTool` replaces a result, `beforeRequest` rewrites messages, `onYield` continues a run, `beforeCompact` supplies its own summary), wraps around a tool or section, durable tasks, and documents for state. `registry.install()` under a used name replaces an extension live, which is hot reload. Owned conversations are Durable's subagents.
 
-Bica's tools and its prompt sections are built this way already (`src/server/agent/harness.ts`, `src/server/profiles/instructions.ts`).
+Bica's tools and its prompt sections are built this way already (`src/server/agent/harness.ts`, and the profile files in `src/server/profiles/`).
 
 What Bica would add:
 

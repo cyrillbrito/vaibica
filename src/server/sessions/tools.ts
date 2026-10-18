@@ -346,10 +346,8 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
       const lines: string[] = [];
       const self = open.find((s) => s.id === me);
       if (self) lines.push(`You are session ${me}, in ${self.cwd}.`, '');
-      // An assistant coordinates its own project; the rest is the hub's.
-      const only = self?.profile === 'assistant' ? self.projectId : undefined;
       for (const p of projects) {
-        if (p.id === CHATS_ID || (only && p.id !== only)) continue;
+        if (p.id === CHATS_ID) continue;
         lines.push(p.name);
         for (const w of p.workspaces) {
           const here = open.filter((s) => s.cwd === w.path);
@@ -391,7 +389,7 @@ export const SessionTools = defineExtension({
   tools: sessionTools(false),
 });
 
-// Only the hub profile selects it (src/server/profiles/definitions.ts).
+// Only the hub profile selects it (src/server/profiles/hub.ts).
 export const HubSessionTools = defineExtension({
   name: 'hub-session-tools',
   tools: sessionTools(true),
