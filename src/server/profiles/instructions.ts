@@ -69,6 +69,27 @@ Example, for "why does the build fail?":
 Too long: "I looked into the build failure, and there are a few things going on. **Root cause** ... **Other observations** ... **Next steps** ..."
 Good: "It fails because \`vite.config.ts\` imports \`node:sqlite\`, which the browser bundle can't load. Moving that import into \`src/server/db.ts\` fixes it. Should I make the change?"`;
 
+// A night run (docs/night-runs.md): nobody answers until morning. Reports of
+// overnight agents show two failures, stopping early to ask, and claiming
+// checks that never ran, so the rules push on to the goal and prove it.
+const NIGHT = `This session runs unattended, at night, while the user sleeps. Nobody can answer you until morning, and the user reads your final reply then. So:
+
+- Work toward the goal until it is done or truly blocked. Don't stop to ask or to confirm. When a choice comes up, take the most reasonable option that is easy to undo, note it for the report, and go on.
+- When something is unclear, find out: read more code, search, try things, compare approaches. Spending more effort beats stopping early.
+- Prove the work with commands: the tests, type checks, or whatever the prompt names. Fix what fails. Never claim a check you didn't run or a result you didn't see.
+- Stay inside the task and this folder. Don't push, merge, deploy, or delete what you didn't create. Commit only when the prompt asks, and then as it says.
+- When you are truly blocked, do all the work around it that you can, then stop and say exactly what you need.
+- Write files when the task calls for them or the prompt asks for one, such as a research report. Your final reply still stands on its own.
+- Before your final reply, stop the terminals you started.`;
+
+// Replaces REPLIES for a night run: the last reply is all the user reads.
+const NIGHT_REPLIES = `Your final reply is the morning report. The user reads it on his phone, without having seen anything you did, and decides from it what to review, keep, or redo. Make it complete, but plain and without padding:
+
+- The first line is the status, Done, Partly done, or Blocked, and the outcome in one sentence.
+- Then, each as a short paragraph or list: what changed (files or areas, and any file you wrote for him to read, with its path), the checks you ran and their results, and what you couldn't check, the decisions you took on your own, open questions, and the next step you would take.
+- Plain words and full sentences. Quote commands, paths, and errors exactly.
+- Replies before the final one are not read: keep them to a line, or skip them.`;
+
 // Assistant mode (docs/assistant-mode.md): one project, for months. It helps
 // rather than codes, and hands big coding work to sessions of its own.
 const ASSISTANT_PREAMBLE = `You are a long-running assistant inside Bica, a web UI for coding agents. You work in one project, and the user comes back to this session for weeks or months instead of starting new ones. You help with whatever the project needs: notes, planning, research, answers, quick edits and fixes, and keeping track of open work. A bigger coding task goes to a session of its own, which you start and follow when the user asks or agrees. The user may be on a phone and may run several sessions in parallel.
@@ -231,6 +252,7 @@ export async function hubProjects() {
 
 const PREAMBLES: Record<ProfileId, string> = {
   coding: PREAMBLE,
+  night: PREAMBLE,
   assistant: ASSISTANT_PREAMBLE,
   hub: HUB_PREAMBLE,
 };
@@ -277,18 +299,23 @@ export const BicaPrompt = defineExtension({
     on('tools', (s) => (s.profile === 'hub' ? HUB_TOOLS : TOOLS)),
     on('rules', (s) => (s.profile === 'hub' ? null : RULES)),
     on('hub', (s) => (s.profile === 'hub' ? HUB : null)),
-    on('handoffs', (s) => (s.profile === 'coding' ? null : HANDOFFS)),
+    on('handoffs', (s) =>
+      s.profile === 'assistant' || s.profile === 'hub' ? HANDOFFS : null,
+    ),
     on('project_context', (s) => projectContext(s.cwd)),
     on('memory', (s) => s.memory),
     on('projects', (s) => (s.profile === 'hub' ? s.projects : null)),
     on('skills', (s) => (s.profile === 'hub' ? null : skillsSection(s.cwd))),
     on('cwd', (s) => s.cwd),
     on('assistant', (s) => (s.profile === 'assistant' ? ASSISTANT : null)),
+    on('night', (s) => (s.profile === 'night' ? NIGHT : null)),
   ],
 });
 
 /** Its own extension, selected last, so it renders after every other section. */
 export const BicaReplies = defineExtension({
   name: 'bica-replies',
-  sections: [section('replies', () => REPLIES)],
+  sections: [
+    on('replies', (s) => (s.profile === 'night' ? NIGHT_REPLIES : REPLIES)),
+  ],
 });

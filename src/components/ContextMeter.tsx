@@ -41,6 +41,7 @@ import {
   CompactIcon,
   ExpiringIcon,
   InfoIcon,
+  MoonIcon,
   VoiceIcon,
 } from './ui/icons';
 
@@ -50,6 +51,7 @@ const LONG_LIVED_HINT =
 const PROFILE_ICON: Record<ProfileId, () => JSX.Element> = {
   coding: CodeIcon,
   assistant: AssistantIcon,
+  night: MoonIcon,
   hub: HubIcon,
 };
 
@@ -150,7 +152,7 @@ export default function ContextMeter(props: {
         <Show when={props.profile !== 'coding'}>
           <span
             class="text-muted"
-            title={`${PROFILES[props.profile].label}: ${PROFILES[props.profile].about}. ${LONG_LIVED_HINT}`}
+            title={`${PROFILES[props.profile].label}: ${PROFILES[props.profile].about}.${PROFILES[props.profile].longLived ? ` ${LONG_LIVED_HINT}` : ''}`}
           >
             <Dynamic component={PROFILE_ICON[props.profile]} />
           </span>

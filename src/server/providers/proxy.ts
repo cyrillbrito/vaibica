@@ -405,5 +405,11 @@ onProxyChange(() => void feed.refresh());
 
 export const watchPlanUsage = feed.watch;
 
+/** The plans' limits, read at most a minute ago, for jobs nobody watches. */
+export async function planUsageNow() {
+  await pollProxy();
+  return usage;
+}
+
 // The proxy's models come from the network; sessions on them resume after.
 export const proxyReady = Promise.resolve().then(refreshProxy);

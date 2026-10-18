@@ -95,6 +95,7 @@ import { openProjectPicker } from './ProjectPicker';
 import { archiveWithChildren } from './ArchiveDialog';
 import { Logo } from './ui/Logo';
 import StatusDot, { StatusTag } from './StatusDot';
+import { Tag } from './ui/Tag';
 import Divider, { dividerClass } from './ui/Divider';
 import { toast } from './ui/Toast';
 import TitleInput from './TitleInput';
@@ -1136,11 +1137,21 @@ export default function Sidebar() {
                     </span>
                   }
                 >
-                  <StatusTag
-                    status={statusOf(s())}
-                    since={s().runningSince}
-                    updatedAt={s().updatedAt}
-                  />
+                  <Show
+                    when={s().tonight}
+                    fallback={
+                      <StatusTag
+                        status={statusOf(s())}
+                        since={s().runningSince}
+                        updatedAt={s().updatedAt}
+                      />
+                    }
+                  >
+                    <Tag tone="accent" title="Held for tonight's run">
+                      <MoonIcon />
+                      Tonight
+                    </Tag>
+                  </Show>
                 </Show>
               </a>
               <MenuButton

@@ -41,6 +41,9 @@ const defaults: Extension[] = [
   ToolSummary,
 ];
 
+// Nobody is awake to answer a night run (docs/night-runs.md).
+export const NIGHT_EXTENSIONS = defaults.filter((e) => e !== AskTool);
+
 // One process owns the storage. Editing vite.config.ts restarts Vite in this
 // process and runs the server code again, so the open harness lives on
 // globalThis.

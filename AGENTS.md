@@ -79,7 +79,8 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 - [tools.md](docs/tools.md): the agent's tools, codemode, `ask`, and the session tools. Read before adding or changing a tool.
 - [instructions.md](docs/instructions.md): the prompt sections, skills, and reply rules. Read before changing what the agent is told.
 - [context-usage.md](docs/context-usage.md): the context chip, prompt cache, spend, compaction, clean up.
-- [profiles.md](docs/profiles.md): coding, assistant, and hub sessions, and what each one gets.
+- [profiles.md](docs/profiles.md): coding, assistant, night, and hub sessions, and what each one gets.
+- [night-runs.md](docs/night-runs.md): sessions held for tonight, run one at a time while the plan has room, ending with a report.
 - [assistant-mode.md](docs/assistant-mode.md): sessions that run for months, with memory in files.
 - [hub.md](docs/hub.md): the one session that coordinates the others.
 - [voice.md](docs/voice.md): voice calls, hand-offs, and hold music.

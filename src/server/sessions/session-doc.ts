@@ -46,6 +46,9 @@ export const SessionDoc = defineDoc<{
   memory?: string;
   // The project list for the hub, kept like `memory`.
   projects?: string;
+  // The first prompt, held for tonight's run (docs/night-runs.md); '' or
+  // unset: none waiting.
+  tonight?: string;
 }>({
   kind: 'bica.session',
   version: 1,

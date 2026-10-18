@@ -8,7 +8,7 @@ import {
 import type { ProfileId } from '#lib/profiles';
 import type { ModelChoice, PromptImage } from '#lib/protocol';
 import { context, getHarness } from '#server/agent';
-import { serverProfile } from '#server/profiles';
+import { nightChoice, serverProfile } from '#server/profiles';
 import {
   CHATS_ID,
   createChatFolder,
@@ -45,6 +45,9 @@ export interface NewSession {
   profile?: ProfileId;
   // Its starter hears nothing of its runs.
   quiet?: boolean;
+  // Holds the prompt for tonight's run (docs/night-runs.md) instead of
+  // sending it, as a Night session.
+  tonight?: boolean;
 }
 
 export async function createSession({
@@ -58,7 +61,14 @@ export async function createSession({
   worktree,
   profile = 'coding',
   quiet,
+  tonight,
 }: NewSession) {
+  if (tonight) {
+    if (!prompt) throw new Error('A night run needs a prompt');
+    if (images.length)
+      throw new Error('A night run takes text only, without images');
+    profile = 'night';
+  }
   // A chat gets a fresh folder; its name needn't wait for the fast model.
   if (worktree && projectId === CHATS_ID) {
     cwd = await createChatFolder(promptTitle(prompt) || 'chat');
@@ -83,7 +93,7 @@ export async function createSession({
   } else if (cwd && !project.workspaces.some((w) => w.path === cwd))
     throw new Error(`${cwd} is not a workspace of ${project.name}`);
   const { model, thinkingLevel } = choice
-    ? checkChoice(choice)
+    ? checkChoice(tonight ? nightChoice(choice) : choice)
     : await serverProfile(profile).choice();
   const harness = await getHarness();
   const workdir = cwd ?? project.path;
@@ -113,13 +123,14 @@ export async function createSession({
         doc.profile = profile;
         if (startedBy) doc.startedBy = startedBy;
         if (quiet) doc.quiet = true;
+        if (tonight) doc.tonight = prompt;
         doc.userPrompted = !startedBy;
       },
     },
     context,
   );
   // Nothing to send: started for a voice call, whose first hand-off names it.
-  if (prompt || images.length)
+  if (!tonight && (prompt || images.length))
     await submit(
       String(conversation.id),
       prompt,
@@ -146,6 +157,7 @@ export async function spawnSession(
   worktree?: boolean,
   quiet?: boolean,
   profile: Exclude<ProfileId, 'hub'> = 'coding',
+  tonight?: boolean,
 ) {
   const harness = await getHarness();
   const [meta, agent] = await Promise.all([
@@ -186,6 +198,7 @@ export async function spawnSession(
     worktree,
     quiet,
     profile,
+    tonight,
   });
 }
 

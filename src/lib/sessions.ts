@@ -29,6 +29,7 @@ export const startSession = (
   choice?: ModelChoice,
   worktree?: boolean,
   profile?: ProfileId,
+  tonight?: boolean,
 ) =>
   request('session.create', {
     projectId,
@@ -39,7 +40,15 @@ export const startSession = (
     choice,
     worktree,
     profile,
+    tonight,
   });
+
+/** A session held for tonight: save its prompt, run it now, or cancel. */
+export const tonightAction = (
+  id: string,
+  action: 'save' | 'run' | 'cancel',
+  prompt?: string,
+) => request('session.tonight', { id, action, prompt });
 
 export const archiveSession = (id: string, archived = true) =>
   request('session.archive', { id, archived });

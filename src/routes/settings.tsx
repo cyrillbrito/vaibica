@@ -374,6 +374,25 @@ export default function Settings() {
           />
 
           <Card title="Behavior">
+            <Setting
+              label="Night runs start at"
+              hint="Sessions held for tonight start one at a time from then, for 5 hours, while the plan has 20% of its week left. Pick a time at least 5 hours before your day starts, so its window is fresh."
+            >
+              <Input
+                type="time"
+                class="h-7"
+                value={catalog().settings.nightStart}
+                onChange={(e) =>
+                  void updateSettings({
+                    nightStart: e.currentTarget.value,
+                  }).catch((error) =>
+                    toast.error(
+                      error instanceof Error ? error.message : String(error),
+                    ),
+                  )
+                }
+              />
+            </Setting>
             <Toggle
               label="Keep the cache for an hour"
               hint="The context stays cached through breaks of up to an hour instead of 5 minutes, so coming back doesn't resend it all. Cache writes cost 2x input instead of 1.25x. Some OpenAI models keep it 24 hours instead."

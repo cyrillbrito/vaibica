@@ -2,7 +2,7 @@
 
 The agent's instructions are prompt sections that Pi Durable renders before every request, so edits apply to running sessions. It sends only the sections that changed, so editing `AGENTS.md` or a skill rewrites the prompt cache from that section on, not from the start. They are built like the Pi coding agent's, in `src/server/profiles/instructions.ts`.
 
-They say what Bica is, give a few house rules (git stays read-only unless asked, anything long-running goes in a terminal, never restart a dev server you didn't start), and add the instruction files: your `~/.bica/AGENTS.md`, then the `AGENTS.md` or `CLAUDE.md` of each folder from the root down to the workspace, under Pi's file names. Bica never reads Pi's `~/.pi` files. Each [profile](./profiles.md) picks its sections: [assistant mode](./assistant-mode.md) adds its memory rules. The [hub](./hub.md) gets instructions of its own instead.
+They say what Bica is, give a few house rules (git stays read-only unless asked, anything long-running goes in a terminal, never restart a dev server you didn't start), and add the instruction files: your `~/.bica/AGENTS.md`, then the `AGENTS.md` or `CLAUDE.md` of each folder from the root down to the workspace, under Pi's file names. Bica never reads Pi's `~/.pi` files. Each [profile](./profiles.md) picks its sections: [assistant mode](./assistant-mode.md) adds its memory rules, and a [night run](./night-runs.md) adds rules to finish alone and swaps the short replies for a morning report. The [hub](./hub.md) gets instructions of its own instead.
 
 ## Skills
 

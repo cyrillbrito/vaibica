@@ -142,6 +142,7 @@ export async function summarize(
     cleanedUp: meta?.cleanedUp ?? null,
     profile: profileOf(meta),
     voice: meta?.voice ?? null,
+    tonight: meta?.tonight || null,
   };
 }
 

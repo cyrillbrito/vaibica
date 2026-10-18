@@ -30,6 +30,10 @@ import {
   markSeen,
   openHub,
   updateHub,
+  cancelTonight,
+  runTonight,
+  saveTonight,
+  startNight,
   push as pushSubmission,
   rename,
   setProfile,
@@ -88,6 +92,7 @@ import {
 
 // Boot: this module loads with the first socket, in dev and in production.
 startUpkeep();
+startNight();
 
 type Sink = {
   snapshot: (value: unknown, kept?: number) => void;
@@ -107,6 +112,12 @@ const calls: Handlers = {
       // Only the hub's own page makes a hub (openHub).
       profile: args.profile === 'assistant' ? 'assistant' : 'coding',
     }),
+  'session.tonight': async ({ id, action, prompt }) => {
+    if (action === 'cancel') return cancelTonight(id);
+    if (action === 'save') await saveTonight(id, prompt ?? '');
+    else await runTonight(id, prompt);
+    return '';
+  },
   'session.configure': async ({ id, ...choice }) => {
     await configure(id, choice);
     return null;

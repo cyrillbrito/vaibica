@@ -121,6 +121,7 @@ const session = (
   cleanedUp: null,
   profile: 'coding',
   voice: null,
+  tonight: null,
   ...extra,
 });
 
@@ -274,6 +275,12 @@ function demo(): Dataset {
           parentDrives: true,
         },
       ),
+      session('vaibica', bica, 'Research offline drafts', 'idle', 30 * MIN, {
+        id: 'demo-tonight',
+        profile: 'night',
+        tonight:
+          'Research how other apps keep drafts offline on the phone and sync them later. Write a report to docs/explorations/offline-drafts.md with options, trade-offs, and sources.',
+      }),
       session('vaibica', bica, 'Release notes for 0.9', 'idle', 2 * HOUR, {
         id: 'demo-release',
         startedBy: 'demo-shortcuts',
@@ -477,6 +484,11 @@ function worst(): Dataset {
     sessions: [
       session('nw', nw, long200, 'running', 0, { id: 'worst-long' }),
       session('nw', nw, 'J', 'done', 59 * 1000),
+      session('nw', nw, long200, 'idle', 9 * MIN, {
+        id: 'worst-tonight',
+        profile: 'night',
+        tonight: `${long200} ${long200}`,
+      }),
       session('nw', nw, '', 'waiting', 3 * MIN, { id: 'worst-ask' }),
       session(
         'nw',

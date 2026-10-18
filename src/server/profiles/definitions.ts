@@ -3,7 +3,7 @@ import type { Extension } from '@earendil-works/pi-durable';
 
 import type { ModelChoice } from '#lib/protocol';
 import type { ProfileId } from '#lib/profiles';
-import { HUB_EXTENSIONS } from '#server/agent';
+import { HUB_EXTENSIONS, NIGHT_EXTENSIONS } from '#server/agent';
 import { defaultChoice } from '#server/providers';
 import { hubChoice } from './hub';
 import { hubProjects } from './instructions';
@@ -39,6 +39,13 @@ const PROFILES: Record<ProfileId, ServerProfile> = {
     passesModel: true,
     hearsAlerts: false,
   },
+  night: {
+    extensions: NIGHT_EXTENSIONS,
+    choice: async () => nightChoice(await defaultChoice()),
+    projects: none,
+    passesModel: true,
+    hearsAlerts: false,
+  },
   hub: {
     extensions: HUB_EXTENSIONS,
     choice: hubChoice,
@@ -49,3 +56,14 @@ const PROFILES: Record<ProfileId, ServerProfile> = {
 };
 
 export const serverProfile = (id: ProfileId) => PROFILES[id];
+
+const LEVELS = ['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'];
+
+/**
+ * At least high effort: with nobody to come back to, the agent should push
+ * on to the goal rather than stop early (docs/night-runs.md).
+ */
+export const nightChoice = (choice: ModelChoice): ModelChoice =>
+  LEVELS.indexOf(choice.thinkingLevel) < LEVELS.indexOf('high')
+    ? { ...choice, thinkingLevel: 'high' }
+    : choice;

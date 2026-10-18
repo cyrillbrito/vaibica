@@ -1,5 +1,12 @@
 import type { JSX } from '@solidjs/web';
-import { For, Show, createEffect, createSignal, untrack } from 'solid-js';
+import {
+  For,
+  Show,
+  createEffect,
+  createSignal,
+  onCleanup,
+  untrack,
+} from 'solid-js';
 
 import { imageUrl, toPromptImage } from '#lib/images';
 import type { PromptImage } from '#lib/protocol';
@@ -65,6 +72,10 @@ export interface ComposerApi {
   // Puts a prompt taken back from the queue into the box, after what's typed.
   restore: (prompt: string, images: PromptImage[]) => void;
   problem: (message: string) => void;
+  // Sends what's typed the `alternate` way, for a button in `actions`.
+  sendAlternate: () => void;
+  // Keeps what's typed as a normal draft when the hold ends, e.g. on Cancel.
+  releaseHold: () => void;
 }
 
 export default function Composer(props: {
@@ -78,6 +89,12 @@ export default function Composer(props: {
   ) => Promise<unknown>;
   // Words on the send button, when sending does more than send.
   sendLabel?: string;
+  // Saved text the box edits, e.g. a prompt held for tonight: the box starts
+  // from it, edits go to `onHoldEdit` as you type, Enter adds a line instead
+  // of sending, and images are off. When it ends unedited, the box empties.
+  hold?: string | null;
+  // `key` is the draft's, since a late edit can land after moving on.
+  onHoldEdit?: (key: string, text: string) => Promise<unknown>;
   // A second way to send, in a menu on the send button's side.
   alternate?: string;
   // Where the draft is kept, e.g. the session id.
@@ -128,26 +145,65 @@ export default function Composer(props: {
     save();
   };
 
+  // The hold the box shows now; its text unedited is no draft.
+  let held: string | null = null;
+  let keepOnRelease = false;
+  let edit: { key: string; text: string } | undefined;
+  let editTimer: ReturnType<typeof setTimeout> | undefined;
+  const flushEdit = () => {
+    clearTimeout(editTimer);
+    const pending = edit;
+    edit = undefined;
+    if (pending)
+      props
+        .onHoldEdit?.(pending.key, pending.text)
+        .catch((error) =>
+          setProblem(error instanceof Error ? error.message : String(error)),
+        );
+  };
+  onCleanup(flushEdit);
+
   const save = (key = props.draft) => {
     setTyped(!!textarea.value.trim());
-    writeDraft(key, { text: textarea.value, pastes: [...pastes] });
+    writeDraft(key, {
+      text: textarea.value === held ? '' : textarea.value,
+      pastes: [...pastes],
+    });
+    const text = unfold(textarea.value.trim());
+    if (held === null || !text || text === held) return;
+    edit = { key, text };
+    clearTimeout(editTimer);
+    editTimer = setTimeout(flushEdit, 600);
   };
 
   createEffect(
-    () => props.draft,
-    (key, previous) => {
-      if (previous !== undefined) {
-        save(previous);
-        draftImages.set(previous, untrack(images));
+    () => ({ key: props.draft, hold: props.hold ?? null }),
+    (now, before) => {
+      if (before?.key === now.key) {
+        if (now.hold !== null) {
+          if (!textarea.value.trim()) textarea.value = now.hold;
+        } else if (!keepOnRelease && textarea.value === before.hold)
+          textarea.value = '';
+        keepOnRelease = false;
+        held = now.hold;
+        save(now.key);
+        return;
       }
-      const draft = readDraft(key);
-      textarea.value = draft.text;
-      setTyped(!!draft.text.trim());
+      if (before) {
+        save(before.key);
+        flushEdit();
+        draftImages.set(before.key, untrack(images));
+      }
+      held = now.hold;
+      keepOnRelease = false;
+      const draft = readDraft(now.key);
+      textarea.value = draft.text || (now.hold ?? '');
+      setTyped(!!textarea.value.trim());
       pastes.clear();
       for (const [n, text] of draft.pastes) pastes.set(n, text);
       browsing = null;
-      setImages(draftImages.get(key) ?? []);
-      draftImages.delete(key);
+      setImages(draftImages.get(now.key) ?? []);
+      draftImages.delete(now.key);
       setProblem('');
     },
   );
@@ -168,6 +224,8 @@ export default function Composer(props: {
       save();
     },
     problem: setProblem,
+    sendAlternate: () => void send(false, true),
+    releaseHold: () => (keepOnRelease = true),
   };
 
   const stop = async () => {
@@ -191,6 +249,7 @@ export default function Composer(props: {
 
   const attach = async (files: File[]) => {
     setProblem('');
+    if (held !== null) return setProblem('This prompt takes text only.');
     for (const file of files) {
       try {
         const image = { ...(await toPromptImage(file)), id: ++nextId };
@@ -208,6 +267,9 @@ export default function Composer(props: {
     const prompt = unfold(typed);
     const sent = images();
     if (!prompt && !sent.length) return;
+    // Sending a hold sends its latest text, so no edit is left to save.
+    clearTimeout(editTimer);
+    edit = undefined;
     // Cleared up front so typing can go on; put back if it fails.
     textarea.value = '';
     save();
@@ -400,6 +462,7 @@ export default function Composer(props: {
             if (
               e.key === 'Enter' &&
               !e.shiftKey &&
+              held === null &&
               !matchMedia('(pointer: coarse)').matches
             ) {
               e.preventDefault();
@@ -414,6 +477,7 @@ export default function Composer(props: {
           <IconButton
             size="md"
             title="Attach images"
+            hidden={props.hold != null}
             onClick={() => picker.click()}
           >
             <ImageIcon />

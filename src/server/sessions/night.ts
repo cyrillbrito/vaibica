@@ -1,0 +1,182 @@
+import 'server-only';
+import { AgentDoc, type ConversationId } from '@earendil-works/pi-durable';
+
+import type { SessionSummary } from '#lib/protocol';
+import { context, getHarness } from '#server/agent';
+import { modelSettings, planUsageNow } from '#server/providers';
+import { setProfile } from './meta';
+import { stop, submit } from './prompts';
+import { SessionDoc, getConversation, listSessions, sessions } from './store';
+
+// Night runs (docs/night-runs.md): sessions held for tonight start one at a
+// time from the start time in Settings, while the plan has room, and turn
+// back into coding sessions once they ran.
+
+const MINUTE = 60_000;
+const HOUR = 60 * MINUTE;
+// New runs start only within one 5-hour plan window after the start time,
+// so a late one can't eat into the morning's window.
+const SPAN = 5 * HOUR;
+// A run past this gets told to wrap up, and stops a while later.
+const WRAP_UP_AT = 3 * HOUR;
+const STOP_AT = WRAP_UP_AT + 20 * MINUTE;
+// Above this much of the week used, nothing new starts: tomorrow needs it.
+const WEEK_RESERVE = 0.8;
+
+const WRAP_UP = `[Note from Bica, not from the user] This night run has gone on for ${WRAP_UP_AT / HOUR} hours. Finish the step you are on, stop the terminals you started, and write your final report now. Bica stops the run in ${(STOP_AT - WRAP_UP_AT) / MINUTE} minutes.`;
+
+// Runs started from here whose end hasn't come yet. Their status can lag a
+// moment behind the submit.
+const starting = new Set<string>();
+const warned = new Set<string>();
+let ticking = false;
+
+/** Checks every minute whether a night run should start, wrap up, or end. */
+export function startNight() {
+  setInterval(() => {
+    if (ticking) return;
+    ticking = true;
+    void tick()
+      .catch((error) => console.error('[night]', error))
+      .finally(() => (ticking = false));
+  }, MINUTE);
+}
+
+const running = (s: SessionSummary) =>
+  starting.has(s.id) || s.status === 'running' || s.status === 'retrying';
+
+async function tick() {
+  const night = (await listSessions()).filter(
+    (s) => s.profile === 'night' && !s.archivedAt,
+  );
+  // Ran, failed, or stopped: from now on it's a normal session.
+  for (const s of night)
+    if (!s.tonight && !running(s)) {
+      warned.delete(s.id);
+      await setProfile(s.id, 'coding');
+    }
+  const current = night.find((s) => !s.tonight && running(s));
+  if (current) {
+    const age = Date.now() - (current.runningSince ?? Date.now());
+    if (age > STOP_AT) await stop(current.id);
+    else if (age > WRAP_UP_AT && !warned.has(current.id)) {
+      warned.add(current.id);
+      await submit(
+        current.id,
+        WRAP_UP,
+        [],
+        `night-wrap:${current.id}`,
+        'bica',
+        'steer',
+      );
+    }
+    return;
+  }
+  if (!inWindow(new Date(), (await modelSettings()).nightStart)) return;
+  // Oldest first: the order they were planned in.
+  const next = night
+    .filter((s) => s.tonight)
+    .sort((a, b) => a.createdAt - b.createdAt)[0];
+  if (next && (await hasRoom(next.id))) await run(next.id);
+}
+
+/** Within SPAN after the latest start time, today's or yesterday's. */
+function inWindow(now: Date, start: string) {
+  const [h, m] = start.split(':').map(Number);
+  const at = new Date(now);
+  at.setHours(h ?? 1, m ?? 0, 0, 0);
+  if (at > now) at.setDate(at.getDate() - 1);
+  return now.getTime() - at.getTime() < SPAN;
+}
+
+/**
+ * Whether the plan behind the session's model has room: one of its accounts
+ * isn't blocked and has the week's reserve left. Only CLIProxyAPI reports
+ * limits; any other provider counts as having room.
+ */
+async function hasRoom(id: string) {
+  const agent = await (
+    await getHarness()
+  ).snapshot(AgentDoc, Number(id) as ConversationId, context);
+  const model = agent?.model;
+  if (!model || model.provider !== 'cliproxy') return true;
+  const accounts = (await planUsageNow()).filter(
+    (u) => u.family && model.modelId.startsWith(u.family),
+  );
+  if (!accounts.length) return true;
+  return accounts.some((u) =>
+    u.windows.every(
+      (w) => !w.limited && !(w.key === '7d' && w.utilization >= WEEK_RESERVE),
+    ),
+  );
+}
+
+/** Sends the held prompt now, whatever the time, `prompt` when edited. */
+export async function runTonight(id: string, prompt?: string) {
+  const held = await takePrompt(id);
+  if (!held) throw new Error('Nothing is waiting for tonight');
+  await send(id, prompt?.trim() || held);
+}
+
+/** Replaces the held prompt, while it still waits. */
+export async function saveTonight(id: string, prompt: string) {
+  if (!prompt.trim()) throw new Error('A night run needs a prompt');
+  const { id: conversationId } = await getConversation(id);
+  await (
+    await getHarness()
+  ).commit(async (tx) => {
+    const doc = await tx.doc(SessionDoc, conversationId);
+    if (!doc.tonight) throw new Error('This night run already started');
+    doc.tonight = prompt.trim();
+  }, context);
+  await sessions.refresh();
+}
+
+async function run(id: string) {
+  const prompt = await takePrompt(id);
+  if (prompt) await send(id, prompt);
+}
+
+async function send(id: string, prompt: string) {
+  starting.add(id);
+  try {
+    // As its starter, so a session the hub planned stays the hub's.
+    const meta = await (
+      await getHarness()
+    ).snapshot(SessionDoc, (await getConversation(id)).id, context);
+    await submit(id, prompt, [], `night:${id}`, meta?.startedBy ?? 'user');
+  } catch (error) {
+    starting.delete(id);
+    throw error;
+  }
+  const conversation = await getConversation(id);
+  void conversation
+    .waitForIdle(context)
+    .catch(() => {})
+    .finally(() => starting.delete(id));
+}
+
+/**
+ * Drops the night run: the session becomes a normal, empty one, and the
+ * prompt comes back to edit or send.
+ */
+export async function cancelTonight(id: string) {
+  const prompt = await takePrompt(id);
+  await setProfile(id, 'coding');
+  return prompt;
+}
+
+/** The held prompt, cleared so it can't run twice. */
+async function takePrompt(id: string) {
+  const { id: conversationId } = await getConversation(id);
+  let prompt = '';
+  await (
+    await getHarness()
+  ).commit(async (tx) => {
+    const doc = await tx.doc(SessionDoc, conversationId);
+    prompt = doc.tonight ?? '';
+    doc.tonight = '';
+  }, context);
+  await sessions.refresh();
+  return prompt;
+}

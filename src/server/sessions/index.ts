@@ -23,5 +23,6 @@ export {
 export { fromUser, handBack, tell } from './notes';
 export { recentPrompts } from './read';
 export { openHub, updateHub } from './hub';
+export { cancelTonight, runTonight, saveTonight, startNight } from './night';
 export { HubSessionTools, SessionTools } from './tools';
 export { voiceSession } from './voice';

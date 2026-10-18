@@ -51,6 +51,9 @@ export interface SessionSummary {
   profile: ProfileId;
   // How its voice calls sound; null: the defaults.
   voice: VoiceSettings | null;
+  // The first prompt, held for tonight's run (docs/night-runs.md); null:
+  // nothing waiting.
+  tonight: string | null;
 }
 
 /** A change of who drives a session another one started. */
@@ -104,6 +107,8 @@ export interface ModelSettings extends ModelChoice {
   hubFolder: string | null;
   // The hub's model and effort; null: Bica's pick for it.
   hubModel: ModelChoice | null;
+  // When night runs start, as local "HH:MM" (docs/night-runs.md).
+  nightStart: string;
 }
 
 /** The providers with a key on the server, and the models they reach. */
@@ -375,7 +380,15 @@ export interface Calls {
       profile?: ProfileId;
       // Starts in a new worktree named after the session, instead of `cwd`.
       worktree?: boolean;
+      // Holds the prompt for tonight's run instead of sending it.
+      tonight?: boolean;
     };
+    result: string;
+  };
+  // A session held for tonight: save an edited prompt, run it now (edited
+  // when `prompt` is given), or cancel the run and get the prompt back.
+  'session.tonight': {
+    args: { id: string; action: 'save' | 'run' | 'cancel'; prompt?: string };
     result: string;
   };
   'session.configure': { args: { id: string } & ModelChoice; result: null };

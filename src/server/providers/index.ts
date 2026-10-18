@@ -11,6 +11,12 @@ export {
 } from './models';
 export { exaKey } from './credentials';
 export { answer, cancel, signIn, signOut, watchAccounts } from './accounts';
-export { proxyReady, removeProxy, saveProxy, watchPlanUsage } from './proxy';
+export {
+  planUsageNow,
+  proxyReady,
+  removeProxy,
+  saveProxy,
+  watchPlanUsage,
+} from './proxy';
 export { askFast, fastModelId } from './fast-model';
 export { decide, hasDecisionModel, type Question } from './decision-model';

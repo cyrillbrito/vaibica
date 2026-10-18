@@ -21,6 +21,7 @@ import MessageRow, { RULE } from '../../components/MessageRow';
 import ModelPicker from '../../components/ModelPicker';
 import OpenFile from '../../components/OpenFile';
 import ParentStrip from '../../components/ParentStrip';
+import TonightStrip from '../../components/TonightStrip';
 import Queue from '../../components/Queue';
 import StatusDot from '../../components/StatusDot';
 import TitleInput from '../../components/TitleInput';
@@ -51,6 +52,7 @@ import {
   handBack,
   sendPrompt,
   stopSession,
+  tonightAction,
   useConversation,
   useHub,
   useSessions,
@@ -176,6 +178,8 @@ export default function Session(props: RouteProps<'/s/:id'>) {
     { name: 'starter' },
   );
   const drives = () => !!summary()?.parentDrives;
+  // The prompt held for tonight, which the composer edits.
+  const held = () => summary()?.tonight ?? null;
   // "Keep parent in charge", for the open session only.
   // Hovering any part of an answer shows the fork button at its end, or the
   // next compaction or clean up line, which has its own.
@@ -484,13 +488,26 @@ export default function Session(props: RouteProps<'/s/:id'>) {
                   onSend={(prompt, images, steer, alternate) => {
                     // Sending means wanting to see the reply.
                     stick.follow();
+                    if (held() !== null)
+                      return tonightAction(props.params.id!, 'run', prompt);
                     return sendPrompt(props.params.id!, prompt, images, {
                       steer,
                       keep: drives() && alternate,
                     });
                   }}
-                  sendLabel={drives() ? 'Take over' : undefined}
-                  alternate={drives() ? 'Send' : undefined}
+                  hold={held()}
+                  onHoldEdit={(id, text) => tonightAction(id, 'save', text)}
+                  placeholder={
+                    held() !== null ? 'What to do tonight…' : undefined
+                  }
+                  sendLabel={
+                    held() !== null
+                      ? 'Run now'
+                      : drives()
+                        ? 'Take over'
+                        : undefined
+                  }
+                  alternate={held() === null && drives() ? 'Send' : undefined}
                   busy={busy()}
                   // The stop drops queued prompts; give them back to edit.
                   onStop={() =>
@@ -504,6 +521,12 @@ export default function Session(props: RouteProps<'/s/:id'>) {
                     <Ready>
                       {(v) => (
                         <>
+                          <Show when={held() !== null}>
+                            <TonightStrip
+                              id={props.params.id!}
+                              onCancel={() => composer?.releaseHold()}
+                            />
+                          </Show>
                           <Show when={summary()?.startedBy}>
                             <ParentStrip
                               parent={starter()}
@@ -531,6 +554,7 @@ export default function Session(props: RouteProps<'/s/:id'>) {
                     <IconButton
                       size="md"
                       title="Voice call"
+                      hidden={held() !== null}
                       onClick={() => void startCall(props.params.id!)}
                     >
                       <VoiceIcon />

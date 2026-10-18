@@ -94,8 +94,17 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
             'true: an assistant-mode session, a long-running helper for one project that keeps memory in files and compacts on its own. Default: a coding session',
         }),
       ),
+      tonight: Type.Optional(
+        Type.Boolean({
+          description:
+            "true: hold it for tonight's night run, when the user asks for work to run overnight. It starts at the night start time from Settings, one at a time, with no `ask`, and ends with a morning report. Write the prompt so it can finish alone: the goal, the scope, and the command that proves it done",
+        }),
+      ),
     }),
-    execute: async ({ prompt, folder, worktree, notify, assistant }, api) => {
+    execute: async (
+      { prompt, folder, worktree, notify, assistant, tonight },
+      api,
+    ) => {
       if (!prompt.trim()) throw new Error('The prompt is empty');
       const id = await spawnSession(
         api.conversationId,
@@ -105,9 +114,14 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
         worktree,
         notify === false,
         assistant ? 'assistant' : 'coding',
+        tonight,
       );
       return {
-        ...text(`Started session ${id}.`),
+        ...text(
+          tonight
+            ? `Session ${id} is held for tonight's run.`
+            : `Started session ${id}.`,
+        ),
         details: { sessionId: id },
       };
     },

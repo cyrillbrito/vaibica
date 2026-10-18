@@ -10,7 +10,7 @@ import { paths } from '../router';
 import Composer, { type ComposerApi } from './Composer';
 import ModelPicker from './ModelPicker';
 import { IconButton } from './ui/Button';
-import { VoiceIcon } from './ui/icons';
+import { MoonIcon, VoiceIcon } from './ui/icons';
 
 export interface StartTarget {
   projectId: string;
@@ -44,7 +44,12 @@ export default function StartComposer(props: {
     { name: 'startChoice' },
   );
 
-  const create = async (prompt: string, images: PromptImage[]) => {
+  // tonight: held for the night run (docs/night-runs.md) instead of sent.
+  const create = async (
+    prompt: string,
+    images: PromptImage[],
+    tonight = false,
+  ) => {
     const t = props.target;
     if (!t) throw new Error('No project');
     const id = await startSession(
@@ -55,6 +60,7 @@ export default function StartComposer(props: {
       choice(),
       t.worktree || undefined,
       props.profile ?? 'coding',
+      tonight || undefined,
     );
     navigate(paths.s(id));
     return id;
@@ -72,14 +78,25 @@ export default function StartComposer(props: {
 
   return (
     <Composer
-      onSend={create}
+      onSend={(prompt, images, _steer, tonight) =>
+        create(prompt, images, tonight)
+      }
       draft={props.draft}
       ref={(api) => (composer = api)}
       placeholder={props.placeholder ?? 'Start a new session…'}
       actions={
-        <IconButton size="md" title="Start with a voice call" onClick={call}>
-          <VoiceIcon />
-        </IconButton>
+        <>
+          <IconButton
+            size="md"
+            title={`Run tonight at ${models().settings.nightStart}, on its own, and report in the morning`}
+            onClick={() => composer?.sendAlternate()}
+          >
+            <MoonIcon />
+          </IconButton>
+          <IconButton size="md" title="Start with a voice call" onClick={call}>
+            <VoiceIcon />
+          </IconButton>
+        </>
       }
       controls={<ModelPicker value={choice()} onChange={setChoice} />}
     />

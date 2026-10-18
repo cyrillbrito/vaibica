@@ -34,6 +34,14 @@ export async function submit(
   keep = false,
 ) {
   const conversation = await getConversation(id);
+  // Its one prompt waits for tonight (docs/night-runs.md); a second would run now.
+  if (
+    (await (await getHarness()).snapshot(SessionDoc, conversation.id, context))
+      ?.tonight
+  )
+    throw new Error(
+      'This session is held for tonight: edit its prompt, or run it now',
+    );
   await keepCopies(conversation.id);
   const parent = await recordSender(conversation.id, from, keep);
   // Pi Durable returns the existing submission for a repeated requestId.

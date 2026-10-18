@@ -348,6 +348,7 @@ export function fixtureCatalog(worst: boolean): ModelCatalog {
       longCache: true,
       hubFolder: null,
       hubModel: null,
+      nightStart: '01:00',
     },
     fromEnv: { model: false, fastModel: false },
     compaction: { reserveTokens: RESERVE, backgroundTokens: BACKGROUND },
