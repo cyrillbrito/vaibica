@@ -34,7 +34,8 @@ function withSummary(message: Message): Message {
         parameters: {
           ...tool.parameters,
           properties: { summary, ...properties },
-          required: ['summary', ...required],
+          // Sessions from before 0dd7e60 stored the field already.
+          required: ['summary', ...required.filter((r) => r !== 'summary')],
         },
       };
     }),
