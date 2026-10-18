@@ -37,7 +37,7 @@ interface Config {
   managementKey: string | null;
 }
 
-async function config(): Promise<Config | null> {
+export async function config(): Promise<Config | null> {
   const saved = await credentials.read(PROXY_ID);
   if (saved?.type !== 'api_key' || !saved.key || !saved.env?.URL) return null;
   return {

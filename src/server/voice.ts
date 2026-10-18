@@ -6,7 +6,7 @@ import { promisify } from 'node:util';
 import WebSocket from 'ws';
 
 import type { VoiceLine } from '#lib/transcript';
-import { models } from '#server/providers';
+import { models, proxyConfig } from '#server/providers';
 import { voiceSession } from '#server/sessions';
 
 /*
@@ -17,6 +17,9 @@ import { voiceSession } from '#server/sessions';
  *
  * Unofficial: it signs in the way the Codex Desktop app does. The official
  * route is the same protocol on api.openai.com with an API key.
+ *
+ * Without a ChatGPT sign-in, calls go through the CLI proxy, which forwards
+ * them to the same ChatGPT route with one of its Codex sign-ins.
  */
 
 const SIGNALING_URL =
@@ -50,20 +53,45 @@ Treat delegation results as your own work. Never mention a backend, delegation, 
 
 The recent conversation below is background, so "continue" or "that" can refer to it. Don't summarize it, answer it, or act on it until the user speaks.`;
 
-async function codexToken() {
+async function route() {
   const token = (await models.getAuth('openai-codex'))?.auth.apiKey;
-  if (!token)
-    throw new Error(
-      'Not signed in to ChatGPT for voice: Settings → Providers → ChatGPT',
+  if (token)
+    return {
+      token,
+      signaling: SIGNALING_URL,
+      sideband: (callId: string) =>
+        `wss://api.openai.com/v1/live/${encodeURIComponent(callId)}`,
+    };
+  const proxy = await proxyConfig();
+  if (proxy)
+    return {
+      token: proxy.apiKey,
+      signaling: `${proxy.url}/v1/realtime/calls`,
+      // Not /v1/realtime/calls/<id>: the proxy forwards that to an OpenAI
+      // address that refuses Codex calls.
+      sideband: (callId: string) =>
+        `${proxy.url.replace(/^http/, 'ws')}/v1/live/${encodeURIComponent(callId)}`,
+    };
+  throw new Error(
+    'Voice needs a ChatGPT sign-in or the CLI proxy: Settings → Providers',
+  );
+}
+
+// The ChatGPT account comes from the sign-in's JWT. A proxy key has none:
+// the proxy adds it for the account it picks.
+function accountOf(token: string) {
+  try {
+    const claims = JSON.parse(
+      Buffer.from(token.split('.')[1] ?? '', 'base64url').toString(),
     );
-  return token;
+    return claims['https://api.openai.com/auth']?.chatgpt_account_id;
+  } catch {
+    return undefined;
+  }
 }
 
 function headers(token: string, id: string) {
-  const claims = JSON.parse(
-    Buffer.from(token.split('.')[1] ?? '', 'base64url').toString() || '{}',
-  );
-  const account = claims['https://api.openai.com/auth']?.chatgpt_account_id;
+  const account = accountOf(token);
   return {
     Authorization: `Bearer ${token}`,
     'OpenAI-Alpha': 'quicksilver=v2',
@@ -88,7 +116,7 @@ const calls = new Map<string, Call>();
 export async function startCall(sessionId: string, sdp: string) {
   const session = await voiceSession(sessionId);
 
-  const token = await codexToken();
+  const { token, signaling, sideband } = await route();
   const id = randomUUID();
   // Context appended after connect reads as a turn to answer, so the voice
   // spoke first. In the instructions it is only background.
@@ -112,7 +140,7 @@ export async function startCall(sessionId: string, sdp: string) {
   ]
     .filter(Boolean)
     .join('\n\n');
-  const response = await fetch(SIGNALING_URL, {
+  const response = await fetch(signaling, {
     method: 'POST',
     headers: { ...headers(token, id), 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -138,10 +166,9 @@ export async function startCall(sessionId: string, sdp: string) {
   if (!callId) throw new Error('Voice call has no id');
 
   // The "sideband": this server's line into the call, for events and results.
-  const socket = new WebSocket(
-    `wss://api.openai.com/v1/live/${encodeURIComponent(callId)}`,
-    { headers: headers(token, id) },
-  );
+  const socket = new WebSocket(sideband(callId), {
+    headers: headers(token, id),
+  });
   const send = (message: object) => {
     if (socket.readyState === WebSocket.OPEN)
       socket.send(JSON.stringify(message));

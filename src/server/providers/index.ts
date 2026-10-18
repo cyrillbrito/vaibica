@@ -12,6 +12,7 @@ export {
 export { exaKey } from './credentials';
 export { answer, cancel, signIn, signOut, watchAccounts } from './accounts';
 export {
+  config as proxyConfig,
   planUsageNow,
   proxyReady,
   removeProxy,
