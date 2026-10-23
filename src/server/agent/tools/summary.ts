@@ -25,6 +25,13 @@ function withSummary(message: Message): Message {
   return {
     ...message,
     toolsAdded: message.toolsAdded.map((tool) => {
+      // A grammar tool's model writes one raw string, like codemode's script,
+      // and pi-ai rejects it with a second required field.
+      if (
+        tool.constrainedSampling &&
+        tool.constrainedSampling.type === 'grammar'
+      )
+        return tool;
       const { properties, required = [] } = tool.parameters as {
         properties?: object;
         required?: string[];

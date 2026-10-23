@@ -1,6 +1,6 @@
 # Agent tools
 
-The agent works through tools. Every call carries a short summary of what it is for, so the transcript reads as a list of intentions. What the agent is told about using them is in [instructions.md](./instructions.md).
+The agent works through tools. Every call carries a short summary of what it is for, so the transcript reads as a list of intentions. The exception is `codemode` on models that write its script as raw text, such as GPT-5, which take no other field. What the agent is told about using them is in [instructions.md](./instructions.md).
 
 - Read, write, edit, and bash work in the session's folder. Read also shows images to the model, shrunk when they are too big.
 - Web search and fetch go through Exa, once its key is set ([models.md](./models.md#providers)).
