@@ -121,7 +121,7 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 
 After UI changes, check them in a real browser with `agent-browser`, a global CLI configured in `~/.agent-browser/config.json`. Its skill explains how to use it. These are the facts for this repo:
 
-- The dev server (`bun run dev`, port 3142) usually hosts the Bica session you are running in. Don't restart or stop it. Vite picks up page edits on its own, but server code (`src/server`) runs as it started until Bica restarts: test server changes on your own dev server on another port. Another dev server may run on a different port; inspect running terminals before starting one.
+- The dev server (`bun run dev`, port 3142) usually hosts the Bica session you are running in. Don't restart or stop it. It has no live updates (`server.ws: false`), so reload the page to see page edits, but server code (`src/server`) runs as it started until Bica restarts: test server changes on your own dev server on another port. Another dev server may run on a different port; inspect running terminals before starting one.
 - Open `http://localhost:3142`, then check `errors` and `console` for Solid warnings and socket errors.
 - For the phone layout, run `set viewport 390 844` and check again.
 - For worst-case data, open the page with `?data=worst`. See Test data in `docs/UI.md`.

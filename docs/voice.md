@@ -43,6 +43,7 @@ Calls run on the ChatGPT plan the way the `pi-live-codex` extension does, by pre
 ## Limits
 
 - One call at a time per browser tab.
+- On iOS, the mic stays on with the phone locked in Safari and Chrome, but not in Bica added to the home screen: iOS only lets apps that declare background audio record in the background, and Safari does but home-screen web apps don't. See [WebKit bug 226620](https://bugs.webkit.org/show_bug.cgi?id=226620).
 - The mic needs a secure page: localhost or the Tailscale HTTPS address.
 
 ## Sources
