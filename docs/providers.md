@@ -2,7 +2,7 @@
 
 Providers are where models come from. Bica uses pi-ai's list, so any provider it knows can be connected in Settings → Providers, and its models then show in the [picker](./models.md).
 
-Connect one with a plan sign-in, such as Claude Max or ChatGPT Plus, or with an API key. Plans are meant for the provider's own apps, so it may refuse Bica at any time. Each row shows the plan and email, or the key's last four characters.
+Connect one with a plan sign-in, such as Claude Max or ChatGPT Plus, or with an API key. Plans are meant for the provider's own apps, so it may refuse Bica at any time. OpenRouter gets a cap on answer length, since it holds back credit for the longest possible answer and a low balance would refuse every turn. Each row shows the plan and email, or the key's last four characters.
 
 ## More than one account
 

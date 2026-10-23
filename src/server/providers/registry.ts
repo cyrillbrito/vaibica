@@ -33,3 +33,22 @@ export const accountsReady = credentials.list().then((saved) => {
       addExtraAccount(providerId);
 });
 
+// OpenRouter holds back credit for the whole output ceiling before a turn
+// starts, and pi-ai asks for the model's maximum, 128k on Opus, so a low
+// balance refuses turns that would cost cents. Claude Code stops at 32k too.
+const OPENROUTER_MAX_TOKENS = 32_000;
+const stream = models.streamSimple.bind(models);
+models.streamSimple = (model, context, options) =>
+  stream(
+    model,
+    context,
+    model.provider === 'openrouter'
+      ? {
+          ...options,
+          maxTokens: Math.min(
+            options?.maxTokens ?? model.maxTokens,
+            OPENROUTER_MAX_TOKENS,
+          ),
+        }
+      : options,
+  );
