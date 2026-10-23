@@ -21,13 +21,7 @@ import { accountsOf, baseOf, forgetLimits, isExtra } from './plans';
 import { refreshPlanUsage } from './usage';
 
 // Listed first, with a guide; every other pi-ai provider follows by name.
-const GUIDES: Record<
-  string,
-  Pick<Account, 'about' | 'link'> & {
-    signIn?: string;
-    noSignIn?: boolean;
-  }
-> = {
+const GUIDES: Record<string, Pick<Account, 'about' | 'link'>> = {
   anthropic: {
     about:
       'Sign in with a Claude Pro or Max plan, or add an API key (billed per use).',
@@ -35,20 +29,16 @@ const GUIDES: Record<
       label: 'API keys',
       url: 'https://console.anthropic.com/settings/keys',
     },
-    signIn: 'Sign in with Claude',
   },
   'openai-codex': {
-    signIn: 'Sign in with ChatGPT',
     about:
       'Sign in with a ChatGPT Plus or Pro plan: sessions get the Codex models, and voice calls use it.',
     link: null,
   },
-  // pi-ai also offers OpenAI's newer Sign in with ChatGPT here; it failed
-  // for us, so ChatGPT plans go through the Codex sign-in above.
   openai: {
-    about: 'An API key, billed per use.',
+    about:
+      'Sign in with a ChatGPT Plus or Pro plan, or add an API key (billed per use).',
     link: { label: 'API keys', url: 'https://platform.openai.com/api-keys' },
-    noSignIn: true,
   },
   exa: {
     about: "The agents' web search and page fetch. The free plan is enough.",
@@ -81,10 +71,10 @@ async function accounts(): Promise<Account[]> {
       if (current?.type === 'oauth' && !emailOf(p.id))
         void learn(p.id, false, () => void feed.refresh());
       const methods: Account['methods'] = [];
-      if (p.auth.oauth && !guide?.noSignIn)
+      if (p.auth.oauth)
         methods.push({
           type: 'oauth',
-          label: guide?.signIn ?? p.auth.oauth.loginLabel ?? 'Sign in',
+          label: p.auth.oauth.loginLabel ?? 'Sign in',
         });
       if (p.auth.apiKey?.login)
         methods.push({ type: 'api_key', label: 'Add key' });

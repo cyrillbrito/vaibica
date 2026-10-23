@@ -5,7 +5,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import type { Credential, CredentialStore } from '@earendil-works/pi-ai';
 
 /*
- * Sign-ins and keys added in Settings (docs/providers.md), one per provider
+ * Sign-ins and keys added in Settings (docs/models.md), one per provider
  * id, in pi's auth.json shape. Only this process writes the file, so one
  * promise chain is the lock. A saved credential wins over the env var.
  */

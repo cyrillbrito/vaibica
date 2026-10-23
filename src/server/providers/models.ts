@@ -15,6 +15,7 @@ import type {
   ModelSettings,
   ThinkingLevel,
 } from '#lib/protocol';
+import { nameOf } from './account-info';
 import { models } from './registry';
 import { live } from '#server/live';
 import { dataFile } from '#server/paths';
@@ -117,7 +118,9 @@ export async function getCatalog(): Promise<ModelCatalog> {
     await Promise.all(
       models.getProviders().map(async (p) => {
         const auth = await models.checkAuth(p.id).catch(() => undefined);
-        return auth && { id: p.id, name: p.name, source: auth.source ?? null };
+        return (
+          auth && { id: p.id, name: nameOf(p.id), source: auth.source ?? null }
+        );
       }),
     )
   ).filter((p) => !!p);
@@ -133,12 +136,7 @@ export async function getCatalog(): Promise<ModelCatalog> {
       name: m.name,
       levels: getSupportedThinkingLevels(m) as ThinkingLevel[],
       contextWindow: m.contextWindow,
-      cost: {
-        input: m.cost.input,
-        output: m.cost.output,
-        cacheRead: m.cost.cacheRead,
-      },
-      images: m.input.includes('image'),
+      cost: { input: m.cost.input, output: m.cost.output },
       cacheTtl: { ...m.promptCache },
     })),
     classifiers: classifiers.map((m) => ({

@@ -7,7 +7,7 @@ import { models } from './registry';
 
 /*
  * What Bica knows about each account beyond its sign-in
- * (docs/providers.md#more-than-one-account): its email and plan, and which
+ * (docs/models.md#more-than-one-account): its email and plan, and which
  * account of a plan goes first. Kept out of auth.json, since
  * renewing a sign-in rewrites its entry there.
  */
@@ -46,15 +46,10 @@ const save = () =>
     }));
 
 // Where the provider's own name isn't the one people know it by.
-const PROVIDER_NAMES: Record<string, string> = {
-  'openai-codex': 'ChatGPT',
-  exa: 'Exa',
-};
-
 /** The provider's name: every account of a plan shares it, the email tells them apart. */
 export function nameOf(id: string) {
   const base = baseOf(id);
-  return PROVIDER_NAMES[base] ?? models.getProvider(base)?.name ?? base;
+  return models.getProvider(base)?.name ?? base;
 }
 
 export const emailOf = (id: string) => accounts[id]?.email ?? null;

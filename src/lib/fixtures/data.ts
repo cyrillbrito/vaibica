@@ -191,7 +191,7 @@ const status = (s: Partial<GitStatus>): GitStatus => ({
 const BICA_FILES =
   `AGENTS.md README.md package.json bun.lock vite.config.ts tsconfig.json
 docs/UI.md docs/architecture.md docs/context-usage.md docs/deploy.md docs/files.md docs/git.md
-docs/projects.md docs/providers.md docs/sessions.md docs/terminals.md docs/tools.md docs/voice.md
+docs/projects.md docs/models.md docs/sessions.md docs/terminals.md docs/tools.md docs/voice.md
 public/favicon.svg public/apple-touch-icon.png src/App.css src/App.tsx src/Document.tsx src/router.ts
 src/components/Activity.tsx src/components/AskCard.tsx src/components/ChangeList.tsx
 src/components/CodeView.tsx src/components/CommitBox.tsx src/components/Composer.tsx

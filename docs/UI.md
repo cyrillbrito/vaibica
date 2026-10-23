@@ -117,10 +117,8 @@ Tailwind's default breakpoints. State lives in `src/lib/layout.ts`.
 Right click (or the menu key / Shift+F10, or a long press on touch) opens a menu on the thing under the pointer: a session row, a workspace header. One `ContextMenu` is mounted in `App.tsx`; any element opts in by spreading `contextMenu(() => items)` (`src/components/ui/ContextMenu.tsx`) and adding the `context-target` class (no iOS callout or text selection on long press).
 
 - Items are read when the menu opens, so they can look at current state. An item is `{ label, icon, onSelect, danger?, disabled?, hint?, keys? }`; `'separator'` splits groups. `disabled` can be a string, shown as the reason on hover, `hint` explains the item on hover, and `keys` shows a shortcut on the right.
-- It grows in from the pointer itself (its `transform-origin` is where you clicked), and the hover fill glides between items.
-- It is a `popover="manual"`, not `auto`: light dismiss would close it on the pointerup of the right click that opened it. Outside press, Esc, scroll and resize close it; focus returns to where it was. Arrows, Home and End move; Tab closes.
-- Touch: 450ms hold, haptic tick, and the click that the lift would cause is swallowed. Items are 44px. While held, the row sinks and darkens (after 120ms, so taps and scrolls don't flash); the row stays highlighted while its menu is open. Text inside a `context-target` can't be selected on touch.
-- A long press is hidden, so on touch the busiest rows (sessions) also show a `MenuButton` ("⋯", `hidden touch:grid`) that opens the same items. Swipe actions are deliberately not used: hard to discover.
+- It grows in from the pointer, and outside press, Esc, scroll, and resize close it. It is a manual popover, since light dismiss would close it on the right click's own pointerup.
+- A long press is hard to discover, so on touch the busiest rows (sessions) also show a "⋯" `MenuButton` with the same items. Swipe actions are not used, for the same reason.
 - Keep menus short and put the most common action first. Everything in a menu should also be reachable some other way, since touch and keyboard users may never open it.
 - File rows are Pierre trees, which draw their own "⋯" on hover (always on touch) and open this same menu.
 
@@ -145,8 +143,7 @@ Screens are drawn against kind data, so check them against the worst realistic d
 
 - The test data stands in where topics are read (`useTopic`), so every screen gets it. It never reaches the server or the cache on the device.
 - The whole app has test data, in `src/lib/fixtures/`: the sidebar (sessions, projects, terminals, kept files), the transcripts, and the right panel (git status and files). In `demo` and `worst`, models (with list prices), providers, plan usage (limits near and at the cap), and each live test session's context have test data too (`usage.ts`), and Compact and Clean up play out on them. The other modes keep those live.
-- Transcripts are built as the server stores them and sent through its projection (`src/lib/projection.ts`), so opened rows load their details as on live data. `chats.ts` has the main demo exchange and the worst one, and `demo-chats.ts` one for every other demo session. Sessions without one get a short exchange from their title and status.
-- In `demo` and `worst`, a few sessions play out live instead (`conversations.ts`): the first runs on a loop (thinking, parallel tools with timers, a streaming reply, a queue), another waits on a question, and another holds every finished row. Prompts sent to them land and get a short reply.
+- Transcripts go through the same projection as live data, so opened rows load their details. In `demo` and `worst`, a few sessions play out live: one runs on a loop, one waits on a question, and one holds every kind of finished row.
 - Demo data doubles as screenshot data: `/s/demo-shortcuts?data=demo` shows one session from prompt to answer, with its changes and diffs on the right.
 - Commands are held back while it's on: they are logged to the console and never answer. Reads with test data (step details, files and diffs in the test data) answer from it; other reads go to the server.
 
@@ -191,7 +188,7 @@ Use [mobbin.com](https://mobbin.com) for real app screens and flows; its [MCP se
 
 ### affectUI
 
-[affectUI](https://www.affectui.com) is a React kit of components for AI products: tool calls, approvals, agent inboxes, context windows, model pickers, usage meters, toasts. It is the closest match to what Bica shows, and its motion is calm and exact. Much of Bica's current finish comes from it: `RollingNumber`, the gliding `Segmented` thumb, `Button loading`, the toast stack, `ThinkingLoader`, the Activity header, question cards, the context field, the model picker bars, ⌘K, the sidebar tabs and clocks, and the workspace card.
+[affectUI](https://www.affectui.com) is a React kit of components for AI products: tool calls, approvals, agent inboxes, context windows, model pickers, usage meters, toasts. It is the closest match to what Bica shows, and its motion is calm and exact. Much of Bica's current finish comes from it: `RollingNumber`, the gliding `Segmented` thumb, `Button loading`, the toast stack, `ThinkingLoader`, the Activity header, question cards, the context field, ⌘K, the sidebar tabs and clocks, and the workspace card.
 
 Look there first when designing a new agent surface:
 
@@ -200,13 +197,5 @@ Look there first when designing a new agent surface:
 - `https://www.affectui.com/llms-full.txt` holds every item's docs. The Motion, Accessibility, and "When not to use" sections are worth more than the props.
 - Port the idea, never the code: it is React, Bica is Solid. Bica's tokens, radii, type roles, and motion rules above win over affectUI's.
 - Not taken: big flashy illustrations, and pills where a word does. The working state is a shimmering word, not a capsule.
-
-Mobbin references:
-
-- Patterns: [mobile chat](https://mobbin.com/explore/mobile/screens/chat-bot) · [web side navigation](https://mobbin.com/explore/web/ui-elements/side-navigation) · [sidebar guide](https://mobbin.com/glossary/sidebar) · [bottom sheets](https://mobbin.com/explore/mobile/ui-elements/bottom-sheet) and [guide](https://mobbin.com/glossary/bottom-sheet)
-- Linear web: [dark mode, sidebar + list](https://mobbin.com/explore/screens/cc5d476b-5ba1-4bc2-bcf3-d6dcc9a636a3) · [issue detail](https://mobbin.com/explore/screens/4e50fabd-fab7-487c-83cf-040de77ee7ea)
-- Hidden sidebar: [Remote](https://mobbin.com/explore/screens/a9a54b12-e5fd-4c9a-bb94-e9a63d22111d)
-- GitHub: [web line diff](https://mobbin.com/explore/screens/0e44aacc-efb0-496b-bcbb-7ccefd99889e) · [iOS PR list](https://mobbin.com/explore/screens/8f217bec-b611-4027-ab0f-f6d089a0b322) (row density for sessions) · [iOS code options](https://mobbin.com/explore/screens/32510bf7-affc-4b83-9046-36ba624914a9)
-- Cursor web: [home](https://mobbin.com/explore/screens/7f26354a-020b-4f86-9d9b-790abc3fe053) · [chat](https://mobbin.com/explore/screens/fef89c8a-bc7c-4167-9471-104efee61a6e)
 
 Add links here as we find good references.

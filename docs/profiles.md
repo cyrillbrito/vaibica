@@ -1,14 +1,12 @@
 # Profiles
 
-A profile says what kind of session a session is. It sets the agent's tools, its instructions, its default model and effort, whether the page shows the Git, files, and terminal panels, and whether Bica keeps the session small on its own while it sits idle.
+A profile is the kind of session: it sets the agent's tools, instructions, default model and effort, which side panels the page shows, and whether Bica keeps the session small while it sits idle.
 
-Bica ships four, defined in code:
+- Coding: one task in one project, with every tool. The default.
+- Assistant: a session that keeps going for months, with memory in files ([assistant-mode.md](./assistant-mode.md)).
+- Night: a session held for tonight, that finishes alone and writes a report ([night-runs.md](./night-runs.md)).
+- Hub: the one coordinator across every project ([hub.md](./hub.md)).
 
-- Coding: one task in one project, with every tool and the coding rules. This is the default.
-- Assistant: a session in one project that keeps going, such as a notes vault or a small coordinator for that project. It is Coding plus memory rules, kept small while idle, and less about code than about help. See [assistant-mode.md](./assistant-mode.md).
-- Night: a session held for tonight's run. It is Coding without `ask`, at high effort or more, with rules to finish alone and end with a report. Once it ran, it turns back into Coding. See [night-runs.md](./night-runs.md).
-- Hub: the one coordinator across every project, with its own tools and instructions, no panels, kept small while idle. See [hub.md](./hub.md).
+You pick Assistant or Night when you start a session, and the context chip's menu can turn Assistant off. Only the hub's page makes the hub. Switching rebuilds the prompt cache once.
 
-A session is Coding unless you start it in assistant mode, with the Assistant toggle next to the workspace on the home page, or hold it for tonight. The context chip's menu can turn it off again. The tools and instructions are part of the prompt cache, so a switch rebuilds it once. Hub is not a choice anywhere: only the hub's own page makes the hub session, and the server refuses to make or switch any other session into one. A session with no profile counts as Coding.
-
-There is no profile editor. Each profile is one file in `src/server/profiles/` with its tools, model, and instructions, and it can reuse parts of Coding or of `common.ts`. Its instructions fill named prompt sections, which render in one fixed order for every profile, so the prompt cache holds up. The page's half, its label and panels, is in `src/lib/profiles.ts`.
+Each profile is one file in `src/server/profiles/`. Its instructions fill the shared prompt sections ([instructions.md](./instructions.md)).

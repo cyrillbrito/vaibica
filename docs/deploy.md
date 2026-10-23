@@ -18,9 +18,7 @@ It gives HTTPS with a real certificate, which the installed app and the micropho
 
 ## Installing as an app
 
-`public/manifest.webmanifest` makes Bica installable, so it opens in its own window with its own Dock icon, away from browser tabs. In Chromium browsers such as Helium, use the install icon in the address bar. In Safari, use File → Add to Dock. The title bar takes the color from the `theme-color` meta tags, which follow the theme.
-
-An installed app runs in the browser profile it was installed from, with that profile's extensions. To run Bica without them, install it from a separate profile that has no extensions.
+Bica installs as an app with its own window and Dock icon. In Chromium browsers such as Helium, use the install icon in the address bar. In Safari, use File → Add to Dock. The app keeps the extensions of the browser profile it was installed from, so install it from a profile without extensions to run it clean.
 
 ## A built copy
 
@@ -52,7 +50,3 @@ A release is a draft GitHub release with `bica` for macOS arm64 and x64 and Linu
 3. Review the draft under Releases. Its notes list the commit subjects since the previous tag and a compare link. Edit them there or with `gh release edit`, then publish.
 
 It runs on macOS so `codesign --sign -` can sign the macOS binaries, which Apple Silicon needs to run them. See [release.yml](../.github/workflows/release.yml).
-
-## Slow links
-
-The phone loads the unbundled dev server, so first-load size matters. The dev server compresses its responses, and icons are imported one by one so the whole icon set never ships.

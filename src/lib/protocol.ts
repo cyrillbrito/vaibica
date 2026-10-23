@@ -122,9 +122,7 @@ export interface ModelCatalog {
     levels: ThinkingLevel[];
     contextWindow: number;
     // List price in dollars per million tokens; 0: unknown.
-    cost: { input: number; output: number; cacheRead: number };
-    // Takes images in prompts.
-    images: boolean;
+    cost: { input: number; output: number };
     // Prompt cache lifetimes in seconds; absent: unknown or no cache.
     cacheTtl: { short?: number; long?: number };
   }[];
@@ -161,7 +159,7 @@ export interface Account {
   // hint: a key's last 4 characters.
   status: { type: 'oauth' | 'api_key'; hint: string | null } | null;
   methods: { type: 'oauth' | 'api_key'; label: string }[];
-  // A plan signed in here, which can take an extra account (docs/providers.md).
+  // A plan signed in here, which can take an extra account (docs/models.md).
   addAccount: boolean;
 }
 

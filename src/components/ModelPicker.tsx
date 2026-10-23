@@ -1,13 +1,12 @@
-import { For, Repeat, Show, createMemo, createSignal } from 'solid-js';
+import { For, Show, createMemo, createSignal } from 'solid-js';
 
 import { formatTokens } from '#lib/context-usage';
-import { modelKey, pickable, useModels } from '#lib/models';
+import { modelKey, pickable, shortName, useModels } from '#lib/models';
 import type { ModelCatalog, ModelChoice, ThinkingLevel } from '#lib/protocol';
 import { buttonClass } from './ui/Button';
 import Chevron from './ui/Chevron';
 import { CheckIcon, ThoughtIcon } from './ui/icons';
 import Input from './ui/Input';
-import { RollingNumber } from './ui/RollingNumber';
 import { Segmented, segmentClass } from './ui/Segmented';
 import { Switch } from './ui/Switch';
 
@@ -17,26 +16,25 @@ type Model = ModelCatalog['models'][number] & { decision?: boolean };
 const asModel = (m: ModelCatalog['classifiers'][number]): Model => ({
   ...m,
   levels: [],
-  images: false,
-  cost: { input: m.cost.input, output: 0, cacheRead: 0 },
+  cost: { input: m.cost.input, output: 0 },
   cacheTtl: {},
   decision: true,
 });
 
-// Five steps each, from pi-ai's real numbers: there are no speed or quality
-// scores to show, so the bars are the window and the price.
-const CONTEXT_STEPS = [32_000, 128_000, 256_000, 512_000];
-const PRICE_STEPS = [0.5, 2, 6, 15];
-const step = (n: number, steps: number[]) =>
-  steps.filter((s) => n > s).length + 1;
-// Most of a coding agent's tokens are input: weigh it three to one.
-const blended = (m: Model) => (3 * m.cost.input + m.cost.output) / 4;
-const contextLevel = (m: Model) => step(m.contextWindow, CONTEXT_STEPS);
-const priceLevel = (m: Model) =>
-  m.cost.input || m.cost.output ? step(blended(m), PRICE_STEPS) : 0;
-
 const dollars = (n: number) =>
   `$${n >= 10 ? Math.round(n) : n.toFixed(2).replace(/\.?0+$/, '')}`;
+
+// "400k context · $1.25 / $10 per 1M": input, then output, price.
+const facts = (m: Model) => {
+  const price = !m.cost.input
+    ? null
+    : m.cost.output
+      ? `${dollars(m.cost.input)} / ${dollars(m.cost.output)} per 1M`
+      : `${dollars(m.cost.input)} per 1M`;
+  return [`${formatTokens(m.contextWindow)} context`, price]
+    .filter(Boolean)
+    .join(' · ');
+};
 
 const EFFORT: Record<ThinkingLevel, [short: string, long: string]> = {
   off: ['Off', 'No thinking'],
@@ -58,53 +56,6 @@ function levelFor(m: Model, want: ThinkingLevel): ThinkingLevel {
   return [...m.levels].sort(
     (a, b) => Math.abs(order.indexOf(a) - at) - Math.abs(order.indexOf(b) - at),
   )[0]!;
-}
-
-const describe = (m: Model) =>
-  [
-    m.decision && 'decision model',
-    `${formatTokens(m.contextWindow)} context`,
-    m.images && 'images',
-    !m.decision && !m.levels.filter((l) => l !== 'off').length && 'no thinking',
-  ]
-    .filter(Boolean)
-    .join(' · ');
-
-/**
- * Five segments; pointing at the row fills them one after another. From
- * the keyboard they fill at once.
- */
-function Bars(props: {
-  level: number;
-  lit: boolean;
-  column: number;
-  instant: boolean;
-}) {
-  return (
-    <span class="grid w-10 shrink-0 grid-cols-5 gap-0.5" aria-hidden="true">
-      <Repeat count={5}>
-        {(i) => (
-          <span
-            class={[
-              'h-1.5 rounded-cell',
-              !props.instant && 'transition-colors duration-200',
-              i >= props.level
-                ? 'bg-active'
-                : props.lit
-                  ? 'bg-fg'
-                  : 'bg-line-strong',
-            ]}
-            style={{
-              'transition-delay':
-                props.lit && !props.instant
-                  ? `${props.column * 40 + i * 25}ms`
-                  : '0ms',
-            }}
-          />
-        )}
-      </Repeat>
-    </span>
-  );
 }
 
 /**
@@ -175,8 +126,7 @@ export default function ModelPicker(props: {
   const [pointed, setPointed] = createSignal<string | null>(null, {
     name: 'modelPointed',
   });
-  const [byKey, setByKey] = createSignal(false, { name: 'modelPointedByKey' });
-  // The tray speaks for the model you point at, else the picked one.
+  // The footer speaks for the model you point at, else the picked one.
   const shown = () =>
     options().find((m) => modelKey(m.provider, m.id) === pointed()) ??
     current();
@@ -200,7 +150,7 @@ export default function ModelPicker(props: {
         style={{ 'anchor-name': `--${id}` }}
         title={
           props.value &&
-          `${modelKey(props.value.model.provider, props.value.model.modelId)}${
+          `${current()?.name ?? props.value.model.modelId} · ${modelKey(props.value.model.provider, props.value.model.modelId)}${
             thinks() ? ` · ${EFFORT[props.value.thinkingLevel][1]}` : ''
           }`
         }
@@ -214,7 +164,9 @@ export default function ModelPicker(props: {
         </Show>
         <span class={['truncate', !props.value && 'text-muted']}>
           {props.value
-            ? (current()?.name ?? props.value.model.modelId)
+            ? current()
+              ? shortName(current()!, options())
+              : props.value.model.modelId
             : props.empty}
         </span>
         <Show when={thinks()}>
@@ -252,16 +204,7 @@ export default function ModelPicker(props: {
             </div>
           </Show>
           <div
-            class="flex items-center gap-2.5 px-3 pt-1.5 text-meta text-muted"
-            aria-hidden="true"
-          >
-            <span class="flex-1">Model</span>
-            <span class="w-10 text-center">Context</span>
-            <span class="w-10 text-center">Price</span>
-          </div>
-          <div
             class="flex max-h-[50dvh] flex-col overflow-y-auto overscroll-contain p-1 md:max-h-80"
-            data-pointing={pointed() ? '' : undefined}
             onPointerLeave={() => setPointed(null)}
           >
             <Show when={!groups().length}>
@@ -285,20 +228,13 @@ export default function ModelPicker(props: {
                         <button
                           type="button"
                           class={[
-                            'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left transition-[background-color,opacity] duration-150 focus-visible:bg-active touch:py-2.5',
+                            'flex h-8 w-full items-center gap-1.5 rounded-lg px-2.5 text-left transition-colors duration-150 focus-visible:bg-active touch:h-11',
                             lit() && 'bg-hover',
-                            pointed() && !lit() && 'opacity-55',
                           ]}
                           title={key()}
                           aria-pressed={on() ? 'true' : 'false'}
-                          onPointerEnter={() => {
-                            setByKey(false);
-                            setPointed(key());
-                          }}
-                          onFocus={() => {
-                            setByKey(true);
-                            setPointed(key());
-                          }}
+                          onPointerEnter={() => setPointed(key())}
+                          onFocus={() => setPointed(key())}
                           onClick={() => {
                             popover?.hidePopover();
                             if (on()) return;
@@ -314,31 +250,12 @@ export default function ModelPicker(props: {
                             });
                           }}
                         >
-                          <span class="flex min-w-0 flex-1 flex-col">
-                            <span class="flex items-center gap-1 font-medium">
-                              <span class="truncate">{m().name}</span>
-                              <Show when={on()}>
-                                <span class="swap-in shrink-0">
-                                  <CheckIcon />
-                                </span>
-                              </Show>
+                          <span class="truncate">{m().name}</span>
+                          <Show when={on()}>
+                            <span class="swap-in shrink-0 text-muted">
+                              <CheckIcon />
                             </span>
-                            <span class="truncate text-meta text-muted">
-                              {describe(m())}
-                            </span>
-                          </span>
-                          <Bars
-                            level={contextLevel(m())}
-                            lit={lit()}
-                            column={0}
-                            instant={byKey()}
-                          />
-                          <Bars
-                            level={priceLevel(m())}
-                            lit={lit()}
-                            column={1}
-                            instant={byKey()}
-                          />
+                          </Show>
                         </button>
                       );
                     }}
@@ -421,34 +338,10 @@ export default function ModelPicker(props: {
         <Show when={shown()}>
           {(m) => (
             <div
-              class="flex min-h-8 items-center gap-1 px-3 pt-1 text-meta text-muted tabular-nums"
+              class="truncate px-3 pt-1.5 pb-0.5 text-meta text-muted tabular-nums"
               aria-hidden="true"
             >
-              <Show
-                when={priceLevel(m())}
-                fallback={<span class="flex-1 truncate">No list price</span>}
-              >
-                <span class="flex min-w-0 flex-1 items-baseline gap-1 truncate">
-                  <RollingNumber
-                    value={m().cost.input}
-                    format={dollars}
-                    class="text-fg"
-                  />
-                  in ·
-                  <RollingNumber
-                    value={m().cost.output}
-                    format={dollars}
-                    class="text-fg"
-                  />
-                  out per 1M
-                </span>
-              </Show>
-              <RollingNumber
-                value={m().contextWindow}
-                format={formatTokens}
-                class="text-fg"
-              />
-              <span>context</span>
+              {facts(m())}
             </div>
           )}
         </Show>

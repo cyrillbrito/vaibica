@@ -1,42 +1,37 @@
 # Agent tools
 
-The agent works through tools. Every call the model makes carries a short summary, so the transcript reads as a list of intentions. Bica adds the field only to the copy of each tool sent to the model, marked required so the model rarely skips it, and removes it before the tool runs. A call without one still runs, since Pi Durable checks it against the tool as registered, and its row shows the command or path instead.
+The agent works through tools. Every call carries a short summary of what it is for, so the transcript reads as a list of intentions. What the agent is told about using them is in [instructions.md](./instructions.md).
 
-- Read, write, edit, and bash work in the session's folder. Read also shows images to the model, shrunk or converted with Bun's image library when they are too big for the API or in a format it doesn't take.
-- Web search and fetch go through Exa, when its key is set.
-- Terminal tools share the workspace's terminals with you, see [terminals.md](./terminals.md).
-- What the agent is told about using them is in [instructions.md](./instructions.md).
+- Read, write, edit, and bash work in the session's folder. Read also shows images to the model, shrunk when they are too big.
+- Web search and fetch go through Exa, once its key is set ([models.md](./models.md#providers)).
+- Terminal tools share the workspace's terminals with you ([terminals.md](./terminals.md)).
 
 ## Codemode
 
-Codemode lets the model write a short JavaScript script that calls the other tools, so it can run them in parallel, chain them, and filter big output. Only what the script prints reaches the model. It is Pi Durable's codemode, which matches the Pi coding agent's: each call a script makes is a tool call of its own, and a script survives a restart, picking up where it was without running finished calls again. The prompt lists the tools scripts can call, exactly as Pi Durable defines them, without the summary field: a script's calls show no summary. Scripts can't call the tools that need the model itself: `ask`, `list`, and the session tools. While a script runs, its row lists the calls it made so far.
+Codemode lets the model write a short JavaScript script that calls the other tools, so it can run them in parallel, chain them, and filter big output. Only what the script prints reaches the model. It is Pi Durable's codemode: each call in a script is a tool call of its own, and a script survives a restart. Scripts can't call the tools that need the model itself, such as `ask` and the session tools.
 
-Scripts can also call classifier models. A classifier doesn't chat: it answers typed yes/no, choice, or score questions about JSON, in well under a second and for a fraction of a cent. That makes it cheap to label many items, such as the steps of past agent runs, and read only the flagged ones. Any provider with a key that offers classifiers works.
+Scripts can also call classifier models, which answer typed yes/no, choice, or score questions in well under a second for a fraction of a cent. That makes it cheap to label many items and read only the flagged ones.
 
 ## Asking you
 
-`ask` puts one to four multiple-choice questions to you and ends the run. Nothing waits, so a question survives restarts and can be answered hours later from another device. Your answer is an ordinary prompt, so typing in the composer answers too. Number keys pick the options of the question you're on and ⌘↵ sends, also with nothing focused. Once answered, the card folds into one row that opens to the questions and your answers. The answer shows there instead of as a prompt of its own, and one typed in the composer shows whole under the questions.
+`ask` puts one to four multiple-choice questions to you and ends the run. Nothing waits, so a question can be answered hours later from another device. Typing in the composer answers too, and number keys pick options. Once answered, the card folds into one row.
 
 ## Other sessions
 
-Agents can see everything open in Bica and work with other sessions the way they work with terminals: start, read, send, and stop.
+Agents can work with other sessions the way they work with terminals: start, read, send, and stop. Bica has no hidden subagents: every helper is a normal session you can open and steer.
 
-- `list` shows every project, workspace, open session, and terminal as a tree, with their status and which one is the caller. With `archived`, it lists the most recent archived sessions instead. The agent is told to leave the rest alone unless you name it. The [hub](./hub.md) has no such limit, but waits for your go before it changes anything.
-- `session_start` starts a normal session with the same model and a prompt that stands on its own, in any workspace or in a new worktree. `effort` sets low, medium, or high when you ask for one. With `assistant`, the new session runs in [assistant mode](./assistant-mode.md). With `tonight`, it is held for the [night run](./night-runs.md) instead of started, so the hub can schedule work you dictate.
-- `session_read` returns a session's status, who started it, who sent its last prompt (you, another session, a note, or the user), whether the user drives it himself, the `ask` questions it waits on, and its last reply, or with `messages` its last few prompts and replies.
-- `session_send` sends a signed message, so the receiver can answer. It waits for the current turn, or joins it with `steer`.
-- `session_stop` stops a session's turn. The session stays.
-- Both refuse a parent whose session the user took over ([sessions.md](./sessions.md#who-drives-a-session)), unless it passes `user_asked` because he told it to.
-- `session_archive` archives a finished session and closes the terminals it started. Its description tells the agent to archive the sessions it started once their result is in its reply and you wouldn't open them, to keep the ones you may want to read or continue, and to name what it archived. A session you took over is refused unless the agent passes `user_asked`, meaning you told it to. With `remove_worktree`, its worktree and branch go too, unless another open session works there or it holds uncommitted files or commits no other branch has.
+- `list` shows every project, workspace, session, and terminal. Agents are told to leave the rest alone unless you name it.
+- `session_start` starts a session with a prompt that stands on its own, in any workspace or a new worktree, optionally in [assistant mode](./assistant-mode.md) or held for the [night run](./night-runs.md).
+- `session_read` returns a session's status, the questions it waits on, and its last reply.
+- `session_send` sends a signed message, so the receiver can answer.
+- `session_stop` stops a session's turn.
+- `session_archive` archives a finished session, and can remove its worktree when nothing would be lost.
 
-The starter gets a note whenever a session it started finishes a turn, with its last reply, unless it started it with `notify: false` or the user took the session over. It hears of the take over and of a hand back once each. A `session_send` with `notify` gets a note for that one turn. A session that already messaged its starter during that turn sends no note, unless it stopped with an error or waits on a question. Notes arrive as queued prompts ([sessions.md](./sessions.md#queue-push-stop)) marked as coming from Bica, and say when the user drives that session himself. Who started a session, and who asked with `notify`, is stored with it, so notes survive restarts. Notes that pile up while a session works merge into one.
-
-Bica has no hidden subagents. Every helper is a normal session you can open, read, and steer, and a short job that reports back is a session with a clear task.
+The starter gets a note whenever a session it started finishes a turn, with its last reply, until you take that session over ([sessions.md](./sessions.md#who-drives-a-session)). Notes arrive as queued prompts, and ones that pile up merge into one.
 
 ## Sources
 
 - Claude Code's `SendMessage` with `notify_when_idle`, and Codex's `send_input` and `wait_agent`, which the session tools follow.
-- Taking over a session: Zendesk and Intercom stop their bot once a human takes a conversation, and the Pi package [`pi-cmux-orchestrator`](https://www.npmjs.com/package/@mporenta/pi-cmux-orchestrator) holds back the orchestrator once you type in a worker, until it is released.
-- Pi Durable's [`codemode`](https://github.com/earendil-works/pi/tree/main/packages/durable), on the `pi-codemode` sandbox.
-- The open [web search benchmark for coding agents](https://github.com/openbenchmarks-labs/web-search-for-coding-agents), where Exa leads search and fetch.
-- [Expand Fetch](https://expand.ai), which reads the rendered page with a vision model. On 43 pages that past sessions fetched, it read two that Exa missed but returned about 1.7 times as much text, so fetch stays on Exa.
+- Taking over a session: Zendesk and Intercom stop their bot once a human takes a conversation, and [`pi-cmux-orchestrator`](https://www.npmjs.com/package/@mporenta/pi-cmux-orchestrator) holds back the orchestrator once you type in a worker.
+- Pi Durable's [`codemode`](https://github.com/earendil-works/pi/tree/main/packages/durable).
+- The [web search benchmark for coding agents](https://github.com/openbenchmarks-labs/web-search-for-coding-agents), where Exa leads search and fetch.

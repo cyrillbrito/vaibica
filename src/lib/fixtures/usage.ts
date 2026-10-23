@@ -226,16 +226,14 @@ const model = (
   name: string,
   levels: ThinkingLevel[],
   contextWindow: number,
-  cost: [input: number, output: number, cacheRead: number],
-  images = true,
+  cost: [input: number, output: number],
 ): Model => ({
   provider,
   id,
   name,
   levels,
   contextWindow,
-  cost: { input: cost[0], output: cost[1], cacheRead: cost[2] },
-  images,
+  cost: { input: cost[0], output: cost[1] },
   cacheTtl: provider === 'anthropic' ? { short: 300, long: 3600 } : {},
 });
 
@@ -248,7 +246,7 @@ export function fixtureCatalog(worst: boolean): ModelCatalog {
       'Claude Opus 4.5',
       CLAUDE,
       200_000,
-      [5, 25, 0.5],
+      [5, 25],
     ),
     model(
       'anthropic',
@@ -256,7 +254,7 @@ export function fixtureCatalog(worst: boolean): ModelCatalog {
       'Claude Sonnet 4.5',
       CLAUDE,
       1_000_000,
-      [3, 15, 0.3],
+      [3, 15],
     ),
     model(
       'anthropic',
@@ -264,7 +262,7 @@ export function fixtureCatalog(worst: boolean): ModelCatalog {
       'Claude Haiku 4.5',
       CLAUDE,
       200_000,
-      [1, 5, 0.1],
+      [1, 5],
     ),
     model(
       'openai-codex',
@@ -272,7 +270,7 @@ export function fixtureCatalog(worst: boolean): ModelCatalog {
       'GPT-5.1 Codex',
       CODEX,
       400_000,
-      [1.25, 10, 0.125],
+      [1.25, 10],
     ),
     model(
       'openai-codex',
@@ -280,7 +278,7 @@ export function fixtureCatalog(worst: boolean): ModelCatalog {
       'GPT-5.1 Codex mini',
       CODEX,
       400_000,
-      [0.25, 2, 0.025],
+      [0.25, 2],
     ),
     model(
       'openrouter',
@@ -288,8 +286,7 @@ export function fixtureCatalog(worst: boolean): ModelCatalog {
       'Kimi K2 Thinking',
       LEVELS,
       262_144,
-      [0.6, 2.5, 0.15],
-      false,
+      [0.6, 2.5],
     ),
     model(
       'openrouter',
@@ -297,8 +294,7 @@ export function fixtureCatalog(worst: boolean): ModelCatalog {
       'GLM 4.6',
       LEVELS,
       202_752,
-      [0.4, 1.75, 0],
-      false,
+      [0.4, 1.75],
     ),
     model(
       'openrouter',
@@ -306,8 +302,7 @@ export function fixtureCatalog(worst: boolean): ModelCatalog {
       'Llama 3.3 70B Instruct',
       [],
       131_072,
-      [0.13, 0.39, 0],
-      false,
+      [0.13, 0.39],
     ),
   ];
   if (worst)
@@ -318,14 +313,17 @@ export function fixtureCatalog(worst: boolean): ModelCatalog {
         'Qwen: Qwen3 Coder 480B A35B Instruct Turbo (preview, experimental)',
         LEVELS,
         1_048_576,
-        [0, 0, 0],
-        false,
+        [0, 0],
       ),
     );
   return {
     providers: [
       { id: 'anthropic', name: 'Anthropic', source: 'Claude Pro/Max' },
-      { id: 'openai-codex', name: 'ChatGPT', source: 'ChatGPT Plus/Pro' },
+      {
+        id: 'openai-codex',
+        name: 'OpenAI Codex (legacy)',
+        source: 'ChatGPT Plus/Pro',
+      },
       { id: 'openrouter', name: 'OpenRouter', source: 'stored credential' },
     ],
     models,

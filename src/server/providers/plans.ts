@@ -11,7 +11,7 @@ import {
 import type { PlanWindow } from '#lib/protocol';
 
 /*
- * More than one account on a plan provider (docs/providers.md#more-than-one-account).
+ * More than one account on a plan provider (docs/models.md#more-than-one-account).
  * An extra account is the provider again under `<provider>:<n>`, with
  * its own sign-in and no models of its own. A session keeps its model, such
  * as anthropic/claude-opus-5-5, and each request goes out on the first
