@@ -3,7 +3,12 @@ import { AgentDoc, type ConversationId } from '@earendil-works/pi-durable';
 
 import type { SessionSummary } from '#lib/protocol';
 import { context, getHarness } from '#server/agent';
-import { modelSettings, planUsageNow } from '#server/providers';
+import {
+  accountsOf,
+  models,
+  modelSettings,
+  openWindows,
+} from '#server/providers';
 import { setProfile } from './meta';
 import { stop, submit } from './prompts';
 import { SessionDoc, getConversation, listSessions, sessions } from './store';
@@ -91,22 +96,20 @@ function inWindow(now: Date, start: string) {
 
 /**
  * Whether the plan behind the session's model has room: one of its accounts
- * isn't blocked and has the week's reserve left. Only CLIProxyAPI reports
- * limits; any other provider counts as having room.
+ * isn't blocked and has the week's reserve left. An account whose limits
+ * aren't known yet, like any API key, counts as having room.
  */
 async function hasRoom(id: string) {
   const agent = await (
     await getHarness()
   ).snapshot(AgentDoc, Number(id) as ConversationId, context);
   const model = agent?.model;
-  if (!model || model.provider !== 'cliproxy') return true;
-  const accounts = (await planUsageNow()).filter(
-    (u) => u.family && model.modelId.startsWith(u.family),
-  );
+  const accounts = model ? accountsOf(models, model.provider) : [];
   if (!accounts.length) return true;
-  return accounts.some((u) =>
-    u.windows.every(
-      (w) => !w.limited && !(w.key === '7d' && w.utilization >= WEEK_RESERVE),
+  return accounts.some((account) =>
+    openWindows(account).every(
+      (w) =>
+        !w.limited && !(w.label === 'Week' && w.utilization >= WEEK_RESERVE),
     ),
   );
 }

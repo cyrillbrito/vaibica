@@ -15,7 +15,7 @@ A submodule is its own repo, so it gets its own section with the same parts whil
 
 ## Commit messages
 
-With a fast model ([providers.md](./providers.md#models)) set, an empty commit box means "write it for me": Commit has the model write the message and commits. Write drafts it into the box first, for review: the draft fades in, Rewrite asks for another, and Undo puts back what you had typed.
+With a fast model ([models.md](./models.md)) set, an empty commit box means "write it for me": Commit has the model write the message and commits. Write drafts it into the box first, for review: the draft fades in, Rewrite asks for another, and Undo puts back what you had typed.
 
 Commit, push, and pull show a toast whose spinner turns into a check or a cross, and the Commit button draws a check for a moment once it went through. Staged and Changes show their lines added and removed, rolling as files move.
 

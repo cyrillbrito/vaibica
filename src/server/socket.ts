@@ -51,14 +51,16 @@ import { wsLogger } from '#server/ws-log';
 // Starts the loop that keeps assistant and hub sessions small.
 import { startUpkeep } from '#server/profiles';
 import {
+  addAccount,
   answer,
   cancel,
   signIn,
   signOut,
+  useFirst,
   watchAccounts,
 } from '#server/providers';
 import { startCall, stopCall } from '#server/voice';
-import { removeProxy, saveProxy, watchPlanUsage } from '#server/providers';
+import { watchPlanUsage } from '#server/providers';
 import {
   addProject,
   listDirs,
@@ -200,19 +202,19 @@ const calls: Handlers = {
     return null;
   },
   'account.cancel': async () => {
-    cancel();
+    await cancel();
+    return null;
+  },
+  'account.add': async ({ provider }) => {
+    await addAccount(provider);
+    return null;
+  },
+  'account.useFirst': async ({ id }) => {
+    await useFirst(id);
     return null;
   },
   'account.signOut': async ({ id }) => {
     await signOut(id);
-    return null;
-  },
-  'proxy.save': async (args) => {
-    await saveProxy(args);
-    return null;
-  },
-  'proxy.remove': async () => {
-    await removeProxy();
     return null;
   },
   'git.stage': async (args) => {

@@ -22,7 +22,7 @@ The server checks every minute.
 
 - Runs start only within one 5-hour window after the start time, so a late one can't spill into the morning's window. Held sessions left over wait for the next night.
 - One runs at a time, oldest first. Parallel runs would share one rate limit and drain the week twice as fast.
-- A run starts only while the plan behind its model has room: not blocked, and with a reserve of the week left for the next day. Only [CLIProxyAPI](./proxy.md) plans report their limits; on other providers it starts without a check.
+- A run starts only while the plan behind its model has room: not blocked, and with a reserve of the week left for the next day. With [more than one account](./providers.md#more-than-one-account), one of them having room is enough. Limits come from each account's last reply, so an account that hasn't answered yet, or an API key, starts without a check.
 - A run that goes on too long is told to wrap up and write its report, and is stopped a while later.
 
 Pick a start time at least 5 hours before your day starts. A Claude window starts at the first message, so the night's window then ends before yours begins.

@@ -1,39 +1,36 @@
 import { For, Show, createEffect, createMemo, createSignal } from 'solid-js';
+import type { JSX } from '@solidjs/web';
 
 import {
+  addAccount,
   answer,
   cancelSignIn,
   signIn,
   signOut,
   useAccounts,
+  useFirst,
 } from '#lib/accounts';
-import { useModels } from '#lib/models';
 import type { Account, SignIn } from '#lib/protocol';
-import { PROXY_ABOUT, ProxyForm, ProxyRow, proxyDraft } from './ProxySettings';
 import Alert from './ui/Alert';
 import { Button, buttonClass } from './ui/Button';
 import { Card } from './ui/Card';
 import { Field, checkKey } from './ui/Field';
 import { ExternalIcon, PlusIcon, SpinnerIcon } from './ui/icons';
 import { Popover, PopoverSearch } from './ui/Popover';
+import { Tag } from './ui/Tag';
+import { providerLogo } from '#lib/provider-logos';
 
 type Method = Account['methods'][number]['type'];
-type Choice =
-  | { kind: 'method'; account: Account; type: Method }
-  | { kind: 'proxy' };
+type Choice = { account: Account; type: Method };
 
 /**
  * Settings → Providers: what Bica can reach, one row each, and Add provider
- * for the rest. Keys in the environment connect on their own.
+ * for the rest. Only what's saved here counts, not keys in the environment.
  */
 export default function Accounts() {
   const data = useAccounts();
-  const catalog = useModels();
   const [failed, setFailed] = createSignal<string | null>(null, {
     name: 'accountError',
-  });
-  const [connectingProxy, setConnectingProxy] = createSignal(!!proxyDraft(), {
-    name: 'proxyConnecting',
   });
   const attempt = (action: Promise<unknown>) => {
     setFailed(null);
@@ -45,9 +42,7 @@ export default function Accounts() {
     () => data().accounts.filter((a) => a.status || a.id === signingIn()),
     { name: 'listedAccounts' },
   );
-  const empty = () => !listed().length && !data().proxy && !connectingProxy();
-  const count = (id: string) =>
-    catalog().models.filter((m) => m.provider === id).length;
+  const empty = () => !listed().length;
 
   // The sign-in page opens in the click that asked for it, so it takes one
   // click instead of two. The page arrives a moment later, still inside the
@@ -55,9 +50,13 @@ export default function Accounts() {
   let clicked = 0;
   let picked: string | undefined;
   const choose = (c: Choice) => {
-    if (c.kind === 'proxy') return setConnectingProxy(true);
     clicked = Date.now();
-    attempt(signIn(c.account.id, c.type));
+    // A plan already signed in takes another account.
+    attempt(
+      c.account.status
+        ? addAccount(c.account.id)
+        : signIn(c.account.id, c.type),
+    );
   };
   // Plan sign-ins first ask how: a browser login calls back to localhost,
   // which only loads on the dev machine, so elsewhere take the other way
@@ -93,26 +92,31 @@ export default function Accounts() {
 
   const Row = (a: Account) => (
     <li class="flex flex-col gap-2.5 px-3.5 py-3">
-      <div class="flex items-center gap-3">
-        <Tile name={a.name} on={!!a.status} />
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <Tile id={a.id} name={a.name} on={!!a.status} />
         <span class="flex min-w-0 flex-1 flex-col">
-          <span class="flex items-center gap-2">
+          <span class="flex min-w-0 items-center gap-2">
             <span class="truncate font-medium">{a.name}</span>
-            <Show when={a.status && count(a.id)}>
-              <span
-                class="rounded-sm border border-line px-1 text-meta text-muted tabular-nums"
-                title={`${count(a.id)} models`}
-              >
-                {count(a.id)}
-              </span>
+            <Show when={a.place === 0}>
+              <Tag tone="neutral" title="Requests try this account first">
+                First
+              </Tag>
             </Show>
           </span>
           <Status account={a} />
         </span>
-        <Show when={a.status?.saved && signingIn() !== a.id}>
-          <Button size="sm" onClick={() => attempt(signOut(a.id))}>
-            {a.status?.type === 'oauth' ? 'Sign out' : 'Remove'}
-          </Button>
+        <Show when={a.status && signingIn() !== a.id}>
+          {/* On a phone the actions get their own line, so the name keeps its room. */}
+          <span class="flex shrink-0 justify-end max-sm:w-full max-sm:justify-start max-sm:pl-9.5">
+            <Show when={(a.place ?? 0) > 0}>
+              <Button size="sm" onClick={() => attempt(useFirst(a.id))}>
+                Use first
+              </Button>
+            </Show>
+            <Button size="sm" onClick={() => attempt(signOut(a.id))}>
+              {a.status?.type === 'oauth' ? 'Sign out' : 'Remove'}
+            </Button>
+          </span>
         </Show>
       </div>
       <Show when={signingIn() === a.id}>
@@ -132,12 +136,10 @@ export default function Accounts() {
   return (
     <Card
       title="Providers"
-      description="Where models come from: plans you sign in to, API keys, and a CLI proxy."
+      description="Plans you sign in to, and API keys. A plan with more than one account uses the first until it passes 90% of a limit, then the next."
       footer={
         <>
-          Keys already in the server's environment, like{' '}
-          <code>EXA_API_KEY</code>, connect on their own. What you add here is
-          kept in <code>.data/auth.json</code> and wins over them.
+          Kept in <code>.data/auth.json</code>.
         </>
       }
     >
@@ -151,25 +153,6 @@ export default function Accounts() {
       >
         <ul class="flex flex-col divide-y divide-line">
           <For each={listed()}>{Row}</For>
-          <Show when={data().proxy}>
-            {(proxy) => <ProxyRow proxy={proxy()} />}
-          </Show>
-          <Show when={connectingProxy() && !data().proxy}>
-            <li class="flex flex-col gap-2.5 px-3.5 py-3">
-              <div class="flex items-center gap-3">
-                <Tile name="P" on={false} />
-                <span class="flex min-w-0 flex-1 flex-col">
-                  <span class="font-medium">CLI proxy</span>
-                  <span class="text-meta text-muted">{PROXY_ABOUT}</span>
-                </span>
-              </div>
-              <ProxyForm
-                current={null}
-                onDone={() => setConnectingProxy(false)}
-                onCancel={() => setConnectingProxy(false)}
-              />
-            </li>
-          </Show>
         </ul>
       </Show>
       <Show when={failed()}>
@@ -179,16 +162,12 @@ export default function Accounts() {
           </div>
         )}
       </Show>
-      <AddProvider
-        accounts={data().accounts}
-        proxy={!!data().proxy || connectingProxy()}
-        onChoose={choose}
-      />
+      <AddProvider accounts={data().accounts} onChoose={choose} />
     </Card>
   );
 }
 
-function Tile(props: { name: string; on: boolean }) {
+function Tile(props: { id: string; name: string; on: boolean }) {
   return (
     <span
       class={[
@@ -197,35 +176,53 @@ function Tile(props: { name: string; on: boolean }) {
       ]}
       aria-hidden="true"
     >
-      {props.name.slice(0, 1)}
+      <ProviderLogo id={props.id} fallback={props.name.slice(0, 1)} />
     </span>
   );
 }
 
-function Status(props: { account: Account }) {
+/** The provider's logo in the text color, or `fallback` where there's none. */
+function ProviderLogo(props: {
+  id: string;
+  fallback: JSX.Element;
+  class?: string;
+}) {
   return (
-    <Show
-      when={props.account.status}
-      fallback={<span class="text-meta text-muted">Connecting…</span>}
-    >
-      {(status) => (
-        <span class="flex min-w-0 items-center gap-1.5 text-meta text-muted">
-          <span class="size-1.5 shrink-0 rounded-full bg-running" />
-          <span class="truncate">
-            <Show
-              when={status().saved}
-              fallback={
-                <>
-                  From <span class="font-mono">{status().source}</span>
-                </>
-              }
-            >
-              {status().type === 'oauth' ? 'Signed in' : 'API key'}
-            </Show>
-          </span>
-        </span>
+    <Show when={providerLogo(props.id)} fallback={props.fallback}>
+      {(url) => (
+        <span
+          class={['size-4 bg-current', props.class]}
+          style={{
+            'mask-image': `url(${url()})`,
+            'mask-size': 'contain',
+            'mask-repeat': 'no-repeat',
+            'mask-position': 'center',
+          }}
+        />
       )}
     </Show>
+  );
+}
+
+/**
+ * Which account or key a row is. Every row listed is connected, so it never
+ * says so; the plan goes before the email, so a long email cuts only itself.
+ */
+function Status(props: { account: Account }) {
+  const line = () => {
+    const status = props.account.status;
+    if (!status) return 'Signing in…';
+    if (status.type === 'api_key')
+      return status.hint ? `Key ending in ${status.hint}` : 'API key';
+    return (
+      [props.account.plan, props.account.email].filter(Boolean).join(' · ') ||
+      'Signed in'
+    );
+  };
+  return (
+    <span class="truncate text-meta text-muted" title={line()}>
+      {line()}
+    </span>
   );
 }
 
@@ -235,7 +232,6 @@ function Status(props: { account: Account }) {
  */
 function AddProvider(props: {
   accounts: Account[];
-  proxy: boolean;
   onChoose: (choice: Choice) => void;
 }) {
   const id = 'add-provider';
@@ -247,53 +243,56 @@ function AddProvider(props: {
       .split(/\s+/)
       .filter(Boolean)
       .every((w) => text.toLowerCase().includes(w));
-  // A provider saved in Bica is done; one from the environment can still
-  // get a sign-in or key of its own, which wins.
   const open = () =>
-    props.accounts.filter((a) => !a.status?.saved && a.id !== 'exa');
+    props.accounts.filter(
+      (a) => !a.status && a.id !== 'exa' && !a.id.includes(':'),
+    );
+  // A plan signed in already is listed again, for another account of it.
   const groups = createMemo(
     () => {
-      const plans = open().flatMap((a) =>
-        a.methods
-          .filter(
-            (m) => m.type === 'oauth' && matches(`${a.name} ${a.id} plan`),
-          )
-          .map((m) => ({ account: a, type: m.type, note: '' })),
-      );
+      const plans = props.accounts
+        .filter((a) => (!a.status && !a.id.includes(':')) || a.addAccount)
+        .flatMap((a) =>
+          a.methods
+            .filter(
+              (m) => m.type === 'oauth' && matches(`${a.name} ${a.id} plan`),
+            )
+            .map((m) => ({
+              account: a,
+              type: m.type,
+              title: a.name,
+              note: a.status ? 'Another account' : '',
+            })),
+        );
       const keys = open().flatMap((a) =>
         a.methods
           .filter(
             (m) => m.type === 'api_key' && matches(`${a.name} ${a.id} key`),
           )
-          .map((m) => ({ account: a, type: m.type, note: '' })),
+          .map((m) => ({
+            account: a,
+            type: m.type,
+            title: a.name,
+            note: '',
+          })),
       );
-      const exa = props.accounts.find(
-        (a) => a.id === 'exa' && !a.status?.saved,
-      );
+      const exa = props.accounts.find((a) => a.id === 'exa' && !a.status);
       return [
         { label: 'Sign in with a plan', items: plans },
         { label: 'Add an API key', items: keys },
         {
           label: 'More',
-          items: [
-            ...(!props.proxy && matches('CLI proxy CLIProxyAPI')
-              ? [
-                  {
-                    proxy: true as const,
-                    note: 'Many plan sign-ins behind one server',
-                  },
-                ]
-              : []),
-            ...(exa && matches('Exa web search key')
+          items:
+            exa && matches('Exa web search key')
               ? [
                   {
                     account: exa,
                     type: 'api_key' as const,
+                    title: exa.name,
                     note: 'Web search for the agents',
                   },
                 ]
-              : []),
-          ],
+              : [],
         },
       ].filter((g) => g.items.length);
     },
@@ -344,20 +343,22 @@ function AddProvider(props: {
                       class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left transition-colors hover:bg-hover focus-visible:bg-active touch:py-2.5"
                       onClick={() => {
                         document.getElementById(id)?.hidePopover();
-                        props.onChoose(
-                          'proxy' in item
-                            ? { kind: 'proxy' }
-                            : {
-                                kind: 'method',
-                                account: item.account,
-                                type: item.type,
-                              },
-                        );
+                        props.onChoose({
+                          account: item.account,
+                          type: item.type,
+                        });
                       }}
                     >
-                      <span class="min-w-0 flex-1 truncate">
-                        {'proxy' in item ? 'CLI proxy' : item.account.name}
+                      <span
+                        class="grid size-4 shrink-0 place-items-center text-meta font-semibold text-muted"
+                        aria-hidden="true"
+                      >
+                        <ProviderLogo
+                          id={item.account.id}
+                          fallback={item.title.slice(0, 1)}
+                        />
                       </span>
+                      <span class="min-w-0 flex-1 truncate">{item.title}</span>
                       <Show when={item.note}>
                         <span class="truncate text-meta text-muted">
                           {item.note}
@@ -390,6 +391,12 @@ function Panel(props: {
 
   return (
     <div class="ml-11 flex flex-col gap-3 rounded-card border border-line bg-panel p-3 appear max-sm:ml-0">
+      <Show when={props.account.id.includes(':')}>
+        <p class="text-meta">
+          Sign in with the other account. If the page opens on one already here,
+          switch accounts there first.
+        </p>
+      </Show>
       <For each={props.signIn.notes}>
         {(note) => (
           <p class="text-meta">

@@ -6,7 +6,7 @@ import { promisify } from 'node:util';
 import WebSocket from 'ws';
 
 import type { VoiceLine } from '#lib/transcript';
-import { models, proxyConfig } from '#server/providers';
+import { models } from '#server/providers';
 import { voiceSession } from '#server/sessions';
 
 /*
@@ -17,9 +17,6 @@ import { voiceSession } from '#server/sessions';
  *
  * Unofficial: it signs in the way the Codex Desktop app does. The official
  * route is the same protocol on api.openai.com with an API key.
- *
- * Without a ChatGPT sign-in, calls go through the CLI proxy, which forwards
- * them to the same ChatGPT route with one of its Codex sign-ins.
  */
 
 const SIGNALING_URL =
@@ -62,23 +59,10 @@ async function route() {
       sideband: (callId: string) =>
         `wss://api.openai.com/v1/live/${encodeURIComponent(callId)}`,
     };
-  const proxy = await proxyConfig();
-  if (proxy)
-    return {
-      token: proxy.apiKey,
-      signaling: `${proxy.url}/v1/realtime/calls`,
-      // Not /v1/realtime/calls/<id>: the proxy forwards that to an OpenAI
-      // address that refuses Codex calls.
-      sideband: (callId: string) =>
-        `${proxy.url.replace(/^http/, 'ws')}/v1/live/${encodeURIComponent(callId)}`,
-    };
-  throw new Error(
-    'Voice needs a ChatGPT sign-in or the CLI proxy: Settings → Providers',
-  );
+  throw new Error('Voice needs a ChatGPT sign-in: Settings → Providers');
 }
 
-// The ChatGPT account comes from the sign-in's JWT. A proxy key has none:
-// the proxy adds it for the account it picks.
+// The ChatGPT account comes from the sign-in's JWT.
 function accountOf(token: string) {
   try {
     const claims = JSON.parse(

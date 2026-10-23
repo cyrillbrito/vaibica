@@ -113,7 +113,7 @@ export interface ModelSettings extends ModelChoice {
 
 /** The providers with a key on the server, and the models they reach. */
 export interface ModelCatalog {
-  // `source`: where the key comes from, e.g. its env var.
+  // `source`: how it's connected, e.g. OAuth.
   providers: { id: string; name: string; source: string | null }[];
   models: {
     provider: string;
@@ -121,14 +121,14 @@ export interface ModelCatalog {
     name: string;
     levels: ThinkingLevel[];
     contextWindow: number;
-    // List price in dollars per million tokens; 0: unknown (proxy models).
+    // List price in dollars per million tokens; 0: unknown.
     cost: { input: number; output: number; cacheRead: number };
     // Takes images in prompts.
     images: boolean;
     // Prompt cache lifetimes in seconds; absent: unknown or no cache.
     cacheTtl: { short?: number; long?: number };
   }[];
-  // Decision models (docs/providers.md): typed answers, no chat.
+  // Decision models (docs/models.md): typed answers, no chat.
   classifiers: {
     provider: string;
     id: string;
@@ -149,15 +149,20 @@ export interface ModelCatalog {
 export interface Account {
   id: string;
   name: string;
+  // Who signed in, and their plan (Max, Plus), read once per sign-in.
+  email: string | null;
+  plan: string | null;
+  // Its turn among the plan's signed-in accounts, 0 first; null: the only one.
+  place: number | null;
   // What it's for and where a key comes from; null: no guide written.
   about: string | null;
   link: { label: string; url: string } | null;
-  // The env vars it reads, as a hint.
-  env: string | null;
-  // null: not set up. saved: signed in or a key added in Settings (can be
-  // removed here); otherwise where it comes from, e.g. its env var.
-  status: { type: 'oauth' | 'api_key'; saved: boolean; source: string } | null;
+  // null: not set up. Only sign-ins and keys saved in Settings count.
+  // hint: a key's last 4 characters.
+  status: { type: 'oauth' | 'api_key'; hint: string | null } | null;
   methods: { type: 'oauth' | 'api_key'; label: string }[];
+  // A plan signed in here, which can take an extra account (docs/providers.md).
+  addAccount: boolean;
 }
 
 /** A sign-in in progress: what the provider asked so far. */
@@ -186,17 +191,6 @@ export interface Accounts {
   accounts: Account[];
   // One at a time, shared by every tab; null: none running.
   signIn: SignIn | null;
-  // The CLIProxyAPI server (docs/proxy.md); null: not set up.
-  proxy: ProxyStatus | null;
-}
-
-export interface ProxyStatus {
-  url: string;
-  // A management key is saved, so its accounts show.
-  managementKey: boolean;
-  models: number;
-  // The last model list or account read failed.
-  error: string | null;
 }
 
 /** A folder sessions run in; git is optional. */
@@ -305,14 +299,13 @@ export interface PlanWindow {
   spent: { used: number; limit: number; currency: string } | null;
 }
 
-/** The limits of one of the proxy's signed-in plans. */
+/** The limits of one signed-in plan account, from its last reply. */
 export interface ProviderUsage {
-  // Unique: cliproxy:<account>.
+  // The account's provider id: anthropic, or anthropic:work.
   id: string;
-  // pi-ai provider id: always cliproxy.
   provider: string;
-  // Proxy accounts: the start of the model names they serve (claude, gpt).
-  family: string | null;
+  // The provider whose models it serves: anthropic for anthropic:work.
+  family: string;
   name: string;
   plan: string | null;
   windows: PlanWindow[];
@@ -471,14 +464,12 @@ export interface Calls {
   };
   'account.answer': { args: { prompt: string; value: string }; result: null };
   'account.cancel': { args: Record<string, never>; result: null };
-  // Forgets a saved sign-in or key; env vars stay.
+  // Signs in another account of a plan (anthropic).
+  'account.add': { args: { provider: string }; result: null };
+  // Puts the account ahead of the others of its plan.
+  'account.useFirst': { args: { id: string }; result: null };
+  // Forgets a saved sign-in or key, with its email and limits.
   'account.signOut': { args: { id: string }; result: null };
-  // Checks them against the proxy first. Empty keys keep the saved ones.
-  'proxy.save': {
-    args: { url: string; apiKey: string; managementKey: string };
-    result: null;
-  };
-  'proxy.remove': { args: Record<string, never>; result: null };
   // Absent paths: everything.
   // repo, on every git call: a submodule's path; absent, the workspace's own
   // repo. Paths are from the workspace; without paths, everything in repo.

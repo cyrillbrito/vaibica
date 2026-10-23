@@ -38,7 +38,7 @@ Voice settings, in the context chip's menu, set how one session's calls sound: a
 
 ## Sign-in
 
-Calls run on the ChatGPT plan the way the `pi-live-codex` extension does, by presenting itself as the Codex app. Without a ChatGPT sign-in in Bica, calls go through the CLI proxy ([proxy.md](./proxy.md)), which sends them to the same ChatGPT route with one of its Codex sign-ins, so they still count against a plan. That route is unofficial and may break. The official route is the same protocol with an OpenAI API key, billed per minute. See [providers.md](./providers.md).
+Calls run on the ChatGPT plan the way the `pi-live-codex` extension does, by presenting itself as the Codex app. That route is unofficial and may break. The official route is the same protocol with an OpenAI API key, billed per minute. See [providers.md](./providers.md).
 
 ## Limits
 

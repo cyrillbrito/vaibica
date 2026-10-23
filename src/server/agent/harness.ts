@@ -4,7 +4,7 @@ import { createRegistry, Harness } from '@earendil-works/pi-durable';
 import { NodeExecutionEnv } from '@earendil-works/pi-durable/env/node';
 import { openNodeSqliteStorage } from '@earendil-works/pi-durable/storage/sqlite/node';
 
-import { cacheRetention, models, proxyReady } from '#server/providers';
+import { accountsReady, cacheRetention, models } from '#server/providers';
 import { timeTools } from './tools/tool-time';
 import { dataFile } from '#server/paths';
 import { ALL_EXTENSIONS, DEFAULT_EXTENSIONS } from '#server/profiles/registry';
@@ -17,7 +17,7 @@ export const context = BACKGROUND_CONTEXT;
 const global = globalThis as { harness?: Promise<Harness> };
 
 async function open(): Promise<Harness> {
-  await proxyReady.catch(() => {});
+  await accountsReady.catch(() => {});
   const registry = createRegistry();
   for (const extension of ALL_EXTENSIONS)
     registry.install(timeTools(extension));

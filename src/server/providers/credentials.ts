@@ -3,7 +3,6 @@ import { dataFile } from '#server/paths';
 import { randomUUID } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import type { Credential, CredentialStore } from '@earendil-works/pi-ai';
-import { env } from 'virtual:env/server';
 
 /*
  * Sign-ins and keys added in Settings (docs/providers.md), one per provider
@@ -50,7 +49,7 @@ export const credentials: CredentialStore = {
 /** Exa isn't a model provider, but its key lives here too, under `exa`. */
 export async function exaKey() {
   const saved = await credentials.read('exa');
-  return (saved?.type === 'api_key' && saved.key) || env.EXA_API_KEY;
+  return saved?.type === 'api_key' ? saved.key : undefined;
 }
 
 // Sign in with ChatGPT names this installation with a stable UUID.

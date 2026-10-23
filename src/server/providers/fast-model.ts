@@ -33,7 +33,7 @@ export async function askFast(
       messages: [{ role: 'user', content: prompt, timestamp: Date.now() }],
     },
     {
-      // Some models (Haiku behind a proxy alias) think silently first, and a
+      // Some models think silently first, and a
       // tight cap leaves no room for the reply; callers keep only one line.
       maxTokens: maxTokens + THINKING_ROOM,
       signal: AbortSignal.timeout(timeoutMs),

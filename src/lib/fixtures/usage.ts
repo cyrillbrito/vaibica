@@ -326,7 +326,7 @@ export function fixtureCatalog(worst: boolean): ModelCatalog {
     providers: [
       { id: 'anthropic', name: 'Anthropic', source: 'Claude Pro/Max' },
       { id: 'openai-codex', name: 'ChatGPT', source: 'ChatGPT Plus/Pro' },
-      { id: 'openrouter', name: 'OpenRouter', source: 'OPENROUTER_API_KEY' },
+      { id: 'openrouter', name: 'OpenRouter', source: 'stored credential' },
     ],
     models,
     classifiers: [
@@ -362,85 +362,103 @@ export function fixtureAccounts(worst: boolean): Accounts {
       {
         id: 'anthropic',
         name: 'Anthropic',
+        email: 'ana.silva@example.com',
+        plan: 'Max',
+        place: 0,
         about: 'Claude models, with a Pro or Max plan or an API key.',
         link: { label: 'Get a key', url: 'https://console.anthropic.com' },
-        env: 'ANTHROPIC_API_KEY',
-        status: { type: 'oauth', saved: true, source: 'Claude Pro/Max' },
+        status: { type: 'oauth', hint: null },
         methods: [{ type: 'oauth', label: 'Sign in with Claude' }, key],
+        addAccount: true,
+      },
+      {
+        id: 'anthropic:2',
+        name: 'Anthropic',
+        email: worst
+          ? 'ana.margarida.silva.contractor@northwind-industries-consulting.example'
+          : 'ana@northwind.example',
+        plan: 'Enterprise',
+        place: 1,
+        about: 'Claude models, with a Pro or Max plan or an API key.',
+        link: null,
+        status: { type: 'oauth', hint: null },
+        methods: [{ type: 'oauth', label: 'Sign in with Claude' }],
+        addAccount: false,
       },
       {
         id: 'openai-codex',
         name: 'ChatGPT',
+        email: 'ana.silva@example.com',
+        plan: 'Plus',
+        place: null,
         about: 'Codex models with a ChatGPT plan.',
         link: null,
-        env: null,
-        status: { type: 'oauth', saved: true, source: 'ChatGPT Plus/Pro' },
+        status: { type: 'oauth', hint: null },
         methods: [{ type: 'oauth', label: 'Sign in with ChatGPT' }],
+        addAccount: true,
       },
       {
         id: 'openrouter',
         name: 'OpenRouter',
+        email: null,
+        plan: null,
+        place: null,
         about: 'Hundreds of models behind one key.',
         link: { label: 'Get a key', url: 'https://openrouter.ai/keys' },
-        env: 'OPENROUTER_API_KEY',
-        status: {
-          type: 'api_key',
-          saved: false,
-          source: 'OPENROUTER_API_KEY',
-        },
+        status: { type: 'api_key', hint: 'f3a9' },
         methods: [key],
+        addAccount: false,
       },
       {
         id: 'openai',
         name: 'OpenAI',
+        email: null,
+        plan: null,
+        place: null,
         about: 'GPT models billed per token.',
         link: {
           label: 'Get a key',
           url: 'https://platform.openai.com/api-keys',
         },
-        env: 'OPENAI_API_KEY',
         status: null,
         methods: [key],
+        addAccount: false,
       },
       {
         id: 'exa',
         name: 'Exa',
+        email: null,
+        plan: null,
+        place: null,
         about: worst
           ? 'Web search and fetch for the agent. Without it, the agent searches with a slower fallback that reads only the first page of results and often misses recent pages, which is why a key is worth setting up even on a free plan.'
           : 'Web search and fetch for the agent.',
         link: { label: 'Get a key', url: 'https://dashboard.exa.ai' },
-        env: 'EXA_API_KEY',
         status: null,
         methods: [key],
+        addAccount: false,
       },
     ],
     signIn: null,
-    proxy: worst
-      ? {
-          url: 'https://legion-northwind-industries.tail0a1b2c.ts.net:8317',
-          managementKey: true,
-          models: 142,
-          error: 'GET /v0/management/auth-files: 401 Unauthorized',
-        }
-      : null,
   };
 }
 
-// The CLI proxy's signed-in accounts, the only plans Bica shows.
+// Plan accounts with the limits of their last reply: two Claude accounts,
+// the first one full, and ChatGPT.
 export function fixturePlanUsage(worst: boolean): PlanUsage {
   return [
     {
-      id: 'cliproxy:claude-work',
-      provider: 'cliproxy',
-      family: 'claude',
-      name: 'Claude',
-      plan: 'Max 5x',
+      id: 'anthropic',
+      provider: 'anthropic',
+      family: 'anthropic',
+      name: 'ana.silva@example.com',
+      plan: null,
       updatedAt: now - 3 * MIN,
       windows: [
         {
           key: 'five_hour',
           label: 'Session',
-          utilization: worst ? 1 : 0.42,
+          utilization: worst ? 1 : 0.93,
           resetsAt: now + 2 * HOUR + 14 * MIN,
           limited: worst,
           spent: null,
@@ -472,11 +490,39 @@ export function fixturePlanUsage(worst: boolean): PlanUsage {
       ],
     },
     {
-      id: 'cliproxy:chatgpt',
-      provider: 'cliproxy',
-      family: 'gpt',
+      id: 'anthropic:2',
+      provider: 'anthropic:2',
+      family: 'anthropic',
+      name: worst
+        ? 'ana.margarida.silva.contractor@northwind-industries-consulting.example'
+        : 'ana@northwind.example',
+      plan: 'In use',
+      updatedAt: now - 2 * MIN,
+      windows: [
+        {
+          key: '5h',
+          label: 'Session',
+          utilization: 0.08,
+          resetsAt: now + 4 * HOUR,
+          limited: false,
+          spent: null,
+        },
+        {
+          key: '7d',
+          label: 'Week',
+          utilization: 0.21,
+          resetsAt: now + 6 * 24 * HOUR,
+          limited: false,
+          spent: null,
+        },
+      ],
+    },
+    {
+      id: 'openai-codex',
+      provider: 'openai-codex',
+      family: 'openai-codex',
       name: 'ChatGPT',
-      plan: 'Plus',
+      plan: null,
       updatedAt: now - MIN,
       windows: [
         {

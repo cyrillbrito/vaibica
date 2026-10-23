@@ -10,21 +10,18 @@ import { RollingNumber } from './ui/RollingNumber';
 // Near a limit the meter warns; affectUI's Usage Meter starts at 80% too.
 const WARN_AT = 80;
 
-/** The open session's plan limits at the foot of the sidebar; hidden outside a session. */
+/**
+ * The limits of the accounts serving the open session's model, at the foot
+ * of the sidebar; hidden outside a session.
+ */
 export default function PlanUsage() {
   const usage = useTopic('plan.usage', () => ({}));
   const shown = () => {
     const open = openModel();
     if (!open) return [];
-    // Proxy model names may carry an account prefix: work/claude-….
-    const name = open.modelId.slice(open.modelId.indexOf('/') + 1);
     return (
-      usage()?.filter(
-        (p) =>
-          p.provider === open.provider &&
-          p.windows.length &&
-          (!p.family || name.startsWith(p.family)),
-      ) ?? []
+      usage()?.filter((p) => p.family === open.provider && p.windows.length) ??
+      []
     );
   };
 

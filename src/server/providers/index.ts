@@ -1,5 +1,5 @@
-// Models, keys, sign-ins, and the CLIProxyAPI provider.
-export { models } from './registry';
+// Models, keys, sign-ins, extra plan accounts, and their limits.
+export { accountsReady, models } from './registry';
 export {
   cacheRetention,
   checkChoice,
@@ -10,14 +10,16 @@ export {
   watchModels,
 } from './models';
 export { exaKey } from './credentials';
-export { answer, cancel, signIn, signOut, watchAccounts } from './accounts';
 export {
-  config as proxyConfig,
-  planUsageNow,
-  proxyReady,
-  removeProxy,
-  saveProxy,
-  watchPlanUsage,
-} from './proxy';
+  addAccount,
+  answer,
+  cancel,
+  signIn,
+  signOut,
+  useFirst,
+  watchAccounts,
+} from './accounts';
+export { accountsOf, openWindows } from './plans';
+export { planUsageNow, watchPlanUsage } from './usage';
 export { askFast, fastModelId } from './fast-model';
 export { decide, hasDecisionModel, type Question } from './decision-model';

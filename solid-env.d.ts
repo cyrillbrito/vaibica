@@ -21,7 +21,6 @@ declare module 'virtual:env/server' {
   const env: {
     readonly "PI_MODEL": __Out<__Schema["server"]["PI_MODEL"]>;
     readonly "PI_FAST_MODEL": __Out<__Schema["server"]["PI_FAST_MODEL"]>;
-    readonly "EXA_API_KEY": __Out<__Schema["server"]["EXA_API_KEY"]>;
   };
   export { env };
   export default env;

@@ -12,7 +12,7 @@ The hub has its own page, not the session page. On top is a board of its threads
 
 Below it is the chat, with a composer and a [voice call](./voice.md) button. The settings button in the top bar opens the hub's voice settings, since you talk to it by voice most, and its folder and model in Settings. There is no Git, files, or terminal panel, no model picker, since Settings sets the hub's model, and no fork, manual compaction, or profile switch: the hub is one session that keeps its own memory and compacts on its own.
 
-The same setting picks its model. Unset, it runs a mid-size Claude model at low effort through the Anthropic provider, or the default model at low effort when Anthropic has no key. Most turns turn a rambling dictated message into a prompt, which needs a smart model more than deep reasoning, and the CLI proxy would add seconds to every reply.
+The same setting picks its model. Unset, it runs a mid-size Claude model at low effort through the Anthropic provider, or the default model at low effort when Anthropic has no key. Most turns turn a rambling dictated message into a prompt, which needs a smart model more than deep reasoning.
 
 ## Memory
 

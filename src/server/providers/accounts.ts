@@ -3,17 +3,27 @@ import { randomUUID } from 'node:crypto';
 import type { AuthInteraction, AuthType } from '@earendil-works/pi-ai';
 
 import type { Account, Accounts, SignIn } from '#lib/protocol';
-import { credentials, deviceId, exaKey } from './credentials';
-import { models } from './registry';
+import { credentials, deviceId } from './credentials';
+import { addExtraAccount, models } from './registry';
 import { live } from '#server/live';
 import { refreshModels } from './models';
-import { onProxyChange, PROXY_ID, proxyStatus } from './proxy';
+import {
+  emailOf,
+  forgetAccount,
+  infoReady,
+  learn,
+  nameOf,
+  newAccountId,
+  planOf,
+  useFirst as preferAccount,
+} from './account-info';
+import { accountsOf, baseOf, forgetLimits, isExtra } from './plans';
+import { refreshPlanUsage } from './usage';
 
 // Listed first, with a guide; every other pi-ai provider follows by name.
 const GUIDES: Record<
   string,
-  Pick<Account, 'about' | 'link' | 'env'> & {
-    name?: string;
+  Pick<Account, 'about' | 'link'> & {
     signIn?: string;
     noSignIn?: boolean;
   }
@@ -26,57 +36,50 @@ const GUIDES: Record<
       url: 'https://console.anthropic.com/settings/keys',
     },
     signIn: 'Sign in with Claude',
-    env: 'ANTHROPIC_OAUTH_TOKEN or ANTHROPIC_API_KEY',
   },
   'openai-codex': {
-    name: 'ChatGPT',
     signIn: 'Sign in with ChatGPT',
     about:
       'Sign in with a ChatGPT Plus or Pro plan: sessions get the Codex models, and voice calls use it.',
     link: null,
-    env: null,
   },
   // pi-ai also offers OpenAI's newer Sign in with ChatGPT here; it failed
   // for us, so ChatGPT plans go through the Codex sign-in above.
   openai: {
     about: 'An API key, billed per use.',
     link: { label: 'API keys', url: 'https://platform.openai.com/api-keys' },
-    env: 'OPENAI_API_KEY',
     noSignIn: true,
   },
   exa: {
-    name: 'Exa',
     about: "The agents' web search and page fetch. The free plan is enough.",
     link: { label: 'API keys', url: 'https://dashboard.exa.ai/api-keys' },
-    env: 'EXA_API_KEY',
   },
 };
 
+// Only what's saved here counts: Bica reads no keys from the environment.
 async function status(id: string): Promise<Account['status']> {
   const saved = await credentials.read(id);
-  if (saved)
-    return {
-      type: saved.type,
-      saved: true,
-      source: saved.type === 'oauth' ? 'Signed in' : 'Key saved',
-    };
-  if (id === 'exa')
-    return (await exaKey())
-      ? { type: 'api_key', saved: false, source: 'EXA_API_KEY' }
-      : null;
-  const check = await models.checkAuth(id).catch(() => undefined);
-  return check
-    ? { type: check.type, saved: false, source: check.source ?? 'Configured' }
-    : null;
+  if (!saved) return null;
+  // A key's last characters tell which one it is, as other apps show them.
+  const key = saved.type === 'api_key' ? (saved.key ?? '') : '';
+  const hint = key.length > 12 ? key.slice(-4) : null;
+  return { type: saved.type, hint };
 }
 
 async function accounts(): Promise<Account[]> {
+  await infoReady;
+  const signedIn = new Set((await credentials.list()).map((c) => c.providerId));
+  // Where an account stands among the signed-in ones of its plan.
+  const placeOf = (id: string) => {
+    const all = accountsOf(models, baseOf(id)).filter((a) => signedIn.has(a));
+    return all.length > 1 ? all.indexOf(id) : null;
+  };
   const list = await Promise.all(
     models.getProviders().map(async (p): Promise<Account | undefined> => {
-      // Settings shows the proxy from `proxy` instead.
-      if (p.id === PROXY_ID) return undefined;
-      const guide = GUIDES[p.id];
+      const guide = GUIDES[isExtra(p.id) ? baseOf(p.id) : p.id];
       const current = await status(p.id);
+      if (current?.type === 'oauth' && !emailOf(p.id))
+        void learn(p.id, false, () => void feed.refresh());
       const methods: Account['methods'] = [];
       if (p.auth.oauth && !guide?.noSignIn)
         methods.push({
@@ -87,31 +90,47 @@ async function accounts(): Promise<Account[]> {
         methods.push({ type: 'api_key', label: 'Add key' });
       return {
         id: p.id,
-        name: guide?.name ?? p.name,
+        name: nameOf(p.id),
+        email: emailOf(p.id),
+        plan: planOf(p.id),
+        place: current ? placeOf(p.id) : null,
         about: guide?.about ?? null,
         link: guide?.link ?? null,
-        env: guide?.env ?? null,
         status: current,
-        methods,
+        methods: isExtra(p.id)
+          ? methods.filter((m) => m.type === 'oauth')
+          : methods,
+        // A plan signed in here can take another account of the same plan.
+        addAccount:
+          !isExtra(p.id) &&
+          !!p.auth.oauth?.isSubscription &&
+          current?.type === 'oauth',
       };
     }),
   );
   const featured = Object.keys(GUIDES);
-  // Exa isn't a model provider, so it goes after them.
-  const rank = (a: Account) =>
-    a.id === 'exa'
-      ? Infinity
-      : featured.includes(a.id)
-        ? featured.indexOf(a.id)
-        : featured.length;
+  // Exa isn't a model provider, so it goes after them. A plan's accounts
+  // stay together, in the order they're used.
+  const rank = (a: Account): number => {
+    if (a.id === 'exa') return Infinity;
+    const base = baseOf(a.id);
+    const within = accountsOf(models, base).indexOf(a.id) / 100;
+    return (
+      (featured.includes(base) ? featured.indexOf(base) : featured.length) +
+      within
+    );
+  };
   const exa: Account = {
     id: 'exa',
     name: 'Exa',
+    email: null,
+    plan: null,
+    place: null,
     about: GUIDES.exa!.about,
     link: GUIDES.exa!.link,
-    env: GUIDES.exa!.env,
     status: await status('exa'),
     methods: [{ type: 'api_key', label: 'Add key' }],
+    addAccount: false,
   };
   return [...list.filter((a) => !!a), exa].sort((a, b) => rank(a) - rank(b));
 }
@@ -126,14 +145,22 @@ let current: Run | undefined;
 const feed = live<Accounts>(async () => ({
   accounts: await accounts(),
   signIn: current ? structuredClone(current.state) : null,
-  proxy: await proxyStatus(),
 }));
 
 export const watchAccounts = feed.watch;
-onProxyChange(() => void feed.refresh());
 
 async function changed() {
-  await Promise.all([feed.refresh(), refreshModels()]);
+  await Promise.all([feed.refresh(), refreshModels(), refreshPlanUsage()]);
+}
+
+// An extra account exists while it has a sign-in; one whose sign-in never
+// finished goes once it's closed.
+async function dropUnsigned() {
+  for (const p of models.getProviders())
+    if (isExtra(p.id) && !(await credentials.read(p.id))) {
+      models.deleteProvider(p.id);
+      await forgetAccount(p.id);
+    }
 }
 
 // Exa has no pi-ai provider: its sign-in is one prompt for the key.
@@ -145,8 +172,40 @@ async function exaSignIn(interaction: AuthInteraction) {
   await credentials.modify('exa', async () => ({ type: 'api_key', key }));
 }
 
+/** Starts the sign-in of another account of a plan. */
+export async function addAccount(provider: string) {
+  if (!models.getProvider(provider)?.auth.oauth?.isSubscription)
+    throw new Error('Only plan sign-ins take another account');
+  const id = newAccountId(provider);
+  addExtraAccount(id);
+  await signIn(id, 'oauth');
+}
+
+/** Makes the account the one its plan's requests try first. */
+export async function useFirst(id: string) {
+  if (!models.getProvider(id)) throw new Error(`Unknown account ${id}`);
+  await preferAccount(id);
+  await changed();
+}
+
+// Two sign-ins of one account would share its limits and look like two.
+async function refuseTwin(id: string) {
+  const email = emailOf(id);
+  const twin = accountsOf(models, baseOf(id)).find(
+    (other) => other !== id && email && emailOf(other) === email,
+  );
+  if (!twin) return;
+  await models.logout(id);
+  await forgetAccount(id);
+  forgetLimits(id);
+  await dropUnsigned();
+  throw new Error(`${email} is already signed in.`);
+}
+
 /** Runs a provider's sign-in; its steps show on `accounts`. */
 export async function signIn(id: string, type: AuthType) {
+  if (id !== 'exa' && !models.getProvider(id))
+    throw new Error(`Unknown provider ${id}`);
   current?.abort.abort();
   const run: Run = {
     state: {
@@ -229,7 +288,14 @@ export async function signIn(id: string, type: AuthType) {
         await models.login(id, type, interaction, {
           getDeviceId: () => device,
         });
+      if (type === 'oauth') {
+        state.progress = 'Checking the account…';
+        update();
+        await learn(id, true, () => void feed.refresh());
+        await refuseTwin(id);
+      }
       if (current === run) current = undefined;
+      await dropUnsigned();
     } catch (error) {
       if (abort.signal.aborted) return;
       state.error = error instanceof Error ? error.message : String(error);
@@ -246,14 +312,18 @@ export function answer(promptId: string, value: string) {
   resolve(value);
 }
 
-export function cancel() {
+export async function cancel() {
   current?.abort.abort();
   current = undefined;
-  void feed.refresh();
+  await dropUnsigned();
+  await changed();
 }
 
 export async function signOut(id: string) {
   if (id === 'exa') await credentials.delete('exa');
   else await models.logout(id);
+  await forgetAccount(id);
+  forgetLimits(id);
+  if (isExtra(id)) models.deleteProvider(id);
   await changed();
 }

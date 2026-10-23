@@ -17,9 +17,8 @@ import {
 /** The hub's folder from Settings, or null before one is picked. */
 export const hubFolder = async () => (await modelSettings()).hubFolder;
 
-// The hub's default (docs/hub.md): smart enough to turn
-// dictation into good prompts at low effort, and direct, since the CLI proxy
-// adds seconds to every request.
+// The hub's default (docs/hub.md): smart enough to turn dictation into good
+// prompts at low effort.
 const HUB_MODEL: ModelChoice = {
   model: { provider: 'anthropic', modelId: 'claude-sonnet-5-5' },
   thinkingLevel: 'low',

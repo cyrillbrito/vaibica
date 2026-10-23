@@ -12,10 +12,7 @@ export const cancelSignIn = () => request('account.cancel', {});
 
 export const signOut = (id: string) => request('account.signOut', { id });
 
-export const saveProxy = (args: {
-  url: string;
-  apiKey: string;
-  managementKey: string;
-}) => request('proxy.save', args);
+export const addAccount = (provider: string) =>
+  request('account.add', { provider });
 
-export const removeProxy = () => request('proxy.remove', {});
+export const useFirst = (id: string) => request('account.useFirst', { id });
