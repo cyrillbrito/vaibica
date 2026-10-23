@@ -202,6 +202,8 @@ export interface Project {
   // Set by hand in projects.json: a link with `{key}`, so ticket tags in
   // branch names open the ticket.
   tickets?: string;
+  // Its main folder stays in the sidebar's list, never in Parked.
+  pinned?: boolean;
   // The project folder, or every worktree of its repo; never empty.
   workspaces: Workspace[];
 }
@@ -389,6 +391,7 @@ export interface Calls {
   'project.add': { args: { path: string }; result: string };
   // Project ids in their new sidebar order; ids left out keep their place after.
   'project.reorder': { args: { ids: string[] }; result: null };
+  'project.pin': { args: { id: string; pinned: boolean }; result: null };
   // Removes a worktree and its local branch, archives its sessions, closes its
   // terminals. Returns what would be lost and removes nothing, unless force.
   'worktree.cleanUp': {

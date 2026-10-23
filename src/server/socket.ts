@@ -65,6 +65,7 @@ import {
   addProject,
   listDirs,
   reorderProjects,
+  pinProject,
   watchProjects,
 } from '#server/projects';
 import { suggestCommitMessage } from '#server/git';
@@ -133,6 +134,10 @@ const calls: Handlers = {
   'project.add': async ({ path }) => addProject(path),
   'project.reorder': async ({ ids }) => {
     await reorderProjects(ids);
+    return null;
+  },
+  'project.pin': async ({ id, pinned }) => {
+    await pinProject(id, pinned);
     return null;
   },
   'worktree.cleanUp': async (args) =>

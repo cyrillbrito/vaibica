@@ -43,7 +43,8 @@ Its header holds the Bica menu (new session, add project, settings, and the them
 - A workspace's header (its branch, or the project's name when it is alone) opens its page: the workspace card, files, and Git. It stays lit while that page is open.
 - Drag a project's header to reorder projects: with the mouse right away, on touch after the long press that opens its menu. While dragging, every project shrinks to its header and a line shows where it lands. The order is saved in `.data/projects.json`. Chats stays last. Sessions stay sorted by time and don't drag.
 - Branch names drop any prefix up to the last slash, and a leading ticket key shrinks to a small tag. The tag opens the ticket when the project has a `tickets` link in `.data/projects.json`.
-- Workspaces with no open sessions or terminals drop into Parked, one line each, so a worktree waiting on review stays out of the way. Starting a session there moves it back up.
+- Workspaces with no open sessions or terminals drop into Parked, one line each, so a worktree waiting on review stays out of the way. Starting a session there moves it back up. Pin project, in a main folder's menu, keeps that folder in the list for good.
+- A project with only its main folder on `main` or `master`, or without git, shows no branch line under its name.
 - Archived sessions sit in a collapsed section at the bottom.
 - A worktree with no branch shows its folder without the project's name in front, so `vaibica-sidebar` is listed as `sidebar`. Its note (detached, folder removed) always stays visible.
 - Kept files with the same name show the parent folders that tell them apart. Old times become a date.

@@ -211,6 +211,16 @@ export async function reorderProjects(ids: string[]) {
   await projects.refresh();
 }
 
+export async function pinProject(id: string, pinned: boolean) {
+  const list = await load();
+  const p = list.find((p) => p.id === id);
+  if (!p) throw new Error(`No project ${id}`);
+  if (pinned) p.pinned = true;
+  else delete p.pinned;
+  await writeFile(FILE, JSON.stringify(list, null, 2));
+  await projects.refresh();
+}
+
 /**
  * A new worktree for a session: its own branch from the freshly fetched
  * default branch, or the local one when it is ahead, in a sibling folder

@@ -9,6 +9,7 @@ import {
   cleanUpWorktree,
   folderName,
   reorderProjects,
+  pinProject,
   setCurrentTarget,
   useProjects,
   workspaceName,
@@ -86,6 +87,7 @@ import {
   SystemThemeIcon,
   TerminalIcon,
   UnreadIcon,
+  PinIcon,
 } from './ui/icons';
 import BranchName from './BranchName';
 import PlanUsage from './PlanUsage';
@@ -141,6 +143,8 @@ interface Group {
   path?: string;
   // A worktree, not the main folder: it can be cleaned up.
   worktree?: boolean;
+  // The main folder of a pinned project: never parked.
+  pinned?: boolean;
   // Absent: a folder that's gone, so no new sessions there.
   target?: Target;
   // Listed above the sessions: they belong to the folder, not to a session.
@@ -272,6 +276,7 @@ export default function Sidebar() {
             pr: w.pr,
             path: w.path,
             worktree: !w.main,
+            pinned: w.main && p.pinned,
             target: {
               projectId: p.id,
               cwd: w.path,
@@ -320,7 +325,7 @@ export default function Sidebar() {
   // Workspaces with nothing open (often a PR waiting on review) shrink to one
   // line in Parked, so the list above is only what's in progress.
   const isParked = (g: Group) =>
-    !g.sessions.length && !g.terminals.length && !g.files.length;
+    !g.pinned && !g.sessions.length && !g.terminals.length && !g.files.length;
   const active = createMemo(() => groups().filter((g) => !isParked(g)), {
     name: 'activeGroups',
   });
@@ -688,6 +693,18 @@ export default function Sidebar() {
           },
         ] satisfies MenuEntry[])
       : []),
+    ...(g.target && !g.worktree && g.projectKey !== CHATS_ID
+      ? ([
+          {
+            label: g.pinned ? 'Unpin project' : 'Pin project',
+            icon: <PinIcon />,
+            onSelect: () =>
+              void pinProject(g.projectKey, !g.pinned).catch((e) =>
+                toast(e instanceof Error ? e.message : String(e)),
+              ),
+          },
+        ] satisfies MenuEntry[])
+      : []),
     ...(g.path
       ? ([
           ...(g.target ? (['separator'] as const) : []),
@@ -1037,7 +1054,18 @@ export default function Sidebar() {
               <h2 class="min-w-0 flex-1 truncate font-semibold">{p.project}</h2>
             </Show>
           </div>
-          <Show when={p.project && (g().branch || g().note)}>
+          {/* Alone, a plain main folder or one without git says nothing new. */}
+          <Show
+            when={
+              p.project &&
+              (g().branch || g().note) &&
+              !(
+                !g().folder &&
+                (g().note === 'no git' ||
+                  (!g().note && ['main', 'master'].includes(g().branch!)))
+              )
+            }
+          >
             <div class="-mt-1 flex pb-0.5">{branchLine()}</div>
           </Show>
         </a>

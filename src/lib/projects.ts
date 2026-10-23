@@ -11,6 +11,9 @@ export const addProject = (path: string) => request('project.add', { path });
 export const reorderProjects = (ids: string[]) =>
   request('project.reorder', { ids });
 
+export const pinProject = (id: string, pinned: boolean) =>
+  request('project.pin', { id, pinned });
+
 export const listDirs = (path?: string) => request('fs.dirs', { path });
 
 export const cleanUpWorktree = (
