@@ -194,7 +194,9 @@ export default function ModelPicker(props: {
       <button
         type="button"
         popovertarget={id}
-        class={[buttonClass({ size: 'md' }), 'min-w-0']}
+        // Shrinks, so a long model name truncates instead of pushing the
+        // composer's send button out of view.
+        class={[buttonClass({ size: 'md' }), 'min-w-0 shrink!']}
         style={{ 'anchor-name': `--${id}` }}
         title={
           props.value &&
@@ -216,7 +218,7 @@ export default function ModelPicker(props: {
             : props.empty}
         </span>
         <Show when={thinks()}>
-          <span class="shrink-0 text-muted/70">
+          <span class="shrink-0 text-muted/70 @max-sm/composer:hidden">
             {EFFORT[props.value!.thinkingLevel][0]}
           </span>
         </Show>

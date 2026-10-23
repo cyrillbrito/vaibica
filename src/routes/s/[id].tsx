@@ -498,7 +498,14 @@ export default function Session(props: RouteProps<'/s/:id'>) {
                   hold={held()}
                   onHoldEdit={(id, text) => tonightAction(id, 'save', text)}
                   placeholder={
-                    held() !== null ? 'What to do tonight…' : undefined
+                    held() !== null
+                      ? 'What to do tonight…'
+                      : drives()
+                        ? 'Write to take over…'
+                        : undefined
+                  }
+                  busyPlaceholder={
+                    drives() ? 'Queue a message to take over…' : undefined
                   }
                   sendLabel={
                     held() !== null

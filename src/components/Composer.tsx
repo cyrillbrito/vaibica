@@ -100,6 +100,8 @@ export default function Composer(props: {
   // Where the draft is kept, e.g. the session id.
   draft: string;
   placeholder?: string;
+  // Instead of "Queue a follow-up…" while a run is working.
+  busyPlaceholder?: string;
   // Next to attach, e.g. the model picker.
   controls?: JSX.Element;
   // Just left of stop and send, e.g. the voice call button.
@@ -312,7 +314,7 @@ export default function Composer(props: {
       <form
         ref={() => props.ref?.(api)}
         {...drop.handlers}
-        class="relative flex flex-col gap-1 rounded-sheet border border-line bg-surface py-2.5 pr-2.5 pl-4 shadow-raised transition-[border-color,box-shadow] duration-200 ease-out focus-within:border-line-strong focus-within:ring-3 focus-within:ring-accent/12"
+        class="@container/composer relative flex flex-col gap-1 rounded-sheet border border-line bg-surface py-2.5 pr-2.5 pl-4 shadow-raised transition-[border-color,box-shadow] duration-200 ease-out focus-within:border-line-strong focus-within:ring-3 focus-within:ring-accent/12"
         onSubmit={(e) => {
           e.preventDefault();
           void send(false);
@@ -352,7 +354,7 @@ export default function Composer(props: {
           class="max-h-[40vh] min-h-8 resize-none bg-transparent py-1 text-read outline-none [field-sizing:content] placeholder:text-muted"
           placeholder={
             props.busy
-              ? 'Queue a follow-up…'
+              ? (props.busyPlaceholder ?? 'Queue a follow-up…')
               : (props.placeholder ?? 'Ask anything…')
           }
           onInput={() => {
@@ -515,8 +517,10 @@ export default function Composer(props: {
           <Show when={props.sendLabel}>
             {(label) => (
               <Button
+                // On a narrow composer only the arrow shows; the label stays
+                // for screen readers and the placeholder says what it does.
                 class={[
-                  'ml-1 pr-2.5 pl-3 [&_svg]:size-3.5 [&_svg]:stroke-[2.5]',
+                  'ml-1 pr-2.5 pl-3 @max-sm/composer:pl-2.5 [&_svg]:size-3.5 [&_svg]:stroke-[2.5]',
                   props.alternate && 'rounded-r-none pr-2',
                   empty() && 'opacity-30',
                 ]}
@@ -527,7 +531,7 @@ export default function Composer(props: {
                 title={props.busy ? `${label()}, after this run` : label()}
                 aria-disabled={empty() ? 'true' : undefined}
               >
-                {label()}
+                <span class="@max-sm/composer:sr-only">{label()}</span>
                 <Show when={props.busy && !empty()} fallback={<ArrowUpIcon />}>
                   <QueueIcon />
                 </Show>
