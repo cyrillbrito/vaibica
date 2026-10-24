@@ -30,6 +30,7 @@ There is no time to prove every idea here, so borrow from people who already bui
 - The Pi coding agent itself. Bica runs its own agent on Pi Durable. The coding agent's code and extensions are a good source of ideas, since the APIs are close, but Bica never runs them.
 - A full IDE. Heavy editing opens your editor.
 - Native mobile or desktop apps. The web app is the app.
+- A plugin system. Features are plain code in their own folders, and agent behavior uses Pi Durable's extensions where that's simple ([extensibility record](docs/records/extensibility.md)).
 
 ## Stack
 
@@ -98,15 +99,17 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 
 `docs/explorations/` holds research and plans for what isn't built. Read the matching one before building in its area, and delete or trim it once the feature's doc takes over. Write one only when the user asks for it.
 
-- [data-sync.md](docs/explorations/data-sync.md): sending only what the browser lacks.
-- [fast-loading.md](docs/explorations/fast-loading.md): opening and switching faster on the phone.
+- [fast-loading.md](docs/explorations/fast-loading.md): opening, switching, and reconnecting faster on the phone.
 - [distribution.md](docs/explorations/distribution.md): installing and updating `bica`.
-- [extensions.md](docs/explorations/extensions.md): agent and UI extensions.
 - [self-hosted-auth.md](docs/explorations/self-hosted-auth.md): a token for the socket, and the DNS rebinding hole.
 - [themes.md](docs/explorations/themes.md): editor color themes.
 - [ui-hierarchy.md](docs/explorations/ui-hierarchy.md): what the side panel next to a session belongs to.
 - [voice-and-hub.md](docs/explorations/voice-and-hub.md): what's left from OpenAI's GPT-Live and Codex voice for calls and the hub.
 - [work-lifecycle.md](docs/explorations/work-lifecycle.md): from a first question to a merged pull request.
+
+`docs/records/` holds decisions worth remembering: what was tried, what was found, and what was decided. Read the matching one before reopening its question.
+
+- [extensibility.md](docs/records/extensibility.md): why features aren't extensions.
 
 `docs/inspiration/` holds screenshots of other agent UIs, as ideas, not specs.
 
@@ -116,6 +119,7 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 - Read [docs/UI.md](docs/UI.md) before any UI work.
 - Keep this file and `docs/` up to date with every change. Add a doc when a new area appears.
 - Simplicity first. If a change adds complexity, look for a smaller one.
+- Keep each feature's code in its own folder, not spread across the app. Give a pattern a shared shape once three features repeat it, not before.
 - Answer questions in the reply. Don't write a plan or an exploration doc unless the user asks for one.
 
 ## Verifying UI
