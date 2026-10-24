@@ -9,7 +9,7 @@ import ContextMenu from './components/ui/ContextMenu';
 import DataToggle from './components/DataToggle';
 import Toaster from './components/ui/Toast';
 import Failed from './components/ui/Failed';
-import Inspector from './components/Inspector';
+import SidePanel from './components/SidePanel';
 import ProjectPicker from './components/ProjectPicker';
 import ArchiveDialog from './components/ArchiveDialog';
 import Resizer from './components/ui/Resizer';
@@ -18,12 +18,12 @@ import TopBar from './components/TopBar';
 import {
   closeDrawer,
   drawer,
-  inspectorHidden,
-  inspectorMax,
-  inspectorW,
-  inspectorWidth,
+  sidePanelHidden,
+  sidePanelMax,
+  sidePanelW,
+  sidePanelWidth,
   noPanels,
-  setInspectorW,
+  setSidePanelW,
   setSidebarW,
   sidebarHidden,
   sidebarMax,
@@ -134,31 +134,31 @@ export default function App() {
                 'xl:[&>aside]:min-w-(--full)',
                 sliding() &&
                   'xl:motion-safe:transition-[width,visibility] xl:motion-safe:duration-200 xl:motion-safe:ease-out',
-                inspectorHidden() || sliding()
+                sidePanelHidden() || sliding()
                   ? 'xl:overflow-hidden'
                   : 'xl:overflow-visible',
-                drawer() === 'inspector'
+                drawer() === 'side-panel'
                   ? 'translate-0 shadow-sheet xl:shadow-none'
                   : 'invisible translate-y-full md:translate-x-full md:translate-y-0',
-                inspectorHidden() ? 'xl:invisible' : 'xl:visible',
+                sidePanelHidden() ? 'xl:invisible' : 'xl:visible',
               ]}
               style={{
-                '--w': inspectorHidden() ? '0px' : `${inspectorW()}px`,
-                '--full': `${inspectorW()}px`,
+                '--w': sidePanelHidden() ? '0px' : `${sidePanelW()}px`,
+                '--full': `${sidePanelW()}px`,
               }}
             >
               <Resizer
                 class="hidden xl:block"
                 side="left"
                 label="Resize files and changes"
-                width={inspectorW()}
-                min={inspectorWidth.min}
-                initial={inspectorWidth.initial}
-                max={inspectorMax()}
-                onResize={setInspectorW}
+                width={sidePanelW()}
+                min={sidePanelWidth.min}
+                initial={sidePanelWidth.initial}
+                max={sidePanelMax()}
+                onResize={setSidePanelW}
               />
               <Loading fallback={<aside class="flex-1 bg-panel" />}>
-                <Inspector />
+                <SidePanel />
               </Loading>
             </div>
           </Show>

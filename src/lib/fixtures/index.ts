@@ -264,7 +264,7 @@ const text = (t: string | undefined): FileText =>
 /**
  * Undefined: send the command. Otherwise its answer from the test data, or
  * a promise that never settles: the command is held back and logged. The
- * live test transcripts act out prompts, compactions, and clean ups.
+ * live test transcripts act out prompts, compactions, and pruning.
  */
 export function testAnswer<C extends Call>(
   call: C,
@@ -297,7 +297,7 @@ export function testAnswer<C extends Call>(
     call === 'session.compact'
       ? talk?.compact
       : call === 'session.cleanup'
-        ? talk?.cleanup
+        ? talk?.prune
         : undefined;
   if (play) return play().then(() => null as never);
   const answer =

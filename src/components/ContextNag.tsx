@@ -13,21 +13,21 @@ import {
   formatTokens,
   type ContextUsage,
 } from '#lib/context-usage';
-import { CLEANUP_HINT } from '#lib/cleanup';
-import { cleanupSession, compactSession, isCleaning } from '#lib/sessions';
+import { PRUNE_HINT } from '#lib/prune';
+import { pruneSession, compactSession, isPruning } from '#lib/sessions';
 import { cheer } from '#lib/sound';
 import { tick } from '#lib/time';
 import type { Message } from '#lib/transcript';
 import { Button, IconButton } from './ui/Button';
 import { toast } from './ui/Toast';
-import { CleanUpIcon, CloseIcon, CompactIcon } from './ui/icons';
+import { PruneIcon, CloseIcon, CompactIcon } from './ui/icons';
 
 type Compaction = Extract<Message, { kind: 'compaction' }>;
-type Cleanup = Extract<Message, { kind: 'cleanup' }>;
+type Prune = Extract<Message, { kind: 'prune' }>;
 
 // Below this, resending the whole context costs little.
 const COLD_WORTH_IT = 30_000;
-// Below this, Clean up saves too little to offer on its own.
+// Below this, pruning saves too little to offer on its own.
 const CLEAN_WORTH_IT = 5_000;
 // Past this share of the auto-compaction point, say it is coming.
 const NEAR_AUTO = 0.85;
@@ -53,7 +53,7 @@ const dismissed = new Map<string, string>();
 
 /**
  * Above the composer, one calm line about the context when there is
- * something worth doing: Clean up once the cache is cold, Compact while it is
+ * something worth doing: Prune once the cache is cold, Compact while it is
  * warm and the session is big. Cheers when it shrinks.
  */
 const fail = (e: unknown) => toast(e instanceof Error ? e.message : String(e));
@@ -62,18 +62,18 @@ export default function ContextNag(props: {
   id: string;
   usage: ContextUsage;
   compaction: Compaction | undefined;
-  cleanup: Cleanup | undefined;
+  prune: Prune | undefined;
 }) {
   // The map isn't reactive; the signal says it changed.
   const [dismissals, setDismissals] = createSignal(0, { name: 'nagDismiss' });
   const [compacting, setCompacting] = createSignal(false, {
     name: 'nagCompacting',
   });
-  const cleaning = () => isCleaning(props.id);
+  const pruning = () => isPruning(props.id);
 
   // Only what lands while watching: not what was already there on open.
   let seen: { id: string; key?: string } | undefined;
-  let seenCleanup: { id: string; key?: string } | undefined;
+  let seenPrune: { id: string; key?: string } | undefined;
   createEffect(
     () => ({ id: props.id, c: props.compaction }),
     ({ id, c }) => {
@@ -85,10 +85,10 @@ export default function ContextNag(props: {
     { name: 'nagCompacted' },
   );
   createEffect(
-    () => ({ id: props.id, c: props.cleanup }),
+    () => ({ id: props.id, c: props.prune }),
     ({ id, c }) => {
-      const prev = seenCleanup;
-      seenCleanup = { id, key: c?.key };
+      const prev = seenPrune;
+      seenPrune = { id, key: c?.key };
       if (!c || !prev || prev.id !== id || prev.key === c.key) return;
       cheer();
     },
@@ -104,10 +104,10 @@ export default function ContextNag(props: {
       const big = u.used >= BLOATED;
       if (left !== undefined && left <= 0) {
         if (u.used < COLD_WORTH_IT) return;
-        const clean = u.cleanable >= CLEAN_WORTH_IT;
+        const clean = u.prunable >= CLEAN_WORTH_IT;
         // Compacting a cold session rereads all of it first: only worth it
         // when even a clean session would stay big.
-        const compact = u.used - (clean ? u.cleanable : 0) >= BLOATED;
+        const compact = u.used - (clean ? u.prunable : 0) >= BLOATED;
         if (!clean && !compact) return;
         return {
           kind: 'cold',
@@ -131,9 +131,7 @@ export default function ContextNag(props: {
   const shown = () => {
     dismissals();
     const h = hint();
-    return !cleaning() && h && dismissed.get(props.id) !== h.key
-      ? h
-      : undefined;
+    return !pruning() && h && dismissed.get(props.id) !== h.key ? h : undefined;
   };
   const dismiss = () => {
     const h = hint();
@@ -148,15 +146,15 @@ export default function ContextNag(props: {
       .catch(fail)
       .finally(() => setCompacting(false));
   };
-  const cleanUp = () => void cleanupSession(props.id).catch(fail);
+  const prune = () => void pruneSession(props.id).catch(fail);
 
   const CompactButton = (p: { primary: boolean }) => (
     <Button
       size="sm"
       variant={p.primary ? 'primary' : 'outline'}
       loading={compacting()}
-      disabled={compacting() || cleaning()}
-      title="Summarizes older turns. The last ~20k stay as they are."
+      disabled={compacting() || pruning()}
+      title="Summarizes older context. The last ~20k stay as they are."
       onClick={compact}
     >
       <CompactIcon />
@@ -188,12 +186,12 @@ export default function ContextNag(props: {
                     size="sm"
                     variant="primary"
                     disabled={compacting()}
-                    title={CLEANUP_HINT}
-                    onClick={cleanUp}
+                    title={PRUNE_HINT}
+                    onClick={prune}
                   >
-                    <CleanUpIcon />
+                    <PruneIcon />
                     <span class="tabular-nums">
-                      Clean up −{formatTokens(props.usage.cleanable)}
+                      Prune −{formatTokens(props.usage.prunable)}
                     </span>
                   </Button>
                 </Show>

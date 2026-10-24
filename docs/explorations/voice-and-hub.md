@@ -1,13 +1,13 @@
 # Voice and the hub
 
-What OpenAI's GPT-Live and ChatGPT's voice for Codex teach Bica's voice calls and the hub, minus what is built. Built: hand-offs carry the user's words, steer running work, and turns the call didn't start reach the voice ([voice.md](../voice.md)), and the hub reads terminals ([hub.md](../hub.md)).
+What OpenAI's GPT-Live and ChatGPT's voice for Codex teach Bica's voice calls and the hub, minus what is built. Built: handoffs carry the user's words, steer running work, and turns the call didn't start reach the voice ([voice.md](../voice.md)), and the hub reads terminals ([hub.md](../hub.md)).
 
 ## The shape stays
 
 OpenAI landed on the same three layers as Bica. GPT-Live is the voice and hands deeper work to a backend. For Codex, that backend gets thread tools (list, create, read, wait, message, fork, read a terminal) and the tasks do the work. Bica has GPT-Live, the hub with its session tools and board, and the sessions.
 
 ```
- you ──▶ GPT-Live ── hand-off ──▶ hub ── session tools ──▶ workers
+ you ──▶ GPT-Live ── handoff ──▶ hub ── session tools ──▶ workers
      ◀──          ◀── reply ────     ◀── notes, reports ──
 ```
 
@@ -15,7 +15,7 @@ The voice gives presence: full duplex, interruptions, timing. The hub gives judg
 
 ## Not built
 
-- Move the call. "Let me talk to the palette session" points the call's hand-offs at that session and refreshes the voice's context with its recent conversation and project names; "back to the hub" points them back, as ChatGPT Voice does for Codex tasks. Medium: `startCall` binds a call to one session, and the transcript would have to follow.
+- Move the call. "Let me talk to the palette session" points the call's handoffs at that session and refreshes the voice's context with its recent conversation and project names; "back to the hub" points them back, as ChatGPT Voice does for Codex tasks. Medium: `startCall` binds a call to one session, and the transcript would have to follow.
 - The board as quiet context. Send the board's lines to the voice at the start of a hub call, so "what waits on me" needs no hub turn. Cheap, but the board goes stale within minutes, and the hub answers fast anyway.
 - Forking a worker. Codex has `fork_thread`. A new session whose ticket carries what the first one found covers most of it.
 - A wait tool. Codex has `wait_threads`; notes do the same without the hub blocking.
@@ -25,7 +25,7 @@ The voice gives presence: full duplex, interruptions, timing. The hub gives judg
 - Responses delegation, which runs the backend on OpenAI. Bica's agents run on its own harness with any provider.
 - Dropping the hub on calls, with GPT-Live calling session tools itself. It has no memory between calls and no board.
 - Starting work from half-heard sentences, which saves seconds on work that takes minutes.
-- A filler before every hand-off. GPT-Live acknowledges on its own, and the hold music says the agent works.
+- A filler before every handoff. GPT-Live acknowledges on its own, and the hold music says the agent works.
 
 ## Open questions
 

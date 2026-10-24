@@ -4,7 +4,7 @@ import type { Turn } from './conversation';
 
 const MIN = 60_000;
 
-// The file the demo session writes; its diff opens from the right panel too.
+// The file the demo session writes; its diff opens from the side panel too.
 export const SHORTCUTS_TS = `// ⌘1–9 open the sidebar's nth session; ⌥↑ and ⌥↓ step through them.
 import { useNavigate } from '@solidjs/router';
 import { onSettled } from 'solid-js';
@@ -408,7 +408,7 @@ export const restoreExportOfArchivedSessionsWithUnicodeTitles = async (sessions:
   },
   { cleaned: 48_000 },
   {
-    user: '[Note from Bica, not from the user] Context is 92% full. Compact now, or clean up old tool output first.\n\nThe last 14 answers rewrote most of their context: the prompt cache keeps expiring.',
+    user: '[Note from Bica, not from the user] Context is 92% full. Compact now, or prune old tool output first.\n\nThe last 14 answers rewrote most of their context: the prompt cache keeps expiring.',
   },
   {
     user: '[Message from session 51715 "Benachrichtigungseinstellungenüberarbeitung: alle Zustände prüfen und Übersetzungen nachziehen"] Done with the German strings. I left `Benachrichtigungseinstellungen` untranslated in two places because the design has no room for it.',

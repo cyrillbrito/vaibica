@@ -1,4 +1,4 @@
-// Clean up: clears old tool output from the model context, without a model
+// Pruning: clears old tool output from the model context, without a model
 // call (docs/context-usage.md). Shared by the server, which writes the edits,
 // and the browser, which shows what they would save.
 import type {
@@ -9,11 +9,15 @@ import type {
 } from '@earendil-works/pi-ai';
 import type { ContextEdit, EntryRecord } from '@earendil-works/pi-durable';
 
-export const CLEANUP_HINT =
-  'Clears old tool output and images from what the model reads, so the next message sends less. Your messages, the replies and the reasoning stay, and the transcript keeps everything.';
+export const PRUNE_HINT =
+  'Clears old tool output and images from what the model reads, so the next prompt sends less. Your prompts, the replies and the reasoning stay, and the transcript keeps everything.';
 
-/** The entry that carries the edits; it adds nothing to the context itself. */
-export const CLEANUP_ENTRY = 'bica.cleanup';
+/**
+ * The entry that carries the edits; it adds nothing to the context itself.
+ * Sessions store it, so its kind keeps the name from when pruning was called
+ * clean up.
+ */
+export const PRUNE_ENTRY = 'bica.cleanup';
 
 // pi-ai's estimate, as in context-usage.ts.
 export const IMAGE_CHARS = 4800;
@@ -30,7 +34,7 @@ const HEAD = 160;
 const TAIL = 80;
 const NOTE = '[Old output cleared to save context';
 
-/** Whether a result is already a Clean up note, so it isn't cleared again. */
+/** Whether a result is already a pruning note, so it isn't cleared again. */
 export const isCleared = (message: ToolResultMessage) =>
   message.content[0]?.type === 'text' &&
   message.content[0].text.startsWith(NOTE);
@@ -59,7 +63,7 @@ export function chars(message: Message): number {
 export const KEEP_RECENT = 6;
 
 /**
- * The ids of the tool calls Clean up may touch: all but the newest
+ * The ids of the tool calls pruning may touch: all but the newest
  * KEEP_RECENT messages. A call counts as recent when its call or its output is.
  */
 export function oldCalls(
@@ -81,13 +85,13 @@ export function oldCalls(
 }
 
 /**
- * Edits that clean up all but the newest messages (KEEP_RECENT): tool output
+ * Edits that prune all but the newest messages (KEEP_RECENT): tool output
  * and images give way to a note, and long tool arguments shrink to their
  * summary and first line. Prompts, thinking and replies stay. `current` is
  * what each entry adds to the context now, after earlier edits. Outputs whose
- * tool call id is in `keep` stay verbatim (src/server/sessions/cleanup-judge.ts).
+ * tool call id is in `keep` stay verbatim (src/server/sessions/prune-judge.ts).
  */
-export function cleanupEdits(
+export function pruneEdits(
   entries: readonly EntryRecord[],
   current: (entry: EntryRecord) => readonly Message[] | undefined,
   keep: ReadonlySet<string> = new Set(),
@@ -100,9 +104,9 @@ export function cleanupEdits(
     const cleaned = messages.map((m) => {
       if (m.role === 'toolResult')
         return old.has(m.toolCallId) && !keep.has(m.toolCallId)
-          ? cleanResult(m)
+          ? pruneResult(m)
           : m;
-      if (m.role === 'assistant') return cleanCalls(m, old);
+      if (m.role === 'assistant') return pruneCalls(m, old);
       return m;
     });
     if (cleaned.some((m, i) => m !== messages[i]))
@@ -111,7 +115,7 @@ export function cleanupEdits(
   return edits;
 }
 
-function cleanResult(message: ToolResultMessage): ToolResultMessage {
+function pruneResult(message: ToolResultMessage): ToolResultMessage {
   const size = chars(message);
   const image = message.content.some((b) => b.type === 'image');
   if ((size <= KEEP_OUTPUT && !image) || isCleared(message)) return message;
@@ -139,7 +143,7 @@ function cleanResult(message: ToolResultMessage): ToolResultMessage {
 const whole = (text: string) =>
   text.replace(/^[\uDC00-\uDFFF]|[\uD800-\uDBFF]$/g, '');
 
-function cleanCalls(
+function pruneCalls(
   message: AssistantMessage,
   old: ReadonlySet<string>,
 ): AssistantMessage {

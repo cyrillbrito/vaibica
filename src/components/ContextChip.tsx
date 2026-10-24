@@ -3,7 +3,7 @@ import { Dynamic, type JSX } from '@solidjs/web';
 import { For, Show, createMemo, createSignal } from 'solid-js';
 
 import {
-  MIN_CLEANUP,
+  MIN_PRUNE,
   bloat,
   formatCost,
   formatTokens,
@@ -11,16 +11,16 @@ import {
   type Item,
 } from '#lib/context-usage';
 import { tick } from '#lib/time';
-import { CLEANUP_HINT } from '#lib/cleanup';
+import { PRUNE_HINT } from '#lib/prune';
 import { toast } from './ui/Toast';
 import {
-  cleanupSession,
+  pruneSession,
   compactSession,
-  isCleaning,
+  isPruning,
   setAgent,
 } from '#lib/sessions';
 import { AGENTS, type AgentId } from '#lib/agents';
-import { keptSmall } from '#lib/upkeep';
+import { isLongLived } from '#lib/housekeeping';
 import type { VoiceSettings as Voice } from '#lib/protocol';
 import ContextField, { percent } from './ContextField';
 import { Breakdown } from './ui/Breakdown';
@@ -34,7 +34,7 @@ import Input from './ui/Input';
 import Summary from './ui/Summary';
 import {
   AssistantIcon,
-  CleanUpIcon,
+  PruneIcon,
   CodeIcon,
   HubIcon,
   CloseIcon,
@@ -47,7 +47,7 @@ import {
 } from './ui/icons';
 
 const LONG_LIVED_HINT =
-  'While it sits idle, Bica clears old tool output once the cache is cold, and past 120k it has the agent save memories to files, then compacts. Past 200k it does that at the first pause.';
+  'While it sits idle, Bica clears old tool output once the cache is cold, and past 120k it has the agent save to its memory files, then compacts. Past 200k it does that at the first pause.';
 
 const AGENT_ICON: Record<AgentId, () => JSX.Element> = {
   coding: CodeIcon,
@@ -57,7 +57,7 @@ const AGENT_ICON: Record<AgentId, () => JSX.Element> = {
 };
 
 /** The context chip in the session's top bar: fork, compact, or the breakdown. */
-export default function ContextMeter(props: {
+export default function ContextChip(props: {
   id: string;
   view: ConversationView;
   usage: ContextUsage;
@@ -92,17 +92,17 @@ export default function ContextMeter(props: {
         onSelect: () => void compactSession(props.id),
       },
       {
-        label: isCleaning(props.id) ? 'Cleaning up…' : 'Clean up old output',
-        hint: CLEANUP_HINT,
-        icon: <CleanUpIcon />,
-        disabled: isCleaning(props.id)
-          ? 'Already cleaning up'
+        label: isPruning(props.id) ? 'Pruning…' : 'Prune old output',
+        hint: PRUNE_HINT,
+        icon: <PruneIcon />,
+        disabled: isPruning(props.id)
+          ? 'Already pruning'
           : usage().compacting
             ? 'Once compaction finishes'
-            : usage().cleanable < MIN_CLEANUP &&
+            : usage().prunable < MIN_PRUNE &&
               'No long output past the last few steps',
         onSelect: () =>
-          void cleanupSession(props.id).catch((e) =>
+          void pruneSession(props.id).catch((e) =>
             toast(e instanceof Error ? e.message : String(e)),
           ),
       },
@@ -153,7 +153,7 @@ export default function ContextMeter(props: {
         <Show when={props.agent !== 'coding'}>
           <span
             class="text-muted"
-            title={`${AGENTS[props.agent].label}: ${AGENTS[props.agent].description}.${keptSmall(props.agent) ? ` ${LONG_LIVED_HINT}` : ''}`}
+            title={`${AGENTS[props.agent].label}: ${AGENTS[props.agent].description}.${isLongLived(props.agent) ? ` ${LONG_LIVED_HINT}` : ''}`}
           >
             <Dynamic component={AGENT_ICON[props.agent]} />
           </span>
@@ -386,7 +386,7 @@ function Cache(props: {
           ]}
           option={measure()}
           onOption={(id) => setMeasure(id as 'cost' | 'tokens')}
-          footer="Priced at API rates, also with a subscription. Subagents not included."
+          footer="Priced at API rates, also with a subscription. Workers not included."
         />
         <details class="group/row -mx-1.5">
           <Summary class="text-meta">

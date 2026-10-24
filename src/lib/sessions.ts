@@ -90,20 +90,20 @@ export const retrySession = (id: string) => request('session.retry', { id });
 export const compactSession = (id: string, instructions?: string) =>
   request('session.compact', { id, instructions });
 
-const [cleaning, setCleaning] = createSignal<ReadonlySet<string>>(new Set(), {
-  name: 'cleaning',
+const [pruning, setPruning] = createSignal<ReadonlySet<string>>(new Set(), {
+  name: 'pruning',
 });
 
-/** A clean up asked for here that hasn't landed yet. */
-export const isCleaning = (id: string) => cleaning().has(id);
+/** Pruning asked for here that hasn't landed yet. */
+export const isPruning = (id: string) => pruning().has(id);
 
-export async function cleanupSession(id: string) {
-  if (isCleaning(id)) return;
-  setCleaning((s) => new Set(s).add(id));
+export async function pruneSession(id: string) {
+  if (isPruning(id)) return;
+  setPruning((s) => new Set(s).add(id));
   try {
     await request('session.cleanup', { id });
   } finally {
-    setCleaning((s) => {
+    setPruning((s) => {
       const next = new Set(s);
       next.delete(id);
       return next;

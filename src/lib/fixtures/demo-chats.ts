@@ -196,7 +196,7 @@ export const releaseNotes: Turn[] = [
 
 **Voice calls.** Talk to a session hands-free from the phone. It answers out loud, and what was said lands in the transcript.
 
-**Worktrees in one click.** Start a session in a new worktree named after it, and clean up merged ones from the sidebar.
+**Worktrees in one click.** Start a session in a new worktree named after it, and remove merged ones from the sidebar.
 
 **Context you can see.** The meter in the top bar shows what fills the window, what it cost, and when the prompt cache goes cold.
 
@@ -235,7 +235,7 @@ export const voiceHandoff: { turns: Turn[]; live: Block[] } = {
       agent: [
         {
           think:
-            'The call already ends through voice.stop. The hand-off needs a tool the voice model can call, then session.create with worktree: true.',
+            'The call already ends through voice.stop. The handoff needs a tool the voice model can call, then session.create with worktree: true.',
           ms: 6_200,
         },
         {
@@ -256,7 +256,7 @@ export const voiceHandoff: { turns: Turn[]; live: Block[] } = {
     {
       agent: [
         {
-          say: 'The voice model can already call tools, so the hand-off is one more tool: `start_session` with the brief. It calls the same code as the New session button, with a new worktree.',
+          say: 'The voice model can already call tools, so the handoff is one more tool: `start_session` with the brief. It calls the same code as the New session button, with a new worktree.',
         },
         {
           tool: 'edit',

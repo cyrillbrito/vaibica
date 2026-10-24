@@ -9,7 +9,7 @@ import type { SessionStatus } from '#lib/protocol';
 import { CHATS_ID, getProject, listProjects } from '#server/projects';
 import { allTerminals, terminalState } from '#server/terminals';
 import { spawnSession } from './create';
-import { archive, cleanUpWorktree } from './meta';
+import { archive, removeWorktree } from './meta';
 import { noteMessage, notifyWhenIdle } from './notes';
 import { stop, submit } from './prompts';
 import { prompters, readSession, recentMessages } from './read';
@@ -43,7 +43,7 @@ const USER_ASKED = Type.Optional(
 );
 
 /** A parent backs off from a session the user took over, unless he says so. */
-function checkDriver(
+function checkInCharge(
   target: { id: string; startedBy: string | null; parentDrives: boolean },
   me: string,
   userAsked: boolean | undefined,
@@ -224,7 +224,7 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
     execute: async ({ id, remove_worktree, user_asked }, api) => {
       other(id, api.conversationId);
       const s = await readSession(id);
-      checkDriver(s, String(api.conversationId), user_asked, 'archive');
+      checkInCharge(s, String(api.conversationId), user_asked, 'archive');
       if (s.status === 'running' || s.status === 'retrying')
         throw new Error(
           `Session ${id} is still running. Wait for it, or stop it first.`,
@@ -244,7 +244,7 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
         return text(
           `${done} Kept the worktree: session ${others.map((o) => o.id).join(', ')} still works there.`,
         );
-      const risk = await cleanUpWorktree(s.projectId, s.cwd, false);
+      const risk = await removeWorktree(s.projectId, s.cwd, false);
       return text(
         risk
           ? `${done} Kept the worktree ${s.cwd}: it has ${risk}.`
@@ -284,7 +284,7 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
         throw new Error(
           `Session ${id} is archived. Ask the user before bringing it back.`,
         );
-      checkDriver(target, me.id, user_asked);
+      checkInCharge(target, me.id, user_asked);
       await noteMessage(api.conversationId, id);
       await submit(
         id,
@@ -309,7 +309,7 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
     }),
     execute: async ({ id, user_asked }, api) => {
       other(id, api.conversationId);
-      checkDriver(
+      checkInCharge(
         await readSession(id),
         String(api.conversationId),
         user_asked,

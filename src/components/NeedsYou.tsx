@@ -37,7 +37,7 @@ const PEEK = 10;
 export default function NeedsYou() {
   const sessions = useSessions();
   const projects = useProjects();
-  // Each hidden card by id, status and time, so a new turn brings it back.
+  // Each hidden card by id, status and time, so a new run brings it back.
   const [hidden, setHidden] = createSignal<string[]>([], {
     name: 'needsYouHidden',
   });

@@ -16,7 +16,7 @@ import type {
   UsageState,
 } from '@earendil-works/pi-durable';
 
-import { IMAGE_CHARS, chars, cleanupEdits } from './cleanup';
+import { IMAGE_CHARS, chars, pruneEdits } from './prune';
 import type { ModelCatalog } from './protocol';
 
 export type Group = 'system' | 'tools' | 'conversation';
@@ -69,8 +69,8 @@ export interface ContextUsage {
   cache?: { at: number; ttl: number };
   compacting: boolean;
   running: boolean;
-  /** Tokens a clean up would take off now (src/lib/cleanup.ts). */
-  cleanable: number;
+  /** Tokens pruning would take off now (src/lib/prune.ts). */
+  prunable: number;
 }
 
 // pi-ai's estimate: four characters a token, an image as IMAGE_CHARS.
@@ -112,7 +112,7 @@ export function contextUsage(
   let lastRequest: AssistantMessage | undefined;
   let lastWrite: Usage | undefined;
 
-  // Context edits (clean ups) replace what earlier entries contribute. Each
+  // Context edits (pruning) replace what earlier entries contribute. Each
   // edit's saving is kept by where it landed: one after the newest answer
   // shrinks a context that answer already measured.
   const byId = new Map(view.entries.map((e) => [e.id, e]));
@@ -273,9 +273,9 @@ export function contextUsage(
   const scale = estimated > 0 ? used / estimated : 1;
   for (const part of parts.values()) part.tokens *= scale;
   for (const item of items) item.tokens *= scale;
-  const cleanable =
+  const prunable =
     tokensOf(
-      cleanupEdits(view.entries, modelOf).reduce(
+      pruneEdits(view.entries, modelOf).reduce(
         (n, e) =>
           n +
           size(modelOf(byId.get(e.target)!)) -
@@ -324,14 +324,14 @@ export function contextUsage(
         : undefined,
     compacting: !!live?.compactions?.length,
     running: !!live?.run,
-    cleanable,
+    prunable,
   };
 }
 
 export const GROUPS: Group[] = ['system', 'tools', 'conversation'];
 
-// Below this a clean up isn't worth offering.
-export const MIN_CLEANUP = 1000;
+// Below this pruning isn't worth offering.
+export const MIN_PRUNE = 1000;
 
 // Past 200k a session gets slow, pricey and forgetful, whatever the window.
 export const BLOATED = 200_000;

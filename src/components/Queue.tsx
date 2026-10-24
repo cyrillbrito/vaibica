@@ -76,8 +76,8 @@ export default function Queue(props: {
                   ]}
                   title={
                     steer()
-                      ? 'Joins the run after the current step'
-                      : 'Sent when the run answers'
+                      ? 'Joins the run after the current turn'
+                      : 'Sent when the run ends'
                   }
                 >
                   {steer() ? <PushIcon /> : <QueueIcon />}
@@ -102,7 +102,7 @@ export default function Queue(props: {
                   <Show when={!steer()}>
                     <IconButton
                       size="sm"
-                      title="Send now: after the current step"
+                      title="Send now: after the current turn"
                       disabled={pending()}
                       onClick={() => void act(item(), 'push')}
                     >

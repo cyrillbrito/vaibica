@@ -14,7 +14,7 @@ import { voiceSession } from '#server/sessions';
  * Voice calls on a session, on the ChatGPT subscription. A port of the
  * pi-live-codex extension (MIT): GPT-Live talks with the user in the browser
  * over WebRTC and hands work to the session ("client delegation"); this
- * server answers each hand-off with the session's reply.
+ * server answers each handoff with the session's reply.
  *
  * Unofficial: it signs in the way the Codex Desktop app does. The official
  * route is the same protocol on api.openai.com with an API key.
@@ -29,13 +29,13 @@ const VOICE = 'sol';
 const CHUNK_BYTES = 500;
 const STATUS = '[[live:status]]';
 const CANCEL = '[[live:cancel-current]]';
-// Requests that joined the same work share its answer: the first to settle
+// Handoffs that joined the same run share its reply: the first to settle
 // gets it, the others this.
 const COVERED = '(Answered in the other result.)';
-// What was said since the last hand-off, newest kept.
+// What was said since the last handoff, newest kept.
 const CALL_WORDS_CHARS = 4000;
-// A hand-off claims its answer within this; a turn's answer still unclaimed
-// after it came from a turn the call didn't start.
+// A handoff claims its reply within this; a final reply still unclaimed
+// after it came from a run the call didn't start.
 const CLAIM_MS = 2000;
 // How long without a new piece of the user's transcript counts as them having
 // stopped, when GPT-Live never closes their turn.
@@ -207,7 +207,7 @@ export async function startCall(sessionId: string, sdp: string) {
     if (socket.readyState === WebSocket.OPEN)
       socket.send(JSON.stringify(message));
   };
-  // `null` for the whole call rather than one hand-off, as pi-codex-voice
+  // `null` for the whole call rather than one handoff, as pi-codex-voice
   // and oh-my-pi send it on the same route.
   const append = (
     text: string,
@@ -243,9 +243,9 @@ export async function startCall(sessionId: string, sdp: string) {
     append(`"Agent Final Message":\n\n${text}`, delegation);
   };
 
-  // Hand-offs waiting for an answer, oldest first.
+  // Handoffs waiting for a reply, oldest first.
   const waiting: string[] = [];
-  // Answers a hand-off got, so each reaches the voice once.
+  // Replies a handoff got, so each reaches the voice once.
   const answered = new Set<EntryId>();
   let latest = { text: '', at: 0 };
   const stopSteps = session.onStep((text, final) => {
@@ -255,7 +255,7 @@ export async function startCall(sessionId: string, sdp: string) {
       if (waiting[0]) append(text, waiting[0], 'commentary');
       return;
     }
-    // A turn the call didn't start, such as the hub hearing that a session
+    // A run the call didn't start, such as the hub hearing that a session
     // finished: the voice tells the user, as Codex's voice brings back
     // results and blockers on its own.
     setTimeout(() => {
@@ -266,9 +266,9 @@ export async function startCall(sessionId: string, sdp: string) {
     }, CLAIM_MS);
   });
 
-  // What was said since the last hand-off, for the agent.
+  // What was said since the last handoff, for the agent.
   const said: string[] = [];
-  // The start of the user's unfinished line that a hand-off already carried.
+  // The start of the user's unfinished line that a handoff already carried.
   let carried = '';
   const callWords = () => {
     const lines = said.splice(0);

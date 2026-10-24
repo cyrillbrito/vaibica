@@ -6,16 +6,16 @@ The command palette is one search box for going anywhere and doing anything in B
 
 Opened empty, it answers "what needs me?" first:
 
-- Needs you: sessions waiting on an answer, then unread answers, then failures, newest first in each ([sessions.md](./sessions.md#status)).
-- Recent: the other sessions, by their last message.
+- Needs you: sessions waiting for you, then unread replies, then failures, newest first in each ([sessions.md](./sessions.md#status)).
+- Recent: the other sessions, by their last activity.
 - This session: the open session's own actions, like Rename, Fork, Stop, Mark as unread, and Archive.
 - Actions: everything else Bica can do from anywhere.
 
-Typing searches sessions (archived ones last), projects and worktrees ([projects.md](./projects.md)), terminals, and actions together, best match first. Letters can be out of place, so "nwe sess" still finds New session, and actions have extra words, so "chat" finds it too. Files aren't listed, since there are too many.
+Typing searches sessions (archived ones last), workspaces ([projects.md](./projects.md)), terminals, and actions together, best match first. Letters can be out of place, so "nwe sess" still finds New session, and actions have extra words, so "chat" finds it too. Files aren't listed, since there are too many.
 
 ## Second pages
 
-An action ending in "…" opens a second page instead of running, like New session in…, Go to project…, Theme…, and Rename. The page's name shows as a chip before the search box. Backspace in an empty box, Esc, or a click on the chip goes back.
+An action ending in "…" opens a second page instead of running, like New session in…, Go to workspace…, Theme…, and Rename. The page's name shows as a chip before the search box. Backspace in an empty box, Esc, or a click on the chip goes back.
 
 ## Shortcuts
 

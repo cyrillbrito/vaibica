@@ -24,7 +24,7 @@ import {
   type Agent,
   type SectionInput,
   type SectionKey,
-  type ToolPack,
+  type ExtensionName,
 } from './common';
 import { hub } from './hub';
 import { night } from './night';
@@ -35,7 +35,7 @@ const AGENTS: Record<AgentId, Agent> = { coding, assistant, night, hub };
 // The extensions behind the names agents pick. Sessions store the names, so
 // they stay as they are. sessions/tools.ts comes back here through
 // create.ts: nothing it exports may be read while it loads.
-const PACKS: Record<ToolPack, Extension> = {
+const BY_NAME: Record<ExtensionName, Extension> = {
   'coding-tools': CodingTools,
   'terminal-tools': TerminalTools,
   // Web tools read the Exa key per call, so adding one needs no restart.
@@ -47,9 +47,9 @@ const PACKS: Record<ToolPack, Extension> = {
   'hub-session-tools': HubSessionTools,
   'hub-terminal-tools': HubTerminalTools,
 };
-for (const [name, pack] of Object.entries(PACKS))
-  if (pack.name !== name)
-    throw new Error(`Tool pack ${name} is named ${pack.name}`);
+for (const [name, extension] of Object.entries(BY_NAME))
+  if (extension.name !== name)
+    throw new Error(`Extension ${name} is named ${extension.name}`);
 
 export const getAgent = (id: AgentId) => AGENTS[id];
 
@@ -111,7 +111,7 @@ const BicaContext = defineExtension({
   sections: TAIL_SECTIONS.map((key) => on(key)),
 });
 
-const packs = (a: Agent) => a.extensions.map((name) => PACKS[name]);
+const picked = (a: Agent) => a.extensions.map((name) => BY_NAME[name]);
 
 /**
  * An agent's extensions, in a fixed order: the prompt, the agent's tools,
@@ -119,7 +119,7 @@ const packs = (a: Agent) => a.extensions.map((name) => PACKS[name]);
  */
 const resolve = (a: Agent) => [
   BicaPrompt,
-  ...packs(a),
+  ...picked(a),
   BicaContext,
   ToolSummary,
 ];
@@ -130,7 +130,7 @@ export const DEFAULT_EXTENSIONS = resolve(coding);
 /** Every extension an agent selects, for the harness to install. */
 export const ALL_EXTENSIONS = new Set([
   BicaPrompt,
-  ...Object.values(AGENTS).flatMap(packs),
+  ...Object.values(AGENTS).flatMap(picked),
   BicaContext,
   ToolSummary,
 ]);

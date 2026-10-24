@@ -75,7 +75,7 @@ test('a prompt sent while the agent works runs after the current answer', async 
   expect(at).toEqual(at.toSorted((a, b) => a - b));
 });
 
-test('a running session counts its time from the prompt, not from its latest step', async () => {
+test('a running session counts its time from the prompt, not from its latest turn', async () => {
   const tab = await bica.connect();
   const first = bica.hold(
     fauxAssistantMessage(
@@ -89,7 +89,7 @@ test('a running session counts its time from the prompt, not from its latest ste
   const prompted = Date.now();
   first.release();
   await second.started;
-  // A fresh watch reads the list as it is now, after the tool step.
+  // A fresh watch reads the list as it is now, after the tool call.
   const list = await tab
     .watch('sessions', {})
     .until((l) => l.some((s) => s.id === id && s.status === 'running'));

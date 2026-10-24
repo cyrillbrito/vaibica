@@ -1,23 +1,23 @@
 import 'server-only';
 import type { ConversationId } from '@earendil-works/pi-durable';
 
-import { MIN_CLEANUP, contextUsage } from '#lib/context-usage';
-import { keptSmall } from '#lib/upkeep';
+import { MIN_PRUNE, contextUsage } from '#lib/context-usage';
+import { isLongLived } from '#lib/housekeeping';
 import { context, getHarness } from '#server/agent';
 import { getCatalog } from '#server/providers';
 import { markSeen } from './meta';
-import { cleanUpContext, compact, submit } from './prompts';
+import { pruneContext, compact, submit } from './prompts';
 import { listSessions } from './store';
 
-// Long-lived sessions, assistant mode (docs/assistant-mode.md) and the hub
-// (docs/hub.md): Bica keeps them small while they sit idle. Clean up runs
-// once the cache is cold, when it is free. Saving memories and compacting
-// call the model, so they run just before the cache expires, while reading
+// Housekeeping: Bica keeps long-lived sessions, assistant mode
+// (docs/assistant-mode.md) and the hub (docs/hub.md), small while they sit
+// idle. Pruning runs once the cache is cold, when it is free. The memory
+// save and compaction call the model, so they run just before the cache expires, while reading
 // it is still cheap.
 
 const MINUTE = 60_000;
 const WARM_MARGIN = 5 * MINUTE;
-// Above this even after Clean up, the session compacts before the cache
+// Above this even after pruning, the session compacts before the cache
 // expires. Below it, the compaction may cost more than it saves.
 const COMPACT_AT = 120_000;
 // Above this, it compacts at the first idle minute: reads cost enough, and
@@ -34,23 +34,23 @@ const busy = new Set<string>();
 // Memory saves whose compaction was tried again, so a failing one can't loop.
 const retried = new Set<string>();
 
-/** Tends long-lived sessions every minute. */
-export function startUpkeep() {
-  setInterval(() => void tendAll(), MINUTE);
+/** Checks long-lived sessions every minute. */
+export function startHousekeeping() {
+  setInterval(() => void housekeepAll(), MINUTE);
 }
 
-async function tendAll() {
+async function housekeepAll() {
   const sessions = await listSessions().catch(() => []);
   for (const s of sessions)
-    if (keptSmall(s.agent) && !s.archivedAt && !busy.has(s.id)) {
+    if (isLongLived(s.agent) && !s.archivedAt && !busy.has(s.id)) {
       busy.add(s.id);
-      void tend(s.id, s.status === 'done')
-        .catch((error) => console.error('[long-lived]', error))
+      void housekeep(s.id, s.status === 'done')
+        .catch((error) => console.error('[housekeeping]', error))
         .finally(() => busy.delete(s.id));
     }
 }
 
-async function tend(id: string, unread: boolean) {
+async function housekeep(id: string, unread: boolean) {
   const conversation = await (
     await getHarness()
   ).conversation(Number(id) as ConversationId, context);
@@ -63,9 +63,9 @@ async function tend(id: string, unread: boolean) {
   if (usage.running || usage.compacting || !usage.cache) return;
   const idle = Date.now() - usage.cache.at;
 
-  // Decided on the size after Clean up: cleared often enough, it frees
+  // Decided on the size after pruning: cleared often enough, it frees
   // nothing, and only compaction helps.
-  const size = usage.used - usage.cleanable;
+  const size = usage.used - usage.prunable;
   if (size > COMPACT_AT) {
     if (size <= COMPACT_NOW_AT && idle < usage.cache.ttl - WARM_MARGIN) return;
     const at = view.entries.findLastIndex((e) => e.kind === 'pi.user');
@@ -85,6 +85,6 @@ async function tend(id: string, unread: boolean) {
     await compact(id, SUMMARY_RULES);
     // The save is bookkeeping, not news: a read session stays read.
     if (!unread) await markSeen(id);
-  } else if (idle >= usage.cache.ttl && usage.cleanable >= MIN_CLEANUP)
-    await cleanUpContext(id);
+  } else if (idle >= usage.cache.ttl && usage.prunable >= MIN_PRUNE)
+    await pruneContext(id);
 }

@@ -2,7 +2,7 @@ import 'server-only';
 import { defineDoc } from '@earendil-works/pi-durable';
 
 import { isAgent } from '#lib/agents';
-import type { Handoff, PullRequest, VoiceSettings } from '#lib/protocol';
+import type { InCharge, PullRequest, VoiceSettings } from '#lib/protocol';
 
 // App metadata stored next to each conversation; Pi Durable has no titles.
 export const SessionDoc = defineDoc<{
@@ -20,23 +20,25 @@ export const SessionDoc = defineDoc<{
   forkedAt?: number;
   // The session whose agent started this one (session_start).
   startedBy?: string;
-  // Its worktree was cleaned up: the branch and PR it had then.
+  // Its worktree was removed: the branch and PR it had then. Named when
+  // removing was called clean up.
   cleanedUp?: { branch: string | null; pr: PullRequest | null };
   // The id of the agent it runs as (src/lib/agents.ts), read through
   // agentIdOf. Agents were called profiles when the field was named, and it
   // keeps the name so stored sessions read as they are. Unset: from before
   // the field, coding.
   profile?: string;
-  // Started with session_start's `notify: false`: its starter hears nothing.
+  // Started with session_start's `notify: false`: its parent hears nothing.
   quiet?: boolean;
-  // Who sent the newest prompt: "user", "bica" for a note, or a session id.
+  // Who sent the newest prompt: "user", "bica" for a note, or the id of a
+  // session that sent a message.
   lastFrom?: string;
   // The user drives it: he started it, or took it over from the session that
   // did, until he hands it back (docs/sessions.md). Unset: from before the
   // field, so a session the user started counts as his.
   userPrompted?: boolean;
-  // Each time the user took it over or handed it back.
-  handoffs?: Handoff[];
+  // Each time you took it over or handed it back.
+  handoffs?: InCharge[];
   voice?: VoiceSettings;
   // Sessions that asked to hear when its current or next run ends
   // (session_send's `notify`). Stored, so a restart doesn't lose them.

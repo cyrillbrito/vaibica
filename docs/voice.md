@@ -7,19 +7,19 @@ During the call, the composer becomes the call panel: a level meter, what is bei
 ## How it works
 
 ```
- you ──speech──▶ GPT-Live (OpenAI) ── hand-off ──▶ Bica server ── prompt ──▶ the session
+ you ──speech──▶ GPT-Live (OpenAI) ── handoff ──▶ Bica server ── prompt ──▶ the session
      ◀─speech──                     ◀── result ───             ◀─ reply ──
 ```
 
-GPT-Live is only the voice. It listens, talks, can be interrupted, and decides when something needs the agent. The session does the work with its own model and tools. Hand-offs arrive as ordinary prompts, so everything stays in the transcript.
+GPT-Live is only the voice. It listens, talks, can be interrupted, and decides when something needs the agent. The session does the work with its own model and tools. Handoffs arrive as ordinary prompts, so everything stays in the transcript.
 
-- A hand-off carries your own words: the voice is asked not to rephrase you, and Bica adds what was said in the call since the last hand-off. The transcript shows those lines once, in the call.
-- A hand-off while the agent works joins that work at once, so "no, the other branch" lands before the wrong thing is done. Requests that joined the same work share one answer, spoken once.
+- A handoff carries your own words: the voice is asked not to rephrase you, and Bica adds what was said in the call since the last handoff. The transcript shows those lines once, in the call.
+- A handoff while the agent works joins the run at once, so "no, the other branch" lands before the wrong thing is done. Handoffs that joined the same run share one reply, spoken once.
 - Progress reaches the voice as quiet commentary, and the final reply as the result to speak. Long runs never time out.
-- A turn the call didn't start is spoken too, such as the hub hearing that a session finished or asks something.
+- A run the call didn't start is spoken too, such as the hub's run after a note that a session finished or asks something.
 - A result that is ready while you talk waits until you finish.
 - The voice knows the recent conversation, so "continue" makes sense, and the project's file names, so it passes names like "CommitBox" on spelled right.
-- "How's it going" gets the agent's latest step and how long ago it was, and "stop" stops the run.
+- "How's it going" gets the agent's latest turn and how long ago it was, and "stop" stops the run.
 
 Voice settings, in the context chip's menu, set a session's speed and instructions such as "talk with me in simple French".
 
@@ -44,7 +44,7 @@ Calls and dictation need the OpenAI Codex (legacy) provider in Settings → Prov
 ## Sources
 
 - [SomaFM: how to link to us](https://somafm.com/linktous/): the official stream links.
-- openai/codex [methods_v2.rs](https://github.com/openai/codex/blob/f1affbac/codex-rs/codex-api/src/endpoint/realtime_websocket/methods_v2.rs) and [#18761](https://github.com/openai/codex/pull/18761): Codex's voice passes "the user's own words", steers a running task, and sends what was said since the last hand-off.
+- openai/codex [methods_v2.rs](https://github.com/openai/codex/blob/f1affbac/codex-rs/codex-api/src/endpoint/realtime_websocket/methods_v2.rs) and [#18761](https://github.com/openai/codex/pull/18761): Codex's voice passes "the user's own words", steers a running task, and sends what was said since the last handoff.
 - ChatGPT, [ChatGPT Voice](https://learn.chatgpt.com/docs/features/voice): progress, blockers, and results from Codex tasks come back while you talk.
 - oh-my-pi's [live protocol](https://github.com/can1357/oh-my-pi/blob/403931b9/packages/coding-agent/src/live/protocol.ts): `session.context.append` on the same Codex route.
 - [How I make apps feel premium](https://youtu.be/MXLF8b15GhQ): a calorie app gives its dictation the nearby restaurant names so it hears them right.

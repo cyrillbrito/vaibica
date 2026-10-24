@@ -9,12 +9,12 @@ import {
 } from '@earendil-works/pi-durable';
 
 import type { Message } from '@earendil-works/pi-ai';
-import { CLEANUP_ENTRY, chars, cleanupEdits } from '#lib/cleanup';
+import { PRUNE_ENTRY, chars, pruneEdits } from '#lib/prune';
 import type { ModelChoice, PromptImage } from '#lib/protocol';
 import { context, getHarness } from '#server/agent';
 import { getAgent, loadMemory, projectList } from '#server/agents';
 import { checkChoice, defaultChoice, models } from '#server/providers';
-import { keepers } from './cleanup-judge';
+import { keepers } from './prune-judge';
 import { SessionDoc, agentIdOf, getConversation } from './store';
 
 /** Who sends a prompt: the user, Bica's own notes, or another session's id. */
@@ -166,7 +166,7 @@ export async function withdraw(id: string, submissionId: number) {
 }
 
 /**
- * Sends a queued follow-up after the current step instead of after the run.
+ * Sends a queued follow-up after the current turn instead of after the run.
  * Pi Durable can't change a queued item, so it is withdrawn and steered anew;
  * false: it was already sent.
  */
@@ -220,7 +220,7 @@ export function input(prompt: string, images: PromptImage[]) {
   ];
 }
 
-/** Switches the model or effort; the next answer uses it. */
+/** Switches the model or effort; the next request uses it. */
 export async function configure(id: string, choice: ModelChoice) {
   await (await getConversation(id)).configure(checkChoice(choice), context);
 }
@@ -241,12 +241,12 @@ export async function compact(id: string, instructions?: string) {
 }
 
 /**
- * Clears old tool output from the model context (src/lib/cleanup.ts). The
+ * Clears old tool output from the model context (src/lib/prune.ts). The
  * transcript keeps everything; only what the model reads changes. While the
  * agent works, the edits land at its next step, like a steer. Resolves once
  * they landed, with the tokens freed.
  */
-export async function cleanUpContext(id: string) {
+export async function pruneContext(id: string) {
   const conversation = await getConversation(id);
   const harness = await getHarness();
   // A summary in the works would hide the entries the edits target.
@@ -254,13 +254,13 @@ export async function cleanUpContext(id: string) {
     (await harness.snapshot(LiveDoc, conversation.id, context))?.compactions
       ?.length
   )
-    throw new Error('Wait for the compaction to finish, then clean up');
+    throw new Error('Wait for the compaction to finish, then prune');
   const view = await conversation.context(context);
   const current = new Map(
     view.entries.map((e, i) => [e.id, view.contributions[i]] as const),
   );
   const of = (e: EntryRecord) => current.get(e.id);
-  const edits = cleanupEdits(view.entries, of, await keepers(view.entries, of));
+  const edits = pruneEdits(view.entries, of, await keepers(view.entries, of));
   if (!edits.length) return 0;
   const size = (messages: readonly Message[] = []) =>
     messages.reduce((n, m) => n + chars(m), 0);
@@ -274,7 +274,7 @@ export async function cleanUpContext(id: string) {
     ) / 4,
   );
   const submission = await conversation.submit(
-    { type: 'write', entry: { kind: CLEANUP_ENTRY, edits, data: { freed } } },
+    { type: 'write', entry: { kind: PRUNE_ENTRY, edits, data: { freed } } },
     context,
   );
   await submission.wait(context);

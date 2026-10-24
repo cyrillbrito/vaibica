@@ -21,8 +21,8 @@ import {
 } from '#lib/protocol';
 import {
   archive,
-  cleanUpWorktree,
-  cleanUpContext,
+  removeWorktree,
+  pruneContext,
   compact,
   configure,
   createSession,
@@ -34,7 +34,7 @@ import {
   runTonight,
   saveTonight,
   startNight,
-  startUpkeep,
+  startHousekeeping,
   push as pushSubmission,
   rename,
   retryStuck,
@@ -100,7 +100,7 @@ import {
 const booted = globalThis as { bicaBooted?: boolean };
 if (!booted.bicaBooted) {
   booted.bicaBooted = true;
-  startUpkeep();
+  startHousekeeping();
   startNight();
   // Opening the harness resumes runs a restart left unfinished.
   void getHarness().catch((error) => console.error('[harness]', error));
@@ -150,7 +150,7 @@ const calls: Handlers = {
     return null;
   },
   'worktree.cleanUp': async (args) =>
-    cleanUpWorktree(args.projectId, args.cwd, args.force === true),
+    removeWorktree(args.projectId, args.cwd, args.force === true),
   'fs.dirs': async ({ path }) => listDirs(path),
   'session.submit': async (args) => {
     await fromUser(
@@ -199,7 +199,7 @@ const calls: Handlers = {
     return null;
   },
   'session.cleanup': async ({ id }) => {
-    await cleanUpContext(id);
+    await pruneContext(id);
     return null;
   },
   'session.fork': async ({ id, at }) => fork(id, at),

@@ -1,8 +1,8 @@
 # Sessions
 
-A session is one conversation with an agent. It runs in one workspace, with its own model and effort, a transcript, and a queue of prompts. You can run many at once and watch them all stream.
+A session is one conversation with an agent. It runs in one workspace ([projects.md](./projects.md)), with its own model and effort, a transcript, and a queue of prompts. You can run many at once and watch them all stream.
 
-Sessions run on Pi Durable, which saves every step before anyone sees it. A crash or restart loses nothing, and unfinished runs pick up where they stopped.
+Sessions run on Pi Durable, which saves every turn and tool call before anyone sees it. A crash or restart loses nothing, and unfinished runs pick up where they stopped.
 
 ## Starting one
 
@@ -15,24 +15,24 @@ The transcript shows your prompts with their images, the agent's replies, its th
 - Thinking and tool calls between two replies fold into one activity list, with a header such as "Worked for 18s · 6 tools, 1 thought". Each call opens to its command and output, its diff, or its arguments.
 - Running calls show a spinner, slow ones a timer, and failed ones say "Failed" in red.
 - Before the first words stream, a "Working" pill sits at the bottom. A provider error waiting to retry shows there too, with a countdown.
-- Hover an answer to copy or fork it. Code blocks get their own copy button.
-- Messages from other sessions show as a quiet row with the sender.
+- Hover a reply to copy or fork it. Code blocks get their own copy button.
+- Notes from Bica and messages from other sessions show as a quiet row with the sender.
 - Hide thinking, in Settings → Appearance, leaves thinking out on that device.
 
 `bun scripts/demo-session.ts` seeds a session with every kind of row.
 
 ## Queue, push, stop
 
-While the agent works, sending queues the prompt for the next run. Queued prompts sit on a tray above the composer, and every tab sees the same queue.
+While the agent works, sending queues the prompt as a follow-up, which starts the next run. Follow-ups sit on a tray above the composer, and every tab sees the same queue.
 
-- Push turns a queued prompt into a steer, which joins the current run after the step in progress. ⌘Enter sends a steer straight away.
+- Push turns a follow-up into a steer, which joins the current run after the turn in progress. ⌘Enter sends a steer straight away.
 - Edit takes a prompt back into the composer, and Remove drops it.
-- Stop ends the run, and queued prompts come back into the composer. Esc twice in the composer stops too.
-- A run that fails doesn't hold up the queue: the next prompt runs anyway, so notes to an unwatched session still get read.
+- Stop ends the run, and follow-ups come back into the composer. Esc twice in the composer stops too.
+- A run that fails doesn't hold up the queue: the next follow-up runs anyway, so notes to an unwatched session still get read.
 
-## Who drives a session
+## Who's in charge
 
-A session another session started is in its parent's charge at first: the parent hears of every turn and answers it. A strip above the composer says "Parent in charge".
+A worker, a session another session started, is in its parent's charge at first: the parent gets a note after every run. A strip above the composer says "Parent in charge".
 
 - Sending takes over, so the send button reads "Take over". From then on the parent hears nothing more, and can't message or stop it unless you tell it to.
 - The arrow beside the send button holds a plain Send, which leaves the parent in charge and gives it a copy of your words.
@@ -47,7 +47,7 @@ A session another session started is in its parent's charge at first: the parent
 
 ## Forks
 
-A fork is a new session with another one's history up to a chosen answer. It runs in the same folder, so files are shared, not rolled back.
+A fork is a new session with another one's history up to a chosen reply. It runs in the same workspace, so files are shared, not rolled back.
 
 ## Status
 
@@ -57,10 +57,10 @@ Each session in the sidebar shows its status:
 - Retrying: the provider failed, and Pi Durable will try again.
 - Failed: the last run ended in an error, or its work is stuck.
 - Waiting for you: the agent asked a question.
-- Unread: finished with an answer you haven't opened.
+- Unread: finished with a reply you haven't opened.
 - Idle: everything else.
 
-The right end of a row shows a live clock while it runs, a tag when it needs you, or how long ago it last moved. Tabs on top of the sidebar filter to All or Needs you. The home page stacks the sessions that need you under the composer, most urgent first.
+The right end of a row shows a live clock while it runs, a tag when it needs you, or how long ago it last moved. Needs you means waiting for you, unread, or failed. Tabs on top of the sidebar filter to All or Needs you, which also keeps running sessions and any that moved in the last few minutes. The home page stacks the sessions that need you under the composer, most urgent first.
 
 Work is stuck when Pi Durable won't run it. Work that was cut off by crashes too many times in a row, such as a tool that runs Bica out of memory, is paused instead of crashing Bica again. Work whose code is gone from Bica, such as a removed extension's tool, can't run at all. A strip above the composer says which, with Retry for paused work. Stop ends either.
 

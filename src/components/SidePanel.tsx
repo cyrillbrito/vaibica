@@ -36,7 +36,7 @@ type Tab = 'files' | 'git';
 // Survives switching workspaces: you usually want the same kind of view.
 const [tab, setTab] = createSignal<Tab>('git');
 
-export default function Inspector() {
+export default function SidePanel() {
   const location = useLocation();
   const current = useCurrentWorkspace();
 

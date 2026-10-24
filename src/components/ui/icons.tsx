@@ -123,7 +123,7 @@ export const DiffIcon = icon(Diff);
 export const SidebarIcon = icon(PanelLeft);
 export const ColdIcon = icon(Snowflake);
 export const ExpiringIcon = icon(Hourglass);
-export const InspectorIcon = icon(PanelRight);
+export const SidePanelIcon = icon(PanelRight);
 export const FolderIcon = icon(Folder);
 export const ListIcon = icon(List);
 export const TreeIcon = icon(ListTree);
@@ -156,7 +156,7 @@ export const MergedIcon = icon(GitMerge);
 export const InfoIcon = icon(Info);
 export const AlertIcon = icon(CircleAlert);
 export const CompactIcon = icon(ChevronsDownUp);
-export const CleanUpIcon = icon(Eraser);
+export const PruneIcon = icon(Eraser);
 /** Voice calls. */
 export const VoiceIcon = icon(AudioLines);
 export const HangUpIcon = icon(PhoneOff);

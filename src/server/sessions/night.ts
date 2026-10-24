@@ -143,7 +143,7 @@ async function run(id: string) {
 async function send(id: string, prompt: string) {
   starting.add(id);
   try {
-    // As its starter, so a session the hub planned stays the hub's.
+    // As its parent, so a session the hub planned stays the hub's.
     const meta = await (
       await getHarness()
     ).snapshot(SessionDoc, (await getConversation(id)).id, context);

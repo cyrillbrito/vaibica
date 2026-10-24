@@ -15,7 +15,7 @@ import {
   workspaceHref,
 } from '#lib/workspace';
 
-export default function ProjectPage(_props: RouteProps<'/p/:id'>) {
+export default function WorkspacePage(_props: RouteProps<'/p/:id'>) {
   const location = useLocation();
   const current = useCurrentWorkspace();
   const open = createMemo(() => openFromSearch(location.search), {
@@ -29,7 +29,7 @@ export default function ProjectPage(_props: RouteProps<'/p/:id'>) {
       fallback={
         <>
           <TopBar />
-          <Empty>Project not found</Empty>
+          <Empty>Workspace not found</Empty>
         </>
       }
     >

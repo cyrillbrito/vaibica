@@ -2,32 +2,32 @@
 
 Assistant mode is for a session you never close. Most sessions are a task: you finish the work and move on. Some are a companion instead, like a notes vault you talk to every day and come back to for months. Assistant mode lets that kind of session keep going without you thinking about context size, cost, or when to start over.
 
-Turn it on with the Assistant button next to the workspace when you start a session, which runs it as the Assistant [agent](./agents.md). The context chip then shows an infinity sign, and its menu can turn it off again. The [hub](./hub.md) is kept small the same way.
+Turn it on with the Assistant button next to the workspace when you start a session, which runs it as the Assistant [agent](./agents.md). The context chip then shows an infinity sign, and its menu can turn it off again.
 
 ## The idea
 
-A long conversation gets expensive, because every message resends everything before it, and forgetful, because models work worse as the context grows and summaries lose detail each time.
+A long conversation gets expensive, because every prompt resends everything before it, and forgetful, because models work worse as the context grows and summaries lose detail each time.
 
 Assistant mode splits memory in two. The conversation is short-term memory, trimmed regularly. Files in the project are long-term memory, and keep what matters. The agent writes to them as it goes, and always before anything is summarized away. The files are ordinary notes, so the memory follows you and doesn't depend on Bica.
 
-## What happens
+## Housekeeping
 
-Bica looks after the session while it sits idle, so it never interrupts your work.
+Housekeeping is what Bica does for the session while it sits idle, so it never interrupts your work. The [hub](./hub.md) gets it too.
 
-- Once the prompt cache has expired, it clears old tool output. Your messages and the agent's replies stay.
-- If the session is still big, it asks the agent to save what's worth keeping to its memory files, then compacts the older turns, just before the cache expires, while that is still cheap.
+- Once the prompt cache has expired, it prunes old tool output. Your prompts and the agent's replies stay.
+- If the session is still big, a memory save asks the agent to write what's worth keeping to its memory files, then Bica compacts the older context, just before the cache expires, while that is still cheap.
 - If a session gets very big during heavy use, it does the same at the first idle minute.
 
 The agent is told it is a long-running helper for its project, for notes, planning, research, answers, and quick fixes, and that bigger coding tasks go to sessions of their own. It writes decisions, preferences, and open tasks down as they come up, keeps only what will stay true, and replaces facts that changed.
 
 ## The memory index
 
-Every session, assistant or not, starts with the memory index in its instructions: `MEMORY.md`, or `PROFILE.md`, in the session's folder. Bica takes a copy when the session starts and refreshes it only after a compaction, so the prompt cache holds. A long index is cut, and the agent is told so.
+Every session, assistant or not, starts with the memory index in its system prompt: `MEMORY.md`, or `PROFILE.md`, in the session's workspace. Bica takes a copy when the session starts and refreshes it only after a compaction, so the prompt cache holds. A long index is cut, and the agent is told so.
 
 ## Why it works this way
 
 - Every change to old context breaks the prompt cache once, so Bica changes it rarely, in large steps, and only when the cache is cold or about to be ([context-usage.md](./context-usage.md)).
-- Clearing old tool output keeps nearly all the value of a summary at no cost, so it comes first.
+- Pruning old tool output keeps nearly all the value of a summary at no cost, so it comes first.
 - A summary of a summary forgets more each time. Saving to files first means the summary never has to carry what matters most.
 
 It needs a model with a known cache lifetime, which means Anthropic's.

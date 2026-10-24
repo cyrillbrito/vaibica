@@ -6,7 +6,7 @@ import { isServer } from '@solidjs/web';
 import { createSignal } from 'solid-js';
 
 import type { StepDetail } from '../protocol';
-import { CLEANUP_ENTRY } from '../cleanup';
+import { PRUNE_ENTRY } from '../prune';
 import { fixtureContext } from './usage';
 
 const MIN = 60_000;
@@ -185,7 +185,7 @@ const CONTEXT = {
   spend: [],
   compacting: false,
   running: false,
-  cleanable: 0,
+  prunable: 0,
 };
 
 const PATCH = `--- a/src/components/Sidebar.tsx
@@ -590,12 +590,12 @@ type Talk = {
   readonly value: ConversationView;
   submit?: (text: string) => void;
   compact?: () => Promise<void>;
-  cleanup?: () => Promise<void>;
+  prune?: () => Promise<void>;
   write?: (kind: string, data: unknown) => void;
   compacted?: (summary: string) => void;
 };
 
-/** The talk with its own context, which compact and clean up change. */
+/** The talk with its own context, which compaction and pruning change. */
 function withContext(
   talk: Talk,
   shape: 'running' | 'finished' | 'asking',
@@ -622,10 +622,10 @@ function withContext(
         3200,
       );
     },
-    cleanup: async () => {
-      const freed = context.value().cleanable;
-      await context.cleanup();
-      talk.write?.(CLEANUP_ENTRY, { freed });
+    prune: async () => {
+      const freed = context.value().prunable;
+      await context.prune();
+      talk.write?.(PRUNE_ENTRY, { freed });
     },
   };
 }

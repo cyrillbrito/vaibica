@@ -31,7 +31,7 @@ import {
 
 export interface NewSession {
   projectId: string;
-  // A workspace of the project; absent: the project folder.
+  // A workspace of the project; absent: its main folder.
   cwd?: string;
   prompt: string;
   images?: PromptImage[];
@@ -43,7 +43,7 @@ export interface NewSession {
   // chat); `cwd` is ignored.
   worktree?: boolean;
   agent?: AgentId;
-  // Its starter hears nothing of its runs.
+  // Its parent hears nothing of its runs.
   quiet?: boolean;
   // Holds the prompt for tonight's run (docs/night-runs.md) instead of
   // sending it, as the Night agent.
@@ -129,7 +129,7 @@ export async function createSession({
     },
     context,
   );
-  // Nothing to send: started for a voice call, whose first hand-off names it.
+  // Nothing to send: started for a voice call, whose first handoff names it.
   if (!tonight && (prompt || images.length))
     await submit(
       String(conversation.id),

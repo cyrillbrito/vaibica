@@ -7,7 +7,7 @@ import { IconButton } from './ui/Button';
 import { CopyButton } from './ui/CopyButton';
 import {
   ChevronIcon,
-  CleanUpIcon,
+  PruneIcon,
   CompactIcon,
   CopyIcon,
   ForkIcon,
@@ -32,7 +32,7 @@ export default function MessageRow(props: {
   onFork?: (at: number) => void;
   onAnswer: (text: string) => Promise<unknown>;
   // A fork's original, for the divider.
-  parent?: { id: string; title: string };
+  forkedFrom?: { id: string; title: string };
   // Where relative paths in replies start.
   cwd?: string;
 }) {
@@ -212,12 +212,12 @@ export default function MessageRow(props: {
         </Match>
         <Match when={props.message.kind === 'end' ? props.message : undefined}>
           {(end) => (
-            // Tucked under the answer it belongs to: quiet until the answer
+            // Tucked under the reply it belongs to: quiet until the reply
             // is hovered or focused (affectUI's Message Actions).
             <div
               class="-mt-4 -ml-1.5 flex text-muted opacity-0 transition-opacity duration-200 ease-out group-data-show/row:opacity-100 focus-within:opacity-100 touch:opacity-100"
               role="toolbar"
-              aria-label="Answer actions"
+              aria-label="Reply actions"
             >
               <Show when={end().text}>
                 {(text) => <CopyButton title="Copy as Markdown" text={text} />}
@@ -239,15 +239,15 @@ export default function MessageRow(props: {
         <Match when={props.message.kind === 'forked'}>
           <div class={RULE}>
             <div class="h-px flex-1 bg-line" />
-            <Show when={props.parent} fallback="Forked here">
-              {(parent) => (
+            <Show when={props.forkedFrom} fallback="Forked here">
+              {(from) => (
                 <a
                   class="flex min-w-0 items-center gap-1.5 hover:text-fg"
-                  href={paths.s(parent().id)}
+                  href={paths.s(from().id)}
                 >
                   <ForkIcon />
                   <span class="truncate">
-                    Forked from {parent().title || 'another session'}
+                    Forked from {from().title || 'another session'}
                   </span>
                 </a>
               )}
@@ -256,7 +256,7 @@ export default function MessageRow(props: {
           </div>
         </Match>
         <Match
-          when={props.message.kind === 'handoff' ? props.message : undefined}
+          when={props.message.kind === 'in-charge' ? props.message : undefined}
         >
           {(h) => (
             <div class={RULE}>
@@ -312,7 +312,7 @@ export default function MessageRow(props: {
           )}
         </Match>
         <Match
-          when={props.message.kind === 'cleanup' ? props.message : undefined}
+          when={props.message.kind === 'prune' ? props.message : undefined}
         >
           {(c) => (
             <div class="flex items-center gap-1">
@@ -321,8 +321,8 @@ export default function MessageRow(props: {
                 title="Old tool output was cleared from what the model reads. The transcript keeps all of it."
               >
                 <div class="h-px flex-1 bg-line" />
-                <CleanUpIcon />
-                Cleaned up old output
+                <PruneIcon />
+                Pruned old output
                 <Show when={c().freed}>
                   {(freed) => (
                     <span class="tabular-nums">· −{formatTokens(freed())}</span>
@@ -333,7 +333,7 @@ export default function MessageRow(props: {
               <RuleFork
                 onFork={props.onFork}
                 at={c().at}
-                title="Fork from here, cleaned up"
+                title="Fork from here, pruned"
               />
             </div>
           )}
@@ -361,7 +361,7 @@ export default function MessageRow(props: {
           )}
         </Match>
         <Match
-          when={props.message.kind === 'cleaning' ? props.message : undefined}
+          when={props.message.kind === 'pruning' ? props.message : undefined}
         >
           {(c) => (
             <div class={RULE} role="status">
@@ -369,8 +369,8 @@ export default function MessageRow(props: {
               <SpinnerIcon />
               <span class="shimmer">
                 {c().running
-                  ? 'Cleaning up old output at the next step…'
-                  : 'Cleaning up old output…'}
+                  ? 'Pruning old output at the next turn…'
+                  : 'Pruning old output…'}
               </span>
               <div class="h-px flex-1 bg-line" />
             </div>

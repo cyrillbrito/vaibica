@@ -9,7 +9,7 @@ import type {
 } from '@earendil-works/pi-durable';
 
 import { projector, stepDetail } from '../projection';
-import { CLEANUP_ENTRY } from '../cleanup';
+import { PRUNE_ENTRY } from '../prune';
 import { VOICE_ENTRY } from '../transcript';
 import type {
   ModelCatalog,
@@ -218,7 +218,7 @@ export function chat(id: string, turns: Turn[], opts: ChatOptions): Chat {
         at += ms;
       });
     } else if ('cleaned' in turn) {
-      entry(CLEANUP_ENTRY, undefined, { freed: turn.cleaned });
+      entry(PRUNE_ENTRY, undefined, { freed: turn.cleaned });
       context -= turn.cleaned;
     } else if ('compacted' in turn) {
       entry(

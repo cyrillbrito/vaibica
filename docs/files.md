@@ -1,14 +1,14 @@
 # Files and diffs
 
-Every workspace ([projects.md](./projects.md)) has a project page for reviewing the agent's work: one file or diff full size in the centre, with Files and Git ([git.md](./git.md)) on the right. The same right panel sits next to every session.
+Every workspace ([projects.md](./projects.md)) has a workspace page for reviewing the agent's work: one file or diff full size in the centre, with the side panel's Files and Git ([git.md](./git.md)) tabs on the right. The same side panel sits next to every session.
 
 The files stay on the dev machine. The browser asks the server for them and never reads the disk.
 
 ## The workspace card
 
-With nothing open, the project page shows a composer for a new session here, then the workspace's sessions, then the workspace as a card: a ring with a segment per changed file, filled once staged, the pull request, the branch, and what to push or pull. Below it are the changed files with their lines added and removed, a filter, and the latest commits. A click opens a file's diff.
+With nothing open, the workspace page shows a composer for a new session here, then the workspace's sessions, then the workspace as a card: a ring with a segment per changed file, filled once staged, the pull request, the branch, and what to push or pull. Below it are the changed files with their lines added and removed, a filter, and the latest commits. A click opens a file's diff.
 
-## Comments on diff lines (prototype)
+## Review comments (prototype)
 
 In a diff, the + next to a line adds a comment for the agent, and dragging covers several lines. Comments collect in a bar at the bottom, and Send passes them as one prompt to the open session, or to the newest session in the workspace. A reload drops them.
 
@@ -17,7 +17,7 @@ In a diff, the + next to a line adds a comment for the agent, and dragging cover
 There are no tabs. Opening something replaces what was there, and what's open lives in the URL, so reload, back, and links all work.
 
 - Opened from a session, the file covers the chat, and ✕ or Esc goes back.
-- Keep open (the pin) lists a file in the sidebar until you unpin it.
+- Keep open (the pin) makes it a kept file, listed in the sidebar until you unpin it.
 - A switch jumps between a file and its diff. Diffs are side by side or unified, and always unified on a phone.
 - Images, PDFs, audio, and video show as themselves, before and after side by side in a diff.
 - Markdown, HTML, and Mermaid files open rendered, and the eye button shows the source. HTML runs in a sandbox with no access to Bica.

@@ -10,7 +10,7 @@ import type {
   LiveState,
 } from '@earendil-works/pi-durable';
 
-import { CLEANUP_ENTRY } from './cleanup';
+import { PRUNE_ENTRY } from './prune';
 import { requestTokens } from './context-usage';
 import type { PromptImage, SessionStatus } from './protocol';
 
@@ -24,12 +24,12 @@ export type Message = { key: string } & (
       // Not typed by you: a note from Bica or a message from another session.
       from?: Sender;
     }
-  // The end of an answer: a fork from here continues after it. `text` is its last reply, for copying.
+  // The end of a reply: a fork from here continues after it. `text` is its last reply, for copying.
   | { kind: 'end'; at: number; text?: string }
   // Where a forked session's own messages start.
   | { kind: 'forked' }
-  // Who drives a session another one started changed here.
-  | { kind: 'handoff'; to: 'you' | 'parent' }
+  // Who is in charge of a worker changed here.
+  | { kind: 'in-charge'; to: 'you' | 'parent' }
   // Everything above was swapped for this summary.
   // `before`: the last measured request size; `after`: the summary's estimate.
   // `at`: the entry, so a fork from here starts with the summary.
@@ -44,9 +44,9 @@ export type Message = { key: string } & (
   // A summary is being written; `retry` after a failed attempt.
   | { kind: 'compacting'; auto: boolean; retry?: string }
   // Old tool output was cleared from here back; `freed` is missing on older ones.
-  | { kind: 'cleanup'; at: number; freed?: number }
-  // A clean up asked for in this tab, until it lands.
-  | { kind: 'cleaning'; running: boolean }
+  | { kind: 'prune'; at: number; freed?: number }
+  // Pruning asked for in this tab, until it lands.
+  | { kind: 'pruning'; running: boolean }
   | { kind: 'text' | 'error'; text: string }
   // Questions for the user; `open` while the session waits for the answer.
   // `answer`: the prompt that came next, shown in the card instead of a row.
@@ -66,7 +66,7 @@ export type Sender = { label: string; session?: string };
 
 // The labels src/server/sessions/ (tell) and session-tools.ts
 // (session_send) put in front. The model reads a plain user message, which
-// is the only kind that starts a turn; only the transcript tells them apart.
+// is the only kind that starts a run; only the transcript tells them apart.
 const NOTE = '[Note from Bica, not from the user] ';
 const SENT = /^\[Message from session (\d+) "(.*?)"\] /;
 
@@ -90,13 +90,13 @@ export function senderOf(text: string): { from?: Sender; text: string } {
 export const VOICE_ENTRY = 'bica.voice';
 export type VoiceLine = { who: 'you' | 'voice'; text: string; at: number };
 
-// A hand-off from a call carries what was said since the last one, as
+// A handoff from a call carries what was said since the last one, as
 // Codex's voice sends a transcript delta, so the agent reads the user's own
 // words and not only the voice's version. The transcript shows those lines
 // already, so the prompt row leaves them out.
 const CALL_WORDS = /\n\n<voice_call>\n[\s\S]*<\/voice_call>$/;
 
-/** A hand-off with the call's lines since the last one appended. */
+/** A handoff with the call's lines since the last one appended. */
 export const withCallWords = (request: string, lines: string[]) =>
   lines.length
     ? `${request}\n\n<voice_call>\nWhat was said in the voice call since the last request. It is transcribed from speech, so it may hold misheard words, half sentences, and corrections: go by the latest, and ask when a detail is unclear.\n\n${lines.join('\n')}\n</voice_call>`
@@ -104,9 +104,9 @@ export const withCallWords = (request: string, lines: string[]) =>
 
 export const withoutCallWords = (text: string) => text.replace(CALL_WORDS, '');
 
-/** From the agent or a prompt: voice lines and clean ups don't set the status. */
+/** From the agent or a prompt: voice lines and pruning don't set the status. */
 export const isTurn = (entry: EntryRecord) =>
-  entry.kind !== VOICE_ENTRY && entry.kind !== CLEANUP_ENTRY;
+  entry.kind !== VOICE_ENTRY && entry.kind !== PRUNE_ENTRY;
 
 /** One question of the `ask` tool (src/server/agent/tools/ask.ts). */
 export interface Question {
@@ -292,7 +292,7 @@ export function toMessages(
       promptAt(last) !== undefined ||
       last.kind === 'end' ||
       last.kind === 'compaction' ||
-      last.kind === 'cleanup'
+      last.kind === 'prune'
     )
       return;
     let text: string | undefined;
@@ -320,7 +320,7 @@ export function toMessages(
       else messages.push({ key: `${entry.id}`, kind: 'call', lines: [line] });
       return;
     }
-    // A finished answer ends before a compaction or clean up, so forking it
+    // A finished answer ends before a compaction or pruning, so forking it
     // keeps the context as it was; the row's own fork takes the new one.
     const settle = () => {
       const prev = view.entries[n - 1];
@@ -328,11 +328,11 @@ export function toMessages(
       if (last?.role === 'assistant' && last.stopReason !== 'toolUse')
         end(prev!.id);
     };
-    if (entry.kind === CLEANUP_ENTRY) {
+    if (entry.kind === PRUNE_ENTRY) {
       settle();
       messages.push({
         key: `${entry.id}`,
-        kind: 'cleanup',
+        kind: 'prune',
         at: entry.id,
         freed: (entry.data as { freed?: number } | undefined)?.freed,
       });

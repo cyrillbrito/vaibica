@@ -76,7 +76,7 @@ The utilities in `App.css`:
 
 - `pop`: menus, popovers, dialogs fade and grow in (from `transform-origin`; modals stay centred).
 - `sheet`: phone bottom sheets slide up (`max-md:sheet md:pop` when a surface is both).
-- `appear`: things that turn up on their own (a question, a queued prompt, a warning) fade and settle.
+- `appear`: things that turn up on their own (a question, a follow-up, a warning) fade and settle.
 - `expand`: on a `<details>`, opens smoothly instead of snapping.
 - `swap-in`: an icon replacing another in place blurs and grows in (a tool call's spinner becoming its icon). Only when you saw the change happen, not on load.
 - `roll-in` / `roll-out`: a character or label rolling in where another was, from below when a value grows and from above when it shrinks (set `--roll-from` negative). `RollingNumber` and `ThinkingLoader` use them.
@@ -142,9 +142,9 @@ Sounds are short and synthesized with Web Audio, with no audio files: a chime wh
 Screens are drawn against kind data, so check them against the worst realistic data too: long names, missing fields, huge counts, non-Latin text. In development, pick one under Settings → Test data, or open any page with `?data=worst` (or `demo`, `empty`, `one`, `huge`, or `live` for real data). A switch at the bottom of the page changes it, – hides it until a reload (for screenshots), and × turns it off. It stays on for the tab across navigation and reloads.
 
 - The test data stands in where topics are read (`useTopic`), so every screen gets it. It never reaches the server or the cache on the device.
-- The whole app has test data, in `src/lib/fixtures/`: the sidebar (sessions, projects, terminals, kept files), the transcripts, and the right panel (git status and files). In `demo` and `worst`, models (with list prices), providers, plan usage (limits near and at the cap), and each live test session's context have test data too (`usage.ts`), and Compact and Clean up play out on them. The other modes keep those live.
+- The whole app has test data, in `src/lib/fixtures/`: the sidebar (sessions, projects, terminals, kept files), the transcripts, and the side panel (git status and files). In `demo` and `worst`, models (with list prices), providers, plan usage (limits near and at the cap), and each live test session's context have test data too (`usage.ts`), and Compact and Clean up play out on them. The other modes keep those live.
 - Transcripts go through the same projection as live data, so opened rows load their details. In `demo` and `worst`, a few sessions play out live: one runs on a loop, one waits on a question, and one holds every kind of finished row.
-- Demo data doubles as screenshot data: `/s/demo-shortcuts?data=demo` shows one session from prompt to answer, with its changes and diffs on the right.
+- Demo data doubles as screenshot data: `/s/demo-shortcuts?data=demo` shows one session from prompt to reply, with its changes and diffs on the right.
 - Commands are held back while it's on: they are logged to the console and never answer. Reads with test data (step details, files and diffs in the test data) answer from it; other reads go to the server.
 
 ## Debugging Solid updates

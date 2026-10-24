@@ -56,7 +56,7 @@ let nextId = 0;
 const words = (q: string) => q.toLowerCase().split(/\s+/).filter(Boolean);
 
 /**
- * Where a new session starts: a project's folder, one of its worktrees, a
+ * Where a new session starts: a project's main folder, one of its worktrees, a
  * new worktree, or a chat. A popover with search on top, grouped by project,
  * the recent places first; a bottom sheet on the phone. Typing a branch,
  * folder, ticket, or pull request number finds it in any project.

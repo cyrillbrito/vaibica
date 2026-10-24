@@ -2,13 +2,13 @@ import 'server-only';
 import type { Message, ToolCall } from '@earendil-works/pi-ai';
 import type { EntryRecord } from '@earendil-works/pi-durable';
 
-import { KEEP_OUTPUT, chars, isCleared, oldCalls } from '#lib/cleanup';
+import { KEEP_OUTPUT, chars, isCleared, oldCalls } from '#lib/prune';
 import { decide, hasDecisionModel } from '#server/providers';
 
-// Smart Clean up: with a decision model set (Settings → Models), it reads the
+// Smart pruning: with a decision model set (Settings → Models), it reads the
 // whole session and names the old tool outputs that must stay word for word. The rest clear as usual. Modeled on
 // fast-jev-compaction (docs/context-usage.md), with its two questions cut to
-// one, since Clean up never removes a call.
+// one, since pruning never removes a call.
 
 const CONTEXT =
   'A coding assistant session is being cleaned up to free context. `history` is the conversation so far, oldest first; long texts are abridged, and each tool call is one line with its id, input, and the start of its output. Old outputs get replaced by a short note with their start and end, unless kept. The assistant can always run a tool again or reread a file.';
@@ -30,7 +30,7 @@ type Candidate = { tag: string; toolCallId: string };
 
 /**
  * Tool call ids whose output should stay verbatim. Empty without a decision
- * model, and when it fails: Clean up then clears everything, as before.
+ * model, and when it fails: pruning then clears everything.
  */
 export async function keepers(
   entries: readonly EntryRecord[],
@@ -94,7 +94,7 @@ export async function keepers(
         .map((c) => c.toolCallId),
     );
   } catch (error) {
-    console.error('[cleanup] decision model failed, clearing all:', error);
+    console.error('[prune] decision model failed, clearing all:', error);
     return new Set();
   }
 }

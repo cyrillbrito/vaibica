@@ -1,6 +1,6 @@
 # Git
 
-The right panel's Git tab is where you stage, commit, and push the agent's work. It is modelled on VS Code's source control.
+The side panel's Git tab is where you stage, commit, and push the agent's work. It is modelled on VS Code's source control.
 
 ## The Git tab
 

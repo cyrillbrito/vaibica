@@ -4,7 +4,7 @@ export { watchSessions, listSessions, sessionWorkspace } from './store';
 export { watchConversation, conversationDetail } from './conversation';
 export { createSession, fork } from './create';
 export {
-  cleanUpContext,
+  pruneContext,
   compact,
   configure,
   push,
@@ -14,7 +14,7 @@ export {
 } from './prompts';
 export {
   archive,
-  cleanUpWorktree,
+  removeWorktree,
   markSeen,
   rename,
   setAgent,
@@ -24,7 +24,7 @@ export { fromUser, handBack, tell } from './notes';
 export { recentPrompts } from './read';
 export { openHub, updateHub } from './hub';
 export { cancelTonight, runTonight, saveTonight, startNight } from './night';
-export { startUpkeep } from './upkeep';
+export { startHousekeeping } from './housekeeping';
 export { retryStuck } from './stuck';
 export { HubSessionTools, SessionTools } from './tools';
 export { voiceSession } from './voice';

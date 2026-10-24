@@ -11,7 +11,7 @@ Bica is a complete development tool for one person, the author. It is not a prod
 - Agent sessions are the core, but not the whole tool.
 - Each feature gets its own worktree, so parallel agents never collide.
 - Review happens in full-screen diffs, not a cramped side panel, and review comments go back to the agent.
-- Git covers commit, push, pull requests, and cleaning up merged worktrees.
+- Git covers commit, push, pull requests, and removing merged worktrees.
 - Files can be opened, searched, and quickly edited.
 
 If a daily dev task forces a switch to another app, that is a gap worth closing. Heavy editing in VS Code is the one accepted exception.
@@ -22,7 +22,7 @@ There is no time to prove every idea here, so borrow from people who already bui
 
 - Remote first. The server runs on the dev machine, and the UI works in any browser and installs as an app on the phone.
 - Fast and polished. Interactions feel instant, output streams, and nothing jumps. Design quality counts as a feature.
-- Many sessions at once. You can watch them stream, steer or queue messages while the agent works, and reconnect or join late without losing anything.
+- Many sessions at once. You can watch them stream, steer or queue prompts while the agent works, and reconnect or join late without losing anything.
 - Reviewing the agent's work in full-size files and diffs, with comments that go back to the agent.
 
 ## Out of scope
@@ -54,7 +54,7 @@ There is no time to prove every idea here, so borrow from people who already bui
 
 ## Next
 
-- Line comments past the prototype in [files.md](docs/files.md), and quick edits in Pierre's edit mode.
+- Review comments past the prototype in [files.md](docs/files.md), and quick edits in Pierre's edit mode.
 - Opening pull requests, and comparing a worktree against its branch base.
 - Installing as an app on the phone.
 - A file watcher instead of polling.
@@ -75,18 +75,19 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 
 `docs/` is a short user manual of what exists, one doc per feature, written as [docs/writing.md](docs/writing.md) describes. Read the doc for the area before changing it, and follow its links to related docs. This list is the index: add new docs here.
 
+- [GLOSSARY.md](docs/GLOSSARY.md): one name per concept, and the words to avoid. Read before naming anything, in code, docs, or the UI.
 - [architecture.md](docs/architecture.md): concepts, server modules, how a prompt travels, where data lives. Start here for anything that crosses areas.
 - [sessions.md](docs/sessions.md): the transcript, queue, composer, forks, status, archive. Read for transcript or composer work.
-- [tools.md](docs/tools.md): the agent's tools, codemode, `ask`, and the session tools. Read before adding or changing a tool.
-- [instructions.md](docs/instructions.md): the prompt sections, skills, and reply rules. Read before changing what the agent is told.
-- [context-usage.md](docs/context-usage.md): the context chip, prompt cache, spend, compaction, clean up.
+- [tools.md](docs/tools.md): the agent's tools, code mode, `ask`, and the session tools. Read before adding or changing a tool.
+- [system-prompt.md](docs/system-prompt.md): the system prompt's sections, project instructions, skills, and reply rules. Read before changing what the agent is told.
+- [context-usage.md](docs/context-usage.md): the context chip, prompt cache, spend, compaction, pruning.
 - [agents.md](docs/agents.md): the Coding, Assistant, Night, and Hub agents, what an agent holds, and what Bica does around it. Read before changing what a kind of session gets.
 - [night-runs.md](docs/night-runs.md): sessions held for tonight, run one at a time while the plan has room, ending with a report.
 - [assistant-mode.md](docs/assistant-mode.md): sessions that run for months, with memory in files.
 - [hub.md](docs/hub.md): the one session that coordinates the others.
-- [voice.md](docs/voice.md): voice calls, hand-offs, hold music, and dictation.
+- [voice.md](docs/voice.md): voice calls, handoffs, hold music, and dictation.
 - [projects.md](docs/projects.md): projects, worktrees, chats, pull requests, the sidebar.
-- [files.md](docs/files.md): the project page, file and diff views, diff comments, file lists.
+- [files.md](docs/files.md): the workspace page, file and diff views, review comments, file lists.
 - [git.md](docs/git.md): the Git tab and commit messages.
 - [command-palette.md](docs/command-palette.md): ⌘K and every keyboard shortcut. Read before adding a shortcut.
 - [terminals.md](docs/terminals.md): shared shells and the agent's terminal tools.
@@ -116,6 +117,7 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 ## Rules
 
 - Write docs, comments, and commit messages as [docs/writing.md](docs/writing.md) describes. Comments are rare and say why, never what.
+- Use the terms in [docs/GLOSSARY.md](docs/GLOSSARY.md) for names, comments, docs, and UI labels. Stored fields, socket names, and Durable extension names keep older words so stored data still reads; their comments say so. Add a term there when a new concept appears.
 - Read [docs/UI.md](docs/UI.md) before any UI work.
 - Keep this file and `docs/` up to date with every change. Add a doc when a new area appears.
 - Simplicity first. If a change adds complexity, look for a smaller one.

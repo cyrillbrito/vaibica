@@ -184,7 +184,7 @@ export default function Settings() {
             </Setting>
             <Setting
               label="Decision model"
-              hint="Answers quick yes or no questions, such as which old tool output Clean up keeps. A decision model like Jev answers in a fraction of a second for a fraction of a cent. A chat model like Haiku works too, slower and pricier. Without one, Clean up clears every old output."
+              hint="Answers quick yes or no questions, such as which old tool output pruning keeps. A decision model like Jev answers in a fraction of a second for a fraction of a cent. A chat model like Haiku works too, slower and pricier. Without one, Clean up clears every old output."
             >
               <ModelPicker
                 provider
@@ -228,8 +228,8 @@ export default function Settings() {
               description="The session that coordinates the others."
             >
               <Setting
-                label="Notes folder"
-                hint="Where the hub keeps its memory as notes, such as a folder in your notes vault. It starts once this is set."
+                label="Hub folder"
+                hint="Where the hub keeps its memory files, such as a folder in your notes vault. It starts once this is set."
               >
                 <Input
                   class="h-8 w-64 max-w-full touch:h-11"

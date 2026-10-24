@@ -18,11 +18,11 @@ Add provider offers a signed-in plan again as Another account. Each request goes
 
 - The default model starts new sessions. `PI_MODEL` fills in until one is picked.
 - The fast model writes session titles and [commit messages](./git.md#commit-messages). `PI_FAST_MODEL` fills in. Without one, titles are the prompt's first words.
-- The decision model answers Bica's own yes or no questions, such as what [Clean up](./context-usage.md#compaction-and-clean-up) keeps. Decision models such as Jev are fastest and cheapest, and a chat model such as Haiku works too.
+- The decision model answers Bica's own yes or no questions, such as what [pruning](./context-usage.md#compaction-and-pruning) keeps. Decision models such as Jev are fastest and cheapest, and a chat model such as Haiku works too.
 
 ## The picker
 
-The Model picker card in Settings chooses which models the picker offers. The picker lists them by name, with a Thinking switch where a model has one. Point at a model to see its context size and list price. A pick in a session applies to that session only. When a session's model is gone, say its provider was removed, the next prompt moves it to the same model through another provider, or else to the default model.
+The Model picker card in Settings chooses which models the picker offers. The picker lists them by name, with a Thinking switch and an Effort choice where a model has them. Point at a model to see its context size and list price. A pick in a session applies to that session only. When a session's model is gone, say its provider was removed, the next prompt moves it to the same model through another provider, or else to the default model.
 
 The picker's button shows a short name, such as Opus for Claude Opus 4.5. Only the newest version gets it, so an older Opus keeps its full name.
 

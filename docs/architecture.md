@@ -16,12 +16,14 @@ Bica is a Bun server on the dev machine and a web app that talks to it over one 
 
 ## Concepts
 
-- A project is a folder on the dev machine, usually a git repo. A workspace is the exact folder work happens in: the project folder or one of its worktrees. See [projects.md](./projects.md).
+[GLOSSARY.md](./GLOSSARY.md) names every concept. These are the ones the rest builds on.
+
+- A project is a folder on the dev machine, usually a git repo. A workspace is the exact folder work happens in: the project's main folder or one of its worktrees. See [projects.md](./projects.md).
 - A session is one agent conversation in one workspace. See [sessions.md](./sessions.md).
-- An agent is what a session runs as: its instructions, model, tools, and skills. See [agents.md](./agents.md).
-- A run is the agent working on a prompt until it answers.
+- An agent is what a session runs as: its system prompt, model, extensions, and skills. See [agents.md](./agents.md).
+- A run is the agent working on a prompt until it replies, made of turns: one model response and its tool calls each.
 - A terminal is a shell in a workspace, shared by you and the agents. See [terminals.md](./terminals.md).
-- The harness is Pi Durable's engine inside the server. It runs every session and saves each step before anyone sees it.
+- The harness is Pi Durable's engine inside the server. It runs every session and saves each turn before anyone sees it.
 
 ## Server modules
 
@@ -29,8 +31,8 @@ Bica is a Bun server on the dev machine and a web app that talks to it over one 
 
 - `agent/`: the harness and the agent's own tools ([tools.md](./tools.md)).
 - `providers/`: models, keys, sign-ins, and plan accounts ([models.md](./models.md)).
-- `sessions/`: what Bica adds to a conversation: titles, prompts and the queue, voice turns, the session tools, and what runs around them, such as night runs, idle upkeep, and the hub ([sessions.md](./sessions.md)).
-- `agents/`: one file per agent, with its tools, model, and instructions ([agents.md](./agents.md), [instructions.md](./instructions.md)).
+- `sessions/`: what Bica adds to a conversation: titles, prompts and the queue, notes, voice handoffs, the session tools, and what runs around them, such as night runs, housekeeping, and the hub ([sessions.md](./sessions.md)).
+- `agents/`: one file per agent, with its extensions, model, and system prompt ([agents.md](./agents.md), [system-prompt.md](./system-prompt.md)).
 - `git/`: status, diffs, staging, and commits ([git.md](./git.md)).
 - `terminals/`: shells and the agent's terminal tools ([terminals.md](./terminals.md)).
 
@@ -42,7 +44,7 @@ Server code doesn't hot-reload in development: it runs as it started until Bica 
 
 1. You send from the composer, and the browser sends a request with a fresh id.
 2. The server hands the prompt to the session, which queues it if a run is going.
-3. The harness runs the agent in the workspace folder and saves every step to SQLite.
+3. The harness runs the agent in the workspace and saves every turn and tool call to SQLite.
 4. Each save produces a small list of changes, which the server forwards to every tab watching that session.
 
 A restart resumes unfinished runs, and a dropped phone reconnects to fresh data. See [realtime-communication.md](./realtime-communication.md).
@@ -59,7 +61,7 @@ Bica's data sits in `.data/`, relative to where the server starts. The browser k
 | Keys and sign-ins | `auth.json` |
 | Worktrees, branches, files | git and the disk |
 
-Your own files for Bica live in `~/.bica/`: an `AGENTS.md` and skills for every session ([instructions.md](./instructions.md)), and the chat folders ([projects.md](./projects.md#chats)).
+Your own files for Bica live in `~/.bica/`: an `AGENTS.md` and skills for every session ([system-prompt.md](./system-prompt.md)), and the chat folders ([projects.md](./projects.md#chats)).
 
 ## Safety
 

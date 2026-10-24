@@ -1,6 +1,6 @@
 # What the side panel belongs to
 
-An open question about the right panel. The workspace page is built ([files.md](../files.md)), but the panel next to a session still shows the whole workspace's Files and Git. Five sessions in one worktree show the same panel, so it reads as part of whichever session is open.
+An open question about the side panel. The workspace page is built ([files.md](../files.md)), but the panel next to a session still shows the whole workspace's Files and Git. Five sessions in one worktree show the same panel, so it reads as part of whichever session is open.
 
 ## Why it matters
 

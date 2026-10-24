@@ -116,8 +116,8 @@ export function sessionFileHref(id: string, open: Open) {
 }
 
 /**
- * Where opening a file from the right panel goes: over the chat when a
- * session is open, so closing it lands back in the session; the project page
+ * Where opening a file from the side panel goes: over the chat when a
+ * session is open, so closing it lands back in the session; the workspace page
  * otherwise. Read at click time, so the plain location is enough.
  */
 export function openHref(ref: WorkspaceRef, open: Open) {
@@ -162,7 +162,7 @@ export const closeKept = (ref: WorkspaceRef, path: string) =>
   saveKept(kept().filter((k) => !samePlace(k, ref, path)));
 
 /**
- * The file open on a project page: ?f=path, or ?d=path&s=staged|changes.
+ * The file open on a workspace page: ?f=path, or ?d=path&s=staged|changes.
  */
 export function openFromSearch(search: string) {
   const q = new URLSearchParams(search);
@@ -176,8 +176,8 @@ export function openFromSearch(search: string) {
 }
 
 /**
- * The workspace the current page is about: the project page's, or the
- * folder the open session or terminal runs in.
+ * The workspace the current page is about: the workspace page's, or the
+ * workspace the open session or terminal runs in.
  */
 export function useCurrentWorkspace() {
   const location = useLocation();

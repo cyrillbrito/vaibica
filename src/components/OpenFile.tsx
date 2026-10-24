@@ -219,7 +219,7 @@ export default function OpenFile(props: {
   );
 }
 
-/** Keeps a file in the sidebar and shows it there, on its project page. */
+/** Keeps a file in the sidebar and shows it there, on its workspace page. */
 export function keepAndShow(
   navigate: (href: string) => void,
   ref: WorkspaceRef,

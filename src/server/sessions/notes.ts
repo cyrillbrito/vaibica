@@ -7,7 +7,7 @@ import { queued, submit, type QueuedInput } from './prompts';
 import { prompters, readSession, recentMessages } from './read';
 import { SessionDoc, getConversation, listSessions, load } from './store';
 
-// When a run ends, its starter (`startedBy`) hears of it, and so do the
+// When a run ends, its parent (`startedBy`) gets a note, and so do the
 // sessions in its `watchers`, for that run only. The last run state seen of
 // every session tells when a run ends.
 export const runState = new Map<ConversationId, boolean>();
@@ -31,7 +31,7 @@ export const noteMessage = (from: ConversationId, to: string) =>
 
 /**
  * `watcher` hears when the current or next run of this session ends. The
- * session's starter hears of every run anyway, from `startedBy`.
+ * session's parent hears of every run anyway, from `startedBy`.
  */
 export async function notifyWhenIdle(id: string, watcher: ConversationId) {
   await load();
@@ -47,7 +47,7 @@ export function runChanged(id: ConversationId | undefined, running: boolean) {
 }
 
 /**
- * Notes for the end of a run: to its starter and one-off watchers, and when
+ * Notes for the end of a run: to its parent and one-off watchers, and when
  * it asks or fails, to every hub too, which coordinates them all
  * (docs/hub.md). A watcher it already messaged this run hears only of a
  * question or an error.
@@ -73,12 +73,12 @@ async function runEnded(id: ConversationId) {
   const watchers = new Set(once);
   // A parent backs off from a session the user took over.
   if (s.parentDrives && !quiet) watchers.add(s.startedBy!);
-  const alert = s.status === 'error' || s.status === 'waiting';
-  if (alert)
+  const asksOrFailed = s.status === 'error' || s.status === 'waiting';
+  if (asksOrFailed)
     for (const other of await listSessions())
       if (other.agent === 'hub' && !other.archivedAt) watchers.add(other.id);
   watchers.delete(String(id));
-  if (!alert) for (const w of told) watchers.delete(w);
+  if (!asksOrFailed) for (const w of told) watchers.delete(w);
   if (!watchers.size) return;
   let what = `finished its turn. Its last reply:\n\n${s.reply || '(none)'}`;
   if (s.status === 'error')
@@ -163,9 +163,9 @@ const NOTE_REQUEST = 'note:';
 
 /**
  * A note from Bica to a session about work it watches, queued like a
- * follow-up: it waits for a running turn and wakes an idle one. Notes that
+ * prompt: it waits for the current run and wakes an idle session. Notes that
  * pile up while it works merge into one, so ten finished sessions cost one
- * turn, not ten. An archived or deleted session gets nothing.
+ * run, not ten. An archived or deleted session gets nothing.
  */
 export async function tell(id: string, text: string) {
   try {

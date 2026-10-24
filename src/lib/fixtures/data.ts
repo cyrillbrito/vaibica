@@ -44,7 +44,7 @@ export interface Dataset {
   // Live transcripts that play out on a timer, by session id. They stand in
   // for `chats` where both have one.
   conversations?: Conversations;
-  // The right panel, by workspace path. Absent: not a git repository / no files.
+  // The side panel, by workspace path. Absent: not a git repository / no files.
   git?: Record<string, GitStatus>;
   files?: Record<string, string[]>;
   // Folders without git: what each session changed, by session id.
@@ -196,8 +196,8 @@ docs/projects.md docs/models.md docs/sessions.md docs/terminals.md docs/tools.md
 public/favicon.svg public/apple-touch-icon.png src/App.css src/App.tsx src/Document.tsx src/router.ts
 src/components/Activity.tsx src/components/AskCard.tsx src/components/ChangeList.tsx
 src/components/CodeView.tsx src/components/CommitBox.tsx src/components/Composer.tsx
-src/components/ContextMeter.tsx src/components/DiffBlock.tsx src/components/FileTree.tsx
-src/components/GitPanel.tsx src/components/Inspector.tsx src/components/Markdown.tsx
+src/components/ContextChip.tsx src/components/DiffBlock.tsx src/components/FileTree.tsx
+src/components/GitPanel.tsx src/components/SidePanel.tsx src/components/Markdown.tsx
 src/components/ModelPicker.tsx src/components/Sidebar.tsx src/components/StatusDot.tsx
 src/components/TerminalView.tsx src/components/ToolCalls.tsx src/components/TopBar.tsx
 src/components/ui/Button.tsx src/components/ui/Empty.tsx src/components/ui/Select.tsx

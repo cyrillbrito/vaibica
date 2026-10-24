@@ -1,6 +1,6 @@
 // Test data for what fills a session's context, the model catalog, the
 // providers in Settings, and plan usage (`?data=demo`, `?data=worst`). Compact
-// and clean up play out on the test sessions, so the context field can be
+// and pruning play out on the test sessions, so the context field can be
 // seen shimmering and clearing.
 import { createSignal } from 'solid-js';
 
@@ -158,12 +158,12 @@ function usage(shape: Shape, worst: boolean): ContextUsage {
           },
     compacting: false,
     running: shape === 'running',
-    cleanable: Math.round(results.reduce((n, p) => n + p.tokens, 0) * 0.74),
+    prunable: Math.round(results.reduce((n, p) => n + p.tokens, 0) * 0.74),
   };
 }
 
 /**
- * One session's context, with compact and clean up that play out: the
+ * One session's context, with compaction and pruning that play out: the
  * cells shimmer for a few seconds, then the conversation shrinks.
  */
 export function fixtureContext(shape: Shape, worst: boolean) {
@@ -181,7 +181,7 @@ export function fixtureContext(shape: Shape, worst: boolean) {
       parts: next,
       used,
       compacting: false,
-      cleanable: 0,
+      prunable: 0,
       biggest: [],
     });
   };
@@ -202,12 +202,12 @@ export function fixtureContext(shape: Shape, worst: boolean) {
         3200,
       );
     },
-    cleanup: async () => {
+    prune: async () => {
       await new Promise((r) => setTimeout(r, 1600));
       const v = value();
       const results = v.parts.filter((p) => p.key.startsWith('result:'));
       const total = results.reduce((n, p) => n + p.tokens, 0);
-      const share = total ? 1 - v.cleanable / total : 1;
+      const share = total ? 1 - v.prunable / total : 1;
       shrink((p) =>
         p.key.startsWith('result:') ? p.tokens * share : p.tokens,
       );

@@ -15,7 +15,7 @@ import { createStickToBottom } from '#lib/stick-to-bottom';
 import { arriveOnChange } from '#lib/arrive';
 import CallBar from '../../components/CallBar';
 import Composer, { type ComposerApi } from '../../components/Composer';
-import ContextMeter from '../../components/ContextMeter';
+import ContextChip from '../../components/ContextChip';
 import ContextNag from '../../components/ContextNag';
 import MessageRow, { RULE } from '../../components/MessageRow';
 import ModelPicker from '../../components/ModelPicker';
@@ -47,7 +47,7 @@ import { sessionChoice, setOpenModel } from '#lib/models';
 import {
   configureSession,
   forkSession,
-  isCleaning,
+  isPruning,
   markSeen,
   handBack,
   sendPrompt,
@@ -152,7 +152,7 @@ export default function Session(props: RouteProps<'/s/:id'>) {
   );
   const [renaming, setRenaming] = createSignal(false);
   const navigate = useNavigate();
-  // A file opened from the right panel shows over the chat, which stays
+  // A file opened from the side panel shows over the chat, which stays
   // mounted underneath: closing it is back to the same draft and scroll.
   const location = useLocation();
   const workspace = useCurrentWorkspace();
@@ -169,22 +169,22 @@ export default function Session(props: RouteProps<'/s/:id'>) {
     addEventListener('keydown', onKey);
     return () => removeEventListener('keydown', onKey);
   });
-  const parent = createMemo(
+  const forkedFrom = createMemo(
     () => sessions().find((s) => s.id === summary()?.forkedFrom),
-    { name: 'forkParent' },
+    { name: 'forkedFrom' },
   );
-  const starter = createMemo(
+  const parent = createMemo(
     () => sessions().find((s) => s.id === summary()?.startedBy),
-    { name: 'starter' },
+    { name: 'parent' },
   );
   const drives = () => !!summary()?.parentDrives;
   // The prompt held for tonight, which the composer edits.
   const held = () => summary()?.tonight ?? null;
   // "Keep parent in charge", for the open session only.
-  // Hovering any part of an answer shows the fork button at its end, or the
-  // next compaction or clean up line, which has its own.
+  // Hovering any part of a reply shows the fork button at its end, or the
+  // next compaction or pruning line, which has its own.
   let shown: Element | undefined;
-  const forks = ['end', 'compaction', 'cleanup'];
+  const forks = ['end', 'compaction', 'prune'];
   const showFork = (e?: PointerEvent) => {
     let row = (e?.target as Element | undefined)?.closest('[data-kind]');
     while (row && ![...forks, 'user'].includes(row.getAttribute('data-kind')!))
@@ -217,26 +217,26 @@ export default function Session(props: RouteProps<'/s/:id'>) {
     const v = view();
     return v ? toMessages(v, forkedAt(), { thinking: !hideThinking() }) : [];
   });
-  // Each change of driver as a line, before the first prompt sent after it.
+  // Each change of who is in charge as a line, before the first prompt sent after it.
   const rows = createMemo(
     () => {
       const list = messages();
-      const handoffs = summary()?.handoffs ?? [];
-      const cleaning = isCleaning(props.params.id!);
-      if (!handoffs.length && !cleaning) return list;
+      const changes = summary()?.handoffs ?? [];
+      const pruning = isPruning(props.params.id!);
+      if (!changes.length && !pruning) return list;
       const out = [...list];
-      for (const h of handoffs.toSorted((a, b) => b.at - a.at)) {
+      for (const h of changes.toSorted((a, b) => b.at - a.at)) {
         const i = out.findIndex((m) => (promptAt(m) ?? -1) >= h.at);
         out.splice(i === -1 ? out.length : i, 0, {
-          key: `handoff:${h.at}`,
-          kind: 'handoff',
+          key: `in-charge:${h.at}`,
+          kind: 'in-charge',
           to: h.to,
         });
       }
-      if (cleaning)
+      if (pruning)
         out.push({
-          key: 'cleaning',
-          kind: 'cleaning',
+          key: 'pruning',
+          kind: 'pruning',
           running: !!(view()?.docs['pi.live'] as LiveState | undefined)?.run,
         });
       return out;
@@ -280,12 +280,12 @@ export default function Session(props: RouteProps<'/s/:id'>) {
       ),
     { name: 'lastCompaction' },
   );
-  const lastCleanup = createMemo(
+  const lastPrune = createMemo(
     () =>
       messages().findLast(
-        (m): m is Extract<Message, { kind: 'cleanup' }> => m.kind === 'cleanup',
+        (m): m is Extract<Message, { kind: 'prune' }> => m.kind === 'prune',
       ),
-    { name: 'lastCleanup' },
+    { name: 'lastPrune' },
   );
 
   // From the list, not the transcript: the composer is ready before it loads.
@@ -334,7 +334,7 @@ export default function Session(props: RouteProps<'/s/:id'>) {
         actions={
           <Ready>
             {(v) => (
-              <ContextMeter
+              <ContextChip
                 id={props.params.id!}
                 view={v()}
                 usage={usage()!}
@@ -376,7 +376,7 @@ export default function Session(props: RouteProps<'/s/:id'>) {
             class="-mx-1.5 max-w-120 py-0.5 font-semibold"
           />
         </Show>
-        <Show when={drives() && starter()}>
+        <Show when={drives() && parent()}>
           {(parent) => (
             <a
               class="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-meta text-accent-ink transition-colors hover:bg-hover [&_svg]:size-3.5"
@@ -401,15 +401,15 @@ export default function Session(props: RouteProps<'/s/:id'>) {
             onPointerOver={showFork}
             onPointerLeave={() => showFork()}
           >
-            <Show when={starter()}>
-              {(starter) => (
+            <Show when={parent()}>
+              {(parent) => (
                 <a
                   class={[RULE, 'min-w-0 self-center hover:text-fg']}
-                  href={paths.s(starter().id)}
+                  href={paths.s(parent().id)}
                 >
                   <SessionIcon />
                   <span class="truncate">
-                    Started by {starter().title || 'another session'}
+                    Started by {parent().title || 'another session'}
                   </span>
                 </a>
               )}
@@ -456,7 +456,7 @@ export default function Session(props: RouteProps<'/s/:id'>) {
                               keep: true,
                             });
                           }}
-                          parent={parent()}
+                          forkedFrom={forkedFrom()}
                           cwd={summary()?.cwd ?? undefined}
                         />
                       )}
@@ -505,7 +505,7 @@ export default function Session(props: RouteProps<'/s/:id'>) {
                         : undefined
                   }
                   busyPlaceholder={
-                    drives() ? 'Queue a message to take over…' : undefined
+                    drives() ? 'Queue a follow-up to take over…' : undefined
                   }
                   sendLabel={
                     held() !== null
@@ -544,7 +544,7 @@ export default function Session(props: RouteProps<'/s/:id'>) {
                           </Show>
                           <Show when={summary()?.startedBy}>
                             <ParentStrip
-                              parent={starter()}
+                              parent={parent()}
                               parentDrives={drives()}
                               onHandBack={() => handBack(props.params.id!)}
                             />
@@ -553,7 +553,7 @@ export default function Session(props: RouteProps<'/s/:id'>) {
                             id={props.params.id!}
                             usage={usage()!}
                             compaction={lastCompaction()}
-                            cleanup={lastCleanup()}
+                            prune={lastPrune()}
                           />
                           <Queue
                             id={props.params.id!}

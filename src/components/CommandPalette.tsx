@@ -10,7 +10,7 @@ import {
   onSettled,
 } from 'solid-js';
 
-import { closeDrawer, toggleInspector, toggleSidebar } from '#lib/layout';
+import { closeDrawer, toggleSidePanel, toggleSidebar } from '#lib/layout';
 import {
   CHATS_ID,
   currentTarget,
@@ -46,7 +46,7 @@ import {
   FolderIcon,
   ForkIcon,
   HubIcon,
-  InspectorIcon,
+  SidePanelIcon,
   KeyboardIcon,
   PencilIcon,
   PlusIcon,
@@ -334,8 +334,8 @@ export default function CommandPalette() {
         })),
       );
 
-  const projectsPage = (): Page => ({
-    title: 'Go to project',
+  const workspacesPage = (): Page => ({
+    title: 'Go to workspace',
     placeholder: 'Search projects and worktrees…',
     items: () => workspaceItems().map((c) => ({ ...c, group: undefined })),
   });
@@ -519,12 +519,12 @@ export default function CommandPalette() {
           ]
         : []),
       {
-        id: 'a:projects',
-        label: 'Go to project…',
-        words: 'open workspace worktree branch',
+        id: 'a:workspaces',
+        label: 'Go to workspace…',
+        words: 'open project worktree branch',
         icon: FolderIcon,
         group,
-        page: projectsPage,
+        page: workspacesPage,
       },
       {
         id: 'a:add-project',
@@ -544,13 +544,13 @@ export default function CommandPalette() {
         run: toggleSidebar,
       },
       {
-        id: 'a:inspector',
+        id: 'a:side-panel',
         label: 'Show or hide files and changes',
         words: 'inspector git diff toggle panel',
-        icon: InspectorIcon,
+        icon: SidePanelIcon,
         keys: { code: 'KeyB', mod: true, alt: true },
         group,
-        run: toggleInspector,
+        run: toggleSidePanel,
       },
       {
         id: 'a:theme',

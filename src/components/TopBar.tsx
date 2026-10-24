@@ -2,9 +2,9 @@ import type { JSX } from '@solidjs/web';
 
 import { Show } from 'solid-js';
 
-import { noPanels, toggleInspector, toggleSidebar } from '#lib/layout';
+import { noPanels, toggleSidePanel, toggleSidebar } from '#lib/layout';
 import { IconButton } from './ui/Button';
-import { InspectorIcon, SidebarIcon } from './ui/icons';
+import { SidePanelIcon, SidebarIcon } from './ui/icons';
 
 export default function TopBar(props: {
   children?: JSX.Element;
@@ -23,9 +23,9 @@ export default function TopBar(props: {
       <Show when={!noPanels()}>
         <IconButton
           title="Toggle files and changes (⌥⌘B)"
-          onClick={toggleInspector}
+          onClick={toggleSidePanel}
         >
-          <InspectorIcon />
+          <SidePanelIcon />
         </IconButton>
       </Show>
     </header>

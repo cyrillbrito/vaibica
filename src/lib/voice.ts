@@ -62,7 +62,7 @@ function fade(music: HTMLAudioElement, to: number, done?: () => void) {
 }
 
 // One voice call at a time, on one session. The browser owns the mic and the
-// speaker (with echo cancellation); the server hands requests to the agent.
+// speaker (with echo cancellation); the server passes handoffs to the session.
 
 type Who = 'you' | 'voice';
 

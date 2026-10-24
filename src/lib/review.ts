@@ -1,12 +1,12 @@
-// Prototype: comments on diff lines, gathered per workspace and sent to an
+// Prototype: review comments on diff lines, gathered per workspace and sent to an
 // agent as one prompt. Kept in memory for the tab; a reload drops them.
 import { createSignal } from 'solid-js';
 
 import type { View } from './workspace';
 
-export interface LineComment {
+export interface ReviewComment {
   id: string;
-  // The workspace folder it belongs to.
+  // The workspace it belongs to.
   cwd: string;
   path: string;
   view: View;
@@ -20,7 +20,7 @@ export interface LineComment {
   draft: boolean;
 }
 
-const [comments, setComments] = createSignal<LineComment[]>([], {
+const [comments, setComments] = createSignal<ReviewComment[]>([], {
   name: 'reviewComments',
 });
 export { comments };
@@ -28,7 +28,7 @@ export { comments };
 let next = 0;
 
 /** A new comment box on lines of a diff; an open draft there is reused. */
-export function startComment(c: Omit<LineComment, 'id' | 'text' | 'draft'>) {
+export function startComment(c: Omit<ReviewComment, 'id' | 'text' | 'draft'>) {
   const open = comments().find(
     (x) =>
       x.draft &&
@@ -66,11 +66,11 @@ export function clearComments(cwd: string) {
   setComments((all) => all.filter((c) => c.cwd !== cwd || c.draft));
 }
 
-const lines = (c: LineComment) =>
+const lines = (c: ReviewComment) =>
   c.start === c.end ? `${c.start}` : `${c.start}-${c.end}`;
 
 /** The prompt for the agent: each comment with its file, lines, and code. */
-export function reviewPrompt(list: LineComment[]) {
+export function reviewPrompt(list: ReviewComment[]) {
   const parts = list.map((c) => {
     const where = `${c.path}:${lines(c)}${c.side === 'deletions' ? ' (removed lines)' : ''}`;
     const code = c.code.length

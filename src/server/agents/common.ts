@@ -37,10 +37,10 @@ export type SectionKey =
   | (typeof TAIL_SECTIONS)[number];
 
 /**
- * The tool packs an agent can pick, by the names Durable stores for them.
+ * The extensions an agent can pick, by the names Durable stores for them.
  * registry.ts holds the extensions behind the names.
  */
-export type ToolPack =
+export type ExtensionName =
   | 'coding-tools'
   | 'terminal-tools'
   | 'web'
@@ -66,7 +66,7 @@ export type Section =
 
 /**
  * What goes into a session that runs as this agent, and nothing else: what
- * Bica does around its sessions, such as upkeep or night runs, keys on its
+ * Bica does around its sessions, such as housekeeping or night runs, keys on its
  * id instead (docs/agents.md). Label and description are src/lib/agents.ts.
  */
 export interface Agent {
@@ -81,7 +81,7 @@ export interface Agent {
   minEffort?: ThinkingLevel;
   // Its tools. registry.ts puts the prompt before them and the reply rules
   // after. Coding's own list is the host default.
-  extensions: ToolPack[];
+  extensions: ExtensionName[];
   // Lists the skills found for its folder (skills.ts).
   skills: boolean;
   // Its instructions, by prompt section. A key it leaves out isn't rendered.
@@ -206,8 +206,8 @@ ${lines.join('\n')}
 
 Before sending, cut an opening that announces and a closing that recaps or offers more help, and end with at most one question or next step. The first and last lines alone should say what happened and what to do next.`;
 
-// For agents that coordinate other sessions, assistant and hub: what makes
-// a worker's start and report work without the conversation behind them
+// For agents that hand work to workers, assistant and hub: what makes a
+// worker's start and report work without the conversation behind them
 // (docs/hub.md, Sources).
 export const HANDOFFS = `Handoffs to other sessions:
 - A session_start prompt stands alone, like a ticket: the goal, the files and findings it needs, the boundaries (what not to touch, when to ask, and no merging, pushing, or committing to main unless the user asked), what done looks like, and the report it ends with: status, result, the checks it ran and couldn't run, where long output went, and what it needs next.
@@ -215,8 +215,8 @@ export const HANDOFFS = `Handoffs to other sessions:
 - One session per thread: continue a thread with session_send to its session, so its context stays warm. Code work gets its own worktree (\`worktree: true\`).`;
 
 // For the long-lived agents, assistant and hub, which Bica keeps small while
-// idle (src/server/sessions/upkeep.ts): the files are the long-term memory,
-// and replies carry what Clean up would otherwise take away.
+// idle (src/server/sessions/housekeeping.ts): the files are the long-term memory,
+// and replies carry what pruning would otherwise take away.
 export const LONG_LIVED = `This session lasts weeks or months. Bica clears old tool output and compacts older turns on its own, so the memory files are the long-term record:
 - Search them before relying on anything from earlier, and say so when they hold nothing.
 - Write decisions, preferences, open tasks, and lasting facts in the same reply they come up in, and quick notes the user dictates where they belong. Keep what he said or you verified and that will still matter in months. Let moods, one-off details, and guesses go.

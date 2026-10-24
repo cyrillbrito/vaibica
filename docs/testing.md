@@ -4,7 +4,7 @@ Bica's tests check the promises the app makes, from the outside, so they keep pa
 
 ## What gets a test
 
-A test guards a behavior that would hurt if it quietly broke: a prompt gets its answer, a queued prompt waits for the run, Stop hands the queue back, a resent request acts once, a crash loses no run, another website can't open the socket, stopping a terminal ends what it started. Each test is named for that behavior in plain words.
+A test guards a behavior that would hurt if it quietly broke: a prompt gets its reply, a follow-up waits for the run, Stop hands the queue back, a resent request acts once, a crash loses no run, another website can't open the socket, stopping a terminal ends what it started. Each test is named for that behavior in plain words.
 
 Everything else goes without one. Helpers, components, and code that is easy to see working in the app don't get tests, and neither do the shapes of data or the steps a feature takes. Fewer tests that each guard something real beat many that restate the code.
 
@@ -21,7 +21,7 @@ A narrower test is fine where a module meets a library and is easy to get wrong,
 
 A test sits next to the code it guards, as `name.test.ts`: session behaviors in `src/server/sessions`, git in `src/server/git`, and so on. A behavior that crosses areas goes next to where it starts.
 
-`src/testing/bica.ts` starts a real Bica on a free port with a fake model, and opens tabs on it. A tab sends requests and watches topics as the browser does. `reply` queues the model's next answers, and `hold` keeps it working until the test releases it. The server is one per process, so each test file starts its own. `src/testing/preload.ts` gives Bun the two modules only Vite provides.
+`src/testing/bica.ts` starts a real Bica on a free port with a fake model, and opens tabs on it. A tab sends requests and watches topics as the browser does. `reply` queues the model's next replies, and `hold` keeps it working until the test releases it. The server is one per process, so each test file starts its own. `src/testing/preload.ts` gives Bun the two modules only Vite provides.
 
 ## Sources
 

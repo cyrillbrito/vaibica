@@ -7,18 +7,18 @@ import {
   createSignal,
 } from 'solid-js';
 
-import { CLEANUP_HINT } from '#lib/cleanup';
+import { PRUNE_HINT } from '#lib/prune';
 import {
-  MIN_CLEANUP,
+  MIN_PRUNE,
   formatTokens,
   type ContextUsage,
   type Part,
 } from '#lib/context-usage';
-import { cleanupSession, compactSession } from '#lib/sessions';
+import { pruneSession, compactSession } from '#lib/sessions';
 import { buttonClass } from './ui/Button';
 import Chevron from './ui/Chevron';
 import {
-  CleanUpIcon,
+  PruneIcon,
   CompactIcon,
   DrawnCheckIcon,
   SpinnerIcon,
@@ -26,7 +26,7 @@ import {
 import { RollingNumber } from './ui/RollingNumber';
 
 // What the field shows, in the order it fills. Tool output is its own kind
-// because it's what Clean up clears.
+// because it's what pruning clears.
 type Kind = 'system' | 'tools' | 'talk' | 'output';
 const KINDS: Kind[] = ['system', 'tools', 'talk', 'output'];
 
@@ -63,7 +63,7 @@ type Hot = { kind: Kind } | { part: string; kind: Kind } | { clean: true };
 
 /**
  * What fills the context, as a field of cells, after affectUI's Context
- * Window: point at a part to light up its cells, compact or clean up from
+ * Window: point at a part to light up its cells, compact or prune from
  * its row while the cells breathe, and watch them clear.
  */
 export default function ContextField(props: {
@@ -109,7 +109,7 @@ export default function ContextField(props: {
           while (out.length < end) out.push({ kind: k.kind, part: p.key });
         }
       // The oldest output goes first; mark that many cells from the start.
-      let clean = Math.round(u().cleanable / per);
+      let clean = Math.round(u().prunable / per);
       for (const c of out)
         if (clean > 0 && c.kind === 'output') {
           c.clean = true;
@@ -127,8 +127,8 @@ export default function ContextField(props: {
   const [open, setOpen] = createSignal<Kind | null>(null, {
     name: 'contextOpen',
   });
-  const [cleaning, setCleaning] = createSignal(false, {
-    name: 'contextCleaning',
+  const [pruning, setPruning] = createSignal(false, {
+    name: 'contextPruning',
   });
   const [compactAsked, setCompactAsked] = createSignal(false, {
     name: 'contextCompactAsked',
@@ -166,12 +166,12 @@ export default function ContextField(props: {
   };
   const busy = (c: Cell) =>
     (compacting() && (c.kind === 'talk' || c.kind === 'output')) ||
-    (cleaning() && !!c.clean);
+    (pruning() && !!c.clean);
 
   const hotTokens = () => {
     const h = hot();
     if (!h) return u().used;
-    if ('clean' in h) return u().cleanable;
+    if ('clean' in h) return u().prunable;
     if ('part' in h)
       return u().parts.find((p) => p.key === h.part)?.tokens ?? 0;
     return byKind().find((k) => k.kind === h.kind)?.tokens ?? 0;
@@ -179,7 +179,7 @@ export default function ContextField(props: {
   const hotLabel = () => {
     const h = hot();
     if (!h) return undefined;
-    if ('clean' in h) return 'Clean up clears';
+    if ('clean' in h) return 'Pruning clears';
     if ('part' in h) return u().parts.find((p) => p.key === h.part)?.label;
     return LABEL[h.kind];
   };
@@ -195,11 +195,11 @@ export default function ContextField(props: {
     const d = done();
     if (d?.saved)
       return {
-        text: `${d.what === 'compact' ? 'Compacted' : 'Cleaned up'}: ${formatTokens(d.saved)} tokens freed`,
+        text: `${d.what === 'compact' ? 'Compacted' : 'Pruned'}: ${formatTokens(d.saved)} tokens freed`,
         tone: 'ok' as const,
       };
     if (compacting()) return { text: 'Summarizing older turns…' };
-    if (cleaning()) return { text: 'Clearing old tool output…' };
+    if (pruning()) return { text: 'Clearing old tool output…' };
     const at = u().compactAt;
     if (!at) return { text: `${formatTokens(u().used)} tokens in the window` };
     const left = at - u().used;
@@ -217,18 +217,18 @@ export default function ContextField(props: {
     setCompactAsked(true);
     void compactSession(props.id).finally(() => setCompactAsked(false));
   };
-  const cleanUp = () => {
-    const saved = u().cleanable;
-    setCleaning(true);
-    void cleanupSession(props.id)
+  const prune = () => {
+    const saved = u().prunable;
+    setPruning(true);
+    void pruneSession(props.id)
       .then(() => finish('clean', saved))
-      .finally(() => setCleaning(false));
+      .finally(() => setPruning(false));
   };
   const cleanBlocked = () =>
     props.running
       ? 'Wait for the agent to finish'
-      : u().cleanable < MIN_CLEANUP
-        ? 'Nothing old to clean up'
+      : u().prunable < MIN_PRUNE
+        ? 'Nothing old to prune'
         : undefined;
 
   return (
@@ -337,27 +337,27 @@ export default function ContextField(props: {
                         }
                         icon={<CompactIcon />}
                         labels={['Compact', 'Compacting', 'Compacted']}
-                        title="Summarize older turns now; keeps the last ~20k as is"
+                        title="Summarize older context now; keeps the last ~20k as is"
                         onClick={compact}
                       />
                     </Show>
                     <Show when={k().kind === 'output'}>
                       <Action
                         state={
-                          cleaning()
+                          pruning()
                             ? 'busy'
                             : done()?.what === 'clean'
                               ? 'done'
                               : 'idle'
                         }
-                        icon={<CleanUpIcon />}
-                        labels={['Clean up', 'Cleaning', 'Cleaned']}
+                        icon={<PruneIcon />}
+                        labels={['Prune', 'Pruning', 'Pruned']}
                         title={
                           cleanBlocked() ??
-                          `${CLEANUP_HINT} Frees ~${formatTokens(u().cleanable)}.`
+                          `${PRUNE_HINT} Frees ~${formatTokens(u().prunable)}.`
                         }
                         disabled={!!cleanBlocked()}
-                        onClick={cleanUp}
+                        onClick={prune}
                         onHover={(on) =>
                           setHot(on ? { clean: true } : { kind: 'output' })
                         }

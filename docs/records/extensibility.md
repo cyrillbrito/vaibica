@@ -11,7 +11,7 @@ The ideas behind it:
 - Anything is reachable. An extension can add to any part of Bica, wrap it, or replace it, and Bica's own features use the same API, so the API never falls behind the app. The test was whether these could be built: a custom file tree, another version control system under the Git panel, a different voice mode, and a game in the centre view.
 - One extension is one folder: a manifest both sides read without running its code, a server half, and a client half. Each has a switch, and decides which sessions it applies to.
 - The agent side is Pi Durable's own extensions: tools, prompt sections, hooks, and agents an extension can ship.
-- The UI is named places: sidebar sections, the centre view, right panel tabs, transcript rows per tool, and the composer. Pages and commands are registries by id. A built-in can be wrapped or replaced by id, and a crash falls back to it.
+- The UI is named places: sidebar sections, the centre view, side panel tabs, transcript rows per tool, and the composer. Pages and commands are registries by id. A built-in can be wrapped or replaced by id, and a crash falls back to it.
 - Extensions meet through the model first: a tool reaches every session that has it, so night runs never need to know web search exists. An agent leaves a tool out by a trait, such as needing someone to answer. Code calls another extension only through a small service, and there's no event bus.
 - Each extension owns its state, settings, and socket requests, instead of fields in shared documents.
 - Later, extensions of your own or a project's would load from `~/.bica/extensions/` and `.bica/extensions/`, with trust per project, a safe mode, and hot reload through Durable's registry.

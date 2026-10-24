@@ -12,7 +12,7 @@ import { CommentIcon, SendIcon } from './ui/icons';
 
 /**
  * Prototype: the comments written on this workspace's diffs, sent to an
- * agent as one prompt. It goes to the open session, or on the project page
+ * agent as one prompt. It goes to the open session, or on the workspace page
  * to the newest session in the workspace.
  */
 export default function ReviewBar(props: { workspace: WorkspaceRef }) {

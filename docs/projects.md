@@ -15,14 +15,14 @@ Add project opens a folder browser on the dev machine, with git repos marked.
 
 ## Where a session starts
 
-The home page's workspace picker searches every project's folders and worktrees by name, branch, ticket key, or pull request number. Empty, it shows the places you used last. + Worktree on a project, or ⌘Enter, starts in a new worktree instead. Pages that show a workspace offer a new session there too.
+The home page's workspace picker searches every project's main folder and worktrees by name, branch, ticket key, or pull request number. Empty, it shows the places you used last. + Worktree on a project, or ⌘Enter, starts in a new worktree instead. Pages that show a workspace offer a new session there too.
 
 ## Worktrees
 
 - Git is the source of truth, so worktrees made in a terminal show up too.
 - New worktree makes one per session. The session's name becomes the branch and a folder next to the project's, and the branch starts from the freshly fetched default branch.
 - Setup runs in a terminal in the new worktree: the project's `setup` command, or an install guessed from the lockfile.
-- Clean up deletes a worktree's folder and local branch, archives its sessions, and closes its terminals. It asks first when that would lose uncommitted files or unmerged commits. A branch whose pull request was squash-merged counts as merged.
+- Remove worktree, in a worktree's menu, deletes its folder and local branch, archives its sessions, and closes its terminals. A worktree whose pull request merged or closed shows it as a button too. It asks first when that would lose uncommitted files or unmerged commits. A branch whose pull request was squash-merged counts as merged.
 
 ## Chats
 
@@ -36,7 +36,7 @@ Each branch shows its pull request's number and state, and a click opens it on G
 
 The sidebar starts with the [hub](./hub.md), then groups sessions by project and workspace, with each workspace's terminals and kept files above its sessions. ⌘B hides it.
 
-- A workspace's header opens its page: the workspace card, files, and Git ([files.md](./files.md)).
+- A workspace's header opens its workspace page: the workspace card, files, and Git ([files.md](./files.md)).
 - Drag a project's header to reorder projects.
 - Branch names drop their prefix, and a leading ticket key becomes a small tag that opens the ticket when the project has a `tickets` link in `.data/projects.json`.
 - Workspaces with nothing open drop into Parked, so a worktree waiting on review stays out of the way. Pin project keeps a main folder listed.

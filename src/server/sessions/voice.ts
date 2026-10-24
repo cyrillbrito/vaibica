@@ -50,9 +50,9 @@ export async function voiceSession(sessionId: string) {
     },
 
     /**
-     * The text of each step the agent writes: `final` for the answer that
-     * ends a turn, else a step between tool calls. Errors and aborts are left
-     * out: their hand-off says it stopped.
+     * The text of each turn the agent writes: `final` for the reply that
+     * ends a run, else a turn that called tools. Errors and aborts are left
+     * out: their handoff says it stopped.
      */
     onStep(listener: (text: string, final: EntryId | undefined) => void) {
       // An entry can be committed again, e.g. when its thinking folds.
@@ -75,8 +75,8 @@ export async function voiceSession(sessionId: string) {
     },
 
     /**
-     * Hands a request to the agent and resolves with its reply. While the
-     * agent works, the request joins that work, as Codex's voice does, so a
+     * Sends a handoff to the session and resolves with its reply. While a
+     * run works, the handoff joins it, as Codex's voice does, so a
      * correction lands before the outdated work is done. A session started
      * for the call is named after what was first asked.
      */

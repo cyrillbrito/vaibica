@@ -63,7 +63,7 @@ const folder = (path: string) =>
 const num = (n: number) => n.toLocaleString();
 
 /**
- * The project page before a file is open: the workspace as a card, after
+ * The workspace page before a file is open: the workspace as a card, after
  * affectUI's Project Card (a ring of one segment per changed file, filled
  * once staged, a status tag for the pull request), holding what changed,
  * after its Change Summary (each file's lines as trends, rolling totals).

@@ -92,7 +92,7 @@ const MAX_PROMPTS = 4;
 const MAX_PROMPT_CHARS = 600;
 const MAX_SESSIONS = 6;
 
-/** What the user asked agents in this folder since `since`, for commit messages. */
+/** What the user asked agents in this workspace since `since`, for commit messages. */
 export async function recentPrompts(cwd: string, since: number) {
   const harness = await getHarness();
   const found = await Promise.all(

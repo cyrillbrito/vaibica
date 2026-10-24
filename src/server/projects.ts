@@ -295,7 +295,7 @@ export async function worktreeRisk(path: string, pr: PullRequest | null) {
 }
 
 /** Deletes a worktree's folder and its local branch, whatever is in them. */
-export async function removeWorktree(projectId: string, path: string) {
+export async function removeGitWorktree(projectId: string, path: string) {
   const project = await getProject(projectId);
   const w = project.workspaces.find((w) => w.path === path && !w.main);
   if (!w) throw new Error(`${path} is not a worktree of ${project.name}`);

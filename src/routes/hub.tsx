@@ -18,7 +18,7 @@ import { useHub } from '#lib/sessions';
 import { paths } from '../router';
 
 /**
- * The hub's own page (docs/hub.md): its open threads on top, the chat below.
+ * The hub's own page (docs/hub.md): its board on top, the chat below.
  * The first visit starts it, or opens Settings when it has no folder yet.
  */
 export default function Hub() {

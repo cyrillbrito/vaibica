@@ -6,7 +6,7 @@ import { copyText } from '#lib/clipboard';
 import { closeDrawer } from '#lib/layout';
 import {
   CHATS_ID,
-  cleanUpWorktree,
+  removeWorktree,
   folderName,
   reorderProjects,
   pinProject,
@@ -141,15 +141,15 @@ interface Group {
   tickets?: string;
   pr?: PullRequest | null;
   path?: string;
-  // A worktree, not the main folder: it can be cleaned up.
+  // A worktree, not the main folder: it can be removed.
   worktree?: boolean;
   // The main folder of a pinned project: never parked.
   pinned?: boolean;
   // Absent: a folder that's gone, so no new sessions there.
   target?: Target;
-  // Listed above the sessions: they belong to the folder, not to a session.
+  // Listed above the sessions: they belong to the workspace, not to a session.
   terminals: TerminalInfo[];
-  // Kept open on this device, with the terminals: also the folder's.
+  // Kept open on this device, with the terminals: also the workspace's.
   files: Kept[];
   sessions: SessionSummary[];
 }
@@ -453,7 +453,7 @@ export default function Sidebar() {
     name: 'archivedOpen',
   });
 
-  // The folder a session ran in, for the archived list.
+  // The workspace a session ran in, for the archived list.
   const whereOf = (s: SessionSummary) => {
     const project = projects().find((p) => p.id === s.projectId);
     if (!project) return undefined;
@@ -719,39 +719,39 @@ export default function Sidebar() {
       ? ([
           'separator',
           {
-            label: 'Clean up worktree',
+            label: 'Remove worktree',
             icon: <DeleteIcon />,
-            onSelect: () => void cleanUp(g),
+            onSelect: () => void remove(g),
           },
         ] satisfies MenuEntry[])
       : []),
   ];
 
   // Merged or closed: the server's check for unsaved work is the only question.
-  const cleanUp = async (g: Group) => {
+  const remove = async (g: Group) => {
     const { projectId, cwd } = g.target!;
     const label = nameOf(g);
     const done = g.pr?.state === 'merged' || g.pr?.state === 'closed';
     if (
       !done &&
       !confirm(
-        `Clean up ${label}? Its folder and local branch are deleted, and its sessions archived.`,
+        `Remove ${label}? Its folder and local branch are deleted, and its sessions archived.`,
       )
     )
       return;
     try {
-      const risk = await cleanUpWorktree(projectId, cwd!);
+      const risk = await removeWorktree(projectId, cwd!);
       if (risk) {
         if (!confirm(`${label} has ${risk}. Delete it anyway? They are lost.`))
           return;
-        await cleanUpWorktree(projectId, cwd!, true);
+        await removeWorktree(projectId, cwd!, true);
       }
       if (
         location.pathname + location.search ===
         workspaceHref({ projectId, cwd: cwd! })
       )
         navigate(paths());
-      toast(`Cleaned up ${label}`);
+      toast(`Removed ${label}`);
     } catch (e) {
       toast(e instanceof Error ? e.message : String(e));
     }
@@ -859,7 +859,7 @@ export default function Sidebar() {
     );
   };
 
-  // Every file shares the project page's path, so the router's
+  // Every file shares the workspace page's path, so the router's
   // aria-current can't tell them apart.
   const isOpenFile = (k: Kept) =>
     location.pathname === paths.p(k.projectId)() &&
@@ -881,7 +881,7 @@ export default function Sidebar() {
     },
   ];
 
-  // `files`: the folder's other kept files, to tell same-named ones apart.
+  // `files`: the workspace's other kept files, to tell same-named ones apart.
   const FileRow = (p: { file: Kept; files: Kept[] }) => {
     const k = () => p.file;
     const name = () => k().path.split('/').pop()!;
@@ -981,8 +981,8 @@ export default function Sidebar() {
         >
           <IconButton
             size="sm"
-            title="Clean up: delete the folder and local branch"
-            onClick={() => void cleanUp(g())}
+            title="Remove worktree: delete the folder and local branch"
+            onClick={() => void remove(g())}
           >
             <DeleteIcon />
           </IconButton>
@@ -1562,7 +1562,7 @@ export default function Sidebar() {
 
 /**
  * Sessions in their order, except that one another session started sits
- * right under it, when both work in the same folder.
+ * right under it, when both work in the same workspace.
  */
 function underParents(list: SessionSummary[]) {
   const here = new Set(list.map((s) => s.id));

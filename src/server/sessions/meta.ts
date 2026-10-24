@@ -5,7 +5,7 @@ import type { AgentId } from '#lib/agents';
 import type { PullRequest, VoiceSettings } from '#lib/protocol';
 import { context, getHarness } from '#server/agent';
 import { getAgent, selection } from '#server/agents';
-import { getProject, removeWorktree, worktreeRisk } from '#server/projects';
+import { getProject, removeGitWorktree, worktreeRisk } from '#server/projects';
 import { allTerminals, removeTerminal, terminalsIn } from '#server/terminals';
 import {
   SessionDoc,
@@ -62,7 +62,7 @@ export async function rename(id: string, title: string) {
   await sessions.refresh();
 }
 
-/** Marks everything in the session so far as read, or the newest turn unread. */
+/** Marks everything in the session so far as read, or the newest reply unread. */
 export async function markSeen(id: string, seen = true) {
   const conversationId = Number(id) as ConversationId;
   if (!Number.isInteger(conversationId)) throw new Error(`No session ${id}`);
@@ -78,10 +78,10 @@ export async function markSeen(id: string, seen = true) {
 }
 
 /**
- * Done with a worktree: its sessions archived, terminals closed, folder and
+ * Removes a worktree: its sessions archived, terminals closed, folder and
  * local branch gone. Without force, returns what would be lost instead.
  */
-export async function cleanUpWorktree(
+export async function removeWorktree(
   projectId: string,
   cwd: string,
   force: boolean,
@@ -95,7 +95,7 @@ export async function cleanUpWorktree(
   }
   await retireSessions(cwd, w.branch, w.pr);
   for (const t of terminalsIn(cwd)) await removeTerminal(t.id);
-  await removeWorktree(projectId, cwd);
+  await removeGitWorktree(projectId, cwd);
   return null;
 }
 

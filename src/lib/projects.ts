@@ -16,11 +16,8 @@ export const pinProject = (id: string, pinned: boolean) =>
 
 export const listDirs = (path?: string) => request('fs.dirs', { path });
 
-export const cleanUpWorktree = (
-  projectId: string,
-  cwd: string,
-  force = false,
-) => request('worktree.cleanUp', { projectId, cwd, force });
+export const removeWorktree = (projectId: string, cwd: string, force = false) =>
+  request('worktree.cleanUp', { projectId, cwd, force });
 
 const baseName = (path: string) =>
   path.split('/').filter(Boolean).pop() ?? path;
@@ -73,7 +70,7 @@ export function setCurrentTarget(target: Target) {
   setTarget(target);
 }
 
-/** The remembered target if it still exists, else the first project's folder. */
+/** The remembered target if it still exists, else the first project's main folder. */
 export function resolveTarget(projects: Project[], target?: Target) {
   const project =
     projects.find((p) => p.id === target?.projectId) ?? projects[0];

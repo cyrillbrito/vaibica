@@ -224,7 +224,7 @@ export const sessions = live(listSessions);
 
 export const watchSessions = sessions.watch;
 
-/** The project and folder a session works in; throws if it has none. */
+/** The project and workspace a session works in; throws if it has none. */
 export async function sessionWorkspace(id: ConversationId) {
   const harness = await getHarness();
   const [meta, agent] = await Promise.all([
@@ -232,7 +232,7 @@ export async function sessionWorkspace(id: ConversationId) {
     harness.snapshot(AgentDoc, id, context),
   ]);
   if (!meta?.projectId || !agent?.cwd)
-    throw new Error('This session has no project folder');
+    throw new Error('This session has no workspace');
   return { projectId: meta.projectId, cwd: agent.cwd, agent };
 }
 

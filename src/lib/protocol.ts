@@ -37,14 +37,15 @@ export interface SessionSummary {
   forkedFrom: string | null;
   // The last entry it took from there.
   forkedAt: number | null;
-  // The session whose agent started it; null: started by the user.
+  // Its parent, the session whose agent started it; null: started by the user.
   startedBy: string | null;
-  // The session that started it still drives it: the user hasn't taken it
-  // over, or handed it back.
+  // Its parent still drives it: the user hasn't taken it over, or handed it
+  // back.
   parentDrives: boolean;
-  // Each time the user took it over or handed it back.
-  handoffs: Handoff[];
-  // Its worktree was cleaned up: the branch and PR it had then; null: not.
+  // Each time you took it over or handed it back.
+  handoffs: InCharge[];
+  // Its worktree was removed: the branch and PR it had then; null: not. Named
+  // when removing was called clean up, and stored so.
   cleanedUp: { branch: string | null; pr: PullRequest | null } | null;
   // The agent it runs as: its tools, instructions, and model
   // (docs/agents.md).
@@ -62,8 +63,8 @@ export interface SessionSummary {
 // Missing: its code is gone from this Bica, so only stopping ends it.
 export type Stuck = 'crashed' | 'missing';
 
-/** A change of who drives a session another one started. */
-export type Handoff = { at: number; to: 'you' | 'parent' };
+/** Who is in charge of a worker from `at` on: you took it over, or handed it back. */
+export type InCharge = { at: number; to: 'you' | 'parent' };
 
 /** A session's voice calls (docs/voice.md). */
 // A type, not an interface: session docs only take plain JSON shapes.
@@ -101,7 +102,7 @@ export interface ModelSettings extends ModelChoice {
   enabled: string[];
   // The small model for titles and commit messages; null: none.
   fastModel: ModelRef | null;
-  // Answers yes or no questions, such as which old tool output Clean up
+  // Answers yes or no questions, such as which old tool output pruning
   // keeps: a decision model like Jev, or a chat model; null: none.
   decisionModel: ModelRef | null;
   // Opening a file's diff under Changes stages it: staged means reviewed.
@@ -208,7 +209,7 @@ export interface Project {
   tickets?: string;
   // Its main folder stays in the sidebar's list, never in Parked.
   pinned?: boolean;
-  // The project folder, or every worktree of its repo; never empty.
+  // The main folder, or every worktree of its repo; never empty.
   workspaces: Workspace[];
 }
 
@@ -239,7 +240,7 @@ export interface DirListing {
   dirs: { name: string; path: string; git: boolean }[];
 }
 
-/** A project folder or worktree, as the browser names it. */
+/** A workspace, as the browser names it. */
 export interface WorkspaceRef {
   projectId: string;
   cwd: string;
@@ -366,10 +367,10 @@ export interface Calls {
   'session.create': {
     args: {
       projectId: string;
-      // A workspace path of the project; absent: the project folder.
+      // A workspace path of the project; absent: its main folder.
       cwd?: string;
       // May be empty when images are attached. Both empty: a session for a
-      // voice call, named by its first hand-off.
+      // voice call, named by its first handoff.
       prompt: string;
       images?: PromptImage[];
       requestId: string;
@@ -398,6 +399,7 @@ export interface Calls {
   'project.pin': { args: { id: string; pinned: boolean }; result: null };
   // Removes a worktree and its local branch, archives its sessions, closes its
   // terminals. Returns what would be lost and removes nothing, unless force.
+  // Named when removing was called clean up.
   'worktree.cleanUp': {
     args: WorkspaceRef & { force?: boolean };
     result: string | null;
@@ -427,7 +429,7 @@ export interface Calls {
     args: { id: string; submission: number };
     result: QueuedPrompt | null;
   };
-  // A queued follow-up joins the run after the current step; false: already sent.
+  // A queued follow-up joins the run after the current turn; false: already sent.
   'session.push': { args: { id: string; submission: number }; result: boolean };
   // Stops the run; returns the queued prompts the stop dropped.
   'session.stop': { args: { id: string }; result: QueuedPrompt[] };
@@ -443,7 +445,8 @@ export interface Calls {
     args: { id: string; instructions?: string };
     result: null;
   };
-  // Clears old tool output from the model context (src/lib/cleanup.ts).
+  // Prunes old tool output from the model context (src/lib/prune.ts).
+  // Named when pruning was called clean up.
   'session.cleanup': { args: { id: string }; result: null };
   // Changing it later breaks the prompt cache once.
   'session.agent': { args: { id: string; agent: AgentId }; result: null };
