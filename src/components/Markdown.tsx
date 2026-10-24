@@ -82,7 +82,7 @@ const highlight = (code: string, lang?: string) => {
   const h = shiki();
   if (!h || !lang || lang === 'plaintext' || lang === 'text')
     return escape(code);
-  if (!h.getLoadedLanguages().includes(lang)) {
+  if (!h.hasLoadedLanguages([lang])) {
     langsLoaded();
     loadLang(lang);
     return escape(code);
@@ -90,12 +90,15 @@ const highlight = (code: string, lang?: string) => {
   const key = `${lang}\0${code}`;
   let html = cache.get(key);
   if (html === undefined) {
-    html = h.codeToHtml(code, {
-      lang,
-      themes: THEMES,
-      defaultColor: 'light-dark()',
-      structure: 'inline', // Only the spans: TanStack supplies <pre><code>.
-    });
+    // Only the spans: TanStack supplies <pre><code>.
+    html = h
+      .codeToHtml(code, {
+        lang,
+        themes: THEMES,
+        defaultColor: 'light-dark()',
+      })
+      .replace(/^<pre[^>]*><code[^>]*>/, '')
+      .replace(/<\/code><\/pre>$/, '');
     if (cache.size > 500) cache.clear();
     cache.set(key, html);
   }

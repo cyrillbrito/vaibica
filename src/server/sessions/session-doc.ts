@@ -59,6 +59,8 @@ export const SessionDoc = defineDoc<{
   history: 'latest',
   fork: 'current',
   initial: () => ({ title: '', createdAt: 0 }),
+  // Small and often changed: a base now and then keeps replay short.
+  checkpointWhen: (_value, _ops, { deltasSinceBase }) => deltasSinceBase >= 32,
 });
 
 /** The agent a session runs as; one this Bica doesn't know runs as Coding. */

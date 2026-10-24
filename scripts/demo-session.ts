@@ -142,6 +142,7 @@ const SessionDoc = defineDoc<{
   history: 'latest',
   fork: 'current',
   initial: () => ({ title: '', createdAt: 0 }),
+  checkpointWhen: () => false,
 });
 
 const conversation = await harness.createConversation(
