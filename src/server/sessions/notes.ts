@@ -2,7 +2,6 @@ import 'server-only';
 import type { ConversationId } from '@earendil-works/pi-durable';
 
 import { context, getHarness } from '#server/agent';
-import { serverProfile } from '#server/profiles';
 import type { PromptImage } from '#lib/protocol';
 import { queued, submit, type QueuedInput } from './prompts';
 import { prompters, readSession, recentMessages } from './read';
@@ -49,8 +48,9 @@ export function runChanged(id: ConversationId | undefined, running: boolean) {
 
 /**
  * Notes for the end of a run: to its starter and one-off watchers, and when
- * it asks or fails, to every hub too (docs/hub.md). A watcher it already
- * messaged this run hears only of a question or an error.
+ * it asks or fails, to every hub too, which coordinates them all
+ * (docs/hub.md). A watcher it already messaged this run hears only of a
+ * question or an error.
  */
 async function runEnded(id: ConversationId) {
   // Taken and cleared at once: these were for the run that just ended.
@@ -76,8 +76,7 @@ async function runEnded(id: ConversationId) {
   const alert = s.status === 'error' || s.status === 'waiting';
   if (alert)
     for (const other of await listSessions())
-      if (serverProfile(other.profile).hearsAlerts && !other.archivedAt)
-        watchers.add(other.id);
+      if (other.agent === 'hub' && !other.archivedAt) watchers.add(other.id);
   watchers.delete(String(id));
   if (!alert) for (const w of told) watchers.delete(w);
   if (!watchers.size) return;

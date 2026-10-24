@@ -2,7 +2,7 @@
 
 Assistant mode is for a session you never close. Most sessions are a task: you finish the work and move on. Some are a companion instead, like a notes vault you talk to every day and come back to for months. Assistant mode lets that kind of session keep going without you thinking about context size, cost, or when to start over.
 
-Turn it on with the Assistant button next to the workspace when you start a session. The context chip then shows an infinity sign, and its menu can turn it off again. The [hub](./hub.md) is kept small the same way.
+Turn it on with the Assistant button next to the workspace when you start a session, which runs it as the Assistant [agent](./agents.md). The context chip then shows an infinity sign, and its menu can turn it off again. The [hub](./hub.md) is kept small the same way.
 
 ## The idea
 

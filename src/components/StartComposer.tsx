@@ -2,7 +2,7 @@ import { useNavigate } from '@solidjs/router';
 import { createSignal } from 'solid-js';
 
 import { useModels } from '#lib/models';
-import type { ProfileId } from '#lib/profiles';
+import type { AgentId } from '#lib/agents';
 import type { PromptImage } from '#lib/protocol';
 import { startSession } from '#lib/sessions';
 import { startCall } from '#lib/voice';
@@ -25,7 +25,7 @@ export interface StartTarget {
 export default function StartComposer(props: {
   target: StartTarget | undefined;
   // Absent: coding.
-  profile?: Exclude<ProfileId, 'hub'>;
+  agent?: Exclude<AgentId, 'hub'>;
   // Where the typed draft is kept, e.g. "new" on the home page.
   draft: string;
   placeholder?: string;
@@ -59,7 +59,7 @@ export default function StartComposer(props: {
       images,
       choice(),
       t.worktree || undefined,
-      props.profile ?? 'coding',
+      props.agent ?? 'coding',
       tonight || undefined,
     );
     navigate(paths.s(id));

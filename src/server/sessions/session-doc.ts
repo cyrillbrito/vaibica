@@ -1,7 +1,7 @@
 import 'server-only';
 import { defineDoc } from '@earendil-works/pi-durable';
 
-import type { ProfileId } from '#lib/profiles';
+import { isAgent } from '#lib/agents';
 import type { Handoff, PullRequest, VoiceSettings } from '#lib/protocol';
 
 // App metadata stored next to each conversation; Pi Durable has no titles.
@@ -22,8 +22,11 @@ export const SessionDoc = defineDoc<{
   startedBy?: string;
   // Its worktree was cleaned up: the branch and PR it had then.
   cleanedUp?: { branch: string | null; pr: PullRequest | null };
-  // Its profile (src/lib/profiles.ts). Unset: from before profiles, coding.
-  profile?: ProfileId;
+  // The id of the agent it runs as (src/lib/agents.ts), read through
+  // agentIdOf. Agents were called profiles when the field was named, and it
+  // keeps the name so stored sessions read as they are. Unset: from before
+  // the field, coding.
+  profile?: string;
   // Started with session_start's `notify: false`: its starter hears nothing.
   quiet?: boolean;
   // Who sent the newest prompt: "user", "bica" for a note, or a session id.
@@ -58,5 +61,6 @@ export const SessionDoc = defineDoc<{
   initial: () => ({ title: '', createdAt: 0 }),
 });
 
-export const profileOf = (meta?: { profile?: ProfileId }) =>
-  meta?.profile ?? 'coding';
+/** The agent a session runs as; one this Bica doesn't know runs as Coding. */
+export const agentIdOf = (meta?: { profile?: string }) =>
+  isAgent(meta?.profile) ? meta.profile : 'coding';

@@ -2,21 +2,18 @@ import 'server-only';
 import type { ConversationId } from '@earendil-works/pi-durable';
 
 import { MIN_CLEANUP, contextUsage } from '#lib/context-usage';
-import { PROFILES } from '#lib/profiles';
+import { keptSmall } from '#lib/upkeep';
 import { context, getHarness } from '#server/agent';
 import { getCatalog } from '#server/providers';
-import {
-  cleanUpContext,
-  compact,
-  listSessions,
-  markSeen,
-  submit,
-} from '#server/sessions';
+import { markSeen } from './meta';
+import { cleanUpContext, compact, submit } from './prompts';
+import { listSessions } from './store';
 
-// Long-lived profiles, assistant (docs/assistant-mode.md) and hub
-// (docs/hub.md): Bica keeps their sessions small while they sit idle. Clean up runs once the cache is cold, when it is
-// free. Saving memories and compacting call the model, so they run just
-// before the cache expires, while reading it is still cheap.
+// Long-lived sessions, assistant mode (docs/assistant-mode.md) and the hub
+// (docs/hub.md): Bica keeps them small while they sit idle. Clean up runs
+// once the cache is cold, when it is free. Saving memories and compacting
+// call the model, so they run just before the cache expires, while reading
+// it is still cheap.
 
 const MINUTE = 60_000;
 const WARM_MARGIN = 5 * MINUTE;
@@ -43,7 +40,7 @@ export function startUpkeep() {
 async function tendAll() {
   const sessions = await listSessions().catch(() => []);
   for (const s of sessions)
-    if (PROFILES[s.profile].longLived && !s.archivedAt && !busy.has(s.id)) {
+    if (keptSmall(s.agent) && !s.archivedAt && !busy.has(s.id)) {
       busy.add(s.id);
       void tend(s.id, s.status === 'done')
         .catch((error) => console.error('[long-lived]', error))

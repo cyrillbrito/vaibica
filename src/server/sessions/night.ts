@@ -9,13 +9,13 @@ import {
   modelSettings,
   openWindows,
 } from '#server/providers';
-import { setProfile } from './meta';
+import { setAgent } from './meta';
 import { stop, submit } from './prompts';
 import { SessionDoc, getConversation, listSessions, sessions } from './store';
 
-// Night runs (docs/night-runs.md): sessions held for tonight start one at a
-// time from the start time in Settings, while the plan has room, and turn
-// back into coding sessions once they ran.
+// Night runs (docs/night-runs.md): sessions held for tonight run as the Night
+// agent. They start one at a time from the start time in Settings, while the
+// plan has room, and go back to the Coding agent once they ran.
 
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
@@ -52,13 +52,13 @@ const running = (s: SessionSummary) =>
 
 async function tick() {
   const night = (await listSessions()).filter(
-    (s) => s.profile === 'night' && !s.archivedAt,
+    (s) => s.agent === 'night' && !s.archivedAt,
   );
   // Ran, failed, or stopped: from now on it's a normal session.
   for (const s of night)
     if (!s.tonight && !running(s)) {
       warned.delete(s.id);
-      await setProfile(s.id, 'coding');
+      await setAgent(s.id, 'coding');
     }
   const current = night.find((s) => !s.tonight && running(s));
   if (current) {
@@ -165,7 +165,7 @@ async function send(id: string, prompt: string) {
  */
 export async function cancelTonight(id: string) {
   const prompt = await takePrompt(id);
-  await setProfile(id, 'coding');
+  await setAgent(id, 'coding');
   return prompt;
 }
 

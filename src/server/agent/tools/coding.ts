@@ -36,7 +36,7 @@ function ownFolder(tool: ToolRegistration): ToolRegistration {
 const any = (tool: unknown) => tool as ToolRegistration;
 const read = () => any(createReadTool({ images: bunImages }));
 
-// Only the hub profile selects it (src/server/profiles/hub.ts).
+// Only the hub agent selects it (src/server/agents/hub.ts).
 export const HubFileTools = defineExtension({
   name: 'hub-file-tools',
   tools: [

@@ -18,6 +18,7 @@ Bica is a Bun server on the dev machine and a web app that talks to it over one 
 
 - A project is a folder on the dev machine, usually a git repo. A workspace is the exact folder work happens in: the project folder or one of its worktrees. See [projects.md](./projects.md).
 - A session is one agent conversation in one workspace. See [sessions.md](./sessions.md).
+- An agent is what a session runs as: its instructions, model, tools, and skills. See [agents.md](./agents.md).
 - A run is the agent working on a prompt until it answers.
 - A terminal is a shell in a workspace, shared by you and the agents. See [terminals.md](./terminals.md).
 - The harness is Pi Durable's engine inside the server. It runs every session and saves each step before anyone sees it.
@@ -28,8 +29,8 @@ Bica is a Bun server on the dev machine and a web app that talks to it over one 
 
 - `agent/`: the harness and the agent's own tools ([tools.md](./tools.md)).
 - `providers/`: models, keys, sign-ins, and plan accounts ([models.md](./models.md)).
-- `sessions/`: what Bica adds to a conversation: titles, prompts and the queue, voice turns, and the session tools ([sessions.md](./sessions.md)).
-- `profiles/`: each kind of session's tools, model, and instructions ([profiles.md](./profiles.md), [instructions.md](./instructions.md)).
+- `sessions/`: what Bica adds to a conversation: titles, prompts and the queue, voice turns, the session tools, and what runs around them, such as night runs, idle upkeep, and the hub ([sessions.md](./sessions.md)).
+- `agents/`: one file per agent, with its tools, model, and instructions ([agents.md](./agents.md), [instructions.md](./instructions.md)).
 - `git/`: status, diffs, staging, and commits ([git.md](./git.md)).
 - `terminals/`: shells and the agent's terminal tools ([terminals.md](./terminals.md)).
 

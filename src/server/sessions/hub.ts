@@ -2,13 +2,24 @@ import 'server-only';
 import { mkdir } from 'node:fs/promises';
 
 import { context, getHarness } from '#server/agent';
-import { serverProfile, hubChoice, hubFolder } from '#server/profiles';
+import { agentChoice, getAgent, selection } from '#server/agents';
+import { modelSettings } from '#server/providers';
 import { SessionDoc, getConversation, listSessions, sessions } from './store';
 
-/** The hub (docs/hub.md): the newest open hub session outside any project. */
+// The hub (docs/hub.md): one session of the Hub agent, in the folder from
+// Settings → Hub, on the model picked there.
+
+/** The hub's folder from Settings, or null before one is picked. */
+const hubFolder = async () => (await modelSettings()).hubFolder;
+
+/** The model from Settings when it is reachable, else the agent's own. */
+const hubChoice = async () =>
+  agentChoice(getAgent('hub'), (await modelSettings()).hubModel);
+
+/** The newest open hub session outside any project. */
 async function findHub() {
   return (await listSessions()).find(
-    (s) => s.profile === 'hub' && !s.archivedAt && !s.projectId,
+    (s) => s.agent === 'hub' && !s.archivedAt && !s.projectId,
   );
 }
 
@@ -19,8 +30,7 @@ export async function openHub() {
   const folder = await hubFolder();
   if (!folder) throw new Error('Pick a folder for the hub in Settings first');
   await mkdir(folder, { recursive: true });
-  const hub = serverProfile('hub');
-  const choice = await hub.choice();
+  const choice = await hubChoice();
   const conversation = await (
     await getHarness()
   ).createConversation(
@@ -29,7 +39,7 @@ export async function openHub() {
       agent: {
         ...choice,
         cwd: folder,
-        extensions: hub.extensions,
+        extensions: selection(getAgent('hub')),
       },
       init: async (tx, id) => {
         const doc = await tx.doc(SessionDoc, id);

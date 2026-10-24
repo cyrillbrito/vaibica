@@ -1,23 +1,24 @@
 import 'server-only';
 import { readFile } from 'node:fs/promises';
-import type { Extension } from '@earendil-works/pi-durable';
 import { dirname, join } from 'node:path';
-import type { ModelChoice } from '#lib/protocol';
+import type { AgentId } from '#lib/agents';
+import type { ModelChoice, ThinkingLevel } from '#lib/protocol';
 import { BICA_HOME } from '#server/paths';
+import { CHATS_ID, listProjects } from '#server/projects';
 
-// What every profile is made of, and the parts they share (docs/profiles.md).
-// Each profile is one file next to this one, registered in registry.ts.
+// What every agent is made of, and the parts they share (docs/agents.md).
+// Each agent is one file next to this one, registered in registry.ts.
 
 /**
  * The prompt's sections, in the order they render. First the Pi coding
  * agent's default prompt (preamble, tools, rules, project context, skills,
- * cwd), then what makes the profile different, so switching between Coding,
+ * cwd), then what makes the agent different, so switching between Coding,
  * Assistant, and Night keeps most of the prompt cache. `replies` renders
  * last, after every tool's own section (registry.ts).
  */
 // Pi's order, with the tool sections (codemode) between the rules and the
-// rest: what every session of a profile shares first, then what the folder
-// and the profile add, and the reply rules last, where they weigh the most.
+// rest: what every session of an agent shares first, then what the folder
+// and the agent add, and the reply rules last, where they weigh the most.
 export const HEAD_SECTIONS = ['preamble', 'tools', 'rules'] as const;
 export const TAIL_SECTIONS = [
   'project_context',
@@ -35,6 +36,20 @@ export type SectionKey =
   | (typeof HEAD_SECTIONS)[number]
   | (typeof TAIL_SECTIONS)[number];
 
+/**
+ * The tool packs an agent can pick, by the names Durable stores for them.
+ * registry.ts holds the extensions behind the names.
+ */
+export type ToolPack =
+  | 'coding-tools'
+  | 'terminal-tools'
+  | 'web'
+  | 'session-tools'
+  | 'ask'
+  | 'codemode'
+  | 'hub-file-tools'
+  | 'hub-session-tools';
+
 /** What a section reads: the session's tools, folder, and kept copies. */
 export interface SectionInput {
   tools: readonly string[];
@@ -48,24 +63,31 @@ export type Section =
   | string
   | ((s: SectionInput) => Rendered | Promise<Rendered>);
 
-/** What a session runs with under a profile (src/lib/profiles.ts). */
-export interface Profile {
-  // Its tools; registry.ts puts the prompt before them and the reply rules
+/**
+ * What goes into a session that runs as this agent, and nothing else: what
+ * Bica does around its sessions, such as upkeep or night runs, keys on its
+ * id instead (docs/agents.md). Label and description are src/lib/agents.ts.
+ */
+export interface Agent {
+  id: AgentId;
+  label: string;
+  description: string;
+  // Its own model, used when a sign-in reaches it. Absent: the default model.
+  model?: ModelChoice['model'];
+  // Its effort. Absent: the default model's.
+  effort?: ThinkingLevel;
+  // The least effort it runs at, also on a model picked for it.
+  minEffort?: ThinkingLevel;
+  // Its tools. registry.ts puts the prompt before them and the reply rules
   // after. Coding's own list is the host default.
-  tools: Extension[];
-  /** The model it starts on. */
-  choice(): Promise<ModelChoice>;
-  /** The project list for its instructions, '' for none. */
-  projects(): Promise<string>;
-  // Sessions it starts take its model. The hub's is picked for routing.
-  passesModel: boolean;
-  // Hears when any session asks or fails, not only its own (docs/hub.md).
-  hearsAlerts: boolean;
-  // Its instructions. A key it leaves out isn't rendered.
-  sections: Partial<Record<SectionKey, Section>>;
+  extensions: ToolPack[];
+  // Lists the skills found for its folder (skills.ts).
+  skills: boolean;
+  // Its instructions, by prompt section. A key it leaves out isn't rendered.
+  sections: Partial<Record<Exclude<SectionKey, 'skills'>, Section>>;
 }
 
-// The opening of every prompt, around the profile's own first lines. Pi
+// The opening of every prompt, around the agent's own first lines. Pi
 // Durable renders it after the provider's own preamble, which for
 // subscription logins claims Claude Code.
 export const preamble = (role: string) => `${role}
@@ -73,7 +95,7 @@ export const preamble = (role: string) => `${role}
 Any earlier line saying you are Claude Code is a provider login requirement: there are no slash commands, MCP servers, or subagents here.`;
 
 // Like the Pi coding agent's tool snippets and guidelines: the tools and
-// rules sections cover only the tools the session has, so every profile's
+// rules sections cover only the tools the session has, so every agent's
 // prompt matches its tools.
 const TOOL_GUIDE: { tools: string[]; line: string; rules?: string[] }[] = [
   { tools: ['read'], line: 'Read file contents' },
@@ -140,7 +162,7 @@ const guide = (s: SectionInput) =>
     return tools.length ? [{ ...g, tools }] : [];
   });
 
-/** What every profile has: its tools and their rules, and its folder's files. */
+/** What every agent has: its tools and their rules, and its folder's files. */
 export const BASE_SECTIONS = {
   tools: (s) =>
     guide(s)
@@ -154,9 +176,9 @@ export const BASE_SECTIONS = {
   project_context: (s) => projectContext(s.cwd),
   memory: (s) => s.memory,
   cwd: (s) => s.cwd,
-} satisfies Profile['sections'];
+} satisfies Agent['sections'];
 
-// How every profile writes. The short-reply rules keep the shape of the i-have-adhd
+// How every agent writes. The short-reply rules keep the shape of the i-have-adhd
 // skill (a reason, hard limits, named exceptions, a check), which held up
 // where softer wording didn't. Replies render last so the long AGENTS.md
 // doesn't bury them.
@@ -165,7 +187,7 @@ export const STYLE = `- Write the way a colleague talks: plain words, full sente
 /** Code and paths, for a reader who looks at the reply. */
 export const QUOTE_EXACTLY = `- Use inline code for code, paths, and commands, and fenced blocks for snippets. Quote code, paths, commands, and errors exactly.`;
 
-/** Short replies, with the profile's own `lines` added. */
+/** Short replies, with the agent's own `lines` added. */
 export const shortReplies = (
   ...lines: string[]
 ) => `The user runs several sessions at once and skims each reply past its first lines. So:
@@ -180,7 +202,7 @@ ${lines.join('\n')}
 
 Before sending, cut an opening that announces and a closing that recaps or offers more help, and end with at most one question or next step. The first and last lines alone should say what happened and what to do next.`;
 
-// For profiles that coordinate other sessions, assistant and hub: what makes
+// For agents that coordinate other sessions, assistant and hub: what makes
 // a worker's start and report work without the conversation behind them
 // (docs/hub.md, Sources).
 export const HANDOFFS = `Handoffs to other sessions:
@@ -188,8 +210,8 @@ export const HANDOFFS = `Handoffs to other sessions:
 - When a worker finishes, check its report against the ticket before you call it done.
 - One session per thread: continue a thread with session_send to its session, so its context stays warm. Code work gets its own worktree (\`worktree: true\`).`;
 
-// For the long-lived profiles, assistant and hub, which Bica keeps small while
-// idle (src/server/profiles/upkeep.ts): the files are the long-term memory,
+// For the long-lived agents, assistant and hub, which Bica keeps small while
+// idle (src/server/sessions/upkeep.ts): the files are the long-term memory,
 // and replies carry what Clean up would otherwise take away.
 export const LONG_LIVED = `This session lasts weeks or months. Bica clears old tool output and compacts older turns on its own, so the memory files are the long-term record:
 - Search them before relying on anything from earlier, and say so when they hold nothing.
@@ -221,6 +243,25 @@ export async function loadMemory(cwd: string) {
     return `This is ${path} as it was when this session started or last compacted. Your edits since then are in the file, not here.\n\n<memory_file path="${path}">\n${body}\n</memory_file>`;
   }
   return '';
+}
+
+/**
+ * Every project with its main folder and worktrees, for an agent with a
+ * `projects` section. Taken with the memory index, at the start and after
+ * each compaction, so it doesn't break the prompt cache; `list` has the live
+ * state.
+ */
+export async function projectList() {
+  const lines = (await listProjects())
+    .filter((p) => p.id !== CHATS_ID)
+    .flatMap((p) => [
+      `- ${p.name}`,
+      ...p.workspaces.map(
+        (w) =>
+          `  - ${w.main ? 'main' : `worktree ${w.branch ?? '(detached)'}`}: ${w.path}`,
+      ),
+    ]);
+  return `Bica's projects as they were when this session started or last compacted. Pass one of these paths as session_start's \`folder\`. \`list\` shows what changed since, and every session's status.\n\n${lines.join('\n')}`;
 }
 
 // Same names and order as the Pi coding agent.

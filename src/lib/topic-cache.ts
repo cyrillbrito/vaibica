@@ -3,7 +3,7 @@
 
 const NAME = 'bica-topics';
 // Bump when a topic's value changes shape, to drop the old copies.
-const VERSION = 2;
+const VERSION = 3;
 const STORE = 'topics';
 // Conversations reach a megabyte or more each.
 const MAX = 40;

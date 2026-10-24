@@ -2,7 +2,7 @@
 // Shared by src/server/socket.ts and src/lib/socket.ts; types only.
 import type { Op } from '@earendil-works/chord/delta';
 import type { ConversationView } from '@earendil-works/pi-durable';
-import type { ProfileId } from './profiles';
+import type { AgentId } from './agents';
 
 export { SOCKET_PATH } from './socket-path';
 
@@ -46,9 +46,9 @@ export interface SessionSummary {
   handoffs: Handoff[];
   // Its worktree was cleaned up: the branch and PR it had then; null: not.
   cleanedUp: { branch: string | null; pr: PullRequest | null } | null;
-  // What kind of session it is: its tools, instructions, and panels
-  // (docs/profiles.md).
-  profile: ProfileId;
+  // The agent it runs as: its tools, instructions, and model
+  // (docs/agents.md).
+  agent: AgentId;
   // How its voice calls sound; null: the defaults.
   voice: VoiceSettings | null;
   // The first prompt, held for tonight's run (docs/night-runs.md); null:
@@ -367,10 +367,10 @@ export interface Calls {
       prompt: string;
       images?: PromptImage[];
       requestId: string;
-      // Absent: the profile's default.
+      // Absent: the agent's default.
       choice?: ModelChoice;
       // Absent: coding.
-      profile?: ProfileId;
+      agent?: AgentId;
       // Starts in a new worktree named after the session, instead of `cwd`.
       worktree?: boolean;
       // Holds the prompt for tonight's run instead of sending it.
@@ -438,7 +438,7 @@ export interface Calls {
   // Clears old tool output from the model context (src/lib/cleanup.ts).
   'session.cleanup': { args: { id: string }; result: null };
   // Changing it later breaks the prompt cache once.
-  'session.profile': { args: { id: string; profile: ProfileId }; result: null };
+  'session.agent': { args: { id: string; agent: AgentId }; result: null };
   // The hub's session id, started first if there is none.
   'hub.open': { args: Record<string, never>; result: string };
   // Applies from the next call.

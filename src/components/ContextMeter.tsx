@@ -17,9 +17,10 @@ import {
   cleanupSession,
   compactSession,
   isCleaning,
-  setProfile,
+  setAgent,
 } from '#lib/sessions';
-import { PROFILES, type ProfileId } from '#lib/profiles';
+import { AGENTS, type AgentId } from '#lib/agents';
+import { keptSmall } from '#lib/upkeep';
 import type { VoiceSettings as Voice } from '#lib/protocol';
 import ContextField, { percent } from './ContextField';
 import { Breakdown } from './ui/Breakdown';
@@ -48,7 +49,7 @@ import {
 const LONG_LIVED_HINT =
   'While it sits idle, Bica clears old tool output once the cache is cold, and past 120k it has the agent save memories to files, then compacts. Past 200k it does that at the first pause.';
 
-const PROFILE_ICON: Record<ProfileId, () => JSX.Element> = {
+const AGENT_ICON: Record<AgentId, () => JSX.Element> = {
   coding: CodeIcon,
   assistant: AssistantIcon,
   night: MoonIcon,
@@ -60,7 +61,7 @@ export default function ContextMeter(props: {
   id: string;
   view: ConversationView;
   usage: ContextUsage;
-  profile: ProfileId;
+  agent: AgentId;
   voice: Voice | null;
 }) {
   let voiceDialog: HTMLDialogElement | undefined;
@@ -105,13 +106,13 @@ export default function ContextMeter(props: {
             toast(e instanceof Error ? e.message : String(e)),
           ),
       },
-      ...(props.profile === 'assistant'
+      ...(props.agent === 'assistant'
         ? [
             {
               label: 'Turn off assistant mode',
               hint: 'Back to a coding session. Rebuilds the prompt cache once.',
               icon: <CodeIcon />,
-              onSelect: () => void setProfile(props.id, 'coding'),
+              onSelect: () => void setAgent(props.id, 'coding'),
             },
           ]
         : []),
@@ -149,12 +150,12 @@ export default function ContextMeter(props: {
         aria-haspopup="menu"
         onClick={menu}
       >
-        <Show when={props.profile !== 'coding'}>
+        <Show when={props.agent !== 'coding'}>
           <span
             class="text-muted"
-            title={`${PROFILES[props.profile].label}: ${PROFILES[props.profile].about}.${PROFILES[props.profile].longLived ? ` ${LONG_LIVED_HINT}` : ''}`}
+            title={`${AGENTS[props.agent].label}: ${AGENTS[props.agent].description}.${keptSmall(props.agent) ? ` ${LONG_LIVED_HINT}` : ''}`}
           >
-            <Dynamic component={PROFILE_ICON[props.profile]} />
+            <Dynamic component={AGENT_ICON[props.agent]} />
           </span>
         </Show>
         <Ring usage={usage()} />
