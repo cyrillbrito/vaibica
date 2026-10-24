@@ -2,9 +2,6 @@ import { createSignal } from 'solid-js';
 
 import type { AgentId } from './agents';
 
-// Module-scope UI state: only written from client event handlers, so the
-// server always renders the defaults.
-
 // Wide screens: panels are columns the user can hide.
 export const [sidebarHidden, setSidebarHidden] = createSignal(false);
 export const [sidePanelHidden, setSidePanelHidden] = createSignal(false);
@@ -29,17 +26,10 @@ const MIN_MAIN = 400;
 const MD = 768;
 const XL = 1280;
 
-// Window width. Infinite until mounted, so the server and first client render
-// use the plain bounds (no hydration mismatch); `trackViewport` fills it in.
-const [viewport, setViewport] = createSignal(Infinity);
-
-/** Follow the window width so columns can't outgrow it. Returns a cleanup. */
-export function trackViewport() {
-  const update = () => setViewport(document.documentElement.clientWidth);
-  update();
-  addEventListener('resize', update);
-  return () => removeEventListener('resize', update);
-}
+// Window width, so columns can't outgrow it.
+const width = () => document.documentElement.clientWidth;
+const [viewport, setViewport] = createSignal(width(), { name: 'viewport' });
+addEventListener('resize', () => setViewport(width()));
 
 const within = (w: number, min: number, max: number) =>
   Math.round(Math.min(max, Math.max(min, w)));

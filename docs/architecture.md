@@ -38,7 +38,7 @@ Bica is a Bun server on the dev machine and a web app that talks to it over one 
 
 The flat files next to them each do one job. `socket.ts` is the one table of calls and topics.
 
-Server code doesn't hot-reload in development: it runs as it started until Bica restarts. Page edits still reload.
+The app renders only in the browser, and Vite builds only the app. The server is Bun source: in development it runs inside Vite's process, and `bun run start` and the `bica` binary run it the same way. It doesn't hot-reload: it runs as it started until Bica restarts. Page edits still reload.
 
 ## How a prompt travels
 

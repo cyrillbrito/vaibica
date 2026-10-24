@@ -49,11 +49,11 @@ Features call each other directly. There are no ports, slots, registries, or swi
 
 Mixing sides in one folder is safe because the two sides are separate programs. The browser bundle and the Bun server share no runtime state and talk only over the socket, with no server functions or server rendering that run one file on both sides. The one way to go wrong is a wrong import, and that fails loudly:
 
-- Every server file starts with `import 'server-only'`. Solid's Vite plugin fails as soon as browser code imports such a file, in dev when the page loads, and in every build. Reading `virtual:env/server` from browser code fails the same way.
+- Every server file starts with `import 'server-only'`. Solid's Vite plugin fails as soon as browser code imports such a file, in dev when the page loads, and in every build.
 - Browser-only modules, such as the socket client and the DOM helpers, start with `import 'client-only'`, which fails when the server imports them.
-- A lint rule in `lint/bica.js`, run by `bun run checks`, catches what the markers would only catch when a page loads. A file that imports a Node built-in, `bun`, `ws`, Pi Durable, `pi-ai`, `pi-codemode`, `virtual:env/server`, or a server file must carry `import 'server-only'` itself. A `.tsx` file may never carry it. Type-only imports cross freely, since they vanish from the bundle.
+- A lint rule in `lint/bica.js`, run by `bun run checks`, catches what the markers would only catch when a page loads. A file that imports a Node built-in, `bun`, `ws`, Pi Durable, `pi-ai`, `pi-codemode`, or a server file must carry `import 'server-only'` itself. A `.tsx` file may never carry it. Type-only imports cross freely, since they vanish from the bundle.
 
-The rule spreads the marker up the import chain, so a component can't reach server code through any number of files without lint saying so. Tests run server code under Bun, where the test preload turns both markers into empty modules.
+The rule spreads the marker up the import chain, so a component can't reach server code through any number of files without lint saying so. Server code runs under Bun, where `src/server/server-only.ts` turns the marker into an empty module.
 
 A feature's own code shared by both sides, such as the transcript projection, is plain TypeScript with neither marker.
 
@@ -75,13 +75,13 @@ When sessions must tell a feature on top that something happened, such as a sess
 
 ## Server-side rendering
 
-Server-side rendering is dropped: Bica's data arrives over the socket, so the server only ever rendered an empty frame. Without it, browser code runs only in the browser, which is what makes `client-only` usable and lets the `isServer` guards go. Vite builds only the browser app, and the server runs as Bun source in dev, in `bun run start`, and in the `bica` binary. It needs Solid rc.18 or newer, and client start mode is marked experimental in the plugin's README.
+Server-side rendering is dropped: Bica's data arrives over the socket, so the server only ever rendered an empty frame. Browser code now runs only in the browser, which makes `client-only` usable. Vite builds only the browser app, and the server runs as Bun source in dev, in `bun run start`, and in the `bica` binary. Client start mode is marked experimental in the plugin's README.
 
 ## Moving there
 
 Each step moves files as a pure rename with import fixes, in its own commit, so open worktrees can rebase across it. Splitting a file comes in a later commit.
 
-1. Drop server-side rendering and move the design system to `ui/`. The aliases for the root folders and the `bica/server-only` lint rule are in place, and every file in `src/server` carries the marker. The move proves the aliases in Vite, `bun test`, `bun check`, and the binary.
+1. Move the design system to `ui/`. The aliases for the root folders and the `bica/server-only` lint rule are in place, and every file in `src/server` carries the marker. The move proves the aliases in Vite, `bun test`, `bun check`, and the binary.
 2. Terminals, with its protocol, handlers, sidebar rows, and actions. This proves the protocol join, the spread router, and a thin route.
 3. Files and Git. This proves the shape on a large UI with types both sides share.
 4. Voice. This proves the direction rule, since it spans sessions on the server and the composer in the browser.

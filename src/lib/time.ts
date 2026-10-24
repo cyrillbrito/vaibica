@@ -1,4 +1,3 @@
-import { isServer } from '@solidjs/web';
 import { createEffect, createMemo, createSignal } from 'solid-js';
 
 const units: [string, number][] = [
@@ -9,11 +8,11 @@ const units: [string, number][] = [
 
 // Shared by every label; without it "now" stays "now" until the data changes.
 const [now, setNow] = createSignal(Date.now(), { name: 'clock' });
-if (!isServer) setInterval(() => setNow(Date.now()), 30_000);
+setInterval(() => setNow(Date.now()), 30_000);
 
 /** Reactive: the time, updated every second, for running timers. */
 const [tick, setTick] = createSignal(Date.now(), { name: 'tick' });
-if (!isServer) setInterval(() => setTick(Date.now()), 1000);
+setInterval(() => setTick(Date.now()), 1000);
 export { tick };
 
 /** Reactive: milliseconds since `timestamp`, updated every second. */

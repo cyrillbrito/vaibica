@@ -7,7 +7,7 @@ import {
   getSupportedThinkingLevels,
 } from '@earendil-works/pi-ai';
 import { DEFAULT_COMPACTION_POLICY } from '@earendil-works/pi-durable';
-import { env } from 'virtual:env/server';
+import { env } from '#server/env';
 
 import type {
   ModelCatalog,

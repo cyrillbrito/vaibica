@@ -19,9 +19,7 @@ export type MusicLevel = keyof typeof MUSIC_LEVELS;
 // Per device, like the sounds: the speakers decide what is loud.
 const MUSIC_KEY = 'music';
 const [musicLevel, setLevel] = createSignal<MusicLevel>(
-  (typeof localStorage !== 'undefined' &&
-    (localStorage.getItem(MUSIC_KEY) as MusicLevel | null)) ||
-    'medium',
+  (localStorage.getItem(MUSIC_KEY) as MusicLevel | null) || 'medium',
   { name: 'musicLevel' },
 );
 export { musicLevel };

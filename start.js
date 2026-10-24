@@ -1,13 +1,23 @@
 // `bun run start`: the built copy from the repo, through the same entry as the
 // `bica` binary, but with its data in the repo's .data/.
+import { Glob } from 'bun';
+import { join } from 'node:path';
+
+import { registerServerOnly } from './src/server/server-only.ts';
+
 process.env.BICA_DATA_DIR ||= '.data';
+registerServerOnly();
 
 const { run } = await import('./cli/bica.ts');
+const dir = join(import.meta.dir, 'dist/client');
 
 await run({
   version: '0.0.0-dev',
-  load: async () => ({
-    ...(await import('./dist/server/node.js')),
-    ...(await import('./dist/server/socket.js')),
-  }),
+  load: () => import('./src/server/socket.ts'),
+  client: Object.fromEntries(
+    [...new Glob('**/*').scanSync(dir)].map((path) => [
+      `/${path}`,
+      join(dir, path),
+    ]),
+  ),
 });

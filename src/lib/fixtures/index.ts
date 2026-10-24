@@ -4,7 +4,6 @@
 // and commands are held back while it's on, except reads it can answer
 // (step details, files and diffs). `?data=live` shows the switch with
 // real data. The mode is per tab and survives navigation and reloads.
-import { isServer } from '@solidjs/web';
 import { createSignal, untrack } from 'solid-js';
 
 import type { Call, Calls, FileText, SessionSummary, Topic } from '../protocol';
@@ -35,7 +34,7 @@ export function openWithTestData(next: Mode | undefined) {
 const KEY = 'bica.data';
 
 function initial() {
-  if (!import.meta.env.DEV || isServer) return null;
+  if (!import.meta.env.DEV) return null;
   const param = new URLSearchParams(location.search).get('data');
   if (param !== null) sessionStorage.setItem(KEY, param);
   return sessionStorage.getItem(KEY);
@@ -90,7 +89,7 @@ const [step, setStep] = createSignal(0, { name: 'fixtureStep' });
 let stepping = false;
 const STEPS = 6;
 function story(base: SessionSummary[]): SessionSummary[] {
-  if (!stepping && !isServer) {
+  if (!stepping) {
     stepping = true;
     setInterval(() => setStep((n) => (n + 1) % STEPS), 6000);
   }

@@ -1,6 +1,6 @@
 # Real-time communication
 
-All work data moves between the dev machine and the browser over one WebSocket per tab: sessions, transcripts, files, diffs, git, settings, and every command on them. HTTP only serves the app itself. The page renders an empty shell, connects, and fills in. The socket refuses connections from other sites' pages.
+All work data moves between the dev machine and the browser over one WebSocket per tab: sessions, transcripts, files, diffs, git, settings, and every command on them. HTTP only serves the app itself. The page loads empty, connects, and fills in. The socket refuses connections from other sites' pages.
 
 ## Two kinds of traffic
 

@@ -2,7 +2,6 @@
 // kind of row, and one run that plays out live (thinking, parallel tools,
 // streaming text) on a loop. Shaped like the server's conversation view.
 import type { ConversationView } from '@earendil-works/pi-durable';
-import { isServer } from '@solidjs/web';
 import { createSignal } from 'solid-js';
 
 import type { StepDetail } from '../protocol';
@@ -541,7 +540,7 @@ function live(id: string, worst: boolean) {
   return {
     details: base.details,
     get value() {
-      if (!timer && !isServer) timer = setInterval(() => setView(frame()), 60);
+      if (!timer) timer = setInterval(() => setView(frame()), 60);
       return view();
     },
   };

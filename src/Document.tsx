@@ -1,12 +1,11 @@
 import type { ParentProps } from 'solid-js';
-import { HydrationScript } from '@solidjs/web';
 
 import { motionBootScript } from '#lib/motion';
 import { themeBootScript } from '#lib/theme';
 
-// The document shell in place of index.html, picked up by the src/Document.*
-// convention. It renders the full <html> and ships no client JS. The plugin
-// strips <HydrationScript /> from the prerendered shell in client mode.
+// The page in place of index.html, picked up by the src/Document.* convention.
+// The build renders it once into dist/client/index.html; the app renders into
+// its <body> in the browser.
 export default function Document(props: ParentProps) {
   return (
     <html lang="en">
@@ -35,7 +34,6 @@ export default function Document(props: ParentProps) {
         {/* oxlint-disable-next-line solid/no-innerhtml -- a constant of ours, no user input */}
         <script innerHTML={themeBootScript + motionBootScript} />
         <title>Bica</title>
-        <HydrationScript />
       </head>
       <body>{props.children}</body>
     </html>

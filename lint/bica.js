@@ -95,7 +95,6 @@ const BUILTINS = new Set(builtinModules);
 const SERVER_PACKAGES = [
   'bun',
   'ws',
-  'virtual:env/server',
   '@earendil-works/pi-durable',
   '@earendil-works/pi-ai',
   '@earendil-works/pi-codemode',

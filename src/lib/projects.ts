@@ -1,4 +1,3 @@
-import { isServer } from '@solidjs/web';
 import { createSignal } from 'solid-js';
 
 import type { Project, Workspace } from './protocol';
@@ -49,7 +48,7 @@ const WORKTREE_KEY = 'bica.worktree';
 
 // Where new sessions start; remembered across visits.
 const [currentTarget, setTarget] = createSignal<Target | undefined>(
-  isServer || !localStorage.getItem(KEY)
+  !localStorage.getItem(KEY)
     ? undefined
     : {
         projectId: localStorage.getItem(KEY)!,

@@ -17,5 +17,5 @@ minimumReleaseAgeExcludes = [
 ]
 
 [test]
-# Server code imports modules only Vite provides (src/testing/preload.ts).
+# Server code imports `server-only`, which only Vite provides (src/testing/preload.ts).
 preload = ["./src/testing/preload.ts"]

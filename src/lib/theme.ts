@@ -6,6 +6,7 @@ export type Theme = 'system' | 'light' | 'dark';
 const KEY = 'theme';
 const BG = { light: '#fbfbfa', dark: '#111113' };
 
+// Document.tsx imports the boot script, and the build renders it under Bun.
 const read = (): Theme => {
   if (typeof localStorage === 'undefined') return 'system';
   const t = localStorage.getItem(KEY);

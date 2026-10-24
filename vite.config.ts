@@ -1,48 +1,27 @@
+import { fileURLToPath } from 'node:url';
 import { fileRoutes } from 'filesystem-routing/vite';
-import { createServerModuleRunner, defineConfig, type Plugin } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import solid from '@solidjs/vite-plugin';
 import tailwindcss from '@tailwindcss/vite';
 import compression from 'compression';
 
+import { registerServerOnly } from './src/server/server-only.ts';
 import { SOCKET_PATH } from './src/lib/socket-path.ts';
 
-const SOCKET_MODULE = './src/server/socket.ts';
+// Imported by path, so Vite's config bundler leaves the server to Bun.
+const SOCKET_MODULE = fileURLToPath(
+  new URL('./src/server/socket.ts', import.meta.url),
+);
 
-// In dev, upgrades run through Vite's SSR module graph; in production,
-// emit the socket module for cli/bica.ts to attach to the built server.
+// The server runs in Vite's own Bun process, imported once: it keeps running
+// as it started until Bica restarts, while page edits reload.
 function socket(): Plugin {
   return {
     name: 'bica:socket',
-    // After the Solid plugin, so the entry names below win.
-    enforce: 'post',
-    config: (_, { command }) =>
-      command !== 'build'
-        ? undefined
-        : {
-            environments: {
-              ssr: {
-                build: {
-                  rollupOptions: {
-                    input: { socket: SOCKET_MODULE },
-                    output: {
-                      entryFileNames: (chunk) =>
-                        chunk.name === 'socket' ? 'socket.js' : 'server.js',
-                    },
-                  },
-                },
-              },
-            },
-          },
     configureServer(server) {
-      // Its own runner without HMR, imported once: the server code runs once
-      // and keeps running as it started until Bica restarts. The SSR runner
-      // reloads on any page edit, and every import checks for changes, so
-      // either would run a second copy next to the agents.
+      registerServerOnly();
       let socket: Promise<typeof import('./src/server/socket')> | undefined;
-      const load = () =>
-        (socket ??= createServerModuleRunner(server.environments.ssr, {
-          hmr: false,
-        }).import(SOCKET_MODULE));
+      const load = () => (socket ??= import(/* @vite-ignore */ SOCKET_MODULE));
       // At start, not with the first tab: night runs, idle upkeep, and
       // resumed runs must not wait for a browser.
       server.httpServer?.once('listening', () =>
@@ -79,13 +58,11 @@ function compress(): Plugin {
 
 export default defineConfig({
   // No index.html or entry files: the plugin generates them around
-  // src/App.tsx, wrapped in src/Document.tsx. `vite build` emits dist/client,
-  // dist/server, and the Node server (dist/server/node.js) cli/bica.ts runs.
+  // src/App.tsx, wrapped in src/Document.tsx. `vite build` emits only
+  // dist/client; the server runs as Bun source (cli/bica.ts).
   plugins: [
     solid({
-      start: { node: true },
-      // Renders only the empty shell; work data arrives over the socket.
-      ssr: true,
+      start: true,
       // Dev-only: capture control at /__solid/diagnostics (see docs/UI.md).
       diagnostics: true,
       // On by default in dev, they record every component and effect run and

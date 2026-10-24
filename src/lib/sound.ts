@@ -5,10 +5,9 @@ import type { SessionStatus, SessionSummary } from './protocol';
 // Per device, like the theme: the laptop may chime while the phone stays quiet.
 const KEY = 'sound';
 
-const [soundOn, set] = createSignal(
-  typeof localStorage === 'undefined' || localStorage.getItem(KEY) !== 'off',
-  { name: 'soundOn' },
-);
+const [soundOn, set] = createSignal(localStorage.getItem(KEY) !== 'off', {
+  name: 'soundOn',
+});
 export { soundOn };
 
 export function setSoundOn(on: boolean) {

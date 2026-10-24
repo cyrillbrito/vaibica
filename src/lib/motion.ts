@@ -6,6 +6,7 @@ export type Motion = 'system' | 'full' | 'reduced';
 // reduced motion on (most browsers can't override it themselves).
 const KEY = 'motion';
 
+// Document.tsx imports the boot script, and the build renders it under Bun.
 const read = (): Motion => {
   if (typeof localStorage === 'undefined') return 'system';
   const m = localStorage.getItem(KEY);

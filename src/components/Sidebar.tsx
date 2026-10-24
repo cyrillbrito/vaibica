@@ -442,9 +442,7 @@ export default function Sidebar() {
   const parkedSections = createMemo(() => bySection(parked()), {
     name: 'parkedSections',
   });
-  const parkedOpen = () =>
-    typeof localStorage === 'undefined' ||
-    localStorage.getItem('bica.parkedOpen') !== '0';
+  const parkedOpen = () => localStorage.getItem('bica.parkedOpen') !== '0';
 
   const archived = createMemo(() => sessions().filter((s) => s.archivedAt), {
     name: 'archivedSessions',

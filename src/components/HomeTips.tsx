@@ -1,4 +1,4 @@
-import { For, Show, createSignal, onSettled } from 'solid-js';
+import { For, Show, createSignal } from 'solid-js';
 
 import { CHATS_ID, useProjects } from '#lib/projects';
 import { openPalette } from './CommandPalette';
@@ -28,10 +28,8 @@ interface Tip {
  */
 export default function HomeTips(props: { onVoice: () => void }) {
   const projects = useProjects();
-  // Read after the first paint: the server has no localStorage.
-  const [closed, setClosed] = createSignal(true, { name: 'tipsClosed' });
-  onSettled(() => {
-    setClosed(localStorage.getItem(KEY) === '1');
+  const [closed, setClosed] = createSignal(localStorage.getItem(KEY) === '1', {
+    name: 'tipsClosed',
   });
   const [used, setUsed] = createSignal<string[]>([], { name: 'tipsUsed' });
 

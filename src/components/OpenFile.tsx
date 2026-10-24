@@ -35,9 +35,7 @@ const [split, setSplit] = createSignal(true);
 const [preview, setPreview] = createSignal(true);
 // Off by default; remembered per device.
 const WRAP_KEY = 'bica.wrap';
-const [wrap, setWrap] = createSignal(
-  typeof localStorage !== 'undefined' && localStorage.getItem(WRAP_KEY) === '1',
-);
+const [wrap, setWrap] = createSignal(localStorage.getItem(WRAP_KEY) === '1');
 const toggleWrap = () => {
   const next = !wrap();
   setWrap(next);

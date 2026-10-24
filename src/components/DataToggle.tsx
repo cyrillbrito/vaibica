@@ -1,4 +1,4 @@
-import { For, Show, createSignal, onSettled } from 'solid-js';
+import { For, Show, createSignal } from 'solid-js';
 import type { JSX } from '@solidjs/web';
 
 import {
@@ -28,15 +28,10 @@ const button = (active: boolean): JSX.CSSProperties => ({
 });
 
 export default function DataToggle() {
-  // Client only: the server can't see the mode, and hydration keeps its guess.
-  const [mounted, setMounted] = createSignal(false);
-  onSettled(() => {
-    setMounted(true);
-  });
   // Out of the way for a screenshot; the data stays until a reload.
   const [hidden, setHidden] = createSignal(false);
   return (
-    <Show when={mounted() && enabled() && !hidden()}>
+    <Show when={enabled() && !hidden()}>
       <div
         style={{
           position: 'fixed',

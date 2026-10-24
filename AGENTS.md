@@ -35,7 +35,7 @@ There is no time to prove every idea here, so borrow from people who already bui
 ## Stack
 
 - Bun 1.4.3 or newer runs the server, installs packages, type-checks, and runs Vite in development.
-- Solid 2 (release candidate) through `@solidjs/vite-plugin` in start mode. This is not SolidStart.
+- Solid 2 (release candidate) through `@solidjs/vite-plugin` in client start mode: the app renders only in the browser, with no server-side rendering. This is not SolidStart.
 - Pi Durable, with `pi-ai` for models, runs the agent and stores it in SQLite.
 - Tailwind v4 with no component library, see [docs/UI.md](docs/UI.md).
 - Pierre for diffs, file views, and the file tree, through their plain JavaScript entries, not the React ones.

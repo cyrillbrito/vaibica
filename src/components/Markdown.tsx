@@ -7,7 +7,6 @@ import type {
 import { streamingMarkdownExtension } from '@tanstack/markdown/extensions/streaming';
 import { renderHtml } from '@tanstack/markdown/html';
 import { parseMarkdown } from '@tanstack/markdown/parser';
-import { isServer } from '@solidjs/web';
 import {
   For,
   Show,
@@ -52,12 +51,10 @@ const [shiki, setShiki] = createSignal<DiffsHighlighter | undefined>(
 const [langsLoaded, setLangsLoaded] = createSignal(0, { name: 'shikiLangs' });
 const requested = new Set<string>();
 
-if (!isServer) {
-  void getSharedHighlighter({
-    themes: [THEMES.light, THEMES.dark],
-    langs: LANGS,
-  }).then((h) => setShiki(() => h));
-}
+void getSharedHighlighter({
+  themes: [THEMES.light, THEMES.dark],
+  langs: LANGS,
+}).then((h) => setShiki(() => h));
 
 const loadLang = (lang: string) => {
   if (requested.has(lang)) return;

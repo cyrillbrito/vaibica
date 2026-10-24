@@ -22,7 +22,7 @@ Bica installs as an app with its own window and Dock icon. In Chromium browsers 
 
 ## A built copy
 
-`bun run build` and `bun run start` run a built copy on port 3141, localhost only. It starts through the same entry as the `bica` binary below, so it takes the same `--port` flag and keys. `BICA_PORT` picks another port for a second dev server.
+`bun run build` and `bun run start` run a built copy on port 3141, localhost only. The build is only the browser app, in `dist/client`; the server runs from source. It starts through the same entry as the `bica` binary below, so it takes the same `--port` flag and keys. `BICA_PORT` picks another port for a second dev server.
 
 Data lives in `.data/`, relative to where the server starts ([architecture.md](./architecture.md#where-data-lives)). Never run two servers against the same `.data/`, since only one process may own the harness.
 

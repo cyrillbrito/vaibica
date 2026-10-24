@@ -636,9 +636,7 @@ export default function CommandPalette() {
         .sort((a, b) => b.score - a.score)
         .map((r) => ({ ...r.c, group: undefined }));
     },
-    // A server memo runs in the context it was created in, outside the Loading
-    // boundary, so it has to be a client source to fall back instead of throwing.
-    { name: 'paletteResults', lazy: true, ssrSource: 'client' },
+    { name: 'paletteResults', lazy: true },
   );
 
   const choose = (c: Command | undefined) => {

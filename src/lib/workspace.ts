@@ -1,5 +1,4 @@
 import { useLocation } from '@solidjs/router';
-import { isServer } from '@solidjs/web';
 import { createMemo, createSignal } from 'solid-js';
 
 import { toast } from '../components/ui/Toast';
@@ -133,7 +132,7 @@ export type Kept = WorkspaceRef & Open;
 // phone should share them.
 const KEPT_KEY = 'bica.kept';
 const [keptHere, setKept] = createSignal<Kept[]>(
-  isServer ? [] : JSON.parse(localStorage.getItem(KEPT_KEY) ?? '[]'),
+  JSON.parse(localStorage.getItem(KEPT_KEY) ?? '[]'),
   { name: 'keptFiles' },
 );
 /** Reactive: files kept open on this device (test data stands in, see lib/fixtures). */
@@ -215,8 +214,6 @@ export function useCurrentWorkspace() {
     },
     {
       name: 'currentWorkspace',
-      // Built from socket topics, which only exist in the browser.
-      ssrSource: 'client',
       // Keep the panel mounted while the same workspace stays open.
       equals: (a, b) =>
         a?.ref.projectId === b?.ref.projectId &&

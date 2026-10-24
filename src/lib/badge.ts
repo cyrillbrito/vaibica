@@ -1,5 +1,4 @@
 // The app icon's badge, and whether this page has focus.
-import { isServer } from '@solidjs/web';
 import { createEffect, createSignal, type Accessor } from 'solid-js';
 
 import type { SessionStatus, SessionSummary } from './protocol';
@@ -8,17 +7,15 @@ import type { SessionStatus, SessionSummary } from './protocol';
 // open on a session, isn't someone looking.
 const isFocused = () =>
   document.visibilityState === 'visible' && document.hasFocus();
-const [focused, setFocused] = createSignal(!isServer && isFocused(), {
+const [focused, setFocused] = createSignal(isFocused(), {
   name: 'pageFocused',
 });
 export { focused as pageFocused };
 
-if (!isServer) {
-  const update = () => setFocused(isFocused());
-  addEventListener('focus', update);
-  addEventListener('blur', update);
-  document.addEventListener('visibilitychange', update);
-}
+const update = () => setFocused(isFocused());
+addEventListener('focus', update);
+addEventListener('blur', update);
+document.addEventListener('visibilitychange', update);
 
 // What counts on the icon: the rows the sidebar marks as needing you.
 const NEEDS_YOU: ReadonlySet<SessionStatus> = new Set(['waiting', 'done']);

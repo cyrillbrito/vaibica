@@ -1,7 +1,6 @@
 // The browser end of the one WebSocket. Views ask for topics and read
 // signals; only this module touches the socket.
 import { applyImmutable } from '@earendil-works/chord/delta';
-import { isServer } from '@solidjs/web';
 import {
   createMemo,
   createSignal,
@@ -87,23 +86,21 @@ function ensureConnected() {
   if (!ws) connect();
 }
 
-if (!isServer) {
-  // Phones drop sockets in the background; come back without waiting.
-  // Leaving or hiding the page is the last moment to save what's open.
-  const saveOpen = () => {
-    for (const entry of entries.values()) if (entry.refs) save(entry);
-  };
-  addEventListener('pagehide', saveOpen);
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') saveOpen();
-    if (
-      document.visibilityState === 'visible' &&
-      !ws &&
-      [...entries.values()].some((e) => e.refs)
-    )
-      connect();
-  });
-}
+// Phones drop sockets in the background; come back without waiting.
+// Leaving or hiding the page is the last moment to save what's open.
+const saveOpen = () => {
+  for (const entry of entries.values()) if (entry.refs) save(entry);
+};
+addEventListener('pagehide', saveOpen);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') saveOpen();
+  if (
+    document.visibilityState === 'visible' &&
+    !ws &&
+    [...entries.values()].some((e) => e.refs)
+  )
+    connect();
+});
 
 function send(message: ClientMessage) {
   if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify(message));
@@ -263,7 +260,7 @@ export function useTopic<T extends Topic>(
       const value = e.value();
       return value === UNSET ? e.first.promise : value;
     },
-    { name: `topic:${topic}:value`, ssrSource: 'client' },
+    { name: `topic:${topic}:value` },
   ) as Accessor<Topics[T]['value']>;
 }
 
@@ -282,13 +279,11 @@ export function useTopicWhenReady<T extends Topic>(
       const value = entry().value();
       return value === UNSET ? undefined : value;
     },
-    { name: `topic:${topic}:ready`, ssrSource: 'client' },
+    { name: `topic:${topic}:ready` },
   ) as Accessor<Topics[T]['value'] | undefined>;
 }
 
 function useEntry(topic: Topic, params: () => unknown) {
-  // Client only: the server renders the empty shell (the boundaries'
-  // fallbacks) and the browser subscribes after hydration.
   return createMemo(
     (): Pick<Entry, 'value' | 'first'> => {
       const p = params();
@@ -303,7 +298,7 @@ function useEntry(topic: Topic, params: () => unknown) {
       onCleanup(() => release(e));
       return e;
     },
-    { name: `topic:${topic}`, ssrSource: 'client' },
+    { name: `topic:${topic}` },
   );
 }
 

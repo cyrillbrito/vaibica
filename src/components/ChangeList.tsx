@@ -15,10 +15,9 @@ export const TREE_STATUS: Record<GitChange['status'], TreeStatus> = {
 
 // Tree or flat list, per device, for every changes list at once.
 const KEY = 'changesAsList';
-const [asList, setAsList] = createSignal(
-  typeof localStorage !== 'undefined' && localStorage.getItem(KEY) === '1',
-  { name: 'changesAsList' },
-);
+const [asList, setAsList] = createSignal(localStorage.getItem(KEY) === '1', {
+  name: 'changesAsList',
+});
 export { asList };
 export function toggleAsList() {
   const next = !asList();

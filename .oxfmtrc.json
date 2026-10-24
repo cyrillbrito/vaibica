@@ -3,7 +3,6 @@
   "printWidth": 80,
   "ignorePatterns": [
     "file-routes.d.ts",
-    "solid-env.d.ts",
     ".agents/skills",
     "docs/explorations/*.html"
   ],

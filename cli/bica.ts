@@ -11,20 +11,16 @@ import {
   type ServerResponse,
 } from 'node:http';
 import { homedir, platform } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, extname, join } from 'node:path';
 import { parseArgs } from 'node:util';
 
-type Listener = (req: IncomingMessage, res: ServerResponse) => Promise<void>;
-
-/** The built server, and in the binary the paths of its embedded files. */
+/** The server and the built app, and in the binary the paths of codemode's embedded files. */
 export interface Build {
   version: string;
-  load: () => Promise<{
-    createListener: (options: { static: boolean }) => Listener;
-    attach: (server: Server) => void;
-  }>;
-  /** URL path, such as `/assets/app.js`, to its embedded file. Without it, the server reads `dist/client`. */
-  client?: Record<string, string>;
+  /** The socket module, src/server/socket.ts. */
+  load: () => Promise<{ attach: (server: Server) => void }>;
+  /** URL path, such as `/assets/app.js`, to the file of Vite's build, dist/client. */
+  client: Record<string, string>;
   wasm?: string;
   worker?: string;
 }
@@ -60,13 +56,8 @@ export async function run(build: Build) {
   if (build.wasm) process.env.BICA_CODEMODE_WASM = build.wasm;
   if (build.worker) process.env.BICA_CODEMODE_WORKER = build.worker;
 
-  const { createListener, attach } = await build.load();
-  const { client } = build;
-  const listener = createListener({ static: !client });
-  const server = createServer(
-    (req, res) =>
-      void ((client && sendEmbedded(client, req, res)) || listener(req, res)),
-  );
+  const { attach } = await build.load();
+  const server = createServer((req, res) => sendClient(build.client, req, res));
   attach(server);
   server.on('error', (error: NodeJS.ErrnoException) =>
     fail(
@@ -96,26 +87,30 @@ function fail(message: string): never {
   process.exit(1);
 }
 
-function sendEmbedded(
+function sendClient(
   client: Record<string, string>,
   req: IncomingMessage,
   res: ServerResponse,
 ) {
-  if (req.method !== 'GET' && req.method !== 'HEAD') return false;
-  const path = client[new URL(req.url ?? '/', 'http://localhost').pathname];
-  if (!path) return false;
+  const { pathname } = new URL(req.url ?? '/', 'http://localhost');
+  // A page's URL, such as /s/<id>, gets the app, which routes in the browser.
+  const path =
+    client[pathname] ?? (extname(pathname) ? undefined : client['/index.html']);
+  if (!path || (req.method !== 'GET' && req.method !== 'HEAD')) {
+    res.writeHead(404).end();
+    return;
+  }
   const file = Bun.file(path);
   res.writeHead(200, {
     'Content-Type': file.type,
     'Content-Length': file.size,
     // Vite hashes the names of what it puts in assets/.
-    'Cache-Control': req.url!.startsWith('/assets/')
+    'Cache-Control': pathname.startsWith('/assets/')
       ? 'public, max-age=31536000, immutable'
       : 'public, max-age=0, must-revalidate',
   });
   if (req.method === 'HEAD') res.end();
   else void file.bytes().then((bytes) => res.end(bytes));
-  return true;
 }
 
 // Keys

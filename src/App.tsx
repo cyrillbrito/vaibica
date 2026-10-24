@@ -30,7 +30,6 @@ import {
   sidebarW,
   sidebarWidth,
   sliding,
-  trackViewport,
 } from '#lib/layout';
 import { Router } from './router';
 import './App.css';
@@ -61,11 +60,9 @@ export default function App() {
     const queries = ['(min-width: 48rem)', '(min-width: 80rem)'].map((q) =>
       matchMedia(q),
     );
-    const untrackViewport = trackViewport();
     addEventListener('keydown', onKey);
     queries.forEach((q) => q.addEventListener('change', closeDrawer));
     return () => {
-      untrackViewport();
       removeEventListener('keydown', onKey);
       queries.forEach((q) => q.removeEventListener('change', closeDrawer));
     };
