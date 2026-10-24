@@ -8,7 +8,7 @@ import {
 import { VOICE_ENTRY, type VoiceLine } from '#lib/transcript';
 import { context, getHarness } from '#server/agent';
 import { VOICE_TITLE, retitle } from './names';
-import { keepCopies, recordSender } from './prompts';
+import { keepCopies, keepModel, recordSender } from './prompts';
 import { textOf } from './read';
 import { SessionDoc, getConversation, sessionWorkspace } from './store';
 
@@ -74,6 +74,7 @@ export async function voiceSession(sessionId: string) {
         void retitle(id, request, VOICE_TITLE);
       }
       await keepCopies(id);
+      await keepModel(id);
       await recordSender(id, 'user');
       const submission = await conversation.submit(
         { type: 'input', content: request, whenBusy: 'followUp' },

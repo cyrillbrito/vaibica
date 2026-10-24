@@ -13,7 +13,7 @@ import { CLEANUP_ENTRY, chars, cleanupEdits } from '#lib/cleanup';
 import type { ModelChoice, PromptImage } from '#lib/protocol';
 import { context, getHarness } from '#server/agent';
 import { getAgent, loadMemory, projectList } from '#server/agents';
-import { checkChoice } from '#server/providers';
+import { checkChoice, defaultChoice, models } from '#server/providers';
 import { keepers } from './cleanup-judge';
 import { SessionDoc, agentIdOf, getConversation } from './store';
 
@@ -43,6 +43,7 @@ export async function submit(
       'This session is held for tonight: edit its prompt, or run it now',
     );
   await keepCopies(conversation.id);
+  await keepModel(conversation.id);
   const parent = await recordSender(conversation.id, from, keep);
   // Pi Durable returns the existing submission for a repeated requestId.
   await conversation.submit(
@@ -107,6 +108,28 @@ export async function keepCopies(id: ConversationId) {
   await harness.commit(async (tx) => {
     Object.assign(await tx.doc(SessionDoc, id), taken);
   }, context);
+}
+
+/**
+ * Moves a session off a model no provider reaches any more, such as one from
+ * a removed provider, so the prompt isn't left unanswered with `no_model`.
+ * The same model through another provider comes first, then the default.
+ */
+export async function keepModel(id: ConversationId) {
+  const agent = await (await getHarness()).snapshot(AgentDoc, id, context);
+  const ref = agent?.model;
+  if (ref && models.getModel(ref.provider, ref.modelId)) return;
+  const twin =
+    ref && (await models.getAvailable()).find((m) => m.id === ref.modelId);
+  const choice = twin
+    ? {
+        model: { provider: twin.provider, modelId: twin.id },
+        thinkingLevel: agent?.thinkingLevel ?? 'medium',
+      }
+    : await defaultChoice();
+  await (
+    await getConversation(String(id))
+  ).configure(checkChoice(choice), context);
 }
 
 export type QueuedInput = Extract<InboxItem, { content: unknown }>;
