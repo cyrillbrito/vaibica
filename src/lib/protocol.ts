@@ -323,35 +323,6 @@ export interface ProviderUsage {
 
 export type PlanUsage = ProviderUsage[];
 
-/** A shell in a workspace, maybe running a command (docs/terminals.md). */
-export interface TerminalInfo {
-  id: string;
-  projectId: string;
-  cwd: string;
-  title: string;
-  // The command it runs first, again on restart; null: none.
-  command: string | null;
-  // The shell itself.
-  status: 'running' | 'exited';
-  exitCode: number | null;
-  // A command runs at its prompt; null: not known (no shell integration).
-  busy: boolean | null;
-  // The last finished command's exit code.
-  lastExit: number | null;
-  // The session whose agent started it; null: started by the user.
-  startedBy: string | null;
-  createdAt: number;
-}
-
-/** A terminal's output, raw (escape codes and all), capped at the front. */
-export interface TerminalOutput {
-  // Bumped on restart: start a clean screen.
-  run: number;
-  // Characters dropped from the front so far.
-  start: number;
-  output: string;
-}
-
 /** A pasted or picked image, sent with a prompt. data: base64, no prefix. */
 export interface PromptImage {
   mimeType: string;
@@ -408,8 +379,8 @@ export interface Calls {
   // Project ids in their new sidebar order; ids left out keep their place after.
   'project.reorder': { args: { ids: string[] }; result: null };
   'project.pin': { args: { id: string; pinned: boolean }; result: null };
-  // Removes a worktree and its local branch, archives its sessions, closes its
-  // terminals. Returns what would be lost and removes nothing, unless force.
+  // Removes a worktree and its local branch, and archives its sessions.
+  // Returns what would be lost and removes nothing, unless force.
   'worktree.cleanUp': {
     args: WorkspaceRef & { force?: boolean };
     result: string | null;
@@ -550,21 +521,6 @@ export interface Calls {
     args: { path: string; cwd?: string; reveal?: boolean };
     result: null;
   };
-  // Absent command: an interactive shell. Its id.
-  'terminal.create': {
-    args: WorkspaceRef & { command?: string; title?: string };
-    result: string;
-  };
-  // Keystrokes, as the terminal encodes them.
-  'terminal.input': { args: { id: string; data: string }; result: null };
-  'terminal.resize': {
-    args: { id: string; cols: number; rows: number };
-    result: null;
-  };
-  'terminal.stop': { args: { id: string }; result: null };
-  'terminal.restart': { args: { id: string }; result: null };
-  // Stops it if needed and drops it from the list.
-  'terminal.remove': { args: { id: string }; result: null };
 }
 
 /** Live state: a snapshot, then numbered changes. */
@@ -582,9 +538,6 @@ export interface Topics {
   'plan.usage': { params: Record<string, never>; value: PlanUsage };
   // Every file path in the workspace, minus what git ignores.
   files: { params: WorkspaceRef; value: string[] };
-  terminals: { params: Record<string, never>; value: TerminalInfo[] };
-  // null: no such terminal (closed, or the server restarted).
-  terminal: { params: { id: string }; value: TerminalOutput | null };
 }
 
 /** A tool call's input and output, or a thought's text; the transcript leaves them out. */
@@ -602,12 +555,18 @@ export interface EntriesHeld {
 export type Call = keyof Calls;
 export type Topic = keyof Topics;
 
+/**
+ * A request or topic an extension owns, routed by its id and typed in the
+ * extension (docs/extensions.md).
+ */
+export type ExtensionName = `ext:${string}/${string}`;
+
 export type ClientMessage =
-  | { type: 'request'; id: string; call: Call; args: unknown }
+  | { type: 'request'; id: string; call: Call | ExtensionName; args: unknown }
   | {
       type: 'subscribe';
       sub: number;
-      topic: Topic;
+      topic: Topic | ExtensionName;
       params: unknown;
       // A conversation the browser already holds, so the snapshot can skip it.
       have?: EntriesHeld;

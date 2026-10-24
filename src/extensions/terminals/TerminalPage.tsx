@@ -1,8 +1,7 @@
 import { Title } from '@solidjs/meta';
-import { useNavigate, type RouteProps } from '@solidjs/router';
+import { useNavigate } from '@solidjs/router';
 import { Show, createMemo } from 'solid-js';
 
-import TerminalView from '../../components/TerminalView';
 import TopBar from '../../components/TopBar';
 import { Button } from '../../components/ui/Button';
 import Empty from '../../components/ui/Empty';
@@ -15,15 +14,19 @@ import {
 } from '../../components/ui/icons';
 import { useProjects, workspaceName } from '#lib/projects';
 import { useSessions } from '#lib/sessions';
+import { usePageWorkspace } from '#lib/workspace';
+import { paths } from '../../router';
 import {
   removeTerminal,
   restartTerminal,
   stopTerminal,
   useTerminals,
-} from '#lib/terminals';
-import { paths } from '../../router';
+} from './socket';
+import TerminalView from './TerminalView';
 
-export default function TerminalPage(props: RouteProps<'/t/:id'>) {
+export default function TerminalPage(props: {
+  params: Record<string, string>;
+}) {
   const navigate = useNavigate();
   const terminals = useTerminals();
   const projects = useProjects();
@@ -32,6 +35,15 @@ export default function TerminalPage(props: RouteProps<'/t/:id'>) {
     () => terminals().find((t) => t.id === props.params.id),
     { name: 'terminalInfo' },
   );
+  // The right panel and ⌘K follow the terminal's workspace.
+  const workspace = createMemo(
+    () => {
+      const t = info();
+      return t && { projectId: t.projectId, cwd: t.cwd };
+    },
+    { name: 'terminalWorkspace' },
+  );
+  usePageWorkspace(workspace);
   const where = () => {
     const t = info();
     const project = projects().find((p) => p.id === t?.projectId);

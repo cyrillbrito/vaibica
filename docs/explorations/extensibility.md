@@ -25,9 +25,9 @@ One extension at a time, each pushing on a different seam. After each one, revie
 These are the extensions to build, in this order. Each one ends with a "What it taught" section below, like the one for `ask`, and earlier extensions move onto any hook a later one reshapes.
 
 1. Web search, done: tools, a setting (the Exa key), and access to a provider. Brought `settings` to the manifest, and the `extensions` topic so the switch stops riding on `models`.
-2. Terminals: the first panel. Brings `rightPanel.tab` with an order field, requests and topics the extension owns (`ext:<id>/…`), and settings.json in its own module. Where core calls terminals today, such as closing them on clean up, core gets a hook named after its own event instead.
+2. Terminals, done: the first UI beyond a transcript row. Brought requests and topics the extension owns (`ext:<id>/…`), hooks named after core's events, pages under `/e/<id>/`, a command registry, and slots for sidebar rows and ⌘K places.
 3. Voice: calls, hand-offs, and dictation in one extension. Brings `composer.above` and a composer button, and is the second to reach a provider.
-4. Git tab: the second `rightPanel.tab`, so the slot gets reshaped here. Pulls a `Vcs` service out of core, which keeps projects, worktrees, status, and diffs.
+4. Git tab: the first `rightPanel.tab`, with an order field, since terminals kept their sidebar rows and full page instead of a tab. The second user of pages and commands, so those get reshaped here. Pulls a `Vcs` service out of core, which keeps projects, worktrees, status, and diffs.
 5. GitHub: pull request numbers and states on branches, through `gh`, and later opening pull requests. Brings a slot for badges on a branch or workspace row, and a search source for the workspace picker.
 6. Jira: ticket keys in branch names, as badges and links. The second user of both GitHub's slots, so they get reshaped here, and the key parsing in `src/lib/branch.ts` leaves core.
 7. File and diff views: the third tab and the second user of `Vcs`, plus diff comments that go back to the agent.
@@ -68,12 +68,29 @@ Moving web search out ([extensions.md](../extensions.md)) needed less than plann
 - The generic tool row needed a short label and an icon per tool, so the client half got `tools` (provisional). It applies on or off, so past calls keep their look.
 - The leak test now also catches a name used as an object key, such as a tool name in a lookup table, and setting keys.
 
-What terminals should expect:
+## What terminals taught
 
-- `rightPanel.tab` is a slot like `transcript.tool`, a lazy component by id, and needs an order field once two tabs exist.
-- Extension-owned requests and topics have no home yet. Calls and topics are one typed map in `protocol.ts` and one handler table in `socket.ts`, so `ext:<id>/…` needs a typed record on each half that the socket routes by prefix. `extension.update` stays core.
-- The terminal tools pack leaves the agents' lists the same way web did, through `appliesTo`. `list` in the session tools reads terminals, which makes it the first consumer of a `Terminals` service.
-- Before that, move `settings.json` into its own small server module, so switches and future plain settings stop living in the models module.
+Moving terminals out ([terminals.md](../terminals.md)) touched more of core than the plan expected, since terminals were never a panel: they were sidebar rows, a full page, ⌘K entries, worktree setup, and lines in `list`.
+
+- The UI stayed as it was, so the panel tab moves to the Git step. Instead, three small provisional pieces, each with terminals as the only user: pages, commands, and the `sidebar.workspace` and `palette.search` slots.
+- Pages and commands are registries, not slots. Core owns one route, `/e/[ext]/[...path]`, and draws the extension's page whose path matches, as Grafana's app plugins own `/a/<plugin-id>/`. The route table stays static, so it would still work if extensions loaded at runtime, and an off extension's page is a plain not found. The cost: the terminal's address moved from `/t/<id>` to `/e/terminals/<id>`, and `paths` can't type it. Commands are records by id, as in VS Code and Obsidian, and `runCommand(id)` runs one from anywhere. Core's own ⌘K entries stay its own list: they close over component state and second pages, so moving them isn't cheap yet.
+- A command registry can't list one entry per terminal, so jumping to one needed `palette.search`, a hook that returns places. Sessions and workspaces work the same way in core, so it may become core's own path when ⌘K is rebuilt on the registry.
+- UI hooks need data, not only components: the sidebar must know a workspace has rows to keep it out of Parked. So `sidebar.workspace` has a `use()` hook that runs in the sidebar's scope and returns the rows, plus a lazy component per row. Hooks run only once the switches are known, since the manifest's default would subscribe to an off extension and the server refuses it.
+- An extension's page names its workspace with `usePageWorkspace`, so the right panel and ⌘K follow it. Before, `useCurrentWorkspace` read terminals by the `/t/` prefix.
+- Hooks on the server came out as events core already had: `worktreeCreated`, `beforeWorktreeRemove`, `sessionArchived`. Durable's `hooks` shape fit (named callbacks on the extension), without an event bus. `list` needed `inWorkspace`, lines per workspace, instead of a `Terminals` service.
+- `appliesTo` now also returns a list of the extension's Durable extensions, because the hub gets a read-only pack. Ask and web still return a boolean. The hub's terminal rule moved from its role into its `terminal_read` description, and night's "stop your terminals" became "stop what still runs".
+- Extension-owned requests and topics fit the socket with little change: names are `ext:<id>/<name>`, the server routes by prefix and refuses while off, and each side types them from one `protocol.ts` in the folder. Maps must be `type`s, not interfaces, to fit `CallMap`. Which calls rerun on a re-send (`reads`) and which topics stay off the device (`unsaved`) turned out to be per-call facts the extension declares.
+- Tools that need sessions (`tell`, the session's folder) import them lazily: the extension lists load inside the agents' module graph, and a static import loops.
+- settings.json stays in the models module. Terminals has no setting, so moving it would be building ahead; voice or the first plain setting should move it.
+- Switching terminals off leaves open shells running, unseen, until Bica restarts. Closing them would need an "off" lifecycle hook, which nothing else needs yet.
+- Test data has terminal rows keyed by the topic's `ext:` name, untyped, so deleting the folder leaves dead data rather than a broken build.
+
+What voice should expect:
+
+- `composer.above` and a composer button are slots like `sidebar.workspace`: a `use()` hook for the data a strip needs, and a lazy component. Reuse the shape rather than invent one.
+- Its requests (`voice.start`, `voice.transcribe`, `voice.stop`) move to `ext:voice/…` with `extensionSocket`, and its session field (`voice` on `SessionSummary`) is the first extension-owned piece of session state, which has no home yet.
+- If it needs a shortcut or a ⌘K entry, use the command registry. If it needs to react to a session event, add a hook named after that event next to `sessionArchived`.
+- Reaching a provider is still unbuilt: voice is the first. Settings that aren't secrets (voice, speed) are where settings.json should leave the models module.
 
 ## Ideas for the contract
 
@@ -97,3 +114,4 @@ From the research, to reach for when an extension needs them:
 - Whether projects and workspaces stay core, or become a `Workspaces` service with git as its first provider.
 - Switches per project, agent, or session, layered over the global one.
 - How extensions that conflict declare it: a capability such as "needs someone to answer" that agents exclude, or explicit `conflicts`.
+- Whether worktree setup belongs in core or an extension. It runs in a terminal, so it left with terminals, and with them off no setup runs.

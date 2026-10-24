@@ -7,7 +7,7 @@
 import { isServer } from '@solidjs/web';
 import { createSignal, untrack } from 'solid-js';
 
-import type { Call, Calls, FileText, SessionSummary, Topic } from '../protocol';
+import type { Call, Calls, FileText, SessionSummary } from '../protocol';
 import { chat, type Chat, type Turn } from './conversation';
 import { MODES, datasets, type Dataset, type Mode } from './data';
 import { fixtureDiff, gitFixtures } from './git';
@@ -190,7 +190,7 @@ function fallback(title: string, status: string): Turn[] {
 }
 
 /** Reactive: the test value for a topic, or undefined to use the live one. */
-export function fixture(topic: Topic, params: unknown) {
+export function fixture(topic: string, params: unknown) {
   if (!import.meta.env.DEV) return undefined;
   const m = mode();
   if (!m) return undefined;
@@ -212,7 +212,7 @@ export function fixture(topic: Topic, params: unknown) {
       return { value: m === 'demo' ? story(data.sessions) : data.sessions };
     case 'projects':
       return { value: data.projects };
-    case 'terminals':
+    case 'ext:terminals/list':
       return { value: data.terminals };
     case 'conversation': {
       const talk = data.conversations?.views.get(p.id!);
@@ -237,7 +237,7 @@ export function fixture(topic: Topic, params: unknown) {
     case 'files':
       return { value: data.files?.[p.cwd!] ?? [] };
     // Terminal output isn't test data: an empty screen.
-    case 'terminal':
+    case 'ext:terminals/output':
       return { value: null };
     // Models, accounts, and plan usage stay live in the other modes.
     default:

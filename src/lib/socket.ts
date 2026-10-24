@@ -10,12 +10,14 @@ import {
   type Accessor,
 } from 'solid-js';
 
+import type { CallMap, TopicMap } from '#extensions/contract';
 import {
   SOCKET_PATH,
   type Call,
   type Calls,
   type ClientMessage,
   type EntriesHeld,
+  type ExtensionName,
   type ServerMessage,
   type Topic,
   type Topics,
@@ -23,8 +25,10 @@ import {
 import { readTopic, saveTopic } from './topic-cache';
 import { fixture, testAnswer } from './fixtures';
 
+type AnyTopic = Topic | ExtensionName;
+
 interface Entry {
-  topic: Topic;
+  topic: AnyTopic;
   params: unknown;
   key: string;
   refs: number;
@@ -44,9 +48,8 @@ const UNSET = Symbol('unset');
 // Topics no view uses any more keep their value, unsubscribed, so going
 // back shows it at once while the live value loads. This many at most.
 const KEEP = 12;
-// A terminal's output is gone once its shell is, so it isn't saved.
-// Presence carries nothing.
-const UNSAVED: ReadonlySet<Topic> = new Set(['terminal']);
+// Topics not worth saving on the device; extensions add theirs.
+const UNSAVED = new Set<AnyTopic>();
 
 interface Pending {
   message: ClientMessage;
@@ -192,7 +195,7 @@ function reopen(entry: Entry) {
   open(entry);
 }
 
-function acquire(topic: Topic, params: unknown) {
+function acquire(topic: AnyTopic, params: unknown) {
   const key = `${topic}:${JSON.stringify(params)}`;
   let entry = entries.get(key);
   if (!entry) {
@@ -255,7 +258,15 @@ function release(entry: Entry) {
 export function useTopic<T extends Topic>(
   topic: T,
   params: () => Topics[T]['params'],
-): Accessor<Topics[T]['value']> {
+): Accessor<Topics[T]['value']>;
+export function useTopic(
+  topic: ExtensionName,
+  params: () => unknown,
+): Accessor<unknown>;
+export function useTopic(
+  topic: AnyTopic,
+  params: () => unknown,
+): Accessor<unknown> {
   const entry = useEntry(topic, params);
   return createMemo(
     () => {
@@ -264,7 +275,7 @@ export function useTopic<T extends Topic>(
       return value === UNSET ? e.first.promise : value;
     },
     { name: `topic:${topic}:value`, ssrSource: 'client' },
-  ) as Accessor<Topics[T]['value']>;
+  );
 }
 
 /**
@@ -286,7 +297,7 @@ export function useTopicWhenReady<T extends Topic>(
   ) as Accessor<Topics[T]['value'] | undefined>;
 }
 
-function useEntry(topic: Topic, params: () => unknown) {
+function useEntry(topic: AnyTopic, params: () => unknown) {
   // Client only: the server renders the empty shell (the boundaries'
   // fallbacks) and the browser subscribes after hydration.
   return createMemo(
@@ -311,8 +322,13 @@ function useEntry(topic: Topic, params: () => unknown) {
 export function request<C extends Call>(
   call: C,
   args: Calls[C]['args'],
-): Promise<Calls[C]['result']> {
-  const test = testAnswer(call, args);
+): Promise<Calls[C]['result']>;
+export function request(call: ExtensionName, args: unknown): Promise<unknown>;
+export function request(
+  call: Call | ExtensionName,
+  args: unknown,
+): Promise<unknown> {
+  const test = testAnswer(call as Call, args as never);
   if (test) return test;
   ensureConnected();
   // Unique, so a request re-sent after a reconnect is recognized.
@@ -336,4 +352,25 @@ export function request<C extends Call>(
 export function requestId() {
   // crypto.randomUUID needs a secure context; a LAN address is not one.
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+
+/**
+ * An extension's own requests and topics, typed by the extension and sent
+ * as `ext:<id>/<name>` (docs/extensions.md). Topics in `unsaved` aren't
+ * kept on the device.
+ */
+export function extensionSocket<C extends CallMap, T extends TopicMap>(
+  id: string,
+  options: { unsaved?: (keyof T & string)[] } = {},
+) {
+  const name = (n: string): ExtensionName => `ext:${id}/${n}`;
+  for (const n of options.unsaved ?? []) UNSAVED.add(name(n));
+  return {
+    request: <K extends keyof C & string>(call: K, args: C[K]['args']) =>
+      request(name(call), args) as Promise<C[K]['result']>,
+    useTopic: <K extends keyof T & string>(
+      topic: K,
+      params: () => T[K]['params'],
+    ) => useTopic(name(topic), params) as Accessor<T[K]['value']>,
+  };
 }

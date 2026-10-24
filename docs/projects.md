@@ -21,8 +21,8 @@ The home page's workspace picker searches every project's folders and worktrees 
 
 - Git is the source of truth, so worktrees made in a terminal show up too.
 - New worktree makes one per session. The session's name becomes the branch and a folder next to the project's, and the branch starts from the freshly fetched default branch.
-- Setup runs in a terminal in the new worktree: the project's `setup` command, or an install guessed from the lockfile.
-- Clean up deletes a worktree's folder and local branch, archives its sessions, and closes its terminals. It asks first when that would lose uncommitted files or unmerged commits. A branch whose pull request was squash-merged counts as merged.
+- Setup runs in a terminal in the new worktree: the project's `setup` command, or an install guessed from the lockfile. With [terminals](./terminals.md) off, no setup runs.
+- Clean up deletes a worktree's folder and local branch, archives its sessions, and closes what extensions run there, such as its terminals. It asks first when that would lose uncommitted files or unmerged commits. A branch whose pull request was squash-merged counts as merged.
 
 ## Chats
 

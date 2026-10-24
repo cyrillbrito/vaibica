@@ -8,7 +8,6 @@ import type {
   PullRequest,
   SessionStatus,
   SessionSummary,
-  TerminalInfo,
   Workspace,
 } from '../protocol';
 import type { Kept } from '../workspace';
@@ -36,7 +35,8 @@ import { conversations, type Conversations } from './conversations';
 export interface Dataset {
   projects: Project[];
   sessions: SessionSummary[];
-  terminals: TerminalInfo[];
+  // The terminals extension's list (src/extensions/terminals).
+  terminals: unknown[];
   kept: Kept[];
   // Transcripts by session id; sessions without one get a short exchange
   // from their title and status.
@@ -131,7 +131,7 @@ const terminal = (
   title: string,
   exitCode: number | null,
   command: string | null = title,
-): TerminalInfo => ({
+) => ({
   id: `fixture-t-${++n}`,
   projectId,
   cwd,

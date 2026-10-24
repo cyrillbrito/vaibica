@@ -16,7 +16,9 @@ Browser (one socket per tab)                  Server (dev machine)
   changes     (sub, n, ops)        ◀──
 ```
 
-A request asks once and gets one reply. A subscription, called a topic, gives a full snapshot, then numbered changes, for anything that changes while you look at it. The types are in `src/lib/protocol.ts`, and `socket.ts` on the server lists every call and topic.
+A request asks once and gets one reply. A subscription, called a topic, gives a full snapshot, then numbered changes, for anything that changes while you look at it. Core's types are in `src/lib/protocol.ts`, and `socket.ts` on the server lists core's calls and topics.
+
+An [extension](./extensions.md) owns its own, named `ext:<id>/<name>`, such as `ext:terminals/output`. It types them in its folder, its server half answers them, and the browser sends them through `extensionSocket`. The server routes them by the prefix, and refuses them while the extension is off.
 
 ## Where live data comes from
 

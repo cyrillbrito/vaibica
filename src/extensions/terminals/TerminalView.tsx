@@ -1,12 +1,8 @@
 import { For, createEffect, createSignal, onSettled } from 'solid-js';
 
-import type { TerminalOutput } from '#lib/protocol';
-import {
-  resizeTerminal,
-  terminalInput,
-  useTerminalOutput,
-} from '#lib/terminals';
 import { theme } from '#lib/theme';
+import type { TerminalOutput } from './protocol';
+import { resizeTerminal, terminalInput, useTerminalOutput } from './socket';
 
 type Ghostty = typeof import('ghostty-web');
 type Term = InstanceType<Ghostty['Terminal']>;

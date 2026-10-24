@@ -1,5 +1,15 @@
 import { useLocation, useNavigate } from '@solidjs/router';
-import { For, Show, createMemo, createSignal, onCleanup } from 'solid-js';
+import { dynamic } from '@solidjs/web';
+import {
+  Errored,
+  For,
+  Loading,
+  Show,
+  createMemo,
+  createSignal,
+  onCleanup,
+  type Component,
+} from 'solid-js';
 
 import { arriveOnChange } from '#lib/arrive';
 import { copyText } from '#lib/clipboard';
@@ -15,12 +25,8 @@ import {
   workspaceName,
   type Target,
 } from '#lib/projects';
-import type {
-  PullRequest,
-  SessionStatus,
-  SessionSummary,
-  TerminalInfo,
-} from '#lib/protocol';
+import { slotComponent, useSlots } from '#lib/extensions';
+import type { PullRequest, SessionStatus, SessionSummary } from '#lib/protocol';
 import {
   archiveSession,
   forkSession,
@@ -28,13 +34,6 @@ import {
   useHub,
   useSessions,
 } from '#lib/sessions';
-import {
-  createTerminal,
-  removeTerminal,
-  restartTerminal,
-  stopTerminal,
-  useTerminals,
-} from '#lib/terminals';
 import { useChimes } from '#lib/sound';
 import { useBadge } from '#lib/badge';
 import { setTheme, theme } from '#lib/theme';
@@ -82,10 +81,8 @@ import {
   ParentIcon,
   SessionIcon,
   SettingsIcon,
-  StopIcon,
   SunIcon,
   SystemThemeIcon,
-  TerminalIcon,
   UnreadIcon,
   PinIcon,
 } from './ui/icons';
@@ -147,11 +144,19 @@ interface Group {
   pinned?: boolean;
   // Absent: a folder that's gone, so no new sessions there.
   target?: Target;
-  // Listed above the sessions: they belong to the folder, not to a session.
-  terminals: TerminalInfo[];
-  // Kept open on this device, with the terminals: also the folder's.
+  // Extensions' rows, listed above the sessions: they
+  // belong to the folder, not to a session.
+  rows: ExtensionRow[];
+  // Kept open on this device, with the rows: also the folder's.
   files: Kept[];
   sessions: SessionSummary[];
+}
+
+interface ExtensionRow {
+  // Unique across extensions.
+  key: string;
+  id: string;
+  Row: Component<{ id: string }>;
 }
 
 // Worktrees are sibling folders named `<project>-<branch>`; the project is
@@ -237,7 +242,12 @@ export default function Sidebar() {
   useChimes(sessions);
   useBadge(sessions);
   const projects = useProjects();
-  const terminals = useTerminals();
+  // The `sidebar.workspace` slot (src/extensions/contract.ts).
+  const extensions = useSlots('sidebar.workspace', (slot, ext) => ({
+    ext,
+    ...slot.use(),
+    Row: slotComponent(slot.load),
+  }));
   const navigate = useNavigate();
   const location = useLocation();
   const [renaming, setRenaming] = createSignal<string>();
@@ -282,13 +292,18 @@ export default function Sidebar() {
               cwd: w.path,
               worktree: p.id === CHATS_ID || undefined,
             },
-            terminals: [],
+            rows: [],
             files: [],
             sessions: [],
           });
         }
-      for (const t of terminals())
-        groups.get(keyOf(t.projectId, t.cwd))?.terminals.push(t);
+      for (const x of extensions())
+        for (const r of x.rows())
+          groups.get(keyOf(r.projectId, r.cwd))?.rows.push({
+            key: `${x.ext}:${r.id}`,
+            id: r.id,
+            Row: x.Row,
+          });
       for (const k of kept())
         groups.get(keyOf(k.projectId, k.cwd))?.files.push(k);
       for (const s of list) {
@@ -308,7 +323,7 @@ export default function Sidebar() {
                 : undefined,
             note: project ? 'folder removed' : undefined,
             path: project ? (s.cwd ?? undefined) : undefined,
-            terminals: [],
+            rows: [],
             files: [],
             sessions: [],
           };
@@ -325,7 +340,7 @@ export default function Sidebar() {
   // Workspaces with nothing open (often a PR waiting on review) shrink to one
   // line in Parked, so the list above is only what's in progress.
   const isParked = (g: Group) =>
-    !g.pinned && !g.sessions.length && !g.terminals.length && !g.files.length;
+    !g.pinned && !g.sessions.length && !g.rows.length && !g.files.length;
   const active = createMemo(() => groups().filter((g) => !isParked(g)), {
     name: 'activeGroups',
   });
@@ -367,7 +382,7 @@ export default function Sidebar() {
         active()
           .map((g) => ({
             ...g,
-            terminals: [],
+            rows: [],
             files: [],
             sessions: g.sessions.filter((s) => isOpen(s) || inFilter(f, s)),
           }))
@@ -664,11 +679,13 @@ export default function Sidebar() {
             icon: <PlusIcon />,
             onSelect: () => newSession(g.target!),
           },
-          {
-            label: 'New terminal here',
-            icon: <TerminalIcon />,
-            onSelect: () => void newTerminal(g.target!),
-          },
+          ...extensions().flatMap(
+            (x) =>
+              x.menu?.({
+                projectId: g.target!.projectId,
+                cwd: g.target!.cwd!,
+              }) ?? [],
+          ),
           {
             label: 'Files and changes',
             icon: <DiffIcon />,
@@ -755,108 +772,6 @@ export default function Sidebar() {
     } catch (e) {
       toast(e instanceof Error ? e.message : String(e));
     }
-  };
-
-  const newTerminal = async (target: Target) => {
-    closeDrawer();
-    const id = await createTerminal({
-      projectId: target.projectId,
-      cwd: target.cwd!,
-    });
-    navigate(paths.t(id)());
-  };
-
-  const closeTerminal = async (t: TerminalInfo) => {
-    if (location.pathname === paths.t(t.id)()) navigate(paths());
-    await removeTerminal(t.id);
-  };
-
-  const terminalMenu = (t: TerminalInfo): MenuEntry[] => [
-    t.status === 'running'
-      ? {
-          label: 'Stop',
-          icon: <StopIcon />,
-          onSelect: () => void stopTerminal(t.id),
-        }
-      : {
-          label: 'Restart',
-          icon: <RestoreIcon />,
-          onSelect: () => void restartTerminal(t.id),
-        },
-    {
-      label: 'Close',
-      icon: <CloseIcon />,
-      onSelect: () => void closeTerminal(t),
-    },
-    'separator',
-    {
-      label: 'Open in new tab',
-      icon: <ExternalIcon />,
-      onSelect: () => window.open(paths.t(t.id)(), '_blank'),
-    },
-    ...(t.command
-      ? ([
-          {
-            label: 'Copy command',
-            icon: <CopyIcon />,
-            onSelect: () => void copyText(t.command!),
-          },
-        ] satisfies MenuEntry[])
-      : []),
-  ];
-
-  const TerminalRow = (p: { terminal: TerminalInfo }) => {
-    const t = () => p.terminal;
-    const state = () =>
-      t().status === 'running' ? 'Running' : `Exited with code ${t().exitCode}`;
-    return (
-      <li data-flip={`t:${t().id}`}>
-        <div
-          class="context-target relative rounded-md"
-          {...contextMenu(() => terminalMenu(t()))}
-        >
-          <a
-            class="flex items-center gap-2 rounded-md px-2 py-1 transition-colors hover:bg-hover aria-[current=page]:bg-active touch:py-3 touch:pr-11"
-            href={paths.t(t().id)}
-            title={t().command ? `${state()}: ${t().command}` : state()}
-            onClick={closeDrawer}
-          >
-            <span
-              class={[
-                // Icon width minus the status dot's, so titles line up.
-                '-mx-0.75',
-                t().status === 'running'
-                  ? 'text-running'
-                  : t().exitCode
-                    ? 'text-danger'
-                    : 'text-muted',
-              ]}
-              role="img"
-              aria-label={state()}
-            >
-              <TerminalIcon />
-            </span>
-            <span
-              class={[
-                'flex-1 truncate',
-                t().status !== 'running' && 'text-muted',
-              ]}
-            >
-              {t().title}
-            </span>
-            <Show when={t().status !== 'running'}>
-              <span class="text-meta text-muted tabular-nums">
-                exit {t().exitCode}
-              </span>
-            </Show>
-          </a>
-          <MenuButton
-            class="absolute inset-y-0 right-0.5 my-auto hidden touch:grid"
-            items={() => terminalMenu(t())}
-          />
-        </div>
-      </li>
-    );
   };
 
   // Every file shares the project page's path, so the router's
@@ -1076,8 +991,24 @@ export default function Sidebar() {
 
   const WorkspaceRows = (p: { group: Group; nested?: boolean }) => (
     <ul class={!p.nested && INDENT}>
-      <For each={p.group.terminals} keyed={(t) => t.id}>
-        {(t) => <TerminalRow terminal={t()} />}
+      <For each={p.group.rows} keyed={(r) => r.key}>
+        {(r) => {
+          const Row = dynamic(() => r().Row);
+          return (
+            <li data-flip={`x:${r().key}`}>
+              <Errored
+                fallback={(error) => {
+                  console.error(`[extension] ${r().key} row:`, error());
+                  return null;
+                }}
+              >
+                <Loading>
+                  <Row id={r().id} />
+                </Loading>
+              </Errored>
+            </li>
+          );
+        }}
       </For>
       <For each={p.group.files} keyed={(k) => k.path}>
         {(k) => <FileRow file={k()} files={p.group.files} />}
@@ -1221,7 +1152,7 @@ export default function Sidebar() {
         ...ordered().flatMap((s) =>
           s.groups.flatMap((g) => [
             g.key,
-            ...g.terminals.map((t) => t.id),
+            ...g.rows.map((r) => r.key),
             ...g.files.map((k) => k.path),
             ...g.sessions.map((s) => s.id),
           ]),

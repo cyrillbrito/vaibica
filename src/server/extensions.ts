@@ -1,6 +1,7 @@
 import 'server-only';
 import type { Registry } from '@earendil-works/pi-durable';
 
+import type { ServerHooks } from '#extensions/contract';
 import { SERVER_EXTENSIONS } from '#extensions/server';
 import { MANIFESTS, awaitsAnswer, enabledIds } from '#extensions/manifests';
 import type { Calls, ExtensionState } from '#lib/protocol';
@@ -84,3 +85,52 @@ export const waitingOn = (call: {
   SERVER_EXTENSIONS.find(
     (e) => enabled.has(e.manifest.id) && e.manifest.tools?.[call.name],
   )?.waitingOn?.(call);
+
+const on = () => SERVER_EXTENSIONS.filter((e) => enabled.has(e.manifest.id));
+
+/**
+ * Runs a core event's hook in every extension that is on, in order. One
+ * that throws is logged and skipped, so it can't stop core's own work.
+ */
+export async function runHook<K extends keyof ServerHooks>(
+  name: K,
+  ...args: Parameters<NonNullable<ServerHooks[K]>>
+) {
+  for (const e of on()) {
+    const hook = e.hooks?.[name] as
+      | ((...a: typeof args) => Promise<void>)
+      | undefined;
+    try {
+      await hook?.(...args);
+    } catch (error) {
+      console.error(`[extension] ${e.manifest.id} ${name}:`, error);
+    }
+  }
+}
+
+/** What runs in a workspace, by every extension that is on, for `list`. */
+export const inWorkspace = (cwd: string, session: string) =>
+  on().flatMap((e) => e.inWorkspace?.(cwd, session) ?? []);
+
+/** The extension a request or topic name such as `ext:<id>/<name>` goes to. */
+function owner(full: string) {
+  const [, id, name] = /^ext:([^/]+)\/(.+)$/.exec(full) ?? [];
+  const e = SERVER_EXTENSIONS.find((e) => e.manifest.id === id);
+  if (!e || !name) return undefined;
+  if (!enabled.has(e.manifest.id))
+    throw new Error(`${e.manifest.title} is off`);
+  return { e, name };
+}
+
+/** An extension's request handler, and whether a re-send runs it again. */
+export function extensionCall(full: string) {
+  const found = owner(full);
+  const run = found?.e.calls?.[found.name];
+  return run && { run, read: !!found.e.reads?.includes(found.name) };
+}
+
+/** An extension's topic. */
+export function extensionTopic(full: string) {
+  const found = owner(full);
+  return found?.e.topics?.[found.name];
+}

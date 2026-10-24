@@ -2,8 +2,6 @@ import 'server-only';
 import { Type } from '@earendil-works/pi-ai';
 import { defineExtension, defineTool } from '@earendil-works/pi-durable';
 import type { ToolRegistration } from '@earendil-works/pi-durable';
-import type { TerminalInfo } from '#lib/protocol';
-import { sessionWorkspace, tell } from '#server/sessions';
 import {
   commandDone,
   createTerminal,
@@ -16,9 +14,14 @@ import {
   terminalsIn,
   writeTerminal,
 } from './terminals';
+import type { TerminalInfo } from './protocol';
+
+// Sessions load the agents, which read the extension lists this module is
+// part of: imported when a tool runs, not while the lists load.
+const sessions = () => import('#server/sessions');
 
 // Like Codex's exec_command / write_stdin and Claude Code's background bash,
-// but each terminal is a shell the user sees in the sidebar, can type into,
+// but each terminal is a shell the user sees in Bica, can type into,
 // restart, and stop. Output comes back as plain text, the tail only.
 // Starting a name again reruns it in the same terminal, as Zed's tasks do,
 // so restarting a dev server never leaves a dead one behind.
@@ -71,7 +74,7 @@ async function notifyWhenDone(id: string, session: string) {
   // Nothing awaits this, so a throw here would take the server down, e.g.
   // after a Vite restart closed the module runner this import goes through.
   try {
-    await tell(session, note);
+    await (await sessions()).tell(session, note);
   } catch (error) {
     console.error('[terminal]', error);
   }
@@ -87,7 +90,7 @@ const notify = (fallback: string) =>
 const terminalStart = defineTool({
   name: 'terminal_start',
   description:
-    'Open a shell in a terminal in your folder, optionally running a command first: a dev server, watcher, game server, REPL. The user sees it in the sidebar and can type into it. Use this instead of `&`, nohup, or a long bash call for anything that keeps running. Starting a name again reuses that terminal: whatever it runs stops, and the new command starts in its place. So to restart a dev server, start it again with the same name. Check `list` first: one may already run. Returns once output settles (or after `wait` seconds) with the latest output.',
+    'Open a shell in a terminal in your folder, optionally running a command first: a dev server, watcher, game server, REPL. The user sees it in Bica and can type into it. Use this instead of `&`, nohup, or a long bash call for anything that keeps running. Starting a name again reuses that terminal: whatever it runs stops, and the new command starts in its place. So to restart a dev server, start it again with the same name. Check `list` first: one may already run. Returns once output settles (or after `wait` seconds) with the latest output.',
   parameters: Type.Object({
     command: Type.Optional(
       Type.String({ description: 'A shell command to run first' }),
@@ -95,7 +98,7 @@ const terminalStart = defineTool({
     name: Type.Optional(
       Type.String({
         description:
-          'A short name for the sidebar, e.g. "dev server". Default: the command',
+          'A short name for the list, e.g. "dev server". Default: the command',
       }),
     ),
     notify: notify('Default: true when you give a command.'),
@@ -107,7 +110,9 @@ const terminalStart = defineTool({
   }),
   execute: async ({ command, name, notify, wait }, api) => {
     const session = String(api.conversationId);
-    const workspace = await sessionWorkspace(api.conversationId);
+    const workspace = await (
+      await sessions()
+    ).sessionWorkspace(api.conversationId);
     const title = name?.trim() || command?.trim().slice(0, 60);
     const same = title
       ? terminalsIn(workspace.cwd).find((t) => t.title === title)
@@ -130,26 +135,29 @@ const terminalStart = defineTool({
   },
 });
 
-const terminalRead = defineTool({
-  name: 'terminal_read',
-  description:
-    "Read a terminal's latest output and state: running a command, at the prompt, or exited. `list` shows all terminals.",
-  parameters: Type.Object({
-    id: Type.String({ description: 'The terminal id' }),
-    lines: Type.Optional(
-      Type.Number({ description: 'How many last lines (default 100)' }),
-    ),
-    wait: Type.Optional(
-      Type.Number({
-        description: `Seconds to wait first for new output to settle or the shell to exit (default 0, max ${MAX_WAIT})`,
-      }),
-    ),
-  }),
-  execute: async ({ id, lines, wait }) => {
-    if (wait) await settle(id, seconds(wait, 0));
-    return report(id, lines);
-  },
-});
+const READ =
+  "Read a terminal's latest output and state: running a command, at the prompt, or exited. `list` shows all terminals.";
+
+const terminalRead = (description: string) =>
+  defineTool({
+    name: 'terminal_read',
+    description,
+    parameters: Type.Object({
+      id: Type.String({ description: 'The terminal id' }),
+      lines: Type.Optional(
+        Type.Number({ description: 'How many last lines (default 100)' }),
+      ),
+      wait: Type.Optional(
+        Type.Number({
+          description: `Seconds to wait first for new output to settle or the shell to exit (default 0, max ${MAX_WAIT})`,
+        }),
+      ),
+    }),
+    execute: async ({ id, lines, wait }) => {
+      if (wait) await settle(id, seconds(wait, 0));
+      return report(id, lines);
+    },
+  });
 
 const terminalSend = defineTool({
   name: 'terminal_send',
@@ -189,7 +197,7 @@ const terminalSend = defineTool({
 const terminalStop = defineTool({
   name: 'terminal_stop',
   description:
-    'Close a terminal when you are done with it: its shell and whatever runs in it end (SIGTERM, then SIGKILL after 3 seconds), and it leaves the sidebar. Returns its last lines. To restart what runs in it, use terminal_start with its name instead; to stop only the command, terminal_send with `interrupt`.',
+    'Close a terminal when you are done with it: its shell and whatever runs in it end (SIGTERM, then SIGKILL after 3 seconds), and it leaves the list. Returns its last lines. To restart what runs in it, use terminal_start with its name instead; to stop only the command, terminal_send with `interrupt`.',
   parameters: Type.Object({
     id: Type.String({ description: 'The terminal id' }),
   }),
@@ -209,16 +217,21 @@ const terminalStop = defineTool({
 });
 
 // The hub reads the workers' terminals but types into none (docs/hub.md).
+// The names are stored in sessions' extension lists, so they stay.
 export const HubTerminalTools = defineExtension({
   name: 'hub-terminal-tools',
-  tools: [terminalRead] as unknown as ToolRegistration[],
+  tools: [
+    terminalRead(
+      `${READ} When a worker's build, tests, or dev server failed, read its terminal to see why instead of messaging the worker.`,
+    ),
+  ] as unknown as ToolRegistration[],
 });
 
 export const TerminalTools = defineExtension({
   name: 'terminal-tools',
   tools: [
     terminalStart,
-    terminalRead,
+    terminalRead(READ),
     terminalSend,
     terminalStop,
   ] as unknown as ToolRegistration[],

@@ -11,7 +11,7 @@ Opened empty, it answers "what needs me?" first:
 - This session: the open session's own actions, like Rename, Fork, Stop, Mark as unread, and Archive.
 - Actions: everything else Bica can do from anywhere.
 
-Typing searches sessions (archived ones last), projects and worktrees ([projects.md](./projects.md)), terminals, and actions together, best match first. Letters can be out of place, so "nwe sess" still finds New session, and actions have extra words, so "chat" finds it too. Files aren't listed, since there are too many.
+Typing searches sessions (archived ones last), projects and worktrees ([projects.md](./projects.md)), what extensions list such as terminals, and actions together, best match first. Letters can be out of place, so "nwe sess" still finds New session, and actions have extra words, so "chat" finds it too. Files aren't listed, since there are too many.
 
 ## Second pages
 
@@ -24,7 +24,7 @@ Every row shows its shortcut, so the palette teaches them. Only actions you take
 - ⌘K opens the palette.
 - ⇧⌘O starts a session in this page's workspace. The browser keeps ⌘N for new windows.
 - ⌥⇧↓ opens the next session that needs you, in the order above. It skips the open one, so pressing again moves on.
-- ⌃` opens a terminal in this page's workspace.
+- ⌃` opens a terminal in this page's workspace, while [terminals](./terminals.md) are on.
 - ⌘B and ⌥⌘B show or hide the sessions and files columns.
 
 The Hub action opens the [hub](./hub.md). It has no shortcut, since it sits at the top of the sidebar.

@@ -5,9 +5,10 @@ import { resolve } from 'node:path';
 import { stripVTControlCharacters } from 'node:util';
 import type { Op } from '@earendil-works/chord/delta';
 
-import type { TerminalInfo, TerminalOutput, WorkspaceRef } from '#lib/protocol';
+import type { WorkspaceRef } from '#lib/protocol';
 import { getProject } from '#server/projects';
 import { dataFile } from '#server/paths';
+import type { TerminalInfo, TerminalOutput } from './protocol';
 
 /**
  * Shells and long-running processes (dev servers, game servers) in a

@@ -14,6 +14,7 @@ import {
   type Calls,
   type ClientMessage,
   type EntriesHeld,
+  type ExtensionName,
   type ServerMessage,
   type Topic,
   type Topics,
@@ -48,7 +49,12 @@ import {
   watchConversation,
   watchSessions,
 } from '#server/sessions';
-import { updateExtension, watchExtensions } from '#server/extensions';
+import {
+  extensionCall,
+  extensionTopic,
+  updateExtension,
+  watchExtensions,
+} from '#server/extensions';
 import { updateSettings, watchModels } from '#server/providers';
 import { wsLogger } from '#server/ws-log';
 import {
@@ -71,16 +77,6 @@ import {
 } from '#server/projects';
 import { suggestCommitMessage } from '#server/git';
 import { openInEditor, openPath } from '#server/git';
-import {
-  createTerminal,
-  removeTerminal,
-  resizeTerminal,
-  restartTerminal,
-  stopTerminal,
-  watchTerminal,
-  watchTerminals,
-  writeTerminal,
-} from '#server/terminals';
 import {
   commit,
   diff,
@@ -278,50 +274,34 @@ const calls: Handlers = {
     await openPath(path, cwd, reveal === true);
     return null;
   },
-  'terminal.create': async (args) =>
-    createTerminal(ref(args), { command: args.command, title: args.title }),
-  'terminal.input': async ({ id, data }) => {
-    writeTerminal(id, data);
-    return null;
-  },
-  'terminal.resize': async ({ id, cols, rows }) => {
-    resizeTerminal(id, cols, rows);
-    return null;
-  },
-  'terminal.stop': async ({ id }) => {
-    await stopTerminal(id);
-    return null;
-  },
-  'terminal.restart': async ({ id }) => {
-    await restartTerminal(id);
-    return null;
-  },
-  'terminal.remove': async ({ id }) => {
-    await removeTerminal(id);
-    return null;
-  },
 };
 
 // A request re-sent after a reconnect (its reply was lost) gets the first
 // run's answer instead of acting twice. Reads simply run again: cheap, and
-// their replies can be big. Keystrokes are too many to remember.
+// their replies can be big. Extensions name their own.
 const READS = new Set<Call>([
   'fs.dirs',
   'file.read',
   'git.diff',
   'git.suggest',
-  'terminal.input',
-  'terminal.resize',
 ]);
 const answered = new Map<string, Promise<unknown>>();
 
-function run(id: string, call: Call, args: unknown) {
-  const handler = calls[call] as (args: unknown) => Promise<unknown>;
+function handlerOf(call: Call | ExtensionName) {
+  if (call.startsWith('ext:')) return extensionCall(call);
+  const run = calls[call as Call] as
+    | ((args: unknown) => Promise<unknown>)
+    | undefined;
+  return run && { run, read: READS.has(call as Call) };
+}
+
+function run(id: string, call: Call | ExtensionName, args: unknown) {
+  const handler = handlerOf(call);
   if (!handler) throw new Error(`Unknown call ${call}`);
-  if (READS.has(call)) return handler(args);
+  if (handler.read) return handler.run(args);
   let result = answered.get(id);
   if (!result) {
-    result = handler(args);
+    result = handler.run(args);
     answered.set(id, result);
     setTimeout(() => answered.delete(id), 10 * 60_000).unref();
   }
@@ -344,8 +324,6 @@ const topics: {
   conversation: ({ id }, sink, have) => watchConversation(id, sink, have),
   'git.status': (params, sink) => watchStatus(ref(params), sink.snapshot),
   files: (params, sink) => watchFiles(ref(params), sink.snapshot),
-  terminals: (_params, sink) => watchTerminals(sink.snapshot),
-  terminal: ({ id }, sink) => watchTerminal(id, sink),
 };
 
 // Just the workspace: a call's other args stay out of caches keyed on it.
@@ -417,7 +395,11 @@ function connect(ws: WebSocket) {
     let diffable = true;
     subs.set(sub, () => (live = false));
     try {
-      const open = topics[topic] as (
+      const open = (
+        topic.startsWith('ext:')
+          ? extensionTopic(topic)
+          : topics[topic as Topic]
+      ) as (
         params: unknown,
         sink: Sink,
         have: EntriesHeld | undefined,

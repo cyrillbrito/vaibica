@@ -17,9 +17,11 @@ import {
   type FauxResponseStep,
 } from '@earendil-works/pi-ai/providers/faux';
 
+import type { CallMap, TopicMap } from '#extensions/contract';
 import type {
   Call,
   Calls,
+  ExtensionName,
   ServerMessage,
   Topic,
   Topics,
@@ -146,66 +148,80 @@ function tab(ws: WebSocket) {
     else subs.get(m.sub)?.(m);
   };
 
+  function request(
+    call: Call | ExtensionName,
+    args: unknown,
+    id: string = crypto.randomUUID(),
+  ) {
+    return new Promise<unknown>((resolve, reject) => {
+      replies.set(id, (m) => {
+        replies.delete(id);
+        if (m.type !== 'reply') return;
+        if (m.ok) resolve(m.value);
+        else reject(new Error(m.error));
+      });
+      ws.send(JSON.stringify({ type: 'request', id, call, args }));
+    });
+  }
+
+  function watch<Value>(topic: Topic | ExtensionName, params: unknown) {
+    const sub = ++seq;
+    let value: Value | undefined;
+    let error: string | undefined;
+    const waiters = new Set<() => void>();
+    subs.set(sub, (m) => {
+      if (m.type === 'snapshot') value = m.value as Value;
+      else if (m.type === 'changes')
+        value = applyImmutable(value as never, m.ops) as Value;
+      else if (m.type === 'error') error = m.error;
+      for (const wake of waiters) wake();
+    });
+    ws.send(JSON.stringify({ type: 'subscribe', sub, topic, params }));
+    return {
+      get value() {
+        return value;
+      },
+      /** Resolves with the value once `check` holds for it. */
+      until(check: (value: Value) => unknown, ms = 4000): Promise<Value> {
+        return new Promise((resolve, reject) => {
+          const timer = setTimeout(() => {
+            waiters.delete(test);
+            const last = JSON.stringify(value, null, 1)?.slice(0, 3000);
+            reject(new Error(`${topic} never matched. Last value:\n${last}`));
+          }, ms);
+          const test = () => {
+            if (error) reject(new Error(error));
+            else if (value === undefined || !check(value)) return;
+            else resolve(value);
+            clearTimeout(timer);
+            waiters.delete(test);
+          };
+          waiters.add(test);
+          test();
+        });
+      },
+      stop() {
+        subs.delete(sub);
+        ws.send(JSON.stringify({ type: 'unsubscribe', sub }));
+      },
+    };
+  }
+
   return {
     socket: ws,
     /** Sends a request; the same `id` twice is a re-send after a lost reply. */
-    request<C extends Call>(
-      call: C,
-      args: Calls[C]['args'],
-      id: string = crypto.randomUUID(),
-    ): Promise<Calls[C]['result']> {
-      return new Promise((resolve, reject) => {
-        replies.set(id, (m) => {
-          replies.delete(id);
-          if (m.type !== 'reply') return;
-          if (m.ok) resolve(m.value as Calls[C]['result']);
-          else reject(new Error(m.error));
-        });
-        ws.send(JSON.stringify({ type: 'request', id, call, args }));
-      });
-    },
+    request: <C extends Call>(call: C, args: Calls[C]['args'], id?: string) =>
+      request(call, args, id) as Promise<Calls[C]['result']>,
     /** Watches a topic, keeping its value current as the browser does. */
-    watch<T extends Topic>(topic: T, params: Topics[T]['params']) {
-      type Value = Topics[T]['value'];
-      const sub = ++seq;
-      let value: Value | undefined;
-      let error: string | undefined;
-      const waiters = new Set<() => void>();
-      subs.set(sub, (m) => {
-        if (m.type === 'snapshot') value = m.value as Value;
-        else if (m.type === 'changes')
-          value = applyImmutable(value as never, m.ops) as Value;
-        else if (m.type === 'error') error = m.error;
-        for (const wake of waiters) wake();
-      });
-      ws.send(JSON.stringify({ type: 'subscribe', sub, topic, params }));
+    watch: <T extends Topic>(topic: T, params: Topics[T]['params']) =>
+      watch<Topics[T]['value']>(topic, params),
+    /** An extension's own requests and topics, typed by the extension. */
+    extension<C extends CallMap, T extends TopicMap>(id: string) {
       return {
-        get value() {
-          return value;
-        },
-        /** Resolves with the value once `check` holds for it. */
-        until(check: (value: Value) => unknown, ms = 4000): Promise<Value> {
-          return new Promise((resolve, reject) => {
-            const timer = setTimeout(() => {
-              waiters.delete(test);
-              const last = JSON.stringify(value, null, 1)?.slice(0, 3000);
-              reject(new Error(`${topic} never matched. Last value:\n${last}`));
-            }, ms);
-            const test = () => {
-              if (error) reject(new Error(error));
-              else if (value === undefined || !check(value)) return;
-              else resolve(value);
-              clearTimeout(timer);
-              waiters.delete(test);
-            };
-            waiters.add(test);
-            test();
-          });
-        },
-        stop() {
-          subs.delete(sub);
-          ws.send(JSON.stringify({ type: 'unsubscribe', sub }));
-        },
+        request: <K extends keyof C & string>(call: K, args: C[K]['args']) =>
+          request(`ext:${id}/${call}`, args) as Promise<C[K]['result']>,
+        watch: <K extends keyof T & string>(topic: K, params: T[K]['params']) =>
+          watch<T[K]['value']>(`ext:${id}/${topic}`, params),
       };
     },
   };

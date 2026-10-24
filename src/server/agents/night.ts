@@ -15,7 +15,7 @@ const ROLE = `This session runs unattended at night. Nobody can answer until mor
 - Stay inside the task and this folder. Don't push, merge, deploy, or delete what you didn't create, and commit only as the prompt says.
 - When blocked, do the work around it, then say exactly what you need.
 - A file the task asks for, such as a research report, doesn't replace the final reply.
-- Stop the terminals you started before your final reply.`;
+- Before your final reply, stop what you started that still runs, such as dev servers.`;
 
 // Instead of the short-reply rules: the last reply is all the user reads, with
 // the same style as every other agent's.

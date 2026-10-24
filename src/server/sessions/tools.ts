@@ -7,7 +7,7 @@ import type {
 } from '@earendil-works/pi-durable';
 import type { SessionStatus } from '#lib/protocol';
 import { CHATS_ID, getProject, listProjects } from '#server/projects';
-import { allTerminals, terminalState } from '#server/terminals';
+import { inWorkspace } from '#server/extensions';
 import { spawnSession } from './create';
 import { archive, cleanUpWorktree } from './meta';
 import { noteMessage, notifyWhenIdle } from './notes';
@@ -198,7 +198,7 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
 
   const sessionArchive = defineTool({
     name: 'session_archive',
-    description: `Archive another session once its work is done: it leaves the session list (the user can bring it back), and the terminals it started close. With \`remove_worktree\`, its worktree folder and local branch go too, unless another open session works there, or it has uncommitted files or commits no other branch has.${hub ? ' Only when the user asked for it.' : " Only archive sessions you started or the user named. Archive one you started once its result is in your reply and the user wouldn't want to open it himself: a lookup, a check, one worker of many. Keep it when he might want to read or continue it: he asked for it, it holds a decision, a long back and forth, unmerged work, or a question for him. Name what you archived in your reply, so he can bring it back. A session he took over is his: archive it only if he told you to."}`,
+    description: `Archive another session once its work is done: it leaves the session list (the user can bring it back), and what it started that still runs stops. With \`remove_worktree\`, its worktree folder and local branch go too, unless another open session works there, or it has uncommitted files or commits no other branch has.${hub ? ' Only when the user asked for it.' : " Only archive sessions you started or the user named. Archive one you started once its result is in your reply and the user wouldn't want to open it himself: a lookup, a check, one worker of many. Keep it when he might want to read or continue it: he asked for it, it holds a decision, a long back and forth, unmerged work, or a question for him. Name what you archived in your reply, so he can bring it back. A session he took over is his: archive it only if he told you to."}`,
     parameters: Type.Object({
       id: Type.String({ description: 'The session id' }),
       remove_worktree: Type.Optional(
@@ -309,7 +309,7 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
 
   const list = defineTool({
     name: 'list',
-    description: `List every project, folder or worktree, open session, and terminal in Bica, as a tree, with each one's status, which one is you, and what you started. With \`archived\`, the archived sessions instead, newest first.${hub ? '' : " Leave others' sessions and terminals alone unless the user names them."}`,
+    description: `List every project, folder or worktree, and open session in Bica, and what runs in them, as a tree, with each one's status, which one is you, and what you started. With \`archived\`, the archived sessions instead, newest first.${hub ? '' : ' Leave what others started alone unless the user names it.'}`,
     parameters: Type.Object({
       archived: Type.Optional(
         Type.Boolean({
@@ -340,7 +340,6 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
         );
       }
       const open = all.filter((s) => !s.archivedAt);
-      const terminals = allTerminals();
       const lines: string[] = [];
       const self = open.find((s) => s.id === me);
       if (self) lines.push(`You are session ${me}, in ${self.cwd}.`, '');
@@ -349,8 +348,8 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
         lines.push(p.name);
         for (const w of p.workspaces) {
           const here = open.filter((s) => s.cwd === w.path);
-          const shells = terminals.filter((t) => t.cwd === w.path);
-          if (!w.main && !here.length && !shells.length) continue;
+          const running = inWorkspace(w.path, me);
+          if (!w.main && !here.length && !running.length) continue;
           lines.push(
             `  ${w.main ? 'main' : `worktree ${w.branch ?? '(detached)'}`}  ${w.path}`,
           );
@@ -358,10 +357,7 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
             lines.push(
               `    session ${s.id} "${s.title}": ${STATUS[s.status]}${s.id === me ? ' (you)' : mine(s.startedBy)}`,
             );
-          for (const t of shells)
-            lines.push(
-              `    terminal ${t.id} "${t.title}": ${terminalState(t)}${mine(t.startedBy)}`,
-            );
+          for (const line of running) lines.push(`    ${line}`);
         }
       }
       return text(lines.join('\n'));

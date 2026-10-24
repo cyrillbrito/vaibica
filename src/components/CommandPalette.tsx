@@ -28,7 +28,8 @@ import {
   stopSession,
   useSessions,
 } from '#lib/sessions';
-import { createTerminal, useTerminals } from '#lib/terminals';
+import { provideCommands, runCommand } from '#lib/commands';
+import { useCommands, useSlots } from '#lib/extensions';
 import { setTheme, theme, type Theme } from '#lib/theme';
 import { age } from '#lib/time';
 import { useCurrentWorkspace, workspaceHref } from '#lib/workspace';
@@ -56,14 +57,13 @@ import {
   SettingsIcon,
   SidebarIcon,
   StopIcon,
-  TerminalIcon,
   ThemeIcon,
   UnreadIcon,
 } from './ui/icons';
 import { toast } from './ui/Toast';
 
 // `mod` is ⌘ on a Mac and Ctrl elsewhere; `ctrl` is Ctrl everywhere.
-interface Keys {
+export interface Keys {
   code: string;
   mod?: boolean;
   ctrl?: boolean;
@@ -207,8 +207,35 @@ export default function CommandPalette() {
   const location = useLocation();
   const sessions = useSessions();
   const projects = useProjects();
-  const terminals = useTerminals();
   const workspace = useCurrentWorkspace();
+  // Extensions' commands and places (src/extensions/contract.ts).
+  const commands = useCommands();
+  const commandContext = () => ({
+    workspace: workspace()?.ref,
+    workspaceName: workspace()
+      ? workspaceName(workspace()!.project, workspace()!.workspace.path)
+      : undefined,
+    navigate: (href: string) => navigate(href),
+  });
+  provideCommands({ commands, context: commandContext });
+  const extensionActions = (): Command[] =>
+    commands()
+      .filter((c) => !c.when || c.when(commandContext()))
+      .map((c) => ({
+        id: c.id,
+        label: c.title,
+        hint: c.hint?.(commandContext()),
+        words: c.words,
+        icon: c.icon,
+        keys: c.keys,
+        group: 'Actions',
+        run: () => void runCommand(c.id),
+      }));
+  const placeLists = useSlots('palette.search', (slot) => slot.use());
+  const places = (): Command[] =>
+    placeLists()
+      .flatMap((list) => list())
+      .map((p) => ({ ...p, run: () => navigate(p.href) }));
 
   const sessionId = () => {
     const [, kind, id] = location.pathname.split('/');
@@ -248,13 +275,6 @@ export default function CommandPalette() {
       navigate(paths());
       focusComposer();
     }
-  };
-
-  const newTerminalHere = async () => {
-    const w = workspace();
-    if (!w) return;
-    closeDrawer();
-    navigate(paths.t(await createTerminal(w.ref))());
   };
 
   // Waiting first, then unread answers, then failures; newest first in each.
@@ -504,20 +524,7 @@ export default function CommandPalette() {
         group,
         run: nextNeedsYou,
       },
-      ...(w
-        ? [
-            {
-              id: 'a:terminal',
-              label: 'New terminal',
-              hint: here,
-              words: 'shell console',
-              icon: TerminalIcon,
-              keys: { code: 'Backquote', ctrl: true },
-              group,
-              run: () => void newTerminalHere(),
-            },
-          ]
-        : []),
+      ...extensionActions(),
       {
         id: 'a:projects',
         label: 'Go to project…',
@@ -595,14 +602,7 @@ export default function CommandPalette() {
             )
             .map((s) => sessionItem(s)),
           ...workspaceItems(),
-          ...terminals().map((t) => ({
-            id: `term:${t.id}`,
-            label: t.title,
-            hint: projects().find((p) => p.id === t.projectId)?.name,
-            words: 'terminal',
-            icon: TerminalIcon,
-            run: () => navigate(paths.t(t.id)()),
-          })),
+          ...places(),
           ...sessionActions(),
           ...actions(),
         ];

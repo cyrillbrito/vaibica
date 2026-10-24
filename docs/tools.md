@@ -28,7 +28,7 @@ Web search is an [extension](./extensions.md). Settings → Extensions switches 
 
 Agents can work with other sessions the way they work with terminals: start, read, send, and stop. Bica has no hidden subagents: every helper is a normal session you can open and steer.
 
-- `list` shows every project, workspace, session, and terminal. Agents are told to leave the rest alone unless you name it.
+- `list` shows every project, workspace, and session, and what extensions run in each, such as terminals. Agents are told to leave the rest alone unless you name it.
 - `session_start` starts a session with a prompt that stands on its own, in any workspace or a new worktree, optionally in [assistant mode](./assistant-mode.md) or held for the [night run](./night-runs.md).
 - `session_read` returns a session's status, the questions it waits on, and its last reply.
 - `session_send` sends a signed message, so the receiver can answer.

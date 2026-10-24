@@ -20,7 +20,7 @@ Bica is a Bun server on the dev machine and a web app that talks to it over one 
 - A session is one agent conversation in one workspace. See [sessions.md](./sessions.md).
 - An agent is what a session runs as: its instructions, model, tools, and skills. See [agents.md](./agents.md).
 - A run is the agent working on a prompt until it answers.
-- A terminal is a shell in a workspace, shared by you and the agents. See [terminals.md](./terminals.md).
+- A terminal is a shell in a workspace, shared by you and the agents. It is an extension. See [terminals.md](./terminals.md).
 - The harness is Pi Durable's engine inside the server. It runs every session and saves each step before anyone sees it.
 
 ## Server modules
@@ -32,9 +32,8 @@ Bica is a Bun server on the dev machine and a web app that talks to it over one 
 - `sessions/`: what Bica adds to a conversation: titles, prompts and the queue, voice turns, the session tools, and what runs around them, such as night runs, idle upkeep, and the hub ([sessions.md](./sessions.md)).
 - `agents/`: one file per agent, with its tools, model, and instructions ([agents.md](./agents.md), [instructions.md](./instructions.md)).
 - `git/`: status, diffs, staging, and commits ([git.md](./git.md)).
-- `terminals/`: shells and the agent's terminal tools ([terminals.md](./terminals.md)).
 
-The flat files next to them each do one job. `socket.ts` is the one table of calls and topics. `extensions.ts` installs the built-in extensions that are on.
+The flat files next to them each do one job. `socket.ts` is the table of core's calls and topics, and routes `ext:<id>/…` names to the extension that owns them. `extensions.ts` installs the built-in extensions that are on, and runs their hooks.
 
 `src/extensions` holds the features that can be switched off, through the `#extensions/...` alias, each with a server half and a browser half. Core never imports one directly. See [extensions.md](./extensions.md).
 

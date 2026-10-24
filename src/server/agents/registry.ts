@@ -13,7 +13,6 @@ import { CodingTools, HubFileTools } from '#server/agent/tools/coding';
 import { ToolSummary } from '#server/agent/tools/summary';
 import { SessionDoc, agentIdOf } from '#server/sessions/session-doc';
 import { HubSessionTools, SessionTools } from '#server/sessions/tools';
-import { HubTerminalTools, TerminalTools } from '#server/terminals';
 import { assistant } from './assistant';
 import { coding } from './coding';
 import {
@@ -35,12 +34,10 @@ const AGENTS: Record<AgentId, Agent> = { coding, assistant, night, hub };
 // create.ts: nothing it exports may be read while it loads.
 const PACKS: Record<ToolPack, Extension> = {
   'coding-tools': CodingTools,
-  'terminal-tools': TerminalTools,
   'session-tools': SessionTools,
   codemode: Codemode,
   'hub-file-tools': HubFileTools,
   'hub-session-tools': HubSessionTools,
-  'hub-terminal-tools': HubTerminalTools,
 };
 for (const [name, pack] of Object.entries(PACKS))
   if (pack.name !== name)
@@ -117,9 +114,10 @@ const packs = (a: Agent) => a.extensions.map((name) => PACKS[name]);
 const resolve = (a: Agent) => [
   BicaPrompt,
   ...packs(a),
-  ...SERVER_EXTENSIONS.filter((e) => e.appliesTo?.(a.id) ?? true).flatMap(
-    (e) => e.durable,
-  ),
+  ...SERVER_EXTENSIONS.flatMap((e) => {
+    const applies = e.appliesTo?.(a.id) ?? true;
+    return applies === true ? e.durable : applies || [];
+  }),
   BicaContext,
   ToolSummary,
 ];

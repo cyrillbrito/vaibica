@@ -48,7 +48,7 @@ export default function HomeTips(props: { onVoice: () => void }) {
     {
       id: 'search',
       title: 'Jump anywhere',
-      text: 'Sessions, projects, terminals and actions from one field.',
+      text: 'Sessions, projects, and actions from one field.',
       keys: '⌘K',
       action: 'Try it',
       run: openPalette,

@@ -1,6 +1,6 @@
 import { useLocation } from '@solidjs/router';
 import { isServer } from '@solidjs/web';
-import { createMemo, createSignal } from 'solid-js';
+import { createEffect, createMemo, createSignal } from 'solid-js';
 
 import { toast } from '../components/ui/Toast';
 import { paths } from '../router';
@@ -9,7 +9,6 @@ import { useProjects } from './projects';
 import type { GitStatus, WorkspaceRef } from './protocol';
 import { useSessions } from './sessions';
 import { request, useTopic } from './socket';
-import { useTerminals } from './terminals';
 
 /** What the main area shows: a file, or one side of a git change. */
 export type View = 'file' | 'staged' | 'changes';
@@ -175,15 +174,30 @@ export function openFromSearch(search: string) {
   return { path, view };
 }
 
+// What an extension's page is about (usePageWorkspace).
+const [pageWorkspace, setPageWorkspace] = createSignal<
+  WorkspaceRef | undefined
+>(undefined, { name: 'pageWorkspace' });
+
 /**
- * The workspace the current page is about: the project page's, or the
- * folder the open session or terminal runs in.
+ * For an extension's page: the workspace it's about, so the right panel and
+ * ⌘K follow it as they follow a session's.
+ */
+export function usePageWorkspace(ref: () => WorkspaceRef | undefined) {
+  createEffect(ref, (r) => {
+    setPageWorkspace(() => r);
+    return () => setPageWorkspace(undefined);
+  });
+}
+
+/**
+ * The workspace the current page is about: the project page's, the folder
+ * the open session runs in, or what an extension's page shows.
  */
 export function useCurrentWorkspace() {
   const location = useLocation();
   const projects = useProjects();
   const sessions = useSessions();
-  const terminals = useTerminals();
   return createMemo(
     () => {
       const [, kind, id] = location.pathname.split('/');
@@ -196,10 +210,9 @@ export function useCurrentWorkspace() {
         const s = sessions().find((s) => s.id === decodeURIComponent(id));
         projectId = s?.projectId;
         cwd = s?.cwd;
-      } else if (kind === 't' && id) {
-        const t = terminals().find((t) => t.id === decodeURIComponent(id));
-        projectId = t?.projectId;
-        cwd = t?.cwd;
+      } else {
+        projectId = pageWorkspace()?.projectId;
+        cwd = pageWorkspace()?.cwd;
       }
       const project = projects().find((p) => p.id === projectId);
       if (!project) return undefined;

@@ -19,7 +19,7 @@ const ROLE =
 export const coding: Agent = {
   id: 'coding',
   ...AGENTS.coding,
-  extensions: ['coding-tools', 'terminal-tools', 'session-tools', 'codemode'],
+  extensions: ['coding-tools', 'session-tools', 'codemode'],
   skills: true,
   sections: {
     ...BASE_SECTIONS,

@@ -44,12 +44,10 @@ export type SectionKey =
  */
 export type ToolPack =
   | 'coding-tools'
-  | 'terminal-tools'
   | 'session-tools'
   | 'codemode'
   | 'hub-file-tools'
-  | 'hub-session-tools'
-  | 'hub-terminal-tools';
+  | 'hub-session-tools';
 
 /** What a section reads: the session's tools, folder, and kept copies. */
 export interface SectionInput {
@@ -130,20 +128,8 @@ const TOOL_GUIDE: ToolGuide[] = [
     ],
   },
   {
-    tools: [
-      'terminal_start',
-      'terminal_read',
-      'terminal_send',
-      'terminal_stop',
-    ],
-    line: 'Shells the user sees in the sidebar, for anything that keeps running',
-    rules: [
-      'Anything that keeps running (dev server, watcher, game server) goes in a terminal: terminal_start, never `&` or nohup in bash. Check `list` first: the user may already run it, and your own terminals can be reused with terminal_send. Stop the ones you started once you are done with them, unless the user wants them kept.',
-    ],
-  },
-  {
     tools: ['list'],
-    line: 'Every project, worktree, open session, and terminal, with live status',
+    line: 'Every project, worktree, and open session, and what runs in them, with live status',
   },
   {
     tools: ['session_read'],
@@ -159,8 +145,8 @@ const TOOL_GUIDE: ToolGuide[] = [
 const guide = (s: SectionInput) =>
   TOOL_GUIDE.flatMap((g) => {
     const tools = g.tools.filter((t) => s.tools.includes(t));
-    // A group's rules are about all of its tools, e.g. the hub's terminal_read
-    // alone doesn't start terminals.
+    // A group's rules are about all of its tools: an agent with only some
+    // of them gets the line without the rules.
     const rules = tools.length === g.tools.length ? g.rules : undefined;
     return tools.length ? [{ ...g, tools, rules }] : [];
   });

@@ -6,7 +6,7 @@ import type { PullRequest, VoiceSettings } from '#lib/protocol';
 import { context, getHarness } from '#server/agent';
 import { getAgent, selection } from '#server/agents';
 import { getProject, removeWorktree, worktreeRisk } from '#server/projects';
-import { allTerminals, removeTerminal, terminalsIn } from '#server/terminals';
+import { runHook } from '#server/extensions';
 import {
   SessionDoc,
   getConversation,
@@ -78,8 +78,8 @@ export async function markSeen(id: string, seen = true) {
 }
 
 /**
- * Done with a worktree: its sessions archived, terminals closed, folder and
- * local branch gone. Without force, returns what would be lost instead.
+ * Done with a worktree: its sessions archived, what extensions run there
+ * closed, folder and local branch gone. Without force, returns what would be lost instead.
  */
 export async function cleanUpWorktree(
   projectId: string,
@@ -94,7 +94,7 @@ export async function cleanUpWorktree(
     if (risk) return risk;
   }
   await retireSessions(cwd, w.branch, w.pr);
-  for (const t of terminalsIn(cwd)) await removeTerminal(t.id);
+  await runHook('beforeWorktreeRemove', { projectId, cwd });
   await removeWorktree(projectId, cwd);
   return null;
 }
@@ -132,8 +132,5 @@ export async function archive(id: string, archived: boolean) {
     // 0, not delete: docs hold plain JSON values.
     doc.archivedAt = archived ? doc.archivedAt || Date.now() : 0;
   }, context);
-  // Its dev servers and shells go with it.
-  if (archived)
-    for (const t of allTerminals())
-      if (t.startedBy === id) await removeTerminal(t.id);
+  if (archived) await runHook('sessionArchived', id);
 }
