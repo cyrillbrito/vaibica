@@ -58,7 +58,7 @@ There is no time to prove every idea here, so borrow from people who already bui
 - Installing as an app on the phone.
 - A file watcher instead of polling.
 - A file mode in the command palette: `/` searches the workspace's files, and ⌘P opens straight into it.
-- More features as extensions, one at a time: web search, approval before a call, then night runs ([extensibility.md](docs/explorations/extensibility.md)).
+- More features as extensions, one at a time: web search, terminals, voice, the Git tab, GitHub, Jira, file views, assistant mode, night runs, then the hub ([extensibility.md](docs/explorations/extensibility.md)).
 
 ## Library docs
 

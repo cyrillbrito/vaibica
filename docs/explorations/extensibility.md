@@ -22,13 +22,20 @@ The reports argue against an earlier plan that is gone now. Read them for their 
 
 One extension at a time, each pushing on a different seam. After each one, review core: which hook it needed, whether that hook is named after a core concept, and whether a second extension could use it. Abstract on the second or third use, not the first. A provisional piece gets reshaped when the next extension needs something close, not built around.
 
-Next, in this order:
+These are the extensions to build, in this order. Each one ends with a "What it taught" section below, like the one for `ask`, and earlier extensions move onto any hook a later one reshapes.
 
-1. Web search: tools, a setting (the Exa key), and access to a provider. Server only. Brings `settings` to the manifest.
-2. Approval before a call: a second extension that makes a session wait for you and draws a card. Settles whether `awaitsAnswer` and `waitingOn` become a status hook. Durable's `beforeTool` can await, so it runs before the call is committed and finds a stored answer after a restart.
-3. Night runs: an agent, lifecycle hooks, a scheduler, and the conflict with `ask`.
+1. Web search: tools, a setting (the Exa key), and access to a provider. Server only. Brings `settings` to the manifest, and the `extensions` topic so the switch stops riding on `models`.
+2. Terminals: the first panel. Brings `rightPanel.tab`, the first service by token (`Terminals`), and requests and topics the extension owns (`ext:<id>/…`).
+3. Voice: calls, hand-offs, and dictation in one extension. Brings `composer.above` and a composer button, and is the second to reach a provider.
+4. Git tab: the second `rightPanel.tab`, so the slot gets reshaped here. Pulls a `Vcs` service out of core, which keeps projects, worktrees, status, and diffs.
+5. GitHub: pull request numbers and states on branches, through `gh`, and later opening pull requests. Brings a slot for badges on a branch or workspace row, and a search source for the workspace picker.
+6. Jira: ticket keys in branch names, as badges and links. The second user of both GitHub's slots, so they get reshaped here, and the key parsing in `src/lib/branch.ts` leaves core.
+7. File and diff views: the third tab and the second user of `Vcs`, plus diff comments that go back to the agent.
+8. Assistant mode: the first agent an extension ships, and the first lifecycle hook, `session.idle`, for the upkeep that clears and compacts while the session sits. Brings a button on the new-session form and a mark on the context chip. The memory index reaches every session, so it stays in core.
+9. Night runs: the second agent and the second user of the lifecycle hooks, plus a scheduler, and the conflict with `ask`, settled by night leaving out extensions that need someone to answer.
+10. Hub: `center.view`, its own agent, and the session tools. It keeps itself small with assistant mode's upkeep, which makes it the first extension that requires another, through a service. The second reader of `waitingOn`, so `awaitsAnswer` and `waitingOn` become a status hook here at the latest.
 
-Later, each with what it needs first: the Git tab and file views (`rightPanel.tab`, a `Vcs` service), terminals (a `Terminals` service), voice and context alerts (`composer.above`), the hub (`center.view`, agents), and small hook extensions like a guard on `git push --force`, lint after an edit, or a cheaper compaction.
+Nothing else is planned. The tool packs (coding, codemode) stay in core until these are done.
 
 ## What `ask` taught
 
