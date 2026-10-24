@@ -387,7 +387,7 @@ export const SessionTools = defineExtension({
   tools: sessionTools(false),
 });
 
-// Only the hub profile selects it (src/server/profiles/hub.ts).
+// Only the hub agent selects it (src/server/agents/hub.ts).
 export const HubSessionTools = defineExtension({
   name: 'hub-session-tools',
   tools: sessionTools(true),

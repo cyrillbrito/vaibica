@@ -7,7 +7,7 @@ import { openNodeSqliteStorage } from '@earendil-works/pi-durable/storage/sqlite
 import { accountsReady, cacheRetention, models } from '#server/providers';
 import { timeTools } from './tools/tool-time';
 import { dataFile } from '#server/paths';
-import { CORE_EXTENSIONS, DEFAULT_EXTENSIONS } from '#server/profiles/registry';
+import { CORE_EXTENSIONS, DEFAULT_EXTENSIONS } from '#server/agents/registry';
 import { installExtensions } from '#server/extensions';
 
 export const context = BACKGROUND_CONTEXT;

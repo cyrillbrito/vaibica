@@ -14,8 +14,10 @@ import {
   setCurrentTarget,
   useProjects,
 } from '#lib/projects';
-import { ASSISTANT_HINT } from '#lib/profiles';
 import { useSessions } from '#lib/sessions';
+
+const ASSISTANT_HINT =
+  'Assistant mode: for a session that keeps going, such as notes or a small coordinator in this project. It compacts on its own and keeps memory in files. Less about code, more about help.';
 
 export default function Home() {
   const projects = useProjects();
@@ -79,7 +81,7 @@ export default function Home() {
                   cwd: t().workspace.path,
                   worktree: t().worktree,
                 }}
-                profile={assistant() ? 'assistant' : 'coding'}
+                agent={assistant() ? 'assistant' : 'coding'}
                 draft="new"
                 ref={(api) => (call = api.call)}
               />

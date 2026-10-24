@@ -5,10 +5,10 @@ import {
   type EntryId,
 } from '@earendil-works/pi-durable';
 
-import type { ProfileId } from '#lib/profiles';
+import type { AgentId } from '#lib/agents';
 import type { ModelChoice, PromptImage, ThinkingLevel } from '#lib/protocol';
 import { context, getHarness } from '#server/agent';
-import { nightChoice, serverProfile } from '#server/profiles';
+import { agentChoice, atLeast, getAgent, selection } from '#server/agents';
 import {
   CHATS_ID,
   createChatFolder,
@@ -24,8 +24,8 @@ import { submit } from './prompts';
 import {
   SessionDoc,
   getConversation,
+  agentIdOf,
   newestEntry,
-  profileOf,
   sessions,
 } from './store';
 
@@ -36,17 +36,17 @@ export interface NewSession {
   prompt: string;
   images?: PromptImage[];
   requestId: string;
-  // Absent: the profile's default.
+  // Absent: the agent's default.
   choice?: ModelChoice;
   startedBy?: string;
   // Starts in a new worktree named after the session (a new folder, for a
   // chat); `cwd` is ignored.
   worktree?: boolean;
-  profile?: ProfileId;
+  agent?: AgentId;
   // Its starter hears nothing of its runs.
   quiet?: boolean;
   // Holds the prompt for tonight's run (docs/night-runs.md) instead of
-  // sending it, as a Night session.
+  // sending it, as the Night agent.
   tonight?: boolean;
 }
 
@@ -59,7 +59,7 @@ export async function createSession({
   choice,
   startedBy,
   worktree,
-  profile = 'coding',
+  agent: agentId = 'coding',
   quiet,
   tonight,
 }: NewSession) {
@@ -67,8 +67,9 @@ export async function createSession({
     if (!prompt) throw new Error('A night run needs a prompt');
     if (images.length)
       throw new Error('A night run takes text only, without images');
-    profile = 'night';
+    agentId = 'night';
   }
+  const agent = getAgent(agentId);
   // A chat gets a fresh folder; its name needn't wait for the fast model.
   if (worktree && projectId === CHATS_ID) {
     cwd = await createChatFolder(promptTitle(prompt) || 'chat');
@@ -93,8 +94,9 @@ export async function createSession({
   } else if (cwd && !project.workspaces.some((w) => w.path === cwd))
     throw new Error(`${cwd} is not a workspace of ${project.name}`);
   const { model, thinkingLevel } = choice
-    ? checkChoice(tonight ? nightChoice(choice) : choice)
-    : await serverProfile(profile).choice();
+    ? checkChoice(atLeast(agent, choice))
+    : await agentChoice(agent);
+  const extensions = selection(agent);
   const harness = await getHarness();
   const workdir = cwd ?? project.path;
   const conversation = await harness.createConversation(
@@ -104,9 +106,7 @@ export async function createSession({
         model,
         thinkingLevel,
         cwd: workdir,
-        ...(serverProfile(profile).extensions && {
-          extensions: serverProfile(profile).extensions,
-        }),
+        ...(extensions && { extensions }),
       },
       init: async (tx, id) => {
         const doc = await tx.doc(SessionDoc, id);
@@ -120,7 +120,7 @@ export async function createSession({
         doc.createdAt = Date.now();
         doc.projectId = projectId;
         doc.seenEntry = 0;
-        doc.profile = profile;
+        doc.profile = agentId;
         if (startedBy) doc.startedBy = startedBy;
         if (quiet) doc.quiet = true;
         if (tonight) doc.tonight = prompt;
@@ -157,17 +157,17 @@ export async function spawnSession(
   folder?: string,
   worktree?: boolean,
   quiet?: boolean,
-  profile: Exclude<ProfileId, 'hub'> = 'coding',
+  agent: Exclude<AgentId, 'hub'> = 'coding',
   tonight?: boolean,
   effort?: ThinkingLevel,
 ) {
   const harness = await getHarness();
-  const [meta, agent] = await Promise.all([
+  const [meta, parentAgent] = await Promise.all([
     harness.snapshot(SessionDoc, parent, context),
     harness.snapshot(AgentDoc, parent, context),
   ]);
   let projectId = meta?.projectId;
-  let cwd = agent?.cwd;
+  let cwd = parentAgent?.cwd;
   if (folder) {
     const path = folder.replace(/\/+$/, '');
     const owner = (await listProjects()).find((p) =>
@@ -181,13 +181,11 @@ export async function spawnSession(
   if (!projectId || !cwd)
     throw new Error('Pass `folder`: a project folder or worktree');
   let choice: ModelChoice | undefined =
-    serverProfile(profileOf(meta)).passesModel &&
-    agent?.model &&
-    agent.thinkingLevel
-      ? { model: agent.model, thinkingLevel: agent.thinkingLevel }
+    agentIdOf(meta) !== 'hub' && parentAgent?.model && parentAgent.thinkingLevel
+      ? { model: parentAgent.model, thinkingLevel: parentAgent.thinkingLevel }
       : undefined;
   if (effort) {
-    const base = choice ?? (await serverProfile(profile).choice());
+    const base = choice ?? (await agentChoice(getAgent(agent)));
     choice = checkChoice({ ...base, thinkingLevel: effort });
   }
   return createSession({
@@ -199,7 +197,7 @@ export async function spawnSession(
     startedBy: String(parent),
     worktree,
     quiet,
-    profile,
+    agent,
     tonight,
   });
 }

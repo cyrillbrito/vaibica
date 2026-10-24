@@ -13,10 +13,10 @@ A switch reaches every session at its next model request, even mid-run. Sessions
 An extension is a folder in `src/extensions/` with three parts, each a plain object:
 
 - `meta.ts` is the manifest: the id, a title and a line for Settings, whether it starts on, and traits of its tools that core acts on. Both sides read it without loading the rest.
-- `server.ts` holds its Durable extensions, which profiles it applies to, its lines in the prompt's tool list, and what a session waiting on it asks, for other agents.
+- `server.ts` holds its Durable extensions, which [agents](./agents.md) it applies to, its lines in the prompt's tool list, and what a session waiting on it asks, for other agents.
 - `client.ts` lists the slots it fills, each with a lazy `load()`. `transcript.tool` draws a tool's calls, and the generic tool row stands in while it's off or when it throws.
 
-`src/extensions/manifests.ts`, `server.ts`, and `client.ts` list the built-ins. The lists are keyed by id, so a missing half fails the type check. Their order is the order extensions take in every session: after the profile's own tools, before the folder's files and the reply rules. The types are in `src/extensions/contract.ts`.
+`src/extensions/manifests.ts`, `server.ts`, and `client.ts` list the built-ins. The lists are keyed by id, so a missing half fails the type check. Their order is the order extensions take in every session: after the agent's own tools, before the folder's files and the reply rules. The types are in `src/extensions/contract.ts`.
 
 ## Rules
 

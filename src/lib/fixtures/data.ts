@@ -119,7 +119,7 @@ const session = (
   parentDrives: false,
   handoffs: [],
   cleanedUp: null,
-  profile: 'coding',
+  agent: 'coding',
   voice: null,
   tonight: null,
   ...extra,
@@ -246,7 +246,7 @@ function demo(): Dataset {
     sessions: [
       session(null, `${HOME}/Vault/Hub`, 'Hub', 'idle', 2 * MIN, {
         id: 'demo-hub',
-        profile: 'hub',
+        agent: 'hub',
       }),
       session('vaibica', keys, 'Keyboard shortcuts for sessions', 'idle', MIN, {
         id: 'demo-shortcuts',
@@ -277,7 +277,7 @@ function demo(): Dataset {
       ),
       session('vaibica', bica, 'Research offline drafts', 'idle', 30 * MIN, {
         id: 'demo-tonight',
-        profile: 'night',
+        agent: 'night',
         tonight:
           'Research how other apps keep drafts offline on the phone and sync them later. Write a report to docs/explorations/offline-drafts.md with options, trade-offs, and sources.',
       }),
@@ -486,7 +486,7 @@ function worst(): Dataset {
       session('nw', nw, 'J', 'done', 59 * 1000),
       session('nw', nw, long200, 'idle', 9 * MIN, {
         id: 'worst-tonight',
-        profile: 'night',
+        agent: 'night',
         tonight: `${long200} ${long200}`,
       }),
       session('nw', nw, '', 'waiting', 3 * MIN, { id: 'worst-ask' }),

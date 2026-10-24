@@ -12,10 +12,10 @@ import type { Message } from '@earendil-works/pi-ai';
 import { CLEANUP_ENTRY, chars, cleanupEdits } from '#lib/cleanup';
 import type { ModelChoice, PromptImage } from '#lib/protocol';
 import { context, getHarness } from '#server/agent';
-import { serverProfile, loadMemory } from '#server/profiles';
+import { getAgent, loadMemory, projectList } from '#server/agents';
 import { checkChoice } from '#server/providers';
 import { keepers } from './cleanup-judge';
-import { SessionDoc, getConversation, profileOf } from './store';
+import { SessionDoc, agentIdOf, getConversation } from './store';
 
 /** Who sends a prompt: the user, Bica's own notes, or another session's id. */
 export type Sender = 'user' | 'bica' | (string & {});
@@ -78,9 +78,10 @@ export async function recordSender(
 }
 
 /**
- * Takes the memory index and the hub's project list when the session holds
+ * Takes the memory index, and the project list for an agent with a
+ * `projects` section such as the hub's, when the session holds
  * no copy: at its first prompt and after a compaction. The prompt sections
- * show the copies (src/server/profiles/registry.ts), since the agent
+ * show the copies (src/server/agents/registry.ts), since the agent
  * edits memory mid-session and every change would be sent again. Every
  * prompt path calls it, voice included.
  */
@@ -100,7 +101,8 @@ export async function keepCopies(id: ConversationId) {
   const taken = {
     memory: meta?.memory ?? (await loadMemory(agent.cwd)),
     projects:
-      meta?.projects ?? (await serverProfile(profileOf(meta)).projects()),
+      meta?.projects ??
+      (getAgent(agentIdOf(meta)).sections.projects ? await projectList() : ''),
   };
   await harness.commit(async (tx) => {
     Object.assign(await tx.doc(SessionDoc, id), taken);

@@ -16,7 +16,7 @@ The reports argue against an earlier plan that is gone now. Read them for their 
 - Everything else is an extension: the tool packs (coding, web, codemode, `ask`, session tools, terminal tools), the Git tab and commits, file and diff views, terminals, voice, night runs, the hub, assistant mode, upkeep, context alerts, short replies, the proxy and plan accounts.
 - The extension is the one way to add anything: tools, prompt sections, behavior, UI, agents. Core capabilities are generic, so any extension can hook into them, as in Pi Durable, CodeMirror, and ProseMirror.
 - Only built-ins for now, as plain imports. One global switch each, and an extension decides which sessions it applies to.
-- Profiles become agents: what the model gets (instructions, model, effort, tools, skills), as a folder like Vercel's [eve](https://eve.dev/docs/reference/agent-files). Behavior such as the night scheduler or the hub's panels is extensions, and an extension can ship its own agents.
+- Profiles became agents ([agents.md](../agents.md)): what the model gets (instructions, model, effort, tools, skills), one plain object per file, which may grow into a folder like Vercel's [eve](https://eve.dev/docs/reference/agent-files). Behavior such as the night scheduler or the hub's panels is extensions, and an extension can ship its own agents.
 
 ## How we get there
 
@@ -62,5 +62,5 @@ From the research, to reach for when an extension needs them:
 - Will outside code ever load? Then Bica needs one shared Solid copy through a build shim, one combined Tailwind sheet, `@theme static` so tokens exist at runtime, and pure-JS compilers for the `bica` binary ([dynamic-loading.md](./extensibility/dynamic-loading.md)). Built-ins need none of it.
 - What an agent folder may hold itself, such as tools and hooks, versus what must be an extension, and where user and project agents live.
 - Whether projects and workspaces stay core, or become a `Workspaces` service with git as its first provider.
-- Switches per project, profile, or session, layered over the global one.
+- Switches per project, agent, or session, layered over the global one.
 - How extensions that conflict declare it: a capability such as "needs someone to answer" that agents exclude, or explicit `conflicts`.

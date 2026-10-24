@@ -1,51 +1,23 @@
 import 'server-only';
-import type { ModelChoice } from '#lib/protocol';
-import { HubFileTools } from '#server/agent/tools/coding';
-import { CHATS_ID, listProjects } from '#server/projects';
-import { checkChoice, modelSettings, models } from '#server/providers';
-import { HubSessionTools } from '#server/sessions/tools';
+import { AGENTS } from '#lib/agents';
 import {
   BASE_SECTIONS,
   HANDOFFS,
   LONG_LIVED,
   shortReplies,
   preamble,
-  type Profile,
+  type Agent,
 } from './common';
 
-/** The hub's folder from Settings, or null before one is picked. */
-export const hubFolder = async () => (await modelSettings()).hubFolder;
-
-// The hub's default (docs/hub.md): smart enough to turn dictation into good
-// prompts at low effort.
-const HUB_MODEL: ModelChoice = {
-  model: { provider: 'anthropic', modelId: 'claude-sonnet-5-5' },
-  thinkingLevel: 'low',
-};
-
-/**
- * The hub's model: the setting, else Sonnet through Anthropic, else the
- * default model at low effort when Anthropic has no key.
- */
-export async function hubChoice(): Promise<ModelChoice> {
-  const { hubModel, model } = await modelSettings();
-  const available = await models.getAvailable();
-  const reachable = (c: ModelChoice) =>
-    available.some(
-      (m) => m.provider === c.model.provider && m.id === c.model.modelId,
-    );
-  for (const c of [hubModel, HUB_MODEL])
-    if (c && reachable(c)) return checkChoice(c);
-  return checkChoice({ model, thinkingLevel: 'low' });
-}
-
 // The hub (docs/hub.md): one long-lived session that coordinates the others.
-// The rules follow docs/hub.md's sources: the plan in a file, tickets that
-// stand alone, short reports, and notes instead of polling.
-const ROLE =
+// Its instructions follow docs/hub.md's sources: the plan in a file, tickets
+// that stand alone, short reports, and notes instead of polling. What Bica
+// does for it, its folder, its model setting, and the notes it hears, is
+// sessions/hub.ts and sessions/notes.ts.
+const PREAMBLE =
   'You are the hub of Bica, a web UI for coding agents: the one long-lived session the user talks to about all of his work. You coordinate: other sessions do the work. You read them and keep the user told where everything stands and what to do next, and you start, message, and steer them when he says so.';
 
-const HUB = `Do no work yourself: code, docs, research, debugging, and anything that runs commands or produces long output go to a session. Your context is for the user's words and the board.
+const ROLE = `Do no work yourself: code, docs, research, debugging, and anything that runs commands or produces long output go to a session. Your context is for the user's words and the board.
 
 - Be proactive with information, never with changes. Without asking, read files and sessions, call \`list\`, keep your memory files (write and edit work only in your folder), and do what he just told you, exactly that and no more. Anything that changes something waits for his go: starting, messaging, steering, stopping, or archiving a session, and merging, pushing, or committing. Propose it with your pick and wait. A standing instruction he gave earlier ("always commit small tweaks to main") covers what it names: follow it, and say you did.
 - Your notes say why a session exists, and only the session says where it stands. session_read it before you say what it does or waits on, several at once when you need several, with \`messages: 3\` when you also need its task.
@@ -71,37 +43,21 @@ const TALK = [
   `- He often listens by voice. Name a file or folder ("the video in bica-visuals") instead of its full path, unless he asks for the path. Quote commands and errors exactly.`,
 ];
 
-/**
- * Every project with its main folder and worktrees, for the hub. Taken with
- * the memory index, at the start and after each compaction, so it doesn't
- * break the prompt cache; `list` has the live state.
- */
-async function hubProjects() {
-  const lines = (await listProjects())
-    .filter((p) => p.id !== CHATS_ID)
-    .flatMap((p) => [
-      `- ${p.name}`,
-      ...p.workspaces.map(
-        (w) =>
-          `  - ${w.main ? 'main' : `worktree ${w.branch ?? '(detached)'}`}: ${w.path}`,
-      ),
-    ]);
-  return `Bica's projects as they were when this session started or last compacted. Pass one of these paths as session_start's \`folder\`. \`list\` shows what changed since, and every session's status.\n\n${lines.join('\n')}`;
-}
-
-export const hub: Profile = {
-  tools: [HubFileTools, HubSessionTools],
-  choice: hubChoice,
-  projects: hubProjects,
-  passesModel: false,
-  hearsAlerts: true,
+export const hub: Agent = {
+  id: 'hub',
+  ...AGENTS.hub,
+  // Smart enough to turn dictation into good prompts at low effort.
+  model: { provider: 'anthropic', modelId: 'claude-sonnet-5-5' },
+  effort: 'low',
+  extensions: ['hub-file-tools', 'hub-session-tools'],
+  skills: false,
   sections: {
     ...BASE_SECTIONS,
-    preamble: preamble(ROLE),
+    preamble: preamble(PREAMBLE),
     projects: (s) => s.projects,
     handoffs: HANDOFFS,
     long_lived: LONG_LIVED,
-    role: HUB,
+    role: ROLE,
     replies: shortReplies(...TALK),
   },
 };

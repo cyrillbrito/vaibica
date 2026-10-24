@@ -34,9 +34,10 @@ import {
   runTonight,
   saveTonight,
   startNight,
+  startUpkeep,
   push as pushSubmission,
   rename,
-  setProfile,
+  setAgent,
   setVoice,
   stop,
   fromUser,
@@ -50,8 +51,6 @@ import {
 import { applyExtensions } from '#server/extensions';
 import { updateSettings, watchModels } from '#server/providers';
 import { wsLogger } from '#server/ws-log';
-// Starts the loop that keeps assistant and hub sessions small.
-import { startUpkeep } from '#server/profiles';
 import {
   addAccount,
   answer,
@@ -115,7 +114,7 @@ const calls: Handlers = {
       ...args,
       prompt: args.prompt.trim(),
       // Only the hub's own page makes a hub (openHub).
-      profile: args.profile === 'assistant' ? 'assistant' : 'coding',
+      agent: args.agent === 'assistant' ? 'assistant' : 'coding',
     }),
   'session.tonight': async ({ id, action, prompt }) => {
     if (action === 'cancel') return cancelTonight(id);
@@ -180,9 +179,11 @@ const calls: Handlers = {
     return null;
   },
   'hub.open': async () => openHub(),
-  'session.profile': async ({ id, profile }) => {
-    if (profile === 'hub') throw new Error('Only the hub is a hub session');
-    await setProfile(id, profile);
+  'session.agent': async ({ id, agent }) => {
+    // The hub and night runs set their own agents (openHub, createSession).
+    if (agent !== 'coding' && agent !== 'assistant')
+      throw new Error('A session can switch only between Coding and Assistant');
+    await setAgent(id, agent);
     return null;
   },
   'session.voice': async ({ id, voice }) => {

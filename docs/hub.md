@@ -20,6 +20,8 @@ Like an [assistant](./assistant-mode.md) session, the hub saves to its notes bef
 
 ## What it can do
 
+The hub runs as the Hub [agent](./agents.md), with these tools:
+
 - `list` and the session tools ([tools.md](./tools.md#other-sessions)), across every project.
 - `read` anywhere, and `write` and `edit` only inside its folder.
 - `ask`.

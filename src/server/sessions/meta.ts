@@ -1,10 +1,10 @@
 import 'server-only';
 import type { ConversationId } from '@earendil-works/pi-durable';
 
-import type { ProfileId } from '#lib/profiles';
+import type { AgentId } from '#lib/agents';
 import type { PullRequest, VoiceSettings } from '#lib/protocol';
 import { context, getHarness } from '#server/agent';
-import { serverProfile } from '#server/profiles';
+import { getAgent, selection } from '#server/agents';
 import { getProject, removeWorktree, worktreeRisk } from '#server/projects';
 import { allTerminals, removeTerminal, terminalsIn } from '#server/terminals';
 import {
@@ -16,18 +16,18 @@ import {
 } from './store';
 
 /**
- * Switches a session's profile: its tools now, its instructions with the
- * next prompt. Both are part of the prompt cache, so it is rebuilt once.
+ * Switches the agent a session runs as: its tools now, its instructions with
+ * the next prompt. Both are part of the prompt cache, so it is rebuilt once.
  */
-export async function setProfile(id: string, profile: ProfileId) {
+export async function setAgent(id: string, agent: AgentId) {
   const conversation = await getConversation(id);
   await (
     await getHarness()
   ).commit(async (tx) => {
-    (await tx.doc(SessionDoc, conversation.id)).profile = profile;
+    (await tx.doc(SessionDoc, conversation.id)).profile = agent;
   }, context);
   await conversation.configure(
-    { extensions: serverProfile(profile).extensions },
+    { extensions: selection(getAgent(agent)) },
     context,
   );
   await sessions.refresh();

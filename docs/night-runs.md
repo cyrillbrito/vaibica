@@ -10,9 +10,9 @@ Other sessions can hold one with `session_start` and `tonight` ([tools.md](./too
 
 ## What runs
 
-A night run works like a coding session without `ask`, since nobody can answer, at high effort. It is told to push on instead of stopping to ask, to take choices that are easy to undo and note them, to prove the work with commands, and to stay out of push, merge, and deploy.
+A night run runs as the Night [agent](./agents.md): like Coding without `ask`, since nobody can answer, at high effort. It is told to push on instead of stopping to ask, to take choices that are easy to undo and note them, to prove the work with commands, and to stay out of push, merge, and deploy.
 
-It ends with a morning report: done, partly done, or blocked, then what changed, the checks and their results, decisions it took alone, open questions, and the next step. After that it is an ordinary coding session you can continue.
+It ends with a morning report: done, partly done, or blocked, then what changed, the checks and their results, decisions it took alone, open questions, and the next step. After that it runs as Coding again, an ordinary session you can continue.
 
 ## When it runs
 

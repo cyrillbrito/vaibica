@@ -7,7 +7,7 @@
 // that needs something close should reshape them, not build around them.
 import type { Extension } from '@earendil-works/pi-durable';
 import type { Component } from 'solid-js';
-import type { ProfileId } from '#lib/profiles';
+import type { AgentId } from '#lib/agents';
 import type { ToolCall } from '#lib/transcript';
 
 export interface Manifest {
@@ -44,8 +44,8 @@ export interface ServerExtension {
   manifest: Manifest;
   /** Installed in Pi Durable's registry while it's on. */
   durable: Extension[];
-  /** Which sessions select it. Absent: all of them. */
-  appliesTo?: (profile: ProfileId) => boolean;
+  /** Which sessions select it, by the agent they run as. Absent: all. */
+  appliesTo?: (agent: AgentId) => boolean;
   /** Shown only in sessions that have the tools. */
   guide?: ToolGuide[];
   /** Provisional: what a session waiting on its call asks, for other agents. */

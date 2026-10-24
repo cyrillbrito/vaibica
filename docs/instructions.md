@@ -1,13 +1,13 @@
 # Instructions and skills
 
-The agent's instructions are named prompt sections that every [profile](./profiles.md) shares, built like the Pi coding agent's. Edits apply to running sessions. The sections that change least come first, so a change keeps most of the prompt cache.
+The agent's instructions are named prompt sections that every [agent](./agents.md) shares, built like the Pi coding agent's. Edits apply to running sessions. The sections that change least come first, so a change keeps most of the prompt cache.
 
 1. What Bica is and what this session does.
 2. The tools the session has, one line each, with their rules, such as git staying read-only unless asked. A session without a tool gets neither its line nor its rules.
 3. The declarations of the tools codemode scripts can call.
 4. Your `~/.bica/AGENTS.md`, then the `AGENTS.md` or `CLAUDE.md` of each folder down to the workspace, then the memory index, the skills, and the folder.
 5. Rules shared by kind: handing work to other sessions, and keeping memory for long-lived sessions such as [assistant mode](./assistant-mode.md) and the [hub](./hub.md).
-6. The profile's own role, such as a [night run](./night-runs.md)'s rules to finish alone.
+6. The agent's own role, such as a [night run](./night-runs.md)'s rules to finish alone.
 7. How to reply, below.
 
 ## Skills

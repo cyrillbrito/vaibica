@@ -1,5 +1,5 @@
 import { createMemo, createSignal } from 'solid-js';
-import type { ProfileId } from './profiles';
+import type { AgentId } from './agents';
 import type { ModelChoice, PromptImage, VoiceSettings } from './protocol';
 import { request, requestId, useTopic, useTopicWhenReady } from './socket';
 
@@ -11,7 +11,7 @@ export function useHub() {
   return createMemo(
     () =>
       sessions().find(
-        (s) => s.profile === 'hub' && !s.archivedAt && !s.projectId,
+        (s) => s.agent === 'hub' && !s.archivedAt && !s.projectId,
       ),
     { name: 'hub' },
   );
@@ -28,7 +28,7 @@ export const startSession = (
   images: PromptImage[],
   choice?: ModelChoice,
   worktree?: boolean,
-  profile?: ProfileId,
+  agent?: AgentId,
   tonight?: boolean,
 ) =>
   request('session.create', {
@@ -39,7 +39,7 @@ export const startSession = (
     requestId: requestId(),
     choice,
     worktree,
-    profile,
+    agent,
     tonight,
   });
 
@@ -109,8 +109,8 @@ export async function cleanupSession(id: string) {
   }
 }
 
-export const setProfile = (id: string, profile: ProfileId) =>
-  request('session.profile', { id, profile });
+export const setAgent = (id: string, agent: AgentId) =>
+  request('session.agent', { id, agent });
 
 export const setVoiceSettings = (id: string, voice: VoiceSettings) =>
   request('session.voice', { id, voice });

@@ -23,7 +23,7 @@ import { VoiceIcon } from '../ui/icons';
 
 /**
  * The hub's conversation: the transcript, then a composer with a voice call
- * button. No fork, compaction, model, or profile controls: the hub is one
+ * button. No fork, compaction, model, or agent controls: the hub is one
  * session that keeps its own memory, with its model set in Settings.
  */
 export default function HubChat(props: { id: string }) {

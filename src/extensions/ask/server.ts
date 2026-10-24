@@ -61,7 +61,7 @@ export default defineServerExtension({
   manifest,
   durable: [AskTool],
   // Nobody is awake to answer a night run.
-  appliesTo: (profile) => profile !== 'night',
+  appliesTo: (agent) => agent !== 'night',
   guide: [
     { tools: ['ask'], line: 'Put multiple-choice questions to the user' },
   ],

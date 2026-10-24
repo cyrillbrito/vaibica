@@ -1,13 +1,18 @@
 import { createSignal } from 'solid-js';
 
+import type { AgentId } from './agents';
+
 // Module-scope UI state: only written from client event handlers, so the
 // server always renders the defaults.
 
 // Wide screens: panels are columns the user can hide.
 export const [sidebarHidden, setSidebarHidden] = createSignal(false);
 export const [inspectorHidden, setInspectorHidden] = createSignal(false);
-// The open session's profile has no files and changes panel (src/lib/profiles.ts).
+// The open session has no files and changes panel.
 export const [noPanels, setNoPanels] = createSignal(false);
+// The hub has no shell and works in no project (docs/hub.md), so its
+// sessions show no Git, files, or terminal panels.
+export const hasPanels = (agent: AgentId) => agent !== 'hub';
 
 // Column widths in px, dragged by the user. The signals hold what the user
 // asked for; the exported `sidebarW` / `inspectorW` are what is rendered, always

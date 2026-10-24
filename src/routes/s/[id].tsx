@@ -34,8 +34,7 @@ import {
   SessionIcon,
   VoiceIcon,
 } from '../../components/ui/icons';
-import { drawer, setNoPanels } from '#lib/layout';
-import { PROFILES } from '#lib/profiles';
+import { drawer, hasPanels, setNoPanels } from '#lib/layout';
 import {
   openFromSearch,
   sameOpen,
@@ -142,9 +141,9 @@ export default function Session(props: RouteProps<'/s/:id'>) {
     },
     { name: 'markSeen' },
   );
-  // A profile without panels hides the files and changes panel while open.
+  // A session without panels hides the files and changes panel while open.
   createEffect(
-    () => (summary() ? !PROFILES[summary()!.profile].panels : false),
+    () => (summary() ? !hasPanels(summary()!.agent) : false),
     (hide) => {
       setNoPanels(hide);
       return () => setNoPanels(false);
@@ -345,7 +344,7 @@ export default function Session(props: RouteProps<'/s/:id'>) {
                 id={props.params.id!}
                 view={v()}
                 usage={usage()!}
-                profile={summary()?.profile ?? 'coding'}
+                agent={summary()?.agent ?? 'coding'}
                 voice={summary()?.voice ?? null}
               />
             )}

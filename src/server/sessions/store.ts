@@ -13,9 +13,9 @@ import { context, getHarness } from '#server/agent';
 import { awaits } from '#server/extensions';
 import { live } from '#server/live';
 import { runChanged, runState } from './notes';
-import { SessionDoc, profileOf } from './session-doc';
+import { SessionDoc, agentIdOf } from './session-doc';
 
-export { SessionDoc, profileOf };
+export { SessionDoc, agentIdOf };
 
 // Summaries by conversation, kept between reads. Every commit marks the
 // conversations it touched; a read re-summarizes only those.
@@ -147,7 +147,7 @@ export async function summarize(
     parentDrives: !!meta?.startedBy && !meta.userPrompted,
     handoffs: meta?.handoffs ?? [],
     cleanedUp: meta?.cleanedUp ?? null,
-    profile: profileOf(meta),
+    agent: agentIdOf(meta),
     voice: meta?.voice ?? null,
     tonight: meta?.tonight || null,
   };
