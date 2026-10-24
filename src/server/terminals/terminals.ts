@@ -313,9 +313,10 @@ export function resizeTerminal(id: string, cols: number, rows: number) {
   t.pty?.terminal?.resize(Math.min(cols, 500), Math.min(rows, 200));
 }
 
-// The pty's shell leads its own process group; signal the whole group, so
-// `npm run dev` and the server it starts both go.
-function signal(p: Bun.Subprocess, name: NodeJS.Signals) {
+// Every process on the pty's tty, not just the shell's process group: an
+// interactive shell puts each `cmd &` job in a group of its own.
+function signal(p: Bun.Subprocess, name: NodeJS.Signals, tty: string | null) {
+  if (tty) Bun.spawnSync(['pkill', `-${name.slice(3)}`, '-t', tty]);
   try {
     process.kill(-p.pid, name);
   } catch {
@@ -323,13 +324,23 @@ function signal(p: Bun.Subprocess, name: NodeJS.Signals) {
   }
 }
 
-/** SIGTERM, then SIGKILL if it won't go. */
+function ttyOf(pid: number) {
+  const ps = Bun.spawnSync(['ps', '-o', 'tty=', '-p', String(pid)]);
+  const tty = ps.stdout.toString().trim();
+  return /^[\w/]+$/.test(tty) && !tty.startsWith('?') ? tty : null;
+}
+
+/**
+ * SIGHUP, as closing a terminal window sends, then SIGKILL if it won't go.
+ * An interactive shell ignores SIGTERM.
+ */
 export async function stopTerminal(id: string) {
   const t = get(id);
   const p = t.pty;
   if (!p) return;
-  signal(p, 'SIGTERM');
-  const timeout = setTimeout(() => signal(p, 'SIGKILL'), 3000);
+  const tty = ttyOf(p.pid);
+  signal(p, 'SIGHUP', tty);
+  const timeout = setTimeout(() => signal(p, 'SIGKILL', tty), 3000);
   await t.exited.promise;
   clearTimeout(timeout);
 }
