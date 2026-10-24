@@ -25,7 +25,7 @@ One extension at a time, each pushing on a different seam. After each one, revie
 These are the extensions to build, in this order. Each one ends with a "What it taught" section below, like the one for `ask`, and earlier extensions move onto any hook a later one reshapes.
 
 1. Web search, done: tools, a setting (the Exa key), and access to a provider. Brought `settings` to the manifest, and the `extensions` topic so the switch stops riding on `models`.
-2. Terminals: the first panel. Brings `rightPanel.tab`, the first service by token (`Terminals`), and requests and topics the extension owns (`ext:<id>/…`).
+2. Terminals: the first panel. Brings `rightPanel.tab` with an order field, requests and topics the extension owns (`ext:<id>/…`), and settings.json in its own module. Where core calls terminals today, such as closing them on clean up, core gets a hook named after its own event instead.
 3. Voice: calls, hand-offs, and dictation in one extension. Brings `composer.above` and a composer button, and is the second to reach a provider.
 4. Git tab: the second `rightPanel.tab`, so the slot gets reshaped here. Pulls a `Vcs` service out of core, which keeps projects, worktrees, status, and diffs.
 5. GitHub: pull request numbers and states on branches, through `gh`, and later opening pull requests. Brings a slot for badges on a branch or workspace row, and a search source for the workspace picker.
@@ -36,6 +36,13 @@ These are the extensions to build, in this order. Each one ends with a "What it 
 10. Hub: `center.view`, its own agent, and the session tools. It keeps itself small with assistant mode's upkeep, which makes it the first extension that requires another, through a service. The second reader of `waitingOn`, so `awaitsAnswer` and `waitingOn` become a status hook here at the latest.
 
 Nothing else is planned. The tool packs (coding, codemode) stay in core until these are done.
+
+How extensions meet, kept as small as the evidence allows:
+
+- Through the model first. An extension adds its tools and prompt lines to the sessions it applies to, and an agent uses whatever it has. Night or assistant mode never needs to know web search exists.
+- An agent leaves tools out by a trait of the tool, such as needing someone to answer, never by an extension's name. Build this when night runs or the hub move, which are the first real cases.
+- Code calling another extension's code goes through a small service that core or the consumer defines. Build it only when a real case shows up, which is the hub using assistant mode's upkeep.
+- No event bus and no shared interfaces in advance.
 
 ## What `ask` taught
 
