@@ -20,6 +20,8 @@ It ends with a morning report: done, partly done, or blocked, then what changed,
 - One runs at a time, oldest first, since parallel runs would drain the plan twice as fast.
 - A run starts only while its plan has room, keeping a reserve of the week for the next day. With [more than one account](./models.md#more-than-one-account), one with room is enough.
 - A run that goes on too long is told to wrap up and write its report.
+- A run that fails to start keeps its prompt held, and tries again a minute later.
+- The schedule starts with Bica, so it needs no open browser tab.
 
 Pick a start time at least 5 hours before your day starts, so the night's Claude window ends before yours begins.
 

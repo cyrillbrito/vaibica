@@ -5,6 +5,8 @@ import {
   type ConversationId,
   type Cursor,
   LiveDoc,
+  type LiveState,
+  type SubmissionId,
 } from '@earendil-works/pi-durable';
 
 import type { SessionSummary } from '#lib/protocol';
@@ -22,6 +24,11 @@ const summaries = new Map<ConversationId, SessionSummary>();
 // Owned conversations are subagents; they belong under their tool call.
 const subagents = new Set<ConversationId>();
 const dirty = new Set<ConversationId>();
+// When each running run began, by its first input: found once per run.
+const runStarts = new Map<
+  ConversationId,
+  { input?: SubmissionId; at: number }
+>();
 let loaded: Promise<void> | undefined;
 
 /**
@@ -127,10 +134,7 @@ export async function summarize(
     status,
     createdAt,
     updatedAt: Math.max(createdAt, newest?.model?.at(-1)?.timestamp ?? 0),
-    runningSince:
-      status === 'running' || status === 'retrying'
-        ? (newest?.model?.[0]?.timestamp ?? null)
-        : null,
+    runningSince: await runningSince(id, live),
     projectId: meta?.projectId ?? null,
     cwd: agent?.cwd ?? null,
     archivedAt: meta?.archivedAt || null,
@@ -144,6 +148,42 @@ export async function summarize(
     voice: meta?.voice ?? null,
     tonight: meta?.tonight || null,
   };
+}
+
+async function runningSince(id: ConversationId, live?: LiveState) {
+  if (!live?.run) {
+    runStarts.delete(id);
+    return null;
+  }
+  const input = live.run.inputs[0];
+  const known = runStarts.get(id);
+  if (known && known.input === input) return known.at;
+  const at = await runStart(id);
+  runStarts.set(id, { input, at });
+  return at;
+}
+
+/**
+ * The time of the running run's first entry: the oldest one after the last
+ * answer that ended a run. Steers join the run, so they don't move it.
+ */
+async function runStart(id: ConversationId) {
+  const conversation = await (await getHarness()).conversation(id, context);
+  let start = Date.now();
+  let cursor: Cursor | undefined;
+  do {
+    const page = await conversation?.entries({}, 100, cursor, context);
+    if (!page) break;
+    for (const entry of page.items) {
+      if (!isTurn(entry)) continue;
+      const last = entry.model?.at(-1);
+      if (last?.role === 'assistant' && last.stopReason !== 'toolUse')
+        return start;
+      start = entry.model?.[0]?.timestamp ?? start;
+    }
+    cursor = page.next;
+  } while (cursor);
+  return start;
 }
 
 /** The conversation a commit change belongs to, if any. */

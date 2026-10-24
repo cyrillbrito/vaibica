@@ -31,6 +31,8 @@ const SAVE_PROMPT = `${SAVE_NOTE} this session is about to be compacted, and old
 const SUMMARY_RULES = `This is a long-lived session. Keep the user's words close to verbatim: orders, decisions, corrections, preferences, and their reasons. Then what has lasting effect, and what failed and why. Copy names, numbers, ids, paths, and errors exactly. Name a minor item in a few words rather than drop it. Never make work look further along than it was. The memory files hold the long-term record: name the ones that matter instead of repeating them.`;
 
 const busy = new Set<string>();
+// Memory saves whose compaction was tried again, so a failing one can't loop.
+const retried = new Set<string>();
 
 /** Tends long-lived sessions every minute. */
 export function startUpkeep() {
@@ -66,12 +68,20 @@ async function tend(id: string, unread: boolean) {
   const size = usage.used - usage.cleanable;
   if (size > COMPACT_AT) {
     if (size <= COMPACT_NOW_AT && idle < usage.cache.ttl - WARM_MARGIN) return;
-    // Nothing new since the last save: compacting again would loop hourly.
-    const prompts = view.entries.filter((e) => e.kind === 'pi.user');
-    const last = JSON.stringify(prompts.at(-1)?.model ?? '');
-    if (last.includes(SAVE_NOTE)) return;
-    await submit(id, SAVE_PROMPT, [], `memory:${Date.now()}`, 'bica');
-    await conversation.waitForIdle(context);
+    const at = view.entries.findLastIndex((e) => e.kind === 'pi.user');
+    const save = view.entries[at];
+    if (save && JSON.stringify(save.model ?? '').includes(SAVE_NOTE)) {
+      // Compacted since, with nothing new: compacting again would loop
+      // hourly. Not compacted: a restart or an error cut in after the save.
+      const done = view.entries
+        .slice(at + 1)
+        .some((e) => e.kind === 'pi.compaction');
+      if (done || retried.has(String(save.id))) return;
+      retried.add(String(save.id));
+    } else {
+      await submit(id, SAVE_PROMPT, [], `memory:${Date.now()}`, 'bica');
+      await conversation.waitForIdle(context);
+    }
     await compact(id, SUMMARY_RULES);
     // The save is bookkeeping, not news: a read session stays read.
     if (!unread) await markSeen(id);

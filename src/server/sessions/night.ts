@@ -150,6 +150,8 @@ async function send(id: string, prompt: string) {
     await submit(id, prompt, [], `night:${id}`, meta?.startedBy ?? 'user');
   } catch (error) {
     starting.delete(id);
+    // Held again: a start that failed mustn't lose the prompt.
+    await hold(id, prompt).catch(() => {});
     throw error;
   }
   const conversation = await getConversation(id);
@@ -167,6 +169,16 @@ export async function cancelTonight(id: string) {
   const prompt = await takePrompt(id);
   await setAgent(id, 'coding');
   return prompt;
+}
+
+async function hold(id: string, prompt: string) {
+  const { id: conversationId } = await getConversation(id);
+  await (
+    await getHarness()
+  ).commit(async (tx) => {
+    (await tx.doc(SessionDoc, conversationId)).tonight = prompt;
+  }, context);
+  await sessions.refresh();
 }
 
 /** The held prompt, cleared so it can't run twice. */

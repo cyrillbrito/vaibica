@@ -43,6 +43,11 @@ function socket(): Plugin {
         (socket ??= createServerModuleRunner(server.environments.ssr, {
           hmr: false,
         }).import(SOCKET_MODULE));
+      // At start, not with the first tab: night runs, idle upkeep, and
+      // resumed runs must not wait for a browser.
+      server.httpServer?.once('listening', () =>
+        load().catch((error) => console.error('[socket]', error)),
+      );
       server.httpServer?.on('upgrade', async (req, sock, head) => {
         const { pathname } = new URL(req.url ?? '/', 'http://localhost');
         if (pathname !== SOCKET_PATH) return;

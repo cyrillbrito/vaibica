@@ -59,6 +59,7 @@ import {
   watchAccounts,
 } from '#server/providers';
 import { startCall, stopCall, transcribe } from '#server/voice';
+import { getHarness } from '#server/agent';
 import { watchPlanUsage } from '#server/providers';
 import {
   addProject,
@@ -92,9 +93,17 @@ import {
   watchStatus,
 } from '#server/git';
 
-// Boot: this module loads with the first socket, in dev and in production.
-startUpkeep();
-startNight();
+// Boot: this module loads at start, in dev and in production. Editing
+// vite.config.ts loads it again in the same process, where the first copy's
+// timers still run, so the jobs start once per process, like the harness.
+const booted = globalThis as { bicaBooted?: boolean };
+if (!booted.bicaBooted) {
+  booted.bicaBooted = true;
+  startUpkeep();
+  startNight();
+  // Opening the harness resumes runs a restart left unfinished.
+  void getHarness().catch((error) => console.error('[harness]', error));
+}
 
 type Sink = {
   snapshot: (value: unknown, kept?: number) => void;

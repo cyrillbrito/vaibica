@@ -75,6 +75,30 @@ test('a prompt sent while the agent works runs after the current answer', async 
   expect(at).toEqual(at.toSorted((a, b) => a - b));
 });
 
+test('a running session counts its time from the prompt, not from its latest step', async () => {
+  const tab = await bica.connect();
+  const first = bica.hold(
+    fauxAssistantMessage(
+      fauxToolCall('bash', { command: 'sleep 0.02', summary: 'Wait' }),
+      { stopReason: 'toolUse' },
+    ),
+  );
+  const second = bica.hold('done at last');
+  const id = await newSession(tab, 'a long job');
+  await first.started;
+  const prompted = Date.now();
+  first.release();
+  await second.started;
+  // A fresh watch reads the list as it is now, after the tool step.
+  const list = await tab
+    .watch('sessions', {})
+    .until((l) => l.some((s) => s.id === id && s.status === 'running'));
+  const since = list.find((s) => s.id === id)?.runningSince;
+  expect(since).toBeLessThanOrEqual(prompted);
+  second.release();
+  await statusOf(tab, id)('done');
+});
+
 test('stop ends the run and hands queued prompts back', async () => {
   const tab = await bica.connect();
   const run = bica.hold();
