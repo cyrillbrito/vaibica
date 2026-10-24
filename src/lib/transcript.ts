@@ -48,11 +48,12 @@ export type Message = { key: string } & (
   // A clean up asked for in this tab, until it lands.
   | { kind: 'cleaning'; running: boolean }
   | { kind: 'text' | 'error'; text: string }
-  // Questions for the user; `open` while the session waits for the answer.
-  // `answer`: the prompt that came next, shown in the card instead of a row.
+  // A call that waits on the user's answer, drawn by its extension
+  // (src/extensions/contract.ts, provisional); `open` while the session waits.
+  // `answer`: the prompt that came next, shown in the row instead of its own.
   | {
-      kind: 'ask';
-      questions: Question[];
+      kind: 'question';
+      call: ToolCall;
       open: boolean;
       answer?: { text: string; timestamp: number };
     }
@@ -94,14 +95,6 @@ export type VoiceLine = { who: 'you' | 'voice'; text: string; at: number };
 export const isTurn = (entry: EntryRecord) =>
   entry.kind !== VOICE_ENTRY && entry.kind !== CLEANUP_ENTRY;
 
-/** One question of the `ask` tool (src/server/agent/tools/ask.ts). */
-export interface Question {
-  question: string;
-  header: string;
-  options: { label: string; description?: string }[];
-  multiSelect?: boolean;
-}
-
 /** Thinking and tool calls with no prose between them: one compact list. */
 export interface Activity {
   kind: 'activity';
@@ -139,7 +132,14 @@ export function toMessages(
   view: ConversationView,
   // A fork's last inherited entry; the divider goes after it.
   forkedAt?: number,
-  { thinking = true }: { thinking?: boolean } = {},
+  {
+    thinking = true,
+    awaits = () => false,
+  }: {
+    thinking?: boolean;
+    // Tools whose calls wait on the user (src/extensions/manifests.ts).
+    awaits?: (tool: string) => boolean;
+  } = {},
 ): Message[] {
   const live = liveOf(view);
   const results = new Map<string, ToolResultMessage>();
@@ -147,7 +147,7 @@ export function toMessages(
     for (const m of entry.model ?? [])
       if (m.role === 'toolResult') results.set(m.toolCallId, m);
   const slots = new Map(live?.tools?.map((s) => [s.callId, s]));
-  const waitingOn = pendingAsk(live, lastTurn(view));
+  const waitingOn = pendingAnswer(live, lastTurn(view), awaits);
 
   const toolCall = (block: PiToolCall): ToolCall => {
     const result = results.get(block.id);
@@ -197,16 +197,16 @@ export function toMessages(
       // Whatever you send next answers the questions, card or composer. It
       // moves past the answer's end, so the prompt row's place stays the same.
       const end = messages.at(-1);
-      const ask = messages.at(-2);
+      const question = messages.at(-2);
       if (
         !sender.from &&
         !images.length &&
         end?.kind === 'end' &&
-        ask?.kind === 'ask' &&
-        !ask.answer
+        question?.kind === 'question' &&
+        !question.answer
       ) {
         messages.splice(-2, 2, end, {
-          ...ask,
+          ...question,
           answer: { text, timestamp: message.timestamp },
         });
         return;
@@ -236,12 +236,17 @@ export function toMessages(
           // Stamped by the server as the block streams (src/server/providers/thinking-time.ts).
           durationMs: (block as { durationMs?: number }).durationMs,
         });
-      // Shown as a card of its own, not a row in the activity list.
-      if (block.type === 'toolCall' && block.name === ASK)
+      // A row of its own, not one in the activity list. A failed call, such
+      // as one made while its extension was off, never asked.
+      if (
+        block.type === 'toolCall' &&
+        awaits(block.name) &&
+        !results.get(block.id)?.isError
+      )
         messages.push({
           key: block.id,
-          kind: 'ask',
-          questions: questionsOf(block.arguments),
+          kind: 'question',
+          call: toolCall(block),
           open: block.id === waitingOn,
         });
       else if (block.type === 'toolCall') {
@@ -391,38 +396,23 @@ export function toMessages(
 export function promptAt(m: { kind: string }): number | undefined {
   const row = m as Message;
   if (row.kind === 'user') return row.timestamp;
-  if (row.kind === 'ask') return row.answer?.timestamp;
+  if (row.kind === 'question') return row.answer?.timestamp;
 }
 
 const num = (v: unknown) => (typeof v === 'number' ? v : undefined);
 
-// Kept in step with src/server/agent/tools/ask.ts, which the browser can't import.
-const ASK = 'ask';
-
-/** The arguments as they stream in: any field may still be missing. */
-function questionsOf(args: Record<string, unknown>): Question[] {
-  const list = Array.isArray(args.questions) ? args.questions : [];
-  return list.map((q: Partial<Question> | undefined) => ({
-    question: typeof q?.question === 'string' ? q.question : '',
-    header: typeof q?.header === 'string' ? q.header : '',
-    options: (Array.isArray(q?.options) ? q.options : []).filter(
-      (o) => typeof o?.label === 'string',
-    ),
-    multiSelect: q?.multiSelect === true,
-  }));
-}
-
 /**
- * The `ask` call the session waits on: the run ended on its result and
- * nothing came after. Any prompt, an answer or not, moves on.
+ * The call the session waits on: the run ended on its result and nothing
+ * came after. Any prompt, an answer or not, moves on.
  */
-function pendingAsk(
+function pendingAnswer(
   live: LiveState | undefined,
   newest: EntryRecord | undefined,
+  awaits: (tool: string) => boolean,
 ) {
   if (live?.run) return undefined;
   const last = newest?.model?.at(-1);
-  return last?.role === 'toolResult' && last.toolName === ASK && !last.isError
+  return last?.role === 'toolResult' && awaits(last.toolName) && !last.isError
     ? last.toolCallId
     : undefined;
 }
@@ -436,17 +426,20 @@ const textOf = (content: readonly { type: string; text?: string }[]) =>
 export function statusOf(
   live: LiveState | undefined,
   newest: EntryRecord | undefined,
+  awaits: (tool: string) => boolean,
 ): SessionStatus {
   if (live?.run) return live.generation?.retry ? 'retrying' : 'running';
-  if (pendingAsk(live, newest)) return 'waiting';
+  if (pendingAnswer(live, newest, awaits)) return 'waiting';
   const last = newest?.model?.at(-1);
   return last?.role === 'assistant' && last.stopReason === 'error'
     ? 'error'
     : 'idle';
 }
 
-export const viewStatus = (view: ConversationView) =>
-  statusOf(liveOf(view), lastTurn(view));
+export const viewStatus = (
+  view: ConversationView,
+  awaits: (tool: string) => boolean,
+) => statusOf(liveOf(view), lastTurn(view), awaits);
 
 // Voice lines come and go during a run; the status follows the agent.
 const lastTurn = (view: ConversationView) => view.entries.findLast(isTurn);

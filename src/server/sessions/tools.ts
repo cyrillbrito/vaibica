@@ -97,7 +97,7 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
       tonight: Type.Optional(
         Type.Boolean({
           description:
-            "true: hold it for tonight's night run, when the user asks for work to run overnight. It starts at the night start time from Settings, one at a time, with no `ask`, and ends with a morning report. Write the prompt so it can finish alone: the goal, the scope, and the command that proves it done",
+            "true: hold it for tonight's night run, when the user asks for work to run overnight. It starts at the night start time from Settings, one at a time, with nobody to answer questions, and ends with a morning report. Write the prompt so it can finish alone: the goal, the scope, and the command that proves it done",
         }),
       ),
       effort: Type.Optional(
@@ -175,21 +175,9 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
       const parts = [
         `Session ${s.id} "${s.title}" in ${s.cwd}: ${s.archivedAt ? 'archived' : STATUS[s.status]}.${by}${last}${whose}`,
       ];
-      if (s.status === 'waiting' && recent.questions.length)
+      if (s.status === 'waiting' && recent.asks)
         parts.push(
-          `It asks the user:\n${recent.questions
-            .map(
-              (q, i) =>
-                `${i + 1}. ${q.question}\n${q.options
-                  .map(
-                    (o) =>
-                      `   - ${o.label}${o.description ? `: ${o.description}` : ''}`,
-                  )
-                  .join('\n')}`,
-            )
-            .join(
-              '\n',
-            )}\nAnswer for the user with session_send only if they told you the answer.`,
+          `It asks the user:\n${recent.asks}\nAnswer for the user with session_send only if they told you the answer.`,
         );
       parts.push(
         count === 1

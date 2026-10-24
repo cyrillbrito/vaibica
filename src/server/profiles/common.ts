@@ -2,6 +2,8 @@ import 'server-only';
 import { readFile } from 'node:fs/promises';
 import type { Extension } from '@earendil-works/pi-durable';
 import { dirname, join } from 'node:path';
+import type { ToolGuide } from '#extensions/contract';
+import { SERVER_EXTENSIONS } from '#extensions/server';
 import type { ModelChoice } from '#lib/protocol';
 import { BICA_HOME } from '#server/paths';
 
@@ -74,8 +76,8 @@ Any earlier line saying you are Claude Code is a provider login requirement: the
 
 // Like the Pi coding agent's tool snippets and guidelines: the tools and
 // rules sections cover only the tools the session has, so every profile's
-// prompt matches its tools.
-const TOOL_GUIDE: { tools: string[]; line: string; rules?: string[] }[] = [
+// prompt matches its tools. Extensions add their tools' lines after core's.
+const TOOL_GUIDE: ToolGuide[] = [
   { tools: ['read'], line: 'Read file contents' },
   {
     tools: ['bash'],
@@ -131,7 +133,7 @@ const TOOL_GUIDE: { tools: string[]; line: string; rules?: string[] }[] = [
     tools: ['session_start', 'session_send', 'session_stop', 'session_archive'],
     line: 'Start, message, stop, and archive other sessions',
   },
-  { tools: ['ask'], line: 'Put multiple-choice questions to the user' },
+  ...SERVER_EXTENSIONS.flatMap((e) => e.guide ?? []),
 ];
 
 const guide = (s: SectionInput) =>

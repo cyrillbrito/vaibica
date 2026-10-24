@@ -9,6 +9,7 @@ import type {
   LiveState,
 } from '@earendil-works/pi-durable';
 
+import { wholeArgs } from '#extensions/manifests';
 import { contextUsage } from './context-usage';
 import type { ModelCatalog, StepDetail } from './protocol';
 
@@ -16,8 +17,6 @@ type Json = Record<string, unknown>;
 
 // Long enough for a summary, a path or a command's first line.
 const ARG_CHARS = 200;
-// Shown whole: its questions are the card.
-const ASK = 'ask';
 
 /** Projects views one after another; entries never change, so each is projected once. */
 export function projector(catalog: () => ModelCatalog | undefined) {
@@ -118,7 +117,7 @@ function slimMessage(m: Message): Message {
       const { partialJson, ...call } = b as typeof b & {
         partialJson?: string;
       };
-      return call.name === ASK
+      return wholeArgs(call.name)
         ? call
         : defined({
             ...call,

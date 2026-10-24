@@ -10,6 +10,7 @@ import {
 import type { SessionSummary } from '#lib/protocol';
 import { isTurn, statusOf } from '#lib/transcript';
 import { context, getHarness } from '#server/agent';
+import { awaits } from '#server/extensions';
 import { live } from '#server/live';
 import { runChanged, runState } from './notes';
 import { SessionDoc, profileOf } from './session-doc';
@@ -59,6 +60,12 @@ export function load() {
     loaded = undefined;
     throw error;
   }));
+}
+
+/** Every row again: an extension switch changes which sessions wait. */
+export async function resummarize() {
+  for (const id of summaries.keys()) dirty.add(id);
+  await sessions.refresh();
 }
 
 export async function listSessions(): Promise<SessionSummary[]> {
@@ -112,7 +119,7 @@ export async function summarize(
     newestTurn(id),
   ]);
   const createdAt = meta?.createdAt ?? 0;
-  let status = statusOf(live, newest);
+  let status = statusOf(live, newest, awaits);
   if (
     status === 'idle' &&
     newest &&

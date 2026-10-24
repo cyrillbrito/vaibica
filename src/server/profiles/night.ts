@@ -1,6 +1,5 @@
 import 'server-only';
 import type { ModelChoice } from '#lib/protocol';
-import { AskTool } from '#server/agent/tools/ask';
 import { defaultChoice } from '#server/providers';
 import { coding } from './coding';
 import { QUOTE_EXACTLY, STYLE, type Profile } from './common';
@@ -41,8 +40,6 @@ export const nightChoice = (choice: ModelChoice): ModelChoice =>
 
 export const night: Profile = {
   ...coding,
-  // Nobody is awake to answer.
-  tools: coding.tools.filter((e) => e !== AskTool),
   choice: async () => nightChoice(await defaultChoice()),
   sections: { ...coding.sections, role: NIGHT, replies: REPORT },
 };

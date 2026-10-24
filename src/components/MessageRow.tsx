@@ -1,8 +1,8 @@
 import { For, Match, Show, Switch } from 'solid-js';
 import Activity from './Activity';
-import AskCard from './AskCard';
 import ErrorReply from './ErrorReply';
 import Markdown from './Markdown';
+import ToolSlot from './ToolSlot';
 import { IconButton } from './ui/Button';
 import { CopyButton } from './ui/CopyButton';
 import {
@@ -171,12 +171,14 @@ export default function MessageRow(props: {
         >
           {(activity) => <Activity activity={activity()} />}
         </Match>
-        <Match when={props.message.kind === 'ask' ? props.message : undefined}>
-          {(ask) => (
-            <AskCard
-              questions={ask().questions}
-              open={ask().open}
-              answer={ask().answer?.text}
+        <Match
+          when={props.message.kind === 'question' ? props.message : undefined}
+        >
+          {(question) => (
+            <ToolSlot
+              call={question().call}
+              open={question().open}
+              answer={question().answer?.text}
               onAnswer={props.onAnswer}
             />
           )}

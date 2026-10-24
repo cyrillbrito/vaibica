@@ -43,9 +43,11 @@ import {
   handBack,
   withdraw,
   conversationDetail,
+  resummarize,
   watchConversation,
   watchSessions,
 } from '#server/sessions';
+import { applyExtensions } from '#server/extensions';
 import { updateSettings, watchModels } from '#server/providers';
 import { wsLogger } from '#server/ws-log';
 // Starts the loop that keeps assistant and hub sessions small.
@@ -129,6 +131,10 @@ const calls: Handlers = {
     await updateSettings(change);
     if (change.hubModel !== undefined || change.hubFolder !== undefined)
       await updateHub();
+    if (change.extensions) {
+      await applyExtensions();
+      await resummarize();
+    }
     return null;
   },
   'project.add': async ({ path }) => addProject(path),

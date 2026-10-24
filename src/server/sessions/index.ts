@@ -1,6 +1,11 @@
 // Sessions as Bica sees them: Pi Durable conversations plus a title, a
 // project, a profile, and the notes between them (docs/sessions.md).
-export { watchSessions, listSessions, sessionWorkspace } from './store';
+export {
+  watchSessions,
+  listSessions,
+  resummarize,
+  sessionWorkspace,
+} from './store';
 export { watchConversation, conversationDetail } from './conversation';
 export { createSession, fork } from './create';
 export {

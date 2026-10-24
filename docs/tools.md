@@ -16,6 +16,8 @@ Scripts can also call classifier models, which answer typed yes/no, choice, or s
 
 `ask` puts one to four multiple-choice questions to you and ends the run. Nothing waits, so a question can be answered hours later from another device. Typing in the composer answers too, and number keys pick options. Once answered, the card folds into one row.
 
+`ask` is an [extension](./extensions.md), so Settings → Extensions can switch it off. Then old questions show as plain tool rows, and their answers as normal prompts. Night runs never get it.
+
 ## Other sessions
 
 Agents can work with other sessions the way they work with terminals: start, read, send, and stop. Bica has no hidden subagents: every helper is a normal session you can open and steer.

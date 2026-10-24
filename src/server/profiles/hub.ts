@@ -1,6 +1,5 @@
 import 'server-only';
 import type { ModelChoice } from '#lib/protocol';
-import { AskTool } from '#server/agent/tools/ask';
 import { HubFileTools } from '#server/agent/tools/coding';
 import { CHATS_ID, listProjects } from '#server/projects';
 import { checkChoice, modelSettings, models } from '#server/providers';
@@ -91,7 +90,7 @@ async function hubProjects() {
 }
 
 export const hub: Profile = {
-  tools: [HubFileTools, HubSessionTools, AskTool],
+  tools: [HubFileTools, HubSessionTools],
   choice: hubChoice,
   projects: hubProjects,
   passesModel: false,

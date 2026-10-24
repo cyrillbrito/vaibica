@@ -110,6 +110,7 @@ export async function modelSettings(): Promise<ModelSettings> {
     hubFolder: saved.hubFolder ?? null,
     hubModel: saved.hubModel ?? null,
     nightStart: saved.nightStart ?? '01:00',
+    extensions: saved.extensions ?? {},
   };
 }
 
@@ -215,6 +216,13 @@ export async function updateSettings(change: Partial<ModelSettings>) {
       throw new Error('Pick a time like 01:00');
     next.nightStart = change.nightStart;
   }
+  if (change.extensions)
+    next.extensions = {
+      ...next.extensions,
+      ...Object.fromEntries(
+        Object.entries(change.extensions).map(([id, on]) => [id, !!on]),
+      ),
+    };
   stored = Promise.resolve(next);
   await writeFile(FILE, `${JSON.stringify(next, null, 2)}\n`);
   await catalog.refresh();

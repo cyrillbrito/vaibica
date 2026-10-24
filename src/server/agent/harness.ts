@@ -7,7 +7,8 @@ import { openNodeSqliteStorage } from '@earendil-works/pi-durable/storage/sqlite
 import { accountsReady, cacheRetention, models } from '#server/providers';
 import { timeTools } from './tools/tool-time';
 import { dataFile } from '#server/paths';
-import { ALL_EXTENSIONS, DEFAULT_EXTENSIONS } from '#server/profiles/registry';
+import { CORE_EXTENSIONS, DEFAULT_EXTENSIONS } from '#server/profiles/registry';
+import { installExtensions } from '#server/extensions';
 
 export const context = BACKGROUND_CONTEXT;
 
@@ -19,8 +20,9 @@ const global = globalThis as { harness?: Promise<Harness> };
 async function open(): Promise<Harness> {
   await accountsReady.catch(() => {});
   const registry = createRegistry();
-  for (const extension of ALL_EXTENSIONS)
+  for (const extension of CORE_EXTENSIONS)
     registry.install(timeTools(extension));
+  await installExtensions(registry);
   const harness = await Harness.open(
     await openNodeSqliteStorage(dataFile('harness.sqlite')),
     {

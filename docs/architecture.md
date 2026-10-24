@@ -33,7 +33,9 @@ Bica is a Bun server on the dev machine and a web app that talks to it over one 
 - `git/`: status, diffs, staging, and commits ([git.md](./git.md)).
 - `terminals/`: shells and the agent's terminal tools ([terminals.md](./terminals.md)).
 
-The flat files next to them each do one job. `socket.ts` is the one table of calls and topics.
+The flat files next to them each do one job. `socket.ts` is the one table of calls and topics. `extensions.ts` installs the built-in extensions that are on.
+
+`src/extensions` holds the features that can be switched off, through the `#extensions/...` alias, each with a server half and a browser half. Core never imports one directly. See [extensions.md](./extensions.md).
 
 Server code doesn't hot-reload in development: it runs as it started until Bica restarts. Page edits still reload.
 

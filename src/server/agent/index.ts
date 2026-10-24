@@ -3,4 +3,3 @@
 // tools/summary.ts directly, and the harness imports them directly: going
 // through an index would load the harness while it loads them.
 export { context, getHarness } from './harness';
-export { ASK } from './tools/ask';

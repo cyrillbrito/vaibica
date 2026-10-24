@@ -1,6 +1,7 @@
 import { For, Show, createEffect, createMemo } from 'solid-js';
 
 import { pageFocused } from '#lib/badge';
+import { useAwaits } from '#lib/extensions';
 import {
   markSeen,
   sendPrompt,
@@ -33,10 +34,16 @@ export default function HubChat(props: { id: string }) {
     { name: 'hubStatus' },
   );
   const busy = () => status() === 'running' || status() === 'retrying';
+  const awaits = useAwaits();
   const messages = createMemo(
     () => {
       const v = view();
-      return v ? toMessages(v, undefined, { thinking: !hideThinking() }) : [];
+      return v
+        ? toMessages(v, undefined, {
+            thinking: !hideThinking(),
+            awaits: awaits(),
+          })
+        : [];
     },
     { name: 'hubMessages' },
   );

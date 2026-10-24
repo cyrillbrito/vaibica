@@ -5,7 +5,8 @@
   "type": "module",
   "imports": {
     "#server/*": "./src/server/*",
-    "#lib/*": "./src/lib/*"
+    "#lib/*": "./src/lib/*",
+    "#extensions/*": "./src/extensions/*"
   },
   "scripts": {
     "dev": "bunx --bun vite dev",
@@ -15,7 +16,7 @@
     "lint": "oxlint src",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
-    "test:bun": "bun scripts/test-bun-durable.ts && bun scripts/test-bun-recovery.ts && bun scripts/test-bun-image.ts",
+    "test:bun": "bun scripts/test-bun-durable.ts && bun scripts/test-bun-recovery.ts && bun scripts/test-bun-image.ts && bun ./scripts/test-extensions.ts",
     "typecheck": "bun check",
     "checks": "bun run typecheck && bun run lint && bun run fmt:check && bun run test:bun"
   },

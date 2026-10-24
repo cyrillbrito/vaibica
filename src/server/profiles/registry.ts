@@ -6,6 +6,7 @@ import {
   type Extension,
   type PromptInput,
 } from '@earendil-works/pi-durable';
+import { SERVER_EXTENSIONS } from '#extensions/server';
 import type { ProfileId } from '#lib/profiles';
 import { ToolSummary } from '#server/agent/tools/summary';
 import { SessionDoc, profileOf } from '#server/sessions/session-doc';
@@ -79,31 +80,51 @@ const BicaContext = defineExtension({
   sections: TAIL_SECTIONS.map((key) => on(key)),
 });
 
-const extensions = (p: Profile) => [
+/**
+ * A profile's extensions, in a fixed order: the prompt, the profile's tools,
+ * the built-in extensions that apply to it, then the folder's files and the
+ * reply rules, which come last. Built-ins that are off stay in the list:
+ * Durable skips what isn't installed (src/server/extensions.ts).
+ */
+const resolve = (id: ProfileId) => [
   BicaPrompt,
-  ...p.tools,
+  ...PROFILES[id].tools,
+  ...SERVER_EXTENSIONS.filter((e) => e.appliesTo?.(id) ?? true).flatMap(
+    (e) => e.durable,
+  ),
   BicaContext,
   ToolSummary,
 ];
 
 /** What every session runs with unless its profile picks its own. */
-export const DEFAULT_EXTENSIONS = extensions(coding);
+export const DEFAULT_EXTENSIONS = resolve('coding');
 
-/** Every extension a profile selects, for the harness to install. */
-export const ALL_EXTENSIONS = new Set(
-  Object.values(PROFILES).flatMap(extensions),
-);
+/** What the harness always installs; built-ins install while they're on. */
+export const CORE_EXTENSIONS = new Set([
+  BicaPrompt,
+  ...Object.values(PROFILES).flatMap((p) => p.tools),
+  BicaContext,
+  ToolSummary,
+]);
 
 export interface ServerProfile extends Profile {
-  // null: DEFAULT_EXTENSIONS, for profiles with Coding's tools, so switching
-  // between them keeps following the host default.
+  // null: DEFAULT_EXTENSIONS, for profiles that resolve to the same list, so
+  // switching between them keeps following the host default.
   extensions: Extension[] | null;
 }
 
+const sameNames = (a: Extension[], b: Extension[]) =>
+  a.length === b.length && a.every((e, i) => e.name === b[i]!.name);
+
 const SERVER = Object.fromEntries(
-  Object.entries(PROFILES).map(([id, p]) => [
+  (Object.keys(PROFILES) as ProfileId[]).map((id) => [
     id,
-    { ...p, extensions: p.tools === coding.tools ? null : extensions(p) },
+    {
+      ...PROFILES[id],
+      extensions: sameNames(resolve(id), DEFAULT_EXTENSIONS)
+        ? null
+        : resolve(id),
+    },
   ]),
 ) as Record<ProfileId, ServerProfile>;
 

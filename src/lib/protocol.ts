@@ -109,6 +109,9 @@ export interface ModelSettings extends ModelChoice {
   hubModel: ModelChoice | null;
   // When night runs start, as local "HH:MM" (docs/night-runs.md).
   nightStart: string;
+  // Extensions switched on or off by id; absent: the manifest's default
+  // (src/extensions/manifests.ts). An update merges into it.
+  extensions: Record<string, boolean>;
 }
 
 /** The providers with a key on the server, and the models they reach. */

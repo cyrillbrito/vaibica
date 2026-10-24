@@ -85,8 +85,8 @@ async function runEnded(id: ConversationId) {
   if (s.status === 'error')
     what = `stopped with an error. Its last reply:\n\n${s.reply || '(none)'}`;
   if (s.status === 'waiting') {
-    const { questions } = await recentMessages(String(id), 1);
-    what = `is waiting for the user's answer to:\n${questions.map((q) => `- ${q.question} (${q.options.map((o) => o.label).join(' / ')})`).join('\n') || s.reply}`;
+    const { asks } = await recentMessages(String(id), 1);
+    what = `is waiting for the user's answer to:\n${asks || s.reply}`;
   }
   // The hub leaves sessions the user prompts to him (docs/hub.md), so it must know them.
   const { user } = await prompters(String(id));

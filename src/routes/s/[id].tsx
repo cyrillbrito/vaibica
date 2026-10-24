@@ -58,6 +58,7 @@ import {
   useSessions,
 } from '#lib/sessions';
 import { pageFocused } from '#lib/badge';
+import { useAwaits } from '#lib/extensions';
 import { createStopwatch, formatLive } from '#lib/time';
 import { readError } from '#lib/error-message';
 import { type ContextUsage } from '#lib/context-usage';
@@ -213,9 +214,15 @@ export default function Session(props: RouteProps<'/s/:id'>) {
   const forkedAt = createMemo(() => summary()?.forkedAt ?? undefined, {
     name: 'forkedAt',
   });
+  const awaits = useAwaits();
   const messages = createMemo(() => {
     const v = view();
-    return v ? toMessages(v, forkedAt(), { thinking: !hideThinking() }) : [];
+    return v
+      ? toMessages(v, forkedAt(), {
+          thinking: !hideThinking(),
+          awaits: awaits(),
+        })
+      : [];
   });
   // Each change of driver as a line, before the first prompt sent after it.
   const rows = createMemo(
@@ -348,8 +355,8 @@ export default function Session(props: RouteProps<'/s/:id'>) {
         {/* The open session is always read: only show a state worth noticing. */}
         <Ready>
           {(v) => (
-            <Show when={viewStatus(v()) !== 'idle'}>
-              <StatusDot status={viewStatus(v())} />
+            <Show when={viewStatus(v(), awaits()) !== 'idle'}>
+              <StatusDot status={viewStatus(v(), awaits())} />
             </Show>
           )}
         </Ready>

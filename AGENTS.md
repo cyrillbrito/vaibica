@@ -46,7 +46,7 @@ There is no time to prove every idea here, so borrow from people who already bui
 
 - `bun run checks` runs every check: types, lint, the format check, and `test:bun`. Run it before every commit, and fix what fails.
 - `bun run typecheck` type-checks with `bun check`, Bun's built-in checker, so `typescript` is not a dependency. `bun run lint` lints, and `bun run fmt` formats.
-- `bun run test:bun` runs the Bun checks for Pi Durable, restart recovery, and images. There is no Vitest suite.
+- `bun run test:bun` runs the Bun checks for Pi Durable, restart recovery, images, and that core names no extension. There is no Vitest suite.
 - `bun run dev` is the dev server on port 3142. It usually runs already, see Verifying UI below.
 - `bun run build` and `bun run start` run a built copy, see [docs/deploy.md](docs/deploy.md).
 - `bun run build:bica` compiles the `bica` binary into `dist/bica/bica`, and the `release` workflow publishes it as a draft GitHub release, see the same doc.
@@ -58,6 +58,7 @@ There is no time to prove every idea here, so borrow from people who already bui
 - Installing as an app on the phone.
 - A file watcher instead of polling.
 - A file mode in the command palette: `/` searches the workspace's files, and ⌘P opens straight into it.
+- More features as extensions, one at a time: web search, approval before a call, then night runs ([extensibility.md](docs/explorations/extensibility.md)).
 
 ## Library docs
 
@@ -77,6 +78,7 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 - [architecture.md](docs/architecture.md): concepts, server modules, how a prompt travels, where data lives. Start here for anything that crosses areas.
 - [sessions.md](docs/sessions.md): the transcript, queue, composer, forks, status, archive. Read for transcript or composer work.
 - [tools.md](docs/tools.md): the agent's tools, codemode, `ask`, and the session tools. Read before adding or changing a tool.
+- [extensions.md](docs/extensions.md): features that can be switched off, how one is built, and the rule that core never names one. Read before adding a feature or moving one out of core.
 - [instructions.md](docs/instructions.md): the prompt sections, skills, and reply rules. Read before changing what the agent is told.
 - [context-usage.md](docs/context-usage.md): the context chip, prompt cache, spend, compaction, clean up.
 - [profiles.md](docs/profiles.md): coding, assistant, night, and hub sessions, and what each one gets.
@@ -100,7 +102,7 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 - [data-sync.md](docs/explorations/data-sync.md): sending only what the browser lacks.
 - [fast-loading.md](docs/explorations/fast-loading.md): opening and switching faster on the phone.
 - [distribution.md](docs/explorations/distribution.md): installing and updating `bica`.
-- [extensions.md](docs/explorations/extensions.md): agent and UI extensions.
+- [extensibility.md](docs/explorations/extensibility.md): the plan for a lean core where every feature is an extension, the next extensions to move, and ideas for the contract, with research reports in `extensibility/`.
 - [self-hosted-auth.md](docs/explorations/self-hosted-auth.md): a token for the socket, and the DNS rebinding hole.
 - [themes.md](docs/explorations/themes.md): editor color themes.
 - [ui-hierarchy.md](docs/explorations/ui-hierarchy.md): what the side panel next to a session belongs to.
@@ -114,6 +116,7 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 - Read [docs/UI.md](docs/UI.md) before any UI work.
 - Keep this file and `docs/` up to date with every change. Add a doc when a new area appears.
 - Simplicity first. If a change adds complexity, look for a smaller one.
+- A feature that can be switched off is an extension in `src/extensions/`, and core never names one. See [docs/extensions.md](docs/extensions.md).
 - Answer questions in the reply. Don't write a plan or an exploration doc unless the user asks for one.
 
 ## Verifying UI

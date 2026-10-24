@@ -17,6 +17,7 @@ import {
   mode as testMode,
   openWithTestData,
 } from '#lib/fixtures';
+import { MANIFESTS, enabledIds } from '#extensions/manifests';
 import { updateSettings, useModels } from '#lib/models';
 import { motion, setMotion, type Motion } from '#lib/motion';
 import { setSoundOn, soundOn } from '#lib/sound';
@@ -295,6 +296,24 @@ export default function Settings() {
               checked={catalog().settings.stageOnView}
               onChange={(on) => void updateSettings({ stageOnView: on })}
             />
+          </Card>
+
+          <Card
+            title="Extensions"
+            footer="Running sessions pick up a change from their next request."
+          >
+            <For each={MANIFESTS}>
+              {(m) => (
+                <Toggle
+                  label={m.title}
+                  hint={m.about}
+                  checked={enabledIds(catalog().settings.extensions).has(m.id)}
+                  onChange={(on) =>
+                    void updateSettings({ extensions: { [m.id]: on } })
+                  }
+                />
+              )}
+            </For>
           </Card>
 
           <Show when={import.meta.env.DEV}>

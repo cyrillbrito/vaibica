@@ -1,5 +1,4 @@
 import 'server-only';
-import { AskTool } from '#server/agent/tools/ask';
 import { Codemode } from '#server/agent/tools/codemode';
 import { CodingTools } from '#server/agent/tools/coding';
 import { createWebTools } from '#server/agent/tools/web';
@@ -30,7 +29,6 @@ export const coding: Profile = {
     TerminalTools,
     createWebTools(exaKey),
     SessionTools,
-    AskTool,
     Codemode,
   ],
   choice: defaultChoice,

@@ -1,9 +1,8 @@
 import 'server-only';
 import type { ConversationId, Cursor } from '@earendil-works/pi-durable';
 
-import type { Question } from '#lib/transcript';
-import { ASK } from '#server/agent';
 import { context, getHarness } from '#server/agent';
+import { awaits, waitingOn } from '#server/extensions';
 import { SessionDoc, getConversation, listSessions, summarize } from './store';
 
 /** A session's title, status, and last reply, as an agent reads it. */
@@ -16,14 +15,15 @@ export async function readSession(id: string) {
 
 /**
  * A session's last `count` messages, prompts and replies, oldest first,
- * without tool calls; and the `ask` questions it waits on, if any.
+ * without tool calls; and what its newest reply asks the user, if anything:
+ * the calls that wait on an answer, in their extension's words.
  */
 export async function recentMessages(id: string, count: number) {
   const conversation = await (
     await getHarness()
   ).conversation(Number(id) as ConversationId, context);
   const messages: { from: 'prompt' | 'reply'; text: string }[] = [];
-  let questions: Question[] | undefined;
+  let asks: string | undefined;
   let cursor: Cursor | undefined;
   // ponytail: looks back at most 1,000 entries.
   for (let pages = 0; pages < 10 && messages.length < count; pages++) {
@@ -31,11 +31,13 @@ export async function recentMessages(id: string, count: number) {
     for (const entry of page?.items ?? [])
       for (const m of (entry.model ?? []).toReversed()) {
         if (m.role === 'assistant')
-          questions ??= m.content.flatMap((b) =>
-            b.type === 'toolCall' && b.name === ASK
-              ? ((b.arguments as { questions?: Question[] }).questions ?? [])
-              : [],
-          );
+          asks ??= m.content
+            .flatMap((b) =>
+              b.type === 'toolCall' && awaits(b.name)
+                ? (waitingOn({ name: b.name, args: b.arguments }) ?? [])
+                : [],
+            )
+            .join('\n');
         if (m.role !== 'assistant' && m.role !== 'user') continue;
         const text = textOf(m.content);
         if (text && messages.length < count)
@@ -47,7 +49,7 @@ export async function recentMessages(id: string, count: number) {
     cursor = page?.next;
     if (!cursor) break;
   }
-  return { messages: messages.toReversed(), questions: questions ?? [] };
+  return { messages: messages.toReversed(), asks: asks ?? '' };
 }
 
 /**

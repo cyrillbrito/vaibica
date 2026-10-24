@@ -7,18 +7,19 @@ import {
   untrack,
 } from 'solid-js';
 
-import { reducedMotion } from '#lib/motion';
-import type { Question } from '#lib/transcript';
-import { Button } from './ui/Button';
-import { CheckMark } from './ui/CheckMark';
-import Input from './ui/Input';
-import Kbd from './ui/Kbd';
+import { Button } from '../../components/ui/Button';
+import { CheckMark } from '../../components/ui/CheckMark';
+import Input from '../../components/ui/Input';
+import Kbd from '../../components/ui/Kbd';
 import {
   CheckIcon,
   ChevronIcon,
   DrawnCheckIcon,
   QuestionIcon,
-} from './ui/icons';
+} from '../../components/ui/icons';
+import type { ToolRowProps } from '../contract';
+import { reducedMotion } from '#lib/motion';
+import { questionsOf, type Question } from './meta';
 
 const MAC = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform);
 
@@ -30,7 +31,18 @@ const MAC = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform);
  * the composer answers too. Once answered, the card glides down into one
  * row, which opens to the questions and the answers.
  */
-export default function AskCard(props: {
+export default function AskRow(props: ToolRowProps) {
+  return (
+    <AskCard
+      questions={questionsOf(props.call.args)}
+      open={props.open}
+      answer={props.answer}
+      onAnswer={props.onAnswer}
+    />
+  );
+}
+
+function AskCard(props: {
   questions: Question[];
   open: boolean;
   // The prompt that answered, from the card or the composer.

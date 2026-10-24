@@ -17,7 +17,8 @@
     // TypeScript needs them here too to find a folder's index.ts.
     "paths": {
       "#server/*": ["./src/server/*"],
-      "#lib/*": ["./src/lib/*"]
+      "#lib/*": ["./src/lib/*"],
+      "#extensions/*": ["./src/extensions/*"]
     },
 
     // Type Checking & Safety
