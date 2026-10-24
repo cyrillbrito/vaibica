@@ -22,7 +22,7 @@ Add provider offers a signed-in plan again as Another account. Each request goes
 
 ## The picker
 
-The Model picker card in Settings chooses which models the picker offers. The picker lists them by name, with a Thinking switch where a model has one. Point at a model to see its context size and list price. A pick in a session applies to that session only.
+The Model picker card in Settings chooses which models the picker offers. The picker lists them by name, with a Thinking switch where a model has one. Point at a model to see its context size and list price. A pick in a session applies to that session only. When a session's model is gone, say its provider was removed, the next prompt moves it to the same model through another provider, or else to the default model.
 
 The picker's button shows a short name, such as Opus for Claude Opus 4.5. Only the newest version gets it, so an older Opus keeps its full name.
 
