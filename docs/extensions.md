@@ -20,7 +20,7 @@ An extension is a folder in `src/extensions/` with three parts, each a plain obj
 
 ## Rules
 
-- Core never names an extension. `test:bun` fails when code outside `src/extensions` quotes an extension's id or tool names; test data is exempt. Deleting an extension's folder and its line in the three lists removes it.
+- Core never names an extension. A test fails when code outside `src/extensions` quotes an extension's id or tool names; test data is exempt. Deleting an extension's folder and its line in the three lists removes it.
 - Extensions import from core, never the other way.
 - A hook core gains is named after a core concept, such as status or transcript rows, so another extension could use it. Pieces only one extension has shaped are marked provisional in `contract.ts` until a second one needs them.
 

@@ -16,9 +16,9 @@
     "lint": "oxlint src",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
-    "test:bun": "bun scripts/test-bun-durable.ts && bun scripts/test-bun-recovery.ts && bun scripts/test-bun-image.ts && bun ./scripts/test-extensions.ts",
+    "test": "bun test --parallel",
     "typecheck": "bun check",
-    "checks": "bun run typecheck && bun run lint && bun run fmt:check && bun run test:bun"
+    "checks": "bun run typecheck && bun run lint && bun run fmt:check && bun run test"
   },
   "dependencies": {
     "@dnd-kit/dom": "^0.5.1",

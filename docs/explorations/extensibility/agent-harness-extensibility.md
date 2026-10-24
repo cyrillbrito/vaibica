@@ -528,7 +528,7 @@ How harness authors test extensions:
 - Pi Durable: `@earendil-works/pi-durable/testing` exports conformance suites for storage and environments (`registerStorageConformance`, `registerEnvConformance`) that any Vitest- or Jest-like runner can run, and its examples cover reload mid-call and restarts (`31-reload-and-restart.ts`, `13-recovery.ts`).
 - OMP: `omp plugin doctor`, structured load errors per path, and an exact allowlist mode to isolate one extension.
 
-An extension conformance suite for Bica, on Durable's own tools (MemoryStorage, the faux provider, Bun's test runner, which the repo already uses for `test:bun`):
+An extension conformance suite for Bica, on Durable's own tools (MemoryStorage, the faux provider, Bun's test runner, which the repo already uses):
 
 - Install, run a turn, uninstall mid-run, reinstall: the transcript stays valid, and pending tasks of the extension wait and then resume.
 - Restart while a hook waits and while a tool runs: replay-safe tools rerun, others report `interrupted`, an approval hook asks again or finds its stored answer.

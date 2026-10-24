@@ -375,7 +375,7 @@ Forks inherit the whole extension API for free, but not the marketplace. Microso
 | Settings | Declarative definitions (Obsidian 1.13), JSON Schema (Jupyter), zod (Backstage), `user_config` (mcpb) | A TypeBox schema (already in the stack through pi-ai). Bica renders the form, layered like extension config. |
 | Styling | CSS variables (Obsidian, VS Code webviews), no custom CSS (VS Code) | Design tokens as CSS variables and Tailwind theme, plus the UI kit. Built-in class names are not a contract. Snippets folder. |
 | Crash isolation | Process (VS Code), worker (Raycast), realm (Grafana sandbox), error boundary (Backstage), validate and fall back (mods) | A boundary per contribution, wrapped callbacks, blame by URL, auto-disable, safe mode. Time budgets on the server. |
-| Testing | Extension tester (Backstage), dev validation messages (mods), Inspect Context Keys (VS Code) | A fixture extension per slot in `test:bun`, a slot gallery page, and an Extensions page with live state. |
+| Testing | Extension tester (Backstage), dev validation messages (mods), Inspect Context Keys (VS Code) | A fixture extension per slot in the tests, a slot gallery page, and an Extensions page with live state. |
 
 ---
 
@@ -545,7 +545,7 @@ Ordered by what to build first:
 Each item answers an open question from the notes:
 
 - **Types.** A `bica` types entry, the same file as the runtime module, so `bun check` type-checks `~/.bica/extensions/*` against the installed API. Each slot's props interface lives in its blueprint. A breaking change bumps the slot's version (Grafana's `/v1`), and the loader warns about an extension built for an older `api`.
-- **Load and unload.** A fixture extension per slot under `test/extensions/`, loaded by `bun run test:bun`. The test checks that registering adds the contribution, that disabling leaves _no_ contributions, disposers, socket handlers, or Durable extensions behind, and that reloading replaces in place.
+- **Load and unload.** A fixture extension per slot under `test/extensions/`, loaded by `bun run test`. The test checks that registering adds the contribution, that disabling leaves _no_ contributions, disposers, socket handlers, or Durable extensions behind, and that reloading replaces in place.
 - **Crash paths.** Fixture extensions that throw in `default()`, in render, in an event handler, and in `when`. Assert the fallback, the blame, and the auto-disable.
 - **Slot space and props.** A dev-only `/dev/slots` gallery renders every slot with the built-ins plus two fixture contributions with worst-case labels (long titles, many tabs, emoji, RTL), at desktop width and at 390 px, light and dark, reusing `?data=worst`. Check it with `agent-browser`. This is Backstage's `createExtensionTester` and the Claude Code mods interface gallery, merged.
 - **CSS and theme.** The gallery in each theme is the visual test. A cheap lint flags raw hex colors and `!important` in extension CSS. Don't build more than that.
