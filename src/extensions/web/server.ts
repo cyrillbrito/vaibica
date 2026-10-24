@@ -112,7 +112,8 @@ const webSearch = defineTool({
             Date.now() - DAYS[recency] * 86_400_000,
           ).toISOString(),
         }),
-        contents: { highlights: { maxCharacters: 1500 } },
+        // Exa sizes each excerpt by its relevance, as its docs recommend.
+        contents: { highlights: true },
       },
       context.abortSignal,
     );
@@ -150,7 +151,7 @@ const webFetch = defineTool({
       {
         urls: [url],
         ...(query
-          ? { highlights: { query, maxCharacters: 8000 } }
+          ? { highlights: { query } }
           : { text: { maxCharacters: 50_000 } }),
         ...(fresh && { maxAgeHours: 0 }),
       },
