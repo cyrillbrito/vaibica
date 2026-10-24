@@ -4,12 +4,13 @@ export {
   cacheRetention,
   checkChoice,
   defaultChoice,
+  extensionSwitches,
   getCatalog,
   modelSettings,
+  saveExtensionSwitch,
   updateSettings,
   watchModels,
 } from './models';
-export { exaKey } from './credentials';
 export {
   addAccount,
   answer,

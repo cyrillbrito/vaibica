@@ -6,7 +6,8 @@ import type { Credential, CredentialStore } from '@earendil-works/pi-ai';
 
 /*
  * Sign-ins and keys added in Settings (docs/models.md), one per provider
- * id, in pi's auth.json shape. Only this process writes the file, so one
+ * id, in pi's auth.json shape. Extensions' secrets live here too, under
+ * their own keys (src/server/extension-settings.ts). Only this process writes the file, so one
  * promise chain is the lock. A saved credential wins over the env var.
  */
 const FILE = dataFile('auth.json');
@@ -45,12 +46,6 @@ export const credentials: CredentialStore = {
     await write(async (all) => void delete all[id]);
   },
 };
-
-/** Exa isn't a model provider, but its key lives here too, under `exa`. */
-export async function exaKey() {
-  const saved = await credentials.read('exa');
-  return saved?.type === 'api_key' ? saved.key : undefined;
-}
 
 // Sign in with ChatGPT names this installation with a stable UUID.
 const DEVICE_FILE = dataFile('device-id');

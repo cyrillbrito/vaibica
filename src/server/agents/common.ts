@@ -45,7 +45,6 @@ export type SectionKey =
 export type ToolPack =
   | 'coding-tools'
   | 'terminal-tools'
-  | 'web'
   | 'session-tools'
   | 'codemode'
   | 'hub-file-tools'
@@ -141,7 +140,6 @@ const TOOL_GUIDE: ToolGuide[] = [
       'Anything that keeps running (dev server, watcher, game server) goes in a terminal: terminal_start, never `&` or nohup in bash. Check `list` first: the user may already run it, and your own terminals can be reused with terminal_send. Stop the ones you started once you are done with them, unless the user wants them kept.',
     ],
   },
-  { tools: ['web_search', 'web_fetch'], line: 'Search the web and read pages' },
   {
     tools: ['list'],
     line: 'Every project, worktree, open session, and terminal, with live status',

@@ -244,9 +244,7 @@ function AddProvider(props: {
       .filter(Boolean)
       .every((w) => text.toLowerCase().includes(w));
   const open = () =>
-    props.accounts.filter(
-      (a) => !a.status && a.id !== 'exa' && !a.id.includes(':'),
-    );
+    props.accounts.filter((a) => !a.status && !a.id.includes(':'));
   // A plan signed in already is listed again, for another account of it.
   const groups = createMemo(
     () => {
@@ -276,24 +274,9 @@ function AddProvider(props: {
             note: '',
           })),
       );
-      const exa = props.accounts.find((a) => a.id === 'exa' && !a.status);
       return [
         { label: 'Sign in with a plan', items: plans },
         { label: 'Add an API key', items: keys },
-        {
-          label: 'More',
-          items:
-            exa && matches('Exa web search key')
-              ? [
-                  {
-                    account: exa,
-                    type: 'api_key' as const,
-                    title: exa.name,
-                    note: 'Web search for the agents',
-                  },
-                ]
-              : [],
-        },
       ].filter((g) => g.items.length);
     },
     { name: 'addProviderGroups' },

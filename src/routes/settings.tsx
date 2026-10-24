@@ -2,6 +2,7 @@ import { Title } from '@solidjs/meta';
 import { For, Show } from 'solid-js';
 
 import Accounts from '../components/Accounts';
+import ExtensionSettings from '../components/ExtensionSettings';
 import { Card, Setting, Toggle } from '../components/ui/Card';
 import Alert from '../components/ui/Alert';
 import { Button } from '../components/ui/Button';
@@ -17,7 +18,8 @@ import {
   mode as testMode,
   openWithTestData,
 } from '#lib/fixtures';
-import { MANIFESTS, enabledIds } from '#extensions/manifests';
+import { MANIFESTS } from '#extensions/manifests';
+import { updateExtension, useEnabled, useExtensions } from '#lib/extensions';
 import { updateSettings, useModels } from '#lib/models';
 import { motion, setMotion, type Motion } from '#lib/motion';
 import { setSoundOn, soundOn } from '#lib/sound';
@@ -38,6 +40,8 @@ const MOTIONS: { value: Motion; label: string }[] = [
 
 export default function Settings() {
   const catalog = useModels();
+  const extensions = useExtensions();
+  const enabled = useEnabled();
   const hasKey = () =>
     catalog().providers.some((p) => p.id === catalog().settings.model.provider);
 
@@ -304,14 +308,20 @@ export default function Settings() {
           >
             <For each={MANIFESTS}>
               {(m) => (
-                <Toggle
-                  label={m.title}
-                  hint={m.about}
-                  checked={enabledIds(catalog().settings.extensions).has(m.id)}
-                  onChange={(on) =>
-                    void updateSettings({ extensions: { [m.id]: on } })
-                  }
-                />
+                <>
+                  <Toggle
+                    label={m.title}
+                    hint={m.about}
+                    checked={enabled().has(m.id)}
+                    onChange={(on) => void updateExtension({ id: m.id, on })}
+                  />
+                  <Show when={enabled().has(m.id)}>
+                    <ExtensionSettings
+                      manifest={m}
+                      state={extensions()?.find((e) => e.id === m.id)}
+                    />
+                  </Show>
+                </>
               )}
             </For>
           </Card>

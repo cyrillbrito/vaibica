@@ -3,7 +3,7 @@
 The agent works through tools. Every call carries a short summary of what it is for, so the transcript reads as a list of intentions. The exception is `codemode` on models that write its script as raw text, such as GPT-5, which take no other field. What the agent is told about using them is in [instructions.md](./instructions.md).
 
 - Read, write, edit, and bash work in the session's folder. Read also shows images to the model, shrunk when they are too big.
-- Web search and fetch go through Exa, once its key is set ([models.md](./models.md#providers)).
+- Web search and fetch read the web through Exa (below).
 - Terminal tools share the workspace's terminals with you ([terminals.md](./terminals.md)).
 
 ## Codemode
@@ -17,6 +17,12 @@ Scripts can also call classifier models, which answer typed yes/no, choice, or s
 `ask` puts one to four multiple-choice questions to you and ends the run. Nothing waits, so a question can be answered hours later from another device. Typing in the composer answers too, and number keys pick options. Once answered, the card folds into one row.
 
 `ask` is an [extension](./extensions.md), so Settings → Extensions can switch it off. Then old questions show as plain tool rows, and their answers as normal prompts. Night runs never get it.
+
+## Web search
+
+`web_search` returns the top results with the passages that match, and `web_fetch` reads a page as clean text, or only the parts that answer a question. Both go through Exa, whose free plan is enough. Fetch can't reach localhost or private networks, so the agent uses `curl` for those.
+
+Web search is an [extension](./extensions.md). Settings → Extensions switches it off and holds the Exa key under it, read on each call, so a new key works at once. Every agent but the hub gets it.
 
 ## Other sessions
 

@@ -10,7 +10,6 @@ const ICONS: Record<string, string> = {
   cloudflare: 'cloudflare',
   'cloudflare-workers-ai': 'workersai',
   deepseek: 'deepseek',
-  exa: 'exa',
   fireworks: 'fireworks',
   'github-copilot': 'githubcopilot',
   google: 'google',
