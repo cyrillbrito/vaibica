@@ -32,13 +32,21 @@ const LEVELS: readonly ThinkingLevel[] = [
   'max',
 ];
 
-let stored: Promise<Partial<ModelSettings>> | undefined;
+// The extension switches share the file, which only this module writes.
+type Saved = Partial<ModelSettings> & { extensions?: Record<string, boolean> };
+
+let stored: Promise<Saved> | undefined;
 
 function load() {
   return (stored ??= readFile(FILE, 'utf8').then(
-    (text) => JSON.parse(text) as Partial<ModelSettings>,
-    (): Partial<ModelSettings> => ({}),
+    (text) => JSON.parse(text) as Saved,
+    (): Saved => ({}),
   ));
+}
+
+async function save(next: Saved) {
+  stored = Promise.resolve(next);
+  await writeFile(FILE, `${JSON.stringify(next, null, 2)}\n`);
 }
 
 const parseRef = (id: string | undefined) => {
@@ -110,7 +118,6 @@ export async function modelSettings(): Promise<ModelSettings> {
     hubFolder: saved.hubFolder ?? null,
     hubModel: saved.hubModel ?? null,
     nightStart: saved.nightStart ?? '01:00',
-    extensions: saved.extensions ?? {},
   };
 }
 
@@ -216,16 +223,17 @@ export async function updateSettings(change: Partial<ModelSettings>) {
       throw new Error('Pick a time like 01:00');
     next.nightStart = change.nightStart;
   }
-  if (change.extensions)
-    next.extensions = {
-      ...next.extensions,
-      ...Object.fromEntries(
-        Object.entries(change.extensions).map(([id, on]) => [id, !!on]),
-      ),
-    };
-  stored = Promise.resolve(next);
-  await writeFile(FILE, `${JSON.stringify(next, null, 2)}\n`);
+  await save(next);
   await catalog.refresh();
+}
+
+/** Extensions switched on or off by id; absent: the manifest's default. */
+export const extensionSwitches = async () => (await load()).extensions ?? {};
+
+export async function saveExtensionSwitch(id: string, on: boolean) {
+  const next = { ...(await load()) };
+  next.extensions = { ...next.extensions, [id]: on };
+  await save(next);
 }
 
 export async function defaultChoice(): Promise<ModelChoice> {

@@ -109,9 +109,15 @@ export interface ModelSettings extends ModelChoice {
   hubModel: ModelChoice | null;
   // When night runs start, as local "HH:MM" (docs/night-runs.md).
   nightStart: string;
-  // Extensions switched on or off by id; absent: the manifest's default
-  // (src/extensions/manifests.ts). An update merges into it.
-  extensions: Record<string, boolean>;
+}
+
+/** A built-in extension's switch and settings (docs/extensions.md). */
+export interface ExtensionState {
+  id: string;
+  on: boolean;
+  // By the keys its manifest declares. A secret says only whether it's
+  // saved, and a long key's last 4 characters.
+  settings: Record<string, { saved: boolean; hint: string | null }>;
 }
 
 /** The providers with a key on the server, and the models they reach. */
@@ -146,7 +152,7 @@ export interface ModelCatalog {
   compaction: { reserveTokens: number; backgroundTokens: number };
 }
 
-/** A model provider or a tool service (Exa) and how it's signed in. */
+/** A model provider and how it's signed in. */
 export interface Account {
   id: string;
   name: string;
@@ -389,6 +395,15 @@ export interface Calls {
   };
   'session.configure': { args: { id: string } & ModelChoice; result: null };
   'settings.update': { args: Partial<ModelSettings>; result: null };
+  // Switches it, or saves its settings; a null setting is removed.
+  'extension.update': {
+    args: {
+      id: string;
+      on?: boolean;
+      settings?: Record<string, string | null>;
+    };
+    result: null;
+  };
   'project.add': { args: { path: string }; result: string };
   // Project ids in their new sidebar order; ids left out keep their place after.
   'project.reorder': { args: { ids: string[] }; result: null };
@@ -558,6 +573,8 @@ export interface Topics {
   projects: { params: Record<string, never>; value: Project[] };
   models: { params: Record<string, never>; value: ModelCatalog };
   accounts: { params: Record<string, never>; value: Accounts };
+  // Every built-in, in manifest order.
+  extensions: { params: Record<string, never>; value: ExtensionState[] };
   // null: no such conversation.
   conversation: { params: { id: string }; value: ConversationView | null };
   // null: not a git repository.

@@ -1,11 +1,12 @@
 import { ask } from './ask/meta';
 import type { Manifest } from './contract';
+import { web } from './web/meta';
 
 /**
  * Every built-in extension. The order is the order their parts take in a
  * session's extension list, so it stays fixed for the prompt cache.
  */
-export const MANIFESTS = [ask] as const satisfies readonly Manifest[];
+export const MANIFESTS = [ask, web] as const satisfies readonly Manifest[];
 
 export type ExtensionId = (typeof MANIFESTS)[number]['id'];
 

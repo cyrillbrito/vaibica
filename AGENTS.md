@@ -58,7 +58,7 @@ There is no time to prove every idea here, so borrow from people who already bui
 - Installing as an app on the phone.
 - A file watcher instead of polling.
 - A file mode in the command palette: `/` searches the workspace's files, and ⌘P opens straight into it.
-- More features as extensions, one at a time: web search, approval before a call, then night runs ([extensibility.md](docs/explorations/extensibility.md)).
+- More features as extensions, one at a time: terminals, voice, the Git tab, GitHub, Jira, file views, assistant mode, night runs, then the hub ([extensibility.md](docs/explorations/extensibility.md)).
 
 ## Library docs
 
@@ -77,7 +77,7 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 
 - [architecture.md](docs/architecture.md): concepts, server modules, how a prompt travels, where data lives. Start here for anything that crosses areas.
 - [sessions.md](docs/sessions.md): the transcript, queue, composer, forks, status, archive. Read for transcript or composer work.
-- [tools.md](docs/tools.md): the agent's tools, codemode, `ask`, and the session tools. Read before adding or changing a tool.
+- [tools.md](docs/tools.md): the agent's tools, codemode, `ask`, web search, and the session tools. Read before adding or changing a tool.
 - [extensions.md](docs/extensions.md): features that can be switched off, how one is built, and the rule that core never names one. Read before adding a feature or moving one out of core.
 - [instructions.md](docs/instructions.md): the prompt sections, skills, and reply rules. Read before changing what the agent is told.
 - [context-usage.md](docs/context-usage.md): the context chip, prompt cache, spend, compaction, clean up.
@@ -91,7 +91,7 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 - [git.md](docs/git.md): the Git tab and commit messages.
 - [command-palette.md](docs/command-palette.md): ⌘K and every keyboard shortcut. Read before adding a shortcut.
 - [terminals.md](docs/terminals.md): shared shells and the agent's terminal tools.
-- [models.md](docs/models.md): providers and sign-ins, more than one plan account, Exa, the default, fast, and decision models, and the model picker.
+- [models.md](docs/models.md): providers and sign-ins, more than one plan account, the default, fast, and decision models, and the model picker.
 - [realtime-communication.md](docs/realtime-communication.md): the WebSocket protocol, projection, and caching. Read before adding a topic or request.
 - [deploy.md](docs/deploy.md): running Bica, Tailscale, the `bica` binary, releases.
 - [UI.md](docs/UI.md): design rules, tokens, components, test data. Read before any UI work.

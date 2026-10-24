@@ -22,13 +22,20 @@ The reports argue against an earlier plan that is gone now. Read them for their 
 
 One extension at a time, each pushing on a different seam. After each one, review core: which hook it needed, whether that hook is named after a core concept, and whether a second extension could use it. Abstract on the second or third use, not the first. A provisional piece gets reshaped when the next extension needs something close, not built around.
 
-Next, in this order:
+These are the extensions to build, in this order. Each one ends with a "What it taught" section below, like the one for `ask`, and earlier extensions move onto any hook a later one reshapes.
 
-1. Web search: tools, a setting (the Exa key), and access to a provider. Server only. Brings `settings` to the manifest.
-2. Approval before a call: a second extension that makes a session wait for you and draws a card. Settles whether `awaitsAnswer` and `waitingOn` become a status hook. Durable's `beforeTool` can await, so it runs before the call is committed and finds a stored answer after a restart.
-3. Night runs: an agent, lifecycle hooks, a scheduler, and the conflict with `ask`.
+1. Web search, done: tools, a setting (the Exa key), and access to a provider. Brought `settings` to the manifest, and the `extensions` topic so the switch stops riding on `models`.
+2. Terminals: the first panel. Brings `rightPanel.tab`, the first service by token (`Terminals`), and requests and topics the extension owns (`ext:<id>/…`).
+3. Voice: calls, hand-offs, and dictation in one extension. Brings `composer.above` and a composer button, and is the second to reach a provider.
+4. Git tab: the second `rightPanel.tab`, so the slot gets reshaped here. Pulls a `Vcs` service out of core, which keeps projects, worktrees, status, and diffs.
+5. GitHub: pull request numbers and states on branches, through `gh`, and later opening pull requests. Brings a slot for badges on a branch or workspace row, and a search source for the workspace picker.
+6. Jira: ticket keys in branch names, as badges and links. The second user of both GitHub's slots, so they get reshaped here, and the key parsing in `src/lib/branch.ts` leaves core.
+7. File and diff views: the third tab and the second user of `Vcs`, plus diff comments that go back to the agent.
+8. Assistant mode: the first agent an extension ships, and the first lifecycle hook, `session.idle`, for the upkeep that clears and compacts while the session sits. Brings a button on the new-session form and a mark on the context chip. The memory index reaches every session, so it stays in core.
+9. Night runs: the second agent and the second user of the lifecycle hooks, plus a scheduler, and the conflict with `ask`, settled by night leaving out extensions that need someone to answer.
+10. Hub: `center.view`, its own agent, and the session tools. It keeps itself small with assistant mode's upkeep, which makes it the first extension that requires another, through a service. The second reader of `waitingOn`, so `awaitsAnswer` and `waitingOn` become a status hook here at the latest.
 
-Later, each with what it needs first: the Git tab and file views (`rightPanel.tab`, a `Vcs` service), terminals (a `Terminals` service), voice and context alerts (`composer.above`), the hub (`center.view`, agents), and small hook extensions like a guard on `git push --force`, lint after an edit, or a cheaper compaction.
+Nothing else is planned. The tool packs (coding, codemode) stay in core until these are done.
 
 ## What `ask` taught
 
@@ -41,6 +48,25 @@ Moving `ask` out ([extensions.md](../extensions.md)) showed what fits and what d
 - `ask` itself says it skips night sessions, so one extension knows another. Better: night excludes extensions that need someone to answer.
 - The switch rides on the model settings and the `models` topic. An `extensions` topic with each one's state and errors would be its home.
 - The server half is still imported when off, only not registered. The browser half truly never loads.
+
+## What web search taught
+
+Moving web search out ([extensions.md](../extensions.md)) needed less than planned, and confirmed most of what `ask` built:
+
+- Tools, a guide line, and `appliesTo` were enough on the server. Agents no longer list the pack: the extension says it applies to every agent but the hub. Both built-ins now exclude one agent by id, so when night and the hub become extensions, that should turn into traits an agent declares, such as "nobody answers" or "coordinates only", which extensions check.
+- Moving a pack out of an agent's list moves its tools after the agent's own, which rebuilds the prompt cache once. Stored lists keep the old place, and Durable doesn't mind. The Durable name stays, since sessions store it.
+- Settings came in as `settings` on the manifest, with one kind, `secret`, kept in `auth.json` under its own key. Keeping the old `exa` key meant no migration, but keys aren't namespaced, so that part is provisional. Settings draws the rows from the manifest, and the server half reads with `readSetting(manifest, key)`, typed against the manifest.
+- "Access to a provider" turned out to be a fake account: Exa sat in Providers with a special case in five places. As a secret it left the providers module for good. Voice is the first extension that truly reaches a pi-ai provider.
+- The `extensions` topic carries each extension's switch and setting status, and `extension.update` changes either. The switch is off `models`, but `settings.json` is still written only by the models module, so the switch is saved there.
+- The generic tool row needed a short label and an icon per tool, so the client half got `tools` (provisional). It applies on or off, so past calls keep their look.
+- The leak test now also catches a name used as an object key, such as a tool name in a lookup table, and setting keys.
+
+What terminals should expect:
+
+- `rightPanel.tab` is a slot like `transcript.tool`, a lazy component by id, and needs an order field once two tabs exist.
+- Extension-owned requests and topics have no home yet. Calls and topics are one typed map in `protocol.ts` and one handler table in `socket.ts`, so `ext:<id>/…` needs a typed record on each half that the socket routes by prefix. `extension.update` stays core.
+- The terminal tools pack leaves the agents' lists the same way web did, through `appliesTo`. `list` in the session tools reads terminals, which makes it the first consumer of a `Terminals` service.
+- Before that, move `settings.json` into its own small server module, so switches and future plain settings stop living in the models module.
 
 ## Ideas for the contract
 

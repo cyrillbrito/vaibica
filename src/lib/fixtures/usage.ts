@@ -347,7 +347,6 @@ export function fixtureCatalog(worst: boolean): ModelCatalog {
       hubFolder: null,
       hubModel: null,
       nightStart: '01:00',
-      extensions: {},
     },
     fromEnv: { model: false, fastModel: false },
     compaction: { reserveTokens: RESERVE, backgroundTokens: BACKGROUND },
@@ -419,20 +418,6 @@ export function fixtureAccounts(worst: boolean): Accounts {
           label: 'Get a key',
           url: 'https://platform.openai.com/api-keys',
         },
-        status: null,
-        methods: [key],
-        addAccount: false,
-      },
-      {
-        id: 'exa',
-        name: 'Exa',
-        email: null,
-        plan: null,
-        place: null,
-        about: worst
-          ? 'Web search and fetch for the agent. Without it, the agent searches with a slower fallback that reads only the first page of results and often misses recent pages, which is why a key is worth setting up even on a free plan.'
-          : 'Web search and fetch for the agent.',
-        link: { label: 'Get a key', url: 'https://dashboard.exa.ai' },
         status: null,
         methods: [key],
         addAccount: false,

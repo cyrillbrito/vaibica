@@ -3,9 +3,11 @@
 // half. Off means its halves never register: its Durable extensions aren't
 // installed, and its client's lazy imports never run.
 //
-// Pieces marked provisional were shaped by `ask` alone. The next extension
-// that needs something close should reshape them, not build around them.
+// Pieces marked provisional were shaped by one extension alone. The next
+// extension that needs something close should reshape them, not build
+// around them.
 import type { Extension } from '@earendil-works/pi-durable';
+import type { JSX } from '@solidjs/web';
 import type { Component } from 'solid-js';
 import type { AgentId } from '#lib/agents';
 import type { ToolCall } from '#lib/transcript';
@@ -19,6 +21,20 @@ export interface Manifest {
   on: boolean;
   /** What core does with its tools' calls, by tool name. */
   tools?: Record<string, ToolTraits>;
+  /** What Settings shows under its switch, by key; its server reads them. */
+  settings?: Record<string, Setting>;
+}
+
+/**
+ * Provisional, shaped by web search's key. A secret is saved apart from
+ * settings.json, in auth.json under its key, which is unique across Bica,
+ * and the browser only learns whether it's set.
+ */
+export interface Setting {
+  type: 'secret';
+  label: string;
+  /** Where to get one. */
+  link?: { label: string; url: string };
 }
 
 /** Provisional. */
@@ -68,9 +84,21 @@ export type Slot = {
   load: () => Promise<{ default: Component<ToolRowProps> }>;
 };
 
+/**
+ * How the generic tool row draws a call, on or off, so past calls keep
+ * their look. Provisional, shaped by web search.
+ */
+export interface ToolLook {
+  /** Short enough for the row's name column. */
+  label?: string;
+  icon?: () => JSX.Element;
+}
+
 export interface ClientExtension {
   manifest: Manifest;
-  slots: Slot[];
+  slots?: Slot[];
+  /** By tool name. */
+  tools?: Record<string, ToolLook>;
 }
 
 export const defineServerExtension = (e: ServerExtension) => e;

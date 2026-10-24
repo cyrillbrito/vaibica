@@ -2,6 +2,7 @@ import { expect, test } from 'bun:test';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
+import type { Manifest } from './contract';
 import { MANIFESTS } from './manifests';
 
 const SRC = join(import.meta.dir, '..');
@@ -20,12 +21,21 @@ const files = (dir: string): string[] =>
       );
 
 // Deleting an extension's folder and its line in the lists should leave
-// nothing behind (docs/extensions.md): core quotes no extension's id or tool.
+// nothing behind (docs/extensions.md): core neither quotes an extension's
+// id, tools, or settings, nor uses them as keys.
 test('core names no extension', () => {
   const leaks: string[] = [];
-  for (const m of MANIFESTS) {
-    const names = [...new Set([m.id, ...Object.keys(m.tools ?? {})])];
-    const quoted = new RegExp(`['"\`](${names.join('|')})['"\`]`);
+  for (const m of MANIFESTS as readonly Manifest[]) {
+    const names = [
+      ...new Set([
+        m.id,
+        ...Object.keys(m.tools ?? {}),
+        ...Object.keys(m.settings ?? {}),
+      ]),
+    ].join('|');
+    const quoted = new RegExp(
+      `['"\`](${names})['"\`]|(^|[{,\\s])(${names})\\??:`,
+    );
     for (const file of files(SRC))
       readFileSync(file, 'utf8')
         .split('\n')

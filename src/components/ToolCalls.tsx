@@ -10,6 +10,7 @@ import {
   onSettled,
 } from 'solid-js';
 
+import { toolLook } from '#lib/extensions';
 import { useSessions } from '#lib/sessions';
 import { useStepDetail } from '#lib/step-detail';
 import { createStopwatch, formatDuration, formatLive } from '#lib/time';
@@ -24,8 +25,6 @@ import {
   FileEditIcon,
   FileReadIcon,
   FileWriteIcon,
-  GlobeIcon,
-  SearchIcon,
   SessionIcon,
   SpinnerIcon,
   TerminalIcon,
@@ -76,7 +75,9 @@ function ToolRow(props: { call: ToolCall }) {
       <summary class={ROW}>
         <StatusIcon name={props.call.name} status={props.call.status} />
         <span class={[LABEL, props.call.status === 'running' && 'shimmer']}>
-          {NAMES[props.call.name] ?? props.call.name}
+          {NAMES[props.call.name] ??
+            toolLook(props.call.name)?.label ??
+            props.call.name}
         </span>
         <Show
           when={summary()}
@@ -198,10 +199,8 @@ export function RowChevron() {
 /** The name column; fixed width so every row's summary starts at the same x. */
 export const LABEL = 'w-14 shrink-0 truncate';
 
-// Short enough for the name column.
+// Short enough for the name column. Extensions add their own.
 const NAMES: Record<string, string> = {
-  web_search: 'search',
-  web_fetch: 'fetch',
   start_session: 'session',
   session_start: 'session',
   codemode: 'code',
@@ -214,15 +213,14 @@ const ICONS: Record<string, () => JSX.Element> = {
   read: FileReadIcon,
   write: FileWriteIcon,
   edit: FileEditIcon,
-  web_search: SearchIcon,
-  web_fetch: GlobeIcon,
   start_session: SessionIcon,
   session_start: SessionIcon,
   codemode: CodeIcon,
 };
 
 /** The icon for a tool, for rows and the group's stack. */
-export const toolIcon = (name: string) => ICONS[name] ?? ToolIcon;
+export const toolIcon = (name: string) =>
+  ICONS[name] ?? toolLook(name)?.icon ?? ToolIcon;
 
 function StatusIcon(props: { name: string; status: ToolStatus }) {
   const Icon = dynamic(() => toolIcon(props.name));

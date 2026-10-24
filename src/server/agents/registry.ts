@@ -11,8 +11,6 @@ import type { AgentId } from '#lib/agents';
 import { Codemode } from '#server/agent/tools/codemode';
 import { CodingTools, HubFileTools } from '#server/agent/tools/coding';
 import { ToolSummary } from '#server/agent/tools/summary';
-import { createWebTools } from '#server/agent/tools/web';
-import { exaKey } from '#server/providers';
 import { SessionDoc, agentIdOf } from '#server/sessions/session-doc';
 import { HubSessionTools, SessionTools } from '#server/sessions/tools';
 import { HubTerminalTools, TerminalTools } from '#server/terminals';
@@ -38,8 +36,6 @@ const AGENTS: Record<AgentId, Agent> = { coding, assistant, night, hub };
 const PACKS: Record<ToolPack, Extension> = {
   'coding-tools': CodingTools,
   'terminal-tools': TerminalTools,
-  // Web tools read the Exa key per call, so adding one needs no restart.
-  web: createWebTools(exaKey),
   'session-tools': SessionTools,
   codemode: Codemode,
   'hub-file-tools': HubFileTools,

@@ -8,7 +8,7 @@ Connect a provider with a plan sign-in, such as Claude Max or ChatGPT Plus, or w
 
 A ChatGPT plan can sign in two ways: Sign in with ChatGPT under OpenAI, or the older OpenAI Codex (legacy). [Voice calls and dictation](./voice.md) need the legacy one.
 
-Exa isn't a model provider. Its key turns on the agent's web search and fetch ([tools.md](./tools.md)), and the free plan is enough.
+Exa isn't a model provider, so its key lives under the web search [extension](./extensions.md) in Settings → Extensions, not here ([tools.md](./tools.md#web-search)).
 
 ## More than one account
 

@@ -40,10 +40,6 @@ const GUIDES: Record<string, Pick<Account, 'about' | 'link'>> = {
       'Sign in with a ChatGPT Plus or Pro plan, or add an API key (billed per use). Voice calls and dictation need OpenAI Codex (legacy) instead.',
     link: { label: 'API keys', url: 'https://platform.openai.com/api-keys' },
   },
-  exa: {
-    about: "The agents' web search and page fetch. The free plan is enough.",
-    link: { label: 'API keys', url: 'https://dashboard.exa.ai/api-keys' },
-  },
 };
 
 // Only what's saved here counts: Bica reads no keys from the environment.
@@ -99,10 +95,8 @@ async function accounts(): Promise<Account[]> {
     }),
   );
   const featured = Object.keys(GUIDES);
-  // Exa isn't a model provider, so it goes after them. A plan's accounts
-  // stay together, in the order they're used.
+  // A plan's accounts stay together, in the order they're used.
   const rank = (a: Account): number => {
-    if (a.id === 'exa') return Infinity;
     const base = baseOf(a.id);
     const within = accountsOf(models, base).indexOf(a.id) / 100;
     return (
@@ -110,19 +104,7 @@ async function accounts(): Promise<Account[]> {
       within
     );
   };
-  const exa: Account = {
-    id: 'exa',
-    name: 'Exa',
-    email: null,
-    plan: null,
-    place: null,
-    about: GUIDES.exa!.about,
-    link: GUIDES.exa!.link,
-    status: await status('exa'),
-    methods: [{ type: 'api_key', label: 'Add key' }],
-    addAccount: false,
-  };
-  return [...list.filter((a) => !!a), exa].sort((a, b) => rank(a) - rank(b));
+  return list.filter((a) => !!a).sort((a, b) => rank(a) - rank(b));
 }
 
 type Run = {
@@ -151,15 +133,6 @@ async function dropUnsigned() {
       models.deleteProvider(p.id);
       await forgetAccount(p.id);
     }
-}
-
-// Exa has no pi-ai provider: its sign-in is one prompt for the key.
-async function exaSignIn(interaction: AuthInteraction) {
-  const key = (
-    await interaction.prompt({ type: 'secret', message: 'Exa API key' })
-  ).trim();
-  if (!key) throw new Error('Expected a key');
-  await credentials.modify('exa', async () => ({ type: 'api_key', key }));
 }
 
 /** Starts the sign-in of another account of a plan. */
@@ -194,8 +167,7 @@ async function refuseTwin(id: string) {
 
 /** Runs a provider's sign-in; its steps show on `accounts`. */
 export async function signIn(id: string, type: AuthType) {
-  if (id !== 'exa' && !models.getProvider(id))
-    throw new Error(`Unknown provider ${id}`);
+  if (!models.getProvider(id)) throw new Error(`Unknown provider ${id}`);
   current?.abort.abort();
   const run: Run = {
     state: {
@@ -273,11 +245,9 @@ export async function signIn(id: string, type: AuthType) {
   const device = await deviceId();
   void (async () => {
     try {
-      if (id === 'exa') await exaSignIn(interaction);
-      else
-        await models.login(id, type, interaction, {
-          getDeviceId: () => device,
-        });
+      await models.login(id, type, interaction, {
+        getDeviceId: () => device,
+      });
       if (type === 'oauth') {
         state.progress = 'Checking the account…';
         update();
@@ -310,8 +280,7 @@ export async function cancel() {
 }
 
 export async function signOut(id: string) {
-  if (id === 'exa') await credentials.delete('exa');
-  else await models.logout(id);
+  await models.logout(id);
   await forgetAccount(id);
   forgetLimits(id);
   if (isExtra(id)) models.deleteProvider(id);

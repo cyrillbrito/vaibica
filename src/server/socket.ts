@@ -48,7 +48,7 @@ import {
   watchConversation,
   watchSessions,
 } from '#server/sessions';
-import { applyExtensions } from '#server/extensions';
+import { updateExtension, watchExtensions } from '#server/extensions';
 import { updateSettings, watchModels } from '#server/providers';
 import { wsLogger } from '#server/ws-log';
 import {
@@ -130,10 +130,12 @@ const calls: Handlers = {
     await updateSettings(change);
     if (change.hubModel !== undefined || change.hubFolder !== undefined)
       await updateHub();
-    if (change.extensions) {
-      await applyExtensions();
-      await resummarize();
-    }
+    return null;
+  },
+  'extension.update': async (change) => {
+    await updateExtension(change);
+    // A switch changes what sessions wait on.
+    if (change.on !== undefined) await resummarize();
     return null;
   },
   'project.add': async ({ path }) => addProject(path),
@@ -337,6 +339,7 @@ const topics: {
   projects: (_params, sink) => watchProjects(sink.snapshot),
   models: (_params, sink) => watchModels(sink.snapshot),
   accounts: (_params, sink) => watchAccounts(sink.snapshot),
+  extensions: (_params, sink) => watchExtensions(sink.snapshot),
   'plan.usage': (_params, sink) => watchPlanUsage(sink.snapshot),
   conversation: ({ id }, sink, have) => watchConversation(id, sink, have),
   'git.status': (params, sink) => watchStatus(ref(params), sink.snapshot),
