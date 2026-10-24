@@ -107,6 +107,7 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 - [self-hosted-auth.md](docs/explorations/self-hosted-auth.md): a token for the socket, and the DNS rebinding hole.
 - [themes.md](docs/explorations/themes.md): editor color themes.
 - [ui-hierarchy.md](docs/explorations/ui-hierarchy.md): what the side panel next to a session belongs to.
+- [voice-and-hub.md](docs/explorations/voice-and-hub.md): what's left from OpenAI's GPT-Live and Codex voice for calls and the hub.
 - [work-lifecycle.md](docs/explorations/work-lifecycle.md): from a first question to a merged pull request.
 
 `docs/inspiration/` holds screenshots of other agent UIs, as ideas, not specs.

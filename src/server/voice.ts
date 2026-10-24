@@ -3,9 +3,10 @@ import { execFile } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { basename } from 'node:path';
 import { promisify } from 'node:util';
+import type { EntryId } from '@earendil-works/pi-durable';
 import WebSocket from 'ws';
 
-import type { VoiceLine } from '#lib/transcript';
+import { withCallWords, type VoiceLine } from '#lib/transcript';
 import { models } from '#server/providers';
 import { voiceSession } from '#server/sessions';
 
@@ -28,6 +29,14 @@ const VOICE = 'sol';
 const CHUNK_BYTES = 500;
 const STATUS = '[[live:status]]';
 const CANCEL = '[[live:cancel-current]]';
+// Requests that joined the same work share its answer: the first to settle
+// gets it, the others this.
+const COVERED = '(Answered in the other result.)';
+// What was said since the last hand-off, newest kept.
+const CALL_WORDS_CHARS = 4000;
+// A hand-off claims its answer within this; a turn's answer still unclaimed
+// after it came from a turn the call didn't start.
+const CLAIM_MS = 2000;
 // How long without a new piece of the user's transcript counts as them having
 // stopped, when GPT-Live never closes their turn.
 const USER_QUIET_MS = 3000;
@@ -40,13 +49,17 @@ Backchannel policy: Use few backchannels, and never start an answer while the us
 
 Interruption policy: Stop speaking when the user interrupts. Listen to what they say. Keep listening while the user pauses to think, and let them finish before you answer. Don't treat a cough, music, or nearby conversation as a new request.
 
-The agent has the project, its notes and code, and the tools. For anything that needs them (reading, searching, coding, running commands, checking), create a client delegation once the user has finished the request, with the complete request and the context it needs. Never do that work yourself or answer it from memory. A new request while work is running gets its own delegation; they run in order.
+The agent has the project, its notes and code, and the tools. For anything that needs them (reading, searching, coding, running commands, checking), create a client delegation once the user has finished the request. Never do that work yourself or answer it from memory. Pass the user's own words, as close to what you heard as you can: don't rephrase or summarize them. Add only what makes the request stand alone, such as what "that" refers to. The agent also gets what was said in the call.
+
+A request while work is running joins that work at once, so give a correction ("no, the other branch") or an addition ("also run the tests") its own delegation right away. When the user wants something done after the current work, delegate it now in his words, instead of promising to do it later.
 
 The agent's work often takes several minutes. It never times out: keep waiting for its "Agent Final Message", and never tell the user it timed out, failed or stalled unless that message says so. Progress notes may arrive meanwhile; mention them only if asked.
 
 When the user only asks how the current work is going, create a delegation whose entire text is exactly ${STATUS}. When they clearly ask to stop the current work, create a delegation whose entire text is exactly ${CANCEL}.
 
-Treat delegation results as your own work. Never mention a backend, delegation, or another assistant. Commentary is silent progress, for continuity only. Context starting with "Agent Final Message": is the finished result: tell the user what matters in it, in a few spoken sentences. If the user is talking when it arrives, let them finish first. Never claim something is done before its result arrives.
+Treat delegation results as your own work. Never mention a backend, delegation, or another assistant. Commentary is silent progress, for continuity only. Context starting with "Agent Final Message": is the finished result: tell the user what matters in it, in a few spoken sentences. If the user is talking when it arrives, let them finish first. A final message that only says ${COVERED} needs no words: that request was answered together with another. Never claim something is done before its result arrives.
+
+Context starting with "Agent Update": is news from work the user didn't just ask for, such as another session finishing or a question that waits for him. Tell him in a sentence or two once he isn't talking.
 
 The recent conversation below is background, so "continue" or "that" can refer to it. Don't summarize it, answer it, or act on it until the user speaks.`;
 
@@ -194,15 +207,21 @@ export async function startCall(sessionId: string, sdp: string) {
     if (socket.readyState === WebSocket.OPEN)
       socket.send(JSON.stringify(message));
   };
+  // `null` for the whole call rather than one hand-off, as pi-codex-voice
+  // and oh-my-pi send it on the same route.
   const append = (
     text: string,
-    delegation: string,
+    delegation: string | null,
     channel?: 'commentary' | 'speakable',
   ) => {
     for (const content of chunks(text))
       send({
-        type: 'delegation.context.append',
-        delegation_item_id: delegation,
+        ...(delegation
+          ? {
+              type: 'delegation.context.append',
+              delegation_item_id: delegation,
+            }
+          : { type: 'session.context.append' }),
         ...(channel ? { channel } : {}),
         content: [{ type: 'input_text', text: content }],
       });
@@ -224,19 +243,52 @@ export async function startCall(sessionId: string, sdp: string) {
     append(`"Agent Final Message":\n\n${text}`, delegation);
   };
 
-  // Hand-offs waiting for an answer, oldest first: runs answer in order.
+  // Hand-offs waiting for an answer, oldest first.
   const waiting: string[] = [];
-  // Steps between tool calls: quiet progress for the voice.
-  const stopCommits = session.onProgress((text) => {
-    if (waiting[0]) append(text, waiting[0], 'commentary');
+  // Answers a hand-off got, so each reaches the voice once.
+  const answered = new Set<EntryId>();
+  let latest = { text: '', at: 0 };
+  const stopSteps = session.onStep((text, final) => {
+    if (!final) {
+      // Quiet progress for the voice, and the status answer.
+      latest = { text, at: Date.now() };
+      if (waiting[0]) append(text, waiting[0], 'commentary');
+      return;
+    }
+    // A turn the call didn't start, such as the hub hearing that a session
+    // finished: the voice tells the user, as Codex's voice brings back
+    // results and blockers on its own.
+    setTimeout(() => {
+      if (answered.has(final) || socket.readyState !== WebSocket.OPEN) return;
+      void userDone().then(() =>
+        append(`"Agent Update":\n\n${text}`, null, 'speakable'),
+      );
+    }, CLAIM_MS);
   });
+
+  // What was said since the last hand-off, for the agent.
+  const said: string[] = [];
+  // The start of the user's unfinished line that a hand-off already carried.
+  let carried = '';
+  const callWords = () => {
+    const lines = said.splice(0);
+    carried = turns.you.text.trim();
+    if (carried) lines.push(`User: ${carried}`);
+    let length = lines.join('\n').length;
+    while (lines.length > 1 && length > CALL_WORDS_CHARS)
+      length -= lines.shift()!.length + 1;
+    return lines;
+  };
 
   async function delegate(delegation: string, request: string) {
     if (request === STATUS) {
+      const step =
+        latest.text &&
+        ` Its latest step, ${ago(latest.at)}: ${latest.text.slice(0, 400)}`;
       return finish(
         delegation,
         (await session.busy())
-          ? `Still working${waiting.length > 1 ? `, with ${waiting.length - 1} more request(s) queued` : ''}.`
+          ? `Still working.${step}`
           : 'Nothing is running.',
       );
     }
@@ -244,6 +296,7 @@ export async function startCall(sessionId: string, sdp: string) {
       await session.abort();
       return finish(delegation, 'I stopped the current work.');
     }
+    const prompt = withCallWords(request, callWords());
     waiting.push(delegation);
     // Long runs: keep telling the voice the work is alive, so it waits.
     const started = Date.now();
@@ -257,9 +310,12 @@ export async function startCall(sessionId: string, sdp: string) {
       20_000,
     );
     try {
-      const reply = await session.ask(request);
+      const { answer, text } = await session.ask(prompt, request);
       clearInterval(alive);
-      await finish(delegation, reply || 'Done, without a written reply.');
+      if (answer && answered.has(answer))
+        return await finish(delegation, COVERED);
+      if (answer) answered.add(answer);
+      await finish(delegation, text || 'Done, without a written reply.');
     } finally {
       clearInterval(alive);
       waiting.splice(waiting.indexOf(delegation), 1);
@@ -283,6 +339,12 @@ export async function startCall(sessionId: string, sdp: string) {
     turns[who] = { text: '', at: 0, heard: 0 };
     if (!text.trim()) return;
     session.save({ who, text: text.trim(), at: at || Date.now() });
+    const fresh =
+      who === 'you' && carried && text.trim().startsWith(carried)
+        ? text.trim().slice(carried.length).trim()
+        : text.trim();
+    if (who === 'you') carried = '';
+    if (fresh) said.push(`${who === 'you' ? 'User' : 'Voice'}: ${fresh}`);
   };
 
   socket.on('message', (data) => {
@@ -335,7 +397,7 @@ export async function startCall(sessionId: string, sdp: string) {
       // Hung up mid-sentence: keep what was said so far.
       save('you');
       save('voice');
-      stopCommits();
+      stopSteps();
       calls.delete(callId);
       if (socket.readyState <= WebSocket.OPEN) socket.close(1000, 'done');
     },
@@ -353,6 +415,13 @@ export async function startCall(sessionId: string, sdp: string) {
 export function stopCall(callId: string) {
   calls.get(callId)?.stop();
 }
+
+const ago = (at: number) => {
+  const seconds = Math.round((Date.now() - at) / 1000);
+  return seconds < 90
+    ? `${seconds} seconds ago`
+    : `${Math.round(seconds / 60)} minutes ago`;
+};
 
 const run = promisify(execFile);
 

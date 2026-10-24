@@ -2,10 +2,11 @@ import 'server-only';
 import {
   LiveDoc,
   type ConversationId,
+  type EntryId,
   type EntryRecord,
 } from '@earendil-works/pi-durable';
 
-import { VOICE_ENTRY, type VoiceLine } from '#lib/transcript';
+import { VOICE_ENTRY, withoutCallWords, type VoiceLine } from '#lib/transcript';
 import { context, getHarness } from '#server/agent';
 import { VOICE_TITLE, retitle } from './names';
 import { keepCopies, keepModel, recordSender } from './prompts';
@@ -40,7 +41,7 @@ export async function voiceSession(sessionId: string) {
       for (const entry of page.items) {
         const role = entry.model?.at(-1)?.role;
         if (role !== 'user' && role !== 'assistant') continue;
-        const text = entryText(entry).slice(0, 1500);
+        const text = withoutCallWords(entryText(entry)).slice(0, 1500);
         if (!text) continue;
         lines.unshift(`${role === 'user' ? 'User' : 'Agent'}: ${text}`);
         if ((length += text.length) > chars) break;
@@ -48,43 +49,62 @@ export async function voiceSession(sessionId: string) {
       return lines.join('\n\n');
     },
 
-    /** The text of each step between tool calls, as the agent works. */
-    onProgress(listener: (text: string) => void) {
+    /**
+     * The text of each step the agent writes: `final` for the answer that
+     * ends a turn, else a step between tool calls. Errors and aborts are left
+     * out: their hand-off says it stopped.
+     */
+    onStep(listener: (text: string, final: EntryId | undefined) => void) {
+      // An entry can be committed again, e.g. when its thinking folds.
+      const seen = new Set<EntryId>();
       return harness.subscribeCommits(({ changes }) => {
         for (const change of changes) {
           if (change.type !== 'entry' || change.value.conversationId !== id)
             continue;
           const message = change.value.model?.at(-1);
-          if (message?.role !== 'assistant' || message.stopReason !== 'toolUse')
+          if (message?.role !== 'assistant' || seen.has(change.value.id))
             continue;
+          const { stopReason } = message;
+          if (stopReason !== 'toolUse' && stopReason !== 'stop') continue;
+          seen.add(change.value.id);
           const text = entryText(change.value);
-          if (text) listener(text);
+          if (text)
+            listener(text, stopReason === 'stop' ? change.value.id : undefined);
         }
       });
     },
 
     /**
-     * Hands a request to the agent, after anything already queued, and
-     * resolves with its reply. A session started for the call is named
-     * after what was first asked.
+     * Hands a request to the agent and resolves with its reply. While the
+     * agent works, the request joins that work, as Codex's voice does, so a
+     * correction lands before the outdated work is done. A session started
+     * for the call is named after what was first asked.
      */
-    async ask(request: string) {
+    async ask(
+      request: string,
+      title = request,
+    ): Promise<{ answer?: EntryId; text: string }> {
       if (!named) {
         named = true;
-        void retitle(id, request, VOICE_TITLE);
+        void retitle(id, title, VOICE_TITLE);
       }
       await keepCopies(id);
       await keepModel(id);
       await recordSender(id, 'user');
       const submission = await conversation.submit(
-        { type: 'input', content: request, whenBusy: 'followUp' },
+        { type: 'input', content: request, whenBusy: 'steer' },
         context,
       );
       const settled = await submission.wait(context);
       const answer = settled.answer;
       return answer
-        ? entryText(await harness.commit((tx) => tx.entry(answer), context))
-        : `It stopped without an answer (${settled.reason}).`;
+        ? {
+            answer,
+            text: entryText(
+              await harness.commit((tx) => tx.entry(answer), context),
+            ),
+          }
+        : { text: `It stopped without an answer (${settled.reason}).` };
     },
 
     /** What was said, in the transcript but outside the agent's context. */

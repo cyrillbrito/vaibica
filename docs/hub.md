@@ -24,9 +24,12 @@ The hub runs as the Hub [agent](./agents.md), with these tools:
 
 - `list` and the session tools ([tools.md](./tools.md#other-sessions)), across every project.
 - `read` anywhere, and `write` and `edit` only inside its folder.
+- `terminal_read` on any terminal, to see why a worker's tests or dev server failed without spending the worker's turn.
 - `ask`.
 
-It has no bash. With a shell, a coordinator drifts into doing the work itself.
+It has no bash, and it reads terminals but never types into them. With a shell, a coordinator drifts into doing the work itself. A hub made before a tool was added gets it the next time its page opens.
+
+On a [voice call](./voice.md), what the hub says after a note is spoken too, so you hear results and questions without asking.
 
 ## How it behaves
 
@@ -45,3 +48,4 @@ When a session finishes, the hub checks the report against what it asked for, th
 - OpenClaw, [session tools](https://docs.openclaw.ai/session-tool): visibility scopes, and worker reports with status, result, and notes.
 - Devin, [managed Devins](https://docs.devin.ai/work-with-devin/advanced-capabilities): the coordinator wakes when a child finishes or needs input.
 - [agent-board](https://github.com/questpie/agent-board): "long-running agent work fails when the plan lives only in chat."
+- openai/codex [#36404](https://github.com/openai/codex/issues/36404): the backend behind ChatGPT's voice gets thread tools much like the hub's, including `read_thread_terminal`.

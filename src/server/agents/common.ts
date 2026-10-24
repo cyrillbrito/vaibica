@@ -49,7 +49,8 @@ export type ToolPack =
   | 'session-tools'
   | 'codemode'
   | 'hub-file-tools'
-  | 'hub-session-tools';
+  | 'hub-session-tools'
+  | 'hub-terminal-tools';
 
 /** What a section reads: the session's tools, folder, and kept copies. */
 export interface SectionInput {
@@ -160,7 +161,10 @@ const TOOL_GUIDE: ToolGuide[] = [
 const guide = (s: SectionInput) =>
   TOOL_GUIDE.flatMap((g) => {
     const tools = g.tools.filter((t) => s.tools.includes(t));
-    return tools.length ? [{ ...g, tools }] : [];
+    // A group's rules are about all of its tools, e.g. the hub's terminal_read
+    // alone doesn't start terminals.
+    const rules = tools.length === g.tools.length ? g.rules : undefined;
+    return tools.length ? [{ ...g, tools, rules }] : [];
   });
 
 /** What every agent has: its tools and their rules, and its folder's files. */

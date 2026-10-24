@@ -12,4 +12,4 @@ export {
   watchTerminals,
   writeTerminal,
 } from './terminals';
-export { terminalState, TerminalTools } from './tools';
+export { HubTerminalTools, terminalState, TerminalTools } from './tools';

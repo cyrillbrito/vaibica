@@ -1,5 +1,6 @@
 import 'server-only';
 import { mkdir } from 'node:fs/promises';
+import { AgentDoc } from '@earendil-works/pi-durable';
 
 import { context, getHarness } from '#server/agent';
 import { agentChoice, getAgent, selection } from '#server/agents';
@@ -26,7 +27,19 @@ async function findHub() {
 /** The hub's id, started in the hub folder first if there is none. */
 export async function openHub() {
   const open = await findHub();
-  if (open) return open.id;
+  if (open) {
+    // Extensions are stored by name when the hub starts, so one added to
+    // the Hub agent since then reaches it here.
+    const conversation = await getConversation(open.id);
+    const want = selection(getAgent('hub')) ?? [];
+    const stored = (
+      await (await getHarness()).snapshot(AgentDoc, conversation.id, context)
+    )?.extensions;
+    const has = new Set(Array.isArray(stored) ? stored : []);
+    if (want.some((e) => !has.has(e.name)))
+      await conversation.configure({ extensions: want }, context);
+    return open.id;
+  }
   const folder = await hubFolder();
   if (!folder) throw new Error('Pick a folder for the hub in Settings first');
   await mkdir(folder, { recursive: true });
