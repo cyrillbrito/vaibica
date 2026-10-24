@@ -59,7 +59,7 @@ import {
   useFirst,
   watchAccounts,
 } from '#server/providers';
-import { startCall, stopCall } from '#server/voice';
+import { startCall, stopCall, transcribe } from '#server/voice';
 import { watchPlanUsage } from '#server/providers';
 import {
   addProject,
@@ -194,6 +194,8 @@ const calls: Handlers = {
     return null;
   },
   'voice.start': async ({ id, sdp }) => startCall(id, sdp),
+  'voice.transcribe': async ({ audio, mimeType }) =>
+    transcribe(audio, mimeType),
   'voice.stop': async ({ callId }) => {
     stopCall(callId);
     return null;

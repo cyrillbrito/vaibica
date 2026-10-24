@@ -32,12 +32,12 @@ const GUIDES: Record<string, Pick<Account, 'about' | 'link'>> = {
   },
   'openai-codex': {
     about:
-      'Sign in with a ChatGPT Plus or Pro plan: sessions get the Codex models, and voice calls use it.',
+      'Sign in with a ChatGPT Plus or Pro plan: sessions get the Codex models, and voice calls and dictation use it.',
     link: null,
   },
   openai: {
     about:
-      'Sign in with a ChatGPT Plus or Pro plan, or add an API key (billed per use).',
+      'Sign in with a ChatGPT Plus or Pro plan, or add an API key (billed per use). Voice calls and dictation need OpenAI Codex (legacy) instead.',
     link: { label: 'API keys', url: 'https://platform.openai.com/api-keys' },
   },
   exa: {

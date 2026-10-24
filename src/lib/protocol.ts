@@ -458,6 +458,11 @@ export interface Calls {
     result: { sdp: string; callId: string };
   };
   'voice.stop': { args: { callId: string }; result: null };
+  // Dictation: a recording in, its text out. `audio` is base64.
+  'voice.transcribe': {
+    args: { audio: string; mimeType: string };
+    result: { text: string };
+  };
   // Starts a sign-in (replacing one running); follow it on `accounts`.
   'account.signIn': {
     args: { id: string; type: 'oauth' | 'api_key' };

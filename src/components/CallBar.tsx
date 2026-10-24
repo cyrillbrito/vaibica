@@ -19,8 +19,10 @@ const MAX = 20;
  * loud. Five bars in a fixed box don't move anything else. While the agent
  * works, a slow wave runs through them, so the call doesn't look dead.
  */
-function Meter(props: {
+export function Meter(props: {
   who?: 'you' | 'voice';
+  // Instead of the call's levels, e.g. dictation's mic.
+  level?: () => number;
   still: boolean;
   working: boolean;
 }) {
@@ -28,18 +30,22 @@ function Meter(props: {
   // Mirrored for the frame loop, which runs outside any tracking scope.
   let still = true;
   let working = false;
+  let read: (() => number) | undefined;
   createEffect(
-    () => [props.still, props.working] as const,
-    ([s, w]) => {
+    () => [props.still, props.working, props.level] as const,
+    ([s, w, l]) => {
       still = s;
       working = w;
+      read = l;
     },
   );
   onSettled(() => {
     // Eased towards the level, so bars glide instead of flicker.
     const shown = BARS.map(() => 0);
     let frame = requestAnimationFrame(function draw(time) {
-      const loud = still ? 0 : Math.max(level('you'), level('voice'));
+      const loud = still
+        ? 0
+        : (read?.() ?? Math.max(level('you'), level('voice')));
       bars.forEach((bar, i) => {
         // About one sweep a second, left to right.
         const wave = working

@@ -8,6 +8,8 @@ import {
   untrack,
 } from 'solid-js';
 
+import { Meter } from './CallBar';
+import { createDictation } from '#lib/dictation';
 import { imageUrl, toPromptImage } from '#lib/images';
 import type { PromptImage } from '#lib/protocol';
 import Alert from './ui/Alert';
@@ -16,9 +18,11 @@ import { createDropZone } from './ui/DropZone';
 import { Button, IconButton } from './ui/Button';
 import {
   ArrowUpIcon,
+  CheckIcon,
   ChevronIcon,
   CloseIcon,
   ImageIcon,
+  MicIcon,
   QueueIcon,
   SpinnerIcon,
   StopIcon,
@@ -243,6 +247,29 @@ export default function Composer(props: {
     }
   };
 
+  // Phones only: their keyboards' own dictation is the weak spot.
+  const touch = matchMedia('(pointer: coarse)').matches;
+  const dictation = createDictation((text) => {
+    const before = textarea.value.slice(0, textarea.selectionStart);
+    const space = before && !/\s$/.test(before) ? ' ' : '';
+    textarea.setRangeText(
+      space + text,
+      textarea.selectionStart,
+      textarea.selectionEnd,
+      'end',
+    );
+    save();
+  });
+  const dictating = () => dictation.phase() !== 'idle';
+  const dictate = () => {
+    setProblem('');
+    dictation
+      .toggle()
+      ?.catch((error) =>
+        setProblem(error instanceof Error ? error.message : String(error)),
+      );
+  };
+
   const drop = createDropZone({
     accept: 'image/',
     noun: 'image',
@@ -351,7 +378,11 @@ export default function Composer(props: {
           ref={(el) => (textarea = el)}
           name="prompt"
           rows="1"
-          class="max-h-[40vh] min-h-8 resize-none bg-transparent py-1 text-read outline-none [field-sizing:content] placeholder:text-muted"
+          readonly={dictating()}
+          class={[
+            'max-h-[40vh] min-h-8 resize-none bg-transparent py-1 text-read outline-none transition-opacity duration-200 [field-sizing:content] placeholder:text-muted',
+            dictating() && 'opacity-40',
+          ]}
           placeholder={
             props.busy
               ? (props.busyPlaceholder ?? 'Queue a follow-up…')
@@ -476,30 +507,84 @@ export default function Composer(props: {
           <Alert>{problem()}</Alert>
         </Show>
         <div class="-ml-1.5 flex items-center gap-0.5">
+          <div class={dictating() ? 'hidden' : 'contents'}>
+            <IconButton
+              size="md"
+              title="Attach images"
+              hidden={props.hold != null}
+              onClick={() => picker.click()}
+            >
+              <ImageIcon />
+            </IconButton>
+            <input
+              ref={(el) => (picker = el)}
+              type="file"
+              accept="image/*"
+              multiple
+              hidden
+              onChange={(e) => {
+                const files = [...(e.currentTarget.files ?? [])];
+                // Cleared so picking the same file again still fires.
+                e.currentTarget.value = '';
+                void attach(files);
+              }}
+            />
+            {props.controls}
+          </div>
+          <Show when={dictating()}>
+            <div class="appear flex min-w-0 items-center gap-2.5 pl-1.5">
+              <Show
+                when={dictation.phase() === 'recording'}
+                fallback={<span class="shimmer text-ui">Writing it out…</span>}
+              >
+                <IconButton
+                  size="md"
+                  round
+                  title="Discard the recording"
+                  onClick={dictation.cancel}
+                >
+                  <CloseIcon />
+                </IconButton>
+                <Meter
+                  who="you"
+                  still={false}
+                  working={false}
+                  level={dictation.level}
+                />
+                <Elapsed since={dictation.started()} />
+              </Show>
+            </div>
+          </Show>
+          <div class="ml-auto" />
           <IconButton
             size="md"
-            title="Attach images"
-            hidden={props.hold != null}
-            onClick={() => picker.click()}
+            round
+            hidden={!touch}
+            variant={dictation.phase() === 'recording' ? 'primary' : undefined}
+            title={
+              dictation.phase() === 'recording'
+                ? 'Done, write it out'
+                : 'Dictate'
+            }
+            aria-pressed={dictation.phase() === 'recording' ? 'true' : 'false'}
+            disabled={dictation.phase() === 'transcribing'}
+            onClick={dictate}
           >
-            <ImageIcon />
+            <Show
+              when={dictation.phase() === 'transcribing'}
+              fallback={
+                <Show
+                  when={dictation.phase() === 'recording'}
+                  fallback={<MicIcon />}
+                >
+                  <CheckIcon />
+                </Show>
+              }
+            >
+              <SpinnerIcon />
+            </Show>
           </IconButton>
-          <input
-            ref={(el) => (picker = el)}
-            type="file"
-            accept="image/*"
-            multiple
-            hidden
-            onChange={(e) => {
-              const files = [...(e.currentTarget.files ?? [])];
-              // Cleared so picking the same file again still fires.
-              e.currentTarget.value = '';
-              void attach(files);
-            }}
-          />
-          {props.controls}
-          <div class="ml-auto" />
-          {props.actions}
+          <div class={dictating() ? 'hidden' : 'contents'}>{props.actions}</div>
           <Show when={props.busy && props.onStop}>
             <IconButton
               class="ml-1 bg-active text-fg [&_svg]:size-3"
@@ -567,7 +652,7 @@ export default function Composer(props: {
           {/* Faded while there's nothing to send, solid once there is; while
             the agent works, the arrow turns into "queue". */}
           <IconButton
-            hidden={!!props.sendLabel}
+            hidden={!!props.sendLabel || dictating()}
             class={[
               'ml-1 [&_svg]:size-3.5 [&_svg]:stroke-[2.5]',
               empty() && 'opacity-30 motion-safe:scale-90',
@@ -596,5 +681,18 @@ export default function Composer(props: {
         <drop.Overlay />
       </form>
     </div>
+  );
+}
+
+// A recording's length, m:ss, ticking each second.
+function Elapsed(props: { since: number }) {
+  const [now, setNow] = createSignal(Date.now(), { name: 'dictationNow' });
+  const timer = setInterval(() => setNow(Date.now()), 1000);
+  onCleanup(() => clearInterval(timer));
+  const seconds = () => Math.max(0, Math.floor((now() - props.since) / 1000));
+  return (
+    <span class="text-ui text-muted tabular-nums">
+      {Math.floor(seconds() / 60)}:{String(seconds() % 60).padStart(2, '0')}
+    </span>
   );
 }

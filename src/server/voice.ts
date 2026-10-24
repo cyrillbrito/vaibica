@@ -59,7 +59,9 @@ async function route() {
       sideband: (callId: string) =>
         `wss://api.openai.com/v1/live/${encodeURIComponent(callId)}`,
     };
-  throw new Error('Voice needs a ChatGPT sign-in: Settings → Providers');
+  throw new Error(
+    'Voice and dictation need the OpenAI Codex (legacy) sign-in: Settings → Providers',
+  );
 }
 
 // The ChatGPT account comes from the sign-in's JWT.
@@ -87,6 +89,41 @@ function headers(token: string, id: string) {
     'thread-id': id,
     ...(account ? { 'chatgpt-account-id': account } : {}),
   };
+}
+
+/**
+ * Dictation, on the endpoint Codex Desktop dictates with. ChatGPT keeps the
+ * recording for 30 days.
+ */
+export async function transcribe(audio: string, mimeType: string) {
+  const { token } = await route();
+  const account = accountOf(token);
+  const form = new FormData();
+  const ext = mimeType.split(/[/;]/)[1] ?? 'webm';
+  form.append(
+    'file',
+    new Blob([Buffer.from(audio, 'base64')], { type: mimeType }),
+    `dictation.${ext}`,
+  );
+  const response = await fetch('https://chatgpt.com/backend-api/transcribe', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'User-Agent': `Codex Desktop/${CLIENT_VERSION}`,
+      originator: 'Codex Desktop',
+      ...(account ? { 'ChatGPT-Account-Id': account } : {}),
+    },
+    body: form,
+  });
+  if (!response.ok)
+    throw new Error(
+      `Dictation failed: ${response.status} ${await response.text()}`.slice(
+        0,
+        300,
+      ),
+    );
+  const { text } = (await response.json()) as { text?: string };
+  return { text: text?.trim() ?? '' };
 }
 
 type Call = { socket: WebSocket; stop: () => void };

@@ -1,4 +1,4 @@
-# Voice calls
+# Voice calls and dictation
 
 A voice call lets you talk to a session. The sound-wave button next to send starts one, and on the home page it starts a new session with a call on it.
 
@@ -24,9 +24,13 @@ Voice settings, in the context chip's menu, set a session's speed and instructio
 
 While the agent works in silence, Groove Salad from [SomaFM](https://somafm.com) plays quietly, as a sign the agent is still working. It keeps playing when you look at another page or lock the phone, and goes quiet while anyone talks. Background music in the Voice dialog sets its volume on this device, and turning off Sounds in Settings → Appearance silences it. On iOS it plays at the phone's volume.
 
+## Dictation
+
+On a phone, the mic button in the composer records until you tap its check, then writes what you said where the cursor is. While it records, the text is locked and the toolbar shows a level meter, the time, and a cross that throws the recording away. It replaces the keyboard's own dictation, which hears names and code words badly. The recording goes to ChatGPT's transcription, the one Codex Desktop dictates with, and ChatGPT keeps it for 30 days.
+
 ## Sign-in
 
-Calls run on a ChatGPT plan through the OpenAI Codex (legacy) sign-in ([models.md](./models.md#providers)), the way the `pi-live-codex` extension does. That route is unofficial and may break.
+Calls and dictation need the OpenAI Codex (legacy) provider in Settings → Providers ([models.md](./models.md#providers)). The newer Sign in with ChatGPT under OpenAI only covers chat models, so it doesn't work for them. Both run on the plan, the way the `pi-live-codex` extension and Codex Desktop do. That route is unofficial and may break.
 
 ## Limits
 
