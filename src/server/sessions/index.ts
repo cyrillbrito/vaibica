@@ -1,3 +1,4 @@
+import 'server-only';
 // Sessions as Bica sees them: Pi Durable conversations plus a title, a
 // project, the agent it runs as, and the notes between them (docs/sessions.md).
 export { watchSessions, listSessions, sessionWorkspace } from './store';

@@ -9,6 +9,7 @@ export default defineConfig({
     ...solidV2.rules,
     'bica/type-tokens': 'error',
     'bica/radius-tokens': 'error',
+    'bica/server-only': 'error',
   },
   options: {
     typeAware: true,

@@ -1,3 +1,4 @@
+import 'server-only';
 import type { ImageProcessor } from '@earendil-works/pi-durable/tools';
 
 const INLINE = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp']);

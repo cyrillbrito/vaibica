@@ -102,6 +102,7 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 
 - [fast-loading.md](docs/explorations/fast-loading.md): opening, switching, and reconnecting faster on the phone.
 - [distribution.md](docs/explorations/distribution.md): installing and updating `bica`.
+- [source-layout.md](docs/explorations/source-layout.md): the source tree by feature, server and browser code in one folder, and the checks that keep them apart. Read before moving code or adding a feature folder.
 - [self-hosted-auth.md](docs/explorations/self-hosted-auth.md): a token for the socket, and the DNS rebinding hole.
 - [themes.md](docs/explorations/themes.md): editor color themes.
 - [ui-hierarchy.md](docs/explorations/ui-hierarchy.md): what the side panel next to a session belongs to.

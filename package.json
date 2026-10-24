@@ -5,7 +5,11 @@
   "type": "module",
   "imports": {
     "#server/*": "./src/server/*",
-    "#lib/*": "./src/lib/*"
+    "#lib/*": "./src/lib/*",
+    "#features/*": "./src/features/*",
+    "#app/*": "./src/app/*",
+    "#ui/*": "./src/ui/*",
+    "#socket/*": "./src/socket/*"
   },
   "scripts": {
     "dev": "bunx --bun vite dev",

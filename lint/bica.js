@@ -1,3 +1,7 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { builtinModules } from 'node:module';
+import { dirname, join } from 'node:path';
+
 import { definePlugin, defineRule } from '@oxlint/plugins';
 
 // The type scale lives in src/App.css (@theme). Tailwind's own sizes and
@@ -80,7 +84,153 @@ const radiusTokens = defineRule({
   },
 });
 
+// Server code and browser code share feature folders
+// (docs/explorations/source-layout.md). Solid's Vite plugin fails when the
+// browser imports a file marked `import 'server-only'`, but only once a page
+// reaches it; this catches it at lint time. Whatever imports server code is
+// server code too, so the marker climbs the import chain until it would land
+// on a component, which may never carry it.
+const MARKER = /^import ['"]server-only['"];?$/m;
+const BUILTINS = new Set(builtinModules);
+const SERVER_PACKAGES = [
+  'bun',
+  'ws',
+  'virtual:env/server',
+  '@earendil-works/pi-durable',
+  '@earendil-works/pi-ai',
+  '@earendil-works/pi-codemode',
+];
+
+const marked = new Map();
+function isMarked(file) {
+  if (!marked.has(file))
+    marked.set(file, MARKER.test(readFileSync(file, 'utf8')));
+  return marked.get(file);
+}
+
+const aliases = new Map();
+function aliasesFor(file) {
+  let dir = dirname(file);
+  while (!existsSync(join(dir, 'package.json'))) {
+    if (dirname(dir) === dir) return { root: dir, map: {} };
+    dir = dirname(dir);
+  }
+  if (!aliases.has(dir)) {
+    const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'));
+    aliases.set(dir, { root: dir, map: pkg.imports ?? {} });
+  }
+  return aliases.get(dir);
+}
+
+const EXTENSIONS = ['', '.ts', '.tsx', '.js', '/index.ts', '/index.tsx'];
+function resolveLocal(from, spec) {
+  let base;
+  if (spec.startsWith('.')) base = join(dirname(from), spec);
+  else if (spec.startsWith('#')) {
+    const { root, map } = aliasesFor(from);
+    for (const [key, target] of Object.entries(map)) {
+      const prefix = key.replace(/\*$/, '');
+      if (key.endsWith('*') ? spec.startsWith(prefix) : spec === key) {
+        base = join(
+          root,
+          target.replace(/\*$/, '') + spec.slice(prefix.length),
+        );
+        break;
+      }
+    }
+  }
+  if (!base) return null;
+  for (const ext of EXTENSIONS) {
+    const file = base + ext;
+    if (existsSync(file) && !file.endsWith('/') && /\.[jt]sx?$/.test(file)) {
+      return file;
+    }
+  }
+  return null;
+}
+
+function isServerSpec(from, spec) {
+  const bare = spec.replace(/^node:/, '').split('/')[0];
+  if (
+    spec.startsWith('node:') ||
+    BUILTINS.has(bare) ||
+    spec.startsWith('bun:')
+  ) {
+    return true;
+  }
+  if (SERVER_PACKAGES.some((p) => spec === p || spec.startsWith(p + '/'))) {
+    return true;
+  }
+  const file = resolveLocal(from, spec);
+  return file !== null && isMarked(file);
+}
+
+// Type-only imports vanish from the bundle, so they cross freely.
+function isTypeOnly(node) {
+  if (node.importKind === 'type' || node.exportKind === 'type') return true;
+  const specs = node.specifiers ?? [];
+  return (
+    specs.length > 0 &&
+    specs.every((s) => s.importKind === 'type' || s.exportKind === 'type')
+  );
+}
+
+const serverOnly = defineRule({
+  meta: {
+    messages: {
+      needs:
+        "`{{spec}}` is server code, so this file is too: start it with `import 'server-only'`, or import only its types.",
+      component:
+        "Components run in the browser and can't be server-only. Move the server code behind the socket, or import only its types.",
+    },
+  },
+  create(context) {
+    const file = context.filename;
+    // Tests and the test server run under Bun only.
+    if (
+      /\.test\.[jt]sx?$/.test(file) ||
+      /[/\\]src[/\\]testing[/\\]/.test(file)
+    ) {
+      return {};
+    }
+    const tsx = file.endsWith('.tsx');
+    let hasMarker = false;
+    const found = [];
+    const visit = (node) => {
+      const spec = node.source?.value;
+      if (typeof spec !== 'string') return;
+      if (spec === 'server-only') {
+        hasMarker = true;
+        if (tsx) context.report({ node, messageId: 'component' });
+        return;
+      }
+      if (!isTypeOnly(node) && isServerSpec(file, spec))
+        found.push({ node, spec });
+    };
+    return {
+      ImportDeclaration: visit,
+      ExportNamedDeclaration: visit,
+      ExportAllDeclaration: visit,
+      ImportExpression: visit,
+      'Program:exit'() {
+        if (hasMarker) return;
+        for (const { node, spec } of found) {
+          context.report({
+            node,
+            messageId: tsx ? 'component' : 'needs',
+            data: { spec },
+          });
+        }
+      },
+    };
+  },
+});
+
 export default definePlugin({
   meta: { name: 'bica' },
-  rules: { 'type-tokens': typeTokens, 'radius-tokens': radiusTokens },
+  rules: {
+    'type-tokens': typeTokens,
+    'radius-tokens': radiusTokens,
+    'server-only': serverOnly,
+  },
 });

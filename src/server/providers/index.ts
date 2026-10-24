@@ -1,3 +1,4 @@
+import 'server-only';
 // Models, keys, sign-ins, extra plan accounts, and their limits.
 export { accountsReady, models } from './registry';
 export {

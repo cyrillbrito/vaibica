@@ -1,3 +1,4 @@
+import 'server-only';
 // Git and files in a workspace: status, diffs, staging, commits, and the editor.
 export {
   commit,

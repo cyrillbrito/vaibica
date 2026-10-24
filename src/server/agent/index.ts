@@ -1,3 +1,4 @@
+import 'server-only';
 // The Pi Durable runtime: one harness per process, and the agent's own tools.
 // Tool files elsewhere (sessions/tools.ts, terminals/tools.ts) import
 // tools/summary.ts directly, and the harness imports them directly: going

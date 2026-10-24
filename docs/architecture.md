@@ -27,7 +27,7 @@ Bica is a Bun server on the dev machine and a web app that talks to it over one 
 
 ## Server modules
 
-`src/server` is grouped into modules. Each module is a folder with one `index.ts`, and code outside the folder imports only that file, through the `#server/...` and `#lib/...` aliases.
+`src/server` is grouped into modules. Each module is a folder with one `index.ts`, and code outside the folder imports only that file, through the `#server/...` and `#lib/...` aliases. Every server file starts with `import 'server-only'`: Solid's Vite plugin fails when browser code imports one, and the `bica/server-only` lint rule makes any file that imports server code carry the marker too, so a component can't reach it through other files.
 
 - `agent/`: the harness and the agent's own tools ([tools.md](./tools.md)).
 - `providers/`: models, keys, sign-ins, and plan accounts ([models.md](./models.md)).
