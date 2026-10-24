@@ -90,6 +90,20 @@ export function senderOf(text: string): { from?: Sender; text: string } {
 export const VOICE_ENTRY = 'bica.voice';
 export type VoiceLine = { who: 'you' | 'voice'; text: string; at: number };
 
+// A hand-off from a call carries what was said since the last one, as
+// Codex's voice sends a transcript delta, so the agent reads the user's own
+// words and not only the voice's version. The transcript shows those lines
+// already, so the prompt row leaves them out.
+const CALL_WORDS = /\n\n<voice_call>\n[\s\S]*<\/voice_call>$/;
+
+/** A hand-off with the call's lines since the last one appended. */
+export const withCallWords = (request: string, lines: string[]) =>
+  lines.length
+    ? `${request}\n\n<voice_call>\nWhat was said in the voice call since the last request. It is transcribed from speech, so it may hold misheard words, half sentences, and corrections: go by the latest, and ask when a detail is unclear.\n\n${lines.join('\n')}\n</voice_call>`
+    : request;
+
+export const withoutCallWords = (text: string) => text.replace(CALL_WORDS, '');
+
 /** From the agent or a prompt: voice lines and clean ups don't set the status. */
 export const isTurn = (entry: EntryRecord) =>
   entry.kind !== VOICE_ENTRY && entry.kind !== CLEANUP_ENTRY;
@@ -193,7 +207,7 @@ export function toMessages(
                 ? [{ mimeType: b.mimeType, data: b.data }]
                 : [],
             );
-      const sender = senderOf(text);
+      const sender = senderOf(withoutCallWords(text));
       // Whatever you send next answers the questions, card or composer. It
       // moves past the answer's end, so the prompt row's place stays the same.
       const end = messages.at(-1);

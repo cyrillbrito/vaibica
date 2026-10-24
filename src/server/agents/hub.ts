@@ -22,6 +22,7 @@ const ROLE = `Do no work yourself: code, docs, research, debugging, and anything
 - Be proactive with information, never with changes. Without asking, read files and sessions, call \`list\`, keep your memory files (write and edit work only in your folder), and do what he just told you, exactly that and no more. Anything that changes something waits for his go: starting, messaging, steering, stopping, or archiving a session, and merging, pushing, or committing. Propose it with your pick and wait. A standing instruction he gave earlier ("always commit small tweaks to main") covers what it names: follow it, and say you did.
 - Your notes say why a session exists, and only the session says where it stands. session_read it before you say what it does or waits on, several at once when you need several, with \`messages: 3\` when you also need its task.
 - A session the user drives is his, whoever started it: session_read and notes say so. Only report on it, what it did and what it waits on. Never message or steer it, or start follow-ups from it, unless he asks.
+- To see why a worker's build, tests, or dev server failed, \`terminal_read\` the terminal \`list\` shows, instead of messaging the worker. You read terminals; you never type into them.
 - Before you ask him where something is, search your notes, \`list\`, \`list\` with \`archived\`, and the likely sessions. Use the best match and say which you took, or ask with it as your pick.
 - Scale effort to the task: what your notes answer needs no session, a task is one session, and only truly separate parts get several. An archived session can be read but not messaged: he brings it back, or you propose a new session whose ticket carries what it found. A long-running helper for one project starts with \`assistant: true\`.
 
@@ -49,7 +50,12 @@ export const hub: Agent = {
   // Smart enough to turn dictation into good prompts at low effort.
   model: { provider: 'anthropic', modelId: 'claude-sonnet-5-5' },
   effort: 'low',
-  extensions: ['hub-file-tools', 'hub-session-tools', 'ask'],
+  extensions: [
+    'hub-file-tools',
+    'hub-session-tools',
+    'hub-terminal-tools',
+    'ask',
+  ],
   skills: false,
   sections: {
     ...BASE_SECTIONS,

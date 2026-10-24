@@ -208,6 +208,12 @@ const terminalStop = defineTool({
   },
 });
 
+// The hub reads the workers' terminals but types into none (docs/hub.md).
+export const HubTerminalTools = defineExtension({
+  name: 'hub-terminal-tools',
+  tools: [terminalRead] as unknown as ToolRegistration[],
+});
+
 export const TerminalTools = defineExtension({
   name: 'terminal-tools',
   tools: [

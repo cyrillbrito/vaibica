@@ -24,6 +24,8 @@ Agents get four tools, shaped after Codex's and Claude Code's background shells:
 
 With `notify`, the agent gets a note when the command finishes, even if it is idle by then. A dev server rarely finishes, so its note usually means it crashed. Agents are told to use terminals instead of `&`, to check for a running one first, and to stop what they started. Archiving a session closes the terminals it started.
 
+The [hub](./hub.md) gets only `terminal_read`, to read any terminal without typing into it.
+
 ## Sources
 
 - Zed's [tasks](https://zed.dev/docs/tasks): rerunning a task reuses its terminal, and `hide: on_success` closes it when it succeeds.

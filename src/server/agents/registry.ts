@@ -15,7 +15,7 @@ import { createWebTools } from '#server/agent/tools/web';
 import { exaKey } from '#server/providers';
 import { SessionDoc, agentIdOf } from '#server/sessions/session-doc';
 import { HubSessionTools, SessionTools } from '#server/sessions/tools';
-import { TerminalTools } from '#server/terminals';
+import { HubTerminalTools, TerminalTools } from '#server/terminals';
 import { assistant } from './assistant';
 import { coding } from './coding';
 import {
@@ -45,6 +45,7 @@ const PACKS: Record<ToolPack, Extension> = {
   codemode: Codemode,
   'hub-file-tools': HubFileTools,
   'hub-session-tools': HubSessionTools,
+  'hub-terminal-tools': HubTerminalTools,
 };
 for (const [name, pack] of Object.entries(PACKS))
   if (pack.name !== name)
