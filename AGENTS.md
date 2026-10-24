@@ -44,9 +44,9 @@ There is no time to prove every idea here, so borrow from people who already bui
 
 ## Commands
 
-- `bun run checks` runs every check: types, lint, the format check, and `test:bun`. Run it before every commit, and fix what fails.
+- `bun run checks` runs every check: types, lint, the format check, and the tests. Run it before every commit, and fix what fails.
 - `bun run typecheck` type-checks with `bun check`, Bun's built-in checker, so `typescript` is not a dependency. `bun run lint` lints, and `bun run fmt` formats.
-- `bun run test:bun` runs the Bun checks for Pi Durable, restart recovery, and images. There is no Vitest suite.
+- `bun run test` runs the behavior tests with `bun test`, each file in its own process. `bun test <path>` runs one file. See [docs/testing.md](docs/testing.md) before writing a test.
 - `bun run dev` is the dev server on port 3142. It usually runs already, see Verifying UI below.
 - `bun run build` and `bun run start` run a built copy, see [docs/deploy.md](docs/deploy.md).
 - `bun run build:bica` compiles the `bica` binary into `dist/bica/bica`, and the `release` workflow publishes it as a draft GitHub release, see the same doc.
@@ -93,6 +93,7 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 - [realtime-communication.md](docs/realtime-communication.md): the WebSocket protocol, projection, and caching. Read before adding a topic or request.
 - [deploy.md](docs/deploy.md): running Bica, Tailscale, the `bica` binary, releases.
 - [UI.md](docs/UI.md): design rules, tokens, components, test data. Read before any UI work.
+- [testing.md](docs/testing.md): what gets a test, how to write one, and the test server. Read before adding or changing a test.
 - [writing.md](docs/writing.md): how to write docs, comments, and commit messages.
 
 `docs/explorations/` holds research and plans for what isn't built. Read the matching one before building in its area, and delete or trim it once the feature's doc takes over. Write one only when the user asks for it.
