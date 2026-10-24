@@ -28,6 +28,7 @@ While the agent works, sending queues the prompt for the next run. Queued prompt
 - Push turns a queued prompt into a steer, which joins the current run after the step in progress. ⌘Enter sends a steer straight away.
 - Edit takes a prompt back into the composer, and Remove drops it.
 - Stop ends the run, and queued prompts come back into the composer. Esc twice in the composer stops too.
+- A run that fails doesn't hold up the queue: the next prompt runs anyway, so notes to an unwatched session still get read.
 
 ## Who drives a session
 
@@ -54,12 +55,14 @@ Each session in the sidebar shows its status:
 
 - Running: the agent is working.
 - Retrying: the provider failed, and Pi Durable will try again.
-- Failed: the last run ended in an error.
+- Failed: the last run ended in an error, or its work is stuck.
 - Waiting for you: the agent asked a question.
 - Unread: finished with an answer you haven't opened.
 - Idle: everything else.
 
 The right end of a row shows a live clock while it runs, a tag when it needs you, or how long ago it last moved. Tabs on top of the sidebar filter to All or Needs you. The home page stacks the sessions that need you under the composer, most urgent first.
+
+Work is stuck when Pi Durable won't run it. Work that was cut off by crashes too many times in a row, such as a tool that runs Bica out of memory, is paused instead of crashing Bica again. Work whose code is gone from Bica, such as a removed extension's tool, can't run at all. A strip above the composer says which, with Retry for paused work. Stop ends either.
 
 Read state lives on the server, so opening a session on the phone marks it read on the laptop too. A chime plays when a session stops, different for done, asking, and failed. The installed app's icon shows a badge with the sessions waiting or unread.
 

@@ -27,13 +27,16 @@ async function open(): Promise<Harness> {
       models,
       registry,
       env: ({ cwd }) => new NodeExecutionEnv({ cwd: cwd ?? process.cwd() }),
-      onReport: (error) => console.error('[harness]', error),
+      onReport: (error, info) => console.error('[harness]', info.type, error),
       // Steers are corrections: every one waiting lands at the next step.
       // Follow-ups stay one per run.
       settings: {
         // Without it, every session would get the hub's tools too.
         extensions: DEFAULT_EXTENSIONS,
         steeringMode: 'all',
+        // Prompts and notes queued behind a failed run still run: many
+        // sessions work unwatched, and a note left waiting is never read.
+        afterFailedRun: 'continue',
         get stream() {
           return { cacheRetention: cacheRetention() };
         },

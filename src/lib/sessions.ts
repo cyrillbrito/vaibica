@@ -85,6 +85,8 @@ export const pushQueued = (id: string, submission: number) =>
 
 export const stopSession = (id: string) => request('session.stop', { id });
 
+export const retrySession = (id: string) => request('session.retry', { id });
+
 export const compactSession = (id: string, instructions?: string) =>
   request('session.compact', { id, instructions });
 

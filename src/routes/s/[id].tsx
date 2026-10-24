@@ -21,6 +21,7 @@ import MessageRow, { RULE } from '../../components/MessageRow';
 import ModelPicker from '../../components/ModelPicker';
 import OpenFile from '../../components/OpenFile';
 import ParentStrip from '../../components/ParentStrip';
+import StuckStrip from '../../components/StuckStrip';
 import TonightStrip from '../../components/TonightStrip';
 import Queue from '../../components/Queue';
 import StatusDot from '../../components/StatusDot';
@@ -532,6 +533,14 @@ export default function Session(props: RouteProps<'/s/:id'>) {
                               id={props.params.id!}
                               onCancel={() => composer?.releaseHold()}
                             />
+                          </Show>
+                          <Show when={summary()?.stuck}>
+                            {(stuck) => (
+                              <StuckStrip
+                                id={props.params.id!}
+                                stuck={stuck()}
+                              />
+                            )}
                           </Show>
                           <Show when={summary()?.startedBy}>
                             <ParentStrip

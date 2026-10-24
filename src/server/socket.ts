@@ -37,6 +37,7 @@ import {
   startUpkeep,
   push as pushSubmission,
   rename,
+  retryStuck,
   setAgent,
   setVoice,
   stop,
@@ -169,6 +170,10 @@ const calls: Handlers = {
   'session.withdraw': async ({ id, submission }) => withdraw(id, submission),
   'session.push': async ({ id, submission }) => pushSubmission(id, submission),
   'session.stop': async ({ id }) => stop(id),
+  'session.retry': async ({ id }) => {
+    await retryStuck(id);
+    return null;
+  },
   'session.archive': async ({ id, archived }) => {
     await archive(id, archived);
     return null;

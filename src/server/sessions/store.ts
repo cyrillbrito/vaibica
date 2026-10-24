@@ -15,6 +15,7 @@ import { context, getHarness } from '#server/agent';
 import { live } from '#server/live';
 import { runChanged, runState } from './notes';
 import { SessionDoc, agentIdOf } from './session-doc';
+import { stuckOf, watchStuck } from './stuck';
 
 export { SessionDoc, agentIdOf };
 
@@ -52,6 +53,10 @@ export function load() {
         scheduled = undefined;
         void sessions.refresh();
       }, 250);
+    });
+    await watchStuck(harness, (ids) => {
+      for (const id of ids) dirty.add(id);
+      void sessions.refresh();
     });
     const ids = await allConversations();
     for (const id of ids) dirty.add(id);
@@ -120,6 +125,10 @@ export async function summarize(
   ]);
   const createdAt = meta?.createdAt ?? 0;
   let status = statusOf(live, newest);
+  const stuck = stuckOf(id);
+  // Its run would look busy for good.
+  if (stuck && (status === 'running' || status === 'retrying'))
+    status = 'error';
   if (
     status === 'idle' &&
     newest &&
@@ -147,6 +156,7 @@ export async function summarize(
     agent: agentIdOf(meta),
     voice: meta?.voice ?? null,
     tonight: meta?.tonight || null,
+    stuck,
   };
 }
 

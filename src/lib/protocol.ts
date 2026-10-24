@@ -54,7 +54,13 @@ export interface SessionSummary {
   // The first prompt, held for tonight's run (docs/night-runs.md); null:
   // nothing waiting.
   tonight: string | null;
+  // Work Pi Durable won't run (docs/sessions.md); null: none.
+  stuck: Stuck | null;
 }
+
+// Crashed: cut off by crashes too often in a row, so paused until a retry.
+// Missing: its code is gone from this Bica, so only stopping ends it.
+export type Stuck = 'crashed' | 'missing';
 
 /** A change of who drives a session another one started. */
 export type Handoff = { at: number; to: 'you' | 'parent' };
@@ -425,6 +431,8 @@ export interface Calls {
   'session.push': { args: { id: string; submission: number }; result: boolean };
   // Stops the run; returns the queued prompts the stop dropped.
   'session.stop': { args: { id: string }; result: QueuedPrompt[] };
+  // Runs work paused after crashes again.
+  'session.retry': { args: { id: string }; result: null };
   'session.archive': {
     args: { id: string; archived: boolean };
     result: null;

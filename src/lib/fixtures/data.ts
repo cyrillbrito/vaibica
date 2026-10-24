@@ -122,6 +122,7 @@ const session = (
   agent: 'coding',
   voice: null,
   tonight: null,
+  stuck: null,
   ...extra,
 });
 
@@ -490,6 +491,10 @@ function worst(): Dataset {
         tonight: `${long200} ${long200}`,
       }),
       session('nw', nw, '', 'waiting', 3 * MIN, { id: 'worst-ask' }),
+      session('nw', nw, long200, 'error', 4 * MIN, {
+        id: 'worst-stuck',
+        stuck: 'crashed',
+      }),
       session(
         'nw',
         nw,

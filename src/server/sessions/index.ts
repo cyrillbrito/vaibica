@@ -25,5 +25,6 @@ export { recentPrompts } from './read';
 export { openHub, updateHub } from './hub';
 export { cancelTonight, runTonight, saveTonight, startNight } from './night';
 export { startUpkeep } from './upkeep';
+export { retryStuck } from './stuck';
 export { HubSessionTools, SessionTools } from './tools';
 export { voiceSession } from './voice';
