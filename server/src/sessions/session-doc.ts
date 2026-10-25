@@ -1,0 +1,73 @@
+import { defineDoc } from '@earendil-works/pi-durable';
+
+import { isAgent } from '@bica/shared/agents';
+import type {
+  InCharge,
+  PullRequest,
+  VoiceSettings,
+} from '@bica/shared/protocol';
+
+// App metadata stored next to each conversation; Pi Durable has no titles.
+export const SessionDoc = defineDoc<{
+  title: string;
+  createdAt: number;
+  projectId?: string;
+  // When it was archived; 0 or unset: shown in the list.
+  archivedAt?: number;
+  // Newest entry opened in the browser; later ones are unread. Unset: treated
+  // as read, so sessions that predate the field don't all light up.
+  seenEntry?: number;
+  // The session this one was forked from.
+  forkedFrom?: string;
+  // Its last entry from that session.
+  forkedAt?: number;
+  // The session whose agent started this one (session_start).
+  startedBy?: string;
+  // Its worktree was removed: the branch and PR it had then. Named when
+  // removing was called clean up.
+  cleanedUp?: { branch: string | null; pr: PullRequest | null };
+  // The id of the agent it runs as (shared/src/agents.ts), read through
+  // agentIdOf. Agents were called profiles when the field was named, and it
+  // keeps the name so stored sessions read as they are. Unset: from before
+  // the field, coding.
+  profile?: string;
+  // Started with session_start's `notify: false`: its parent hears nothing.
+  quiet?: boolean;
+  // Who sent the newest prompt: "user", "bica" for a note, or the id of a
+  // session that sent a message.
+  lastFrom?: string;
+  // The user drives it: he started it, or took it over from the session that
+  // did, until he hands it back (docs/sessions.md). Unset: from before the
+  // field, so a session the user started counts as his.
+  userPrompted?: boolean;
+  // Each time you took it over or handed it back.
+  handoffs?: InCharge[];
+  voice?: VoiceSettings;
+  // Sessions that asked to hear when its current or next run ends
+  // (session_send's `notify`). Stored, so a restart doesn't lose them.
+  watchers?: string[];
+  // Sessions it messaged during its current run: they need no note that
+  // repeats what it told them.
+  messaged?: string[];
+  // The memory index as the agent sees it (loadMemory), '' for none. Unset:
+  // taken again on the next prompt, as after a compaction.
+  memory?: string;
+  // The project list for the hub, kept like `memory`.
+  projects?: string;
+  // The first prompt, held for tonight's run (docs/night-runs.md); '' or
+  // unset: none waiting.
+  tonight?: string;
+}>({
+  kind: 'bica.session',
+  version: 1,
+  scope: 'conversation',
+  history: 'latest',
+  fork: 'current',
+  initial: () => ({ title: '', createdAt: 0 }),
+  // Small and often changed: a base now and then keeps replay short.
+  checkpointWhen: (_value, _ops, { deltasSinceBase }) => deltasSinceBase >= 32,
+});
+
+/** The agent a session runs as; one this Bica doesn't know runs as Coding. */
+export const agentIdOf = (meta?: { profile?: string }) =>
+  isAgent(meta?.profile) ? meta.profile : 'coding';

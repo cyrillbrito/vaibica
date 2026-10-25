@@ -1,11 +1,10 @@
 {
+  // Shared options; each package's tsconfig extends this and is checked on
+  // its own (`bun run typecheck`).
+  "files": [],
   "compilerOptions": {
-    // General
-    "jsx": "preserve",
-    "jsxImportSource": "@solidjs/web",
     "target": "ESNext",
-
-    // Modules
+    "lib": ["ESNext"],
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "isolatedModules": true,
@@ -13,20 +12,8 @@
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "noEmit": true,
-    // The same aliases as "imports" in package.json, which Vite and Bun read.
-    // TypeScript needs them here too to find a folder's index.ts.
-    "paths": {
-      "#server/*": ["./src/server/*"],
-      "#lib/*": ["./src/lib/*"],
-      "#features/*": ["./src/features/*"],
-      "#app/*": ["./src/app/*"],
-      "#ui/*": ["./src/ui/*"],
-      "#socket/*": ["./src/socket/*"]
-    },
-
-    // Type Checking & Safety
     "strict": true,
     "skipLibCheck": true,
-    "types": ["vite/client", "bun"]
+    "types": []
   }
 }

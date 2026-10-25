@@ -4,7 +4,7 @@ A lock for Bica's socket that doesn't depend on the network. None is built. Toda
 
 ## A hole today
 
-The socket accepts a handshake when the `Origin` host equals the `Host` header (`handleUpgrade` in `src/server/socket.ts`). DNS rebinding passes that check: a page on `evil.example` points its own name at `127.0.0.1`, both headers say `evil.example:3142`, and the page drives the agent. Vite's `allowedHosts` doesn't help, because Bica answers the upgrade before Vite's host check. Transmission had a code execution bug of exactly this kind in 2018.
+The socket accepts a handshake when the `Origin` host equals the `Host` header (`handleUpgrade` in `server/src/socket.ts`). DNS rebinding passes that check: a page on `evil.example` points its own name at `127.0.0.1`, both headers say `evil.example:3142`, and the page drives the agent. Vite's `allowedHosts` doesn't help, because Bica answers the upgrade before Vite's host check. Transmission had a code execution bug of exactly this kind in 2018.
 
 The fix is a `Host` allowlist (localhost, IP addresses, `.ts.net`, and names you add), or a secret the attacker's page doesn't have. Either one is small and worth doing on its own.
 

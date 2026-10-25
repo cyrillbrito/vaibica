@@ -1,0 +1,40 @@
+{
+  "name": "@bica/client",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#lib/*": "./src/lib/*"
+  },
+  "scripts": {
+    "dev": "bunx --bun vite dev",
+    "build": "bunx --bun vite build"
+  },
+  "dependencies": {
+    "@bica/shared": "workspace:*",
+    "@dnd-kit/dom": "^0.5.1",
+    "@earendil-works/chord": "^1.4.0",
+    "@earendil-works/pi-ai": "^1.4.0",
+    "@earendil-works/pi-durable": "^1.4.0",
+    "@pierre/diffs": "1.6.1",
+    "@pierre/trees": "1.0.0-beta.6",
+    "@solidjs/meta": "^1.0.0-next.2",
+    "@solidjs/router": "^2.0.0-next.40",
+    "@solidjs/web": "^2.0.0-rc.18",
+    "@tanstack/markdown": "^1.0.0",
+    "ghostty-web": "^0.4.0",
+    "lucide": "^1.61.0",
+    "mermaid": "^12.2.0",
+    "solid-js": "^2.0.0-rc.18"
+  },
+  "devDependencies": {
+    "@solidjs/diagnostics": "^2.0.0-rc.18",
+    "@solidjs/vite-plugin": "^3.0.0-next.51",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/bun": "^1.4.4",
+    "@types/compression": "^1.8.1",
+    "compression": "^1.8.2",
+    "filesystem-routing": "0.4.1",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.3.5"
+  }
+}

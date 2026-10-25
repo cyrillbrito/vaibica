@@ -15,7 +15,3 @@ minimumReleaseAgeExcludes = [
   "filesystem-routing",
   "@earendil-works/pi-codemode",
 ]
-
-[test]
-# Server code imports `server-only`, which only Vite provides (src/testing/preload.ts).
-preload = ["./src/testing/preload.ts"]

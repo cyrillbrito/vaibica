@@ -25,9 +25,19 @@ Bica is a Bun server on the dev machine and a web app that talks to it over one 
 - A terminal is a shell in a workspace, shared by you and the agents. See [terminals.md](./terminals.md).
 - The harness is Pi Durable's engine inside the server. It runs every session and saves each turn before anyone sees it.
 
+## Packages
+
+The repo is three Bun workspace packages, one per side, so each runs and type-checks on its own:
+
+- `client`: the Solid app, built by Vite, which runs in the browser. Its types have the DOM and no Bun or Node.
+- `server`: plain Bun, with the socket, the agents, git, and the shells. Its types have Bun and no DOM.
+- `shared`: the code both run, imported as `@bica/shared/...`: the message types, the agents' names, and the transcript projection.
+
+The client can't import the server, because its `package.json` doesn't list it. See [the record](./records/packages-per-side.md) for why.
+
 ## Server modules
 
-`src/server` is grouped into modules. Each module is a folder with one `index.ts`, and code outside the folder imports only that file, through the `#server/...` and `#lib/...` aliases. Every server file starts with `import 'server-only'`: Solid's Vite plugin fails when browser code imports one, and the `bica/server-only` lint rule makes any file that imports server code carry the marker too, so a component can't reach it through other files.
+`server/src` is grouped into modules. Each module is a folder with one `index.ts`, and code outside the folder imports only that file, through the `#server/...` alias.
 
 - `agent/`: the harness and the agent's own tools ([tools.md](./tools.md)).
 - `providers/`: models, keys, sign-ins, and plan accounts ([models.md](./models.md)).
@@ -38,7 +48,7 @@ Bica is a Bun server on the dev machine and a web app that talks to it over one 
 
 The flat files next to them each do one job. `socket.ts` is the one table of calls and topics.
 
-The app renders only in the browser, and Vite builds only the app. The server is Bun source: in development it runs inside Vite's process, and `bun run start` and the `bica` binary run it the same way. It doesn't hot-reload: it runs as it started until Bica restarts. Page edits still reload.
+The app renders only in the browser. In development, `bun run dev` runs two processes: Vite serves the pages on 3142 and forwards the socket to the server one port up. `bun run start` and the `bica` binary run one server that serves the built app too. The server doesn't hot-reload: it runs as it started until Bica restarts. Page edits still reload.
 
 ## How a prompt travels
 
@@ -51,7 +61,7 @@ A restart resumes unfinished runs, and a dropped phone reconnects to fresh data.
 
 ## Where data lives
 
-Bica's data sits in `.data/`, relative to where the server starts. The browser keeps small preferences per device, such as the theme, and a cache of what it last showed.
+Bica's data sits in the repo's `.data/`. The browser keeps small preferences per device, such as the theme, and a cache of what it last showed.
 
 | What | Where |
 | --- | --- |

@@ -1,63 +1,31 @@
 {
   "name": "vaibica",
   "version": "0.0.0",
-  "description": "",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server",
+    "shared"
+  ],
   "type": "module",
-  "imports": {
-    "#server/*": "./src/server/*",
-    "#lib/*": "./src/lib/*",
-    "#features/*": "./src/features/*",
-    "#app/*": "./src/app/*",
-    "#ui/*": "./src/ui/*",
-    "#socket/*": "./src/socket/*"
-  },
   "scripts": {
-    "dev": "bunx --bun vite dev",
-    "build": "bunx --bun vite build",
-    "start": "bun start.js",
-    "build:bica": "bun cli/build.ts",
-    "lint": "oxlint src",
+    "dev": "bun run --parallel --filter @bica/server --filter @bica/client dev",
+    "build": "bun run --filter @bica/client build",
+    "start": "bun server/start.js",
+    "build:bica": "bun server/cli/build.ts",
+    "lint": "oxlint client server shared",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "test": "bun test --parallel",
-    "typecheck": "bun check",
+    "typecheck": "bun check -p client && bun check -p client/tsconfig.node.json && bun check -p server && bun check -p shared",
     "checks": "bun run typecheck && bun run lint && bun run fmt:check && bun run test"
-  },
-  "dependencies": {
-    "@dnd-kit/dom": "^0.5.1",
-    "@earendil-works/chord": "^1.4.0",
-    "@earendil-works/pi-ai": "^1.4.0",
-    "@earendil-works/pi-codemode": "^1.4.0",
-    "@earendil-works/pi-durable": "^1.4.0",
-    "@pierre/diffs": "1.6.1",
-    "@pierre/trees": "1.0.0-beta.6",
-    "@solidjs/meta": "^1.0.0-next.2",
-    "@solidjs/router": "^2.0.0-next.40",
-    "@solidjs/web": "^2.0.0-rc.18",
-    "@tanstack/markdown": "^1.0.0",
-    "ghostty-web": "^0.4.0",
-    "lucide": "^1.61.0",
-    "mermaid": "^12.2.0",
-    "solid-js": "^2.0.0-rc.18",
-    "valibot": "^1.5.0",
-    "ws": "^8.22.0"
   },
   "devDependencies": {
     "@oxlint/plugins": "^1.89.0",
-    "@solidjs/diagnostics": "^2.0.0-rc.18",
-    "@solidjs/vite-plugin": "^3.0.0-next.51",
-    "@tailwindcss/vite": "^4.3.3",
-    "@types/bun": "^1.4.4",
-    "@types/compression": "^1.8.1",
-    "@types/ws": "^8.18.2",
-    "compression": "^1.8.2",
     "eslint-plugin-solid": "~0.18.1",
-    "filesystem-routing": "0.4.1",
     "oxfmt": "^0.74.0",
     "oxlint": "^1.89.0",
-    "oxlint-tsgolint": "^7.0.2005",
-    "tailwindcss": "^4.3.3",
-    "vite": "^8.3.5"
+    "oxlint-tsgolint": "^7.0.2005"
   },
   "devEngines": {
     "packageManager": {

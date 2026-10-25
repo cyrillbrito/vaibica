@@ -16,13 +16,13 @@ Browser (one socket per tab)                  Server (dev machine)
   changes     (sub, n, ops)        ◀──
 ```
 
-A request asks once and gets one reply. A subscription, called a topic, gives a full snapshot, then numbered changes, for anything that changes while you look at it. The types are in `src/lib/protocol.ts`, and `socket.ts` on the server lists every call and topic.
+A request asks once and gets one reply. A subscription, called a topic, gives a full snapshot, then numbered changes, for anything that changes while you look at it. The types are in `shared/src/protocol.ts`, and `socket.ts` on the server lists every call and topic.
 
 ## Where live data comes from
 
 Pi Durable hands over a conversation once, then the exact changes from every save. Partial replies are saved several times a second, so the stream looks live.
 
-The browser gets a slimmer copy of the conversation (`src/lib/projection.ts`). Tool calls keep their name, status, timing, and a one-line summary, and thoughts only that they exist and how long they took. Opening one asks the server for its full contents. So streamed tool output costs nothing until you open it. This follows [Pi Pocket's projection](https://github.com/TannerMidd/pi-pocket/blob/main/src/lib/projection.ts).
+The browser gets a slimmer copy of the conversation (`shared/src/projection.ts`). Tool calls keep their name, status, timing, and a one-line summary, and thoughts only that they exist and how long they took. Opening one asks the server for its full contents. So streamed tool output costs nothing until you open it. This follows [Pi Pocket's projection](https://github.com/TannerMidd/pi-pocket/blob/main/src/lib/projection.ts).
 
 Everything else, such as the session list, git, and files, the server re-reads when something changes or polls while someone looks, and sends only the difference.
 
@@ -43,4 +43,4 @@ The browser keeps recent topics in memory and saves them in IndexedDB, so going 
 
 ## Logging the traffic
 
-Creating `~/.bica/ws-log.jsonl` makes the server log every message to it, and deleting the file stops it. `bun scripts/ws-log.ts` sums the log by type and lists the largest messages.
+Creating `~/.bica/ws-log.jsonl` makes the server log every message to it, and deleting the file stops it. `bun server/scripts/ws-log.ts` sums the log by type and lists the largest messages.

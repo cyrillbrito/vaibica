@@ -19,7 +19,7 @@ The transcript shows your prompts with their images, the agent's replies, its th
 - Notes from Bica and messages from other sessions show as a quiet row with the sender.
 - Hide thinking, in Settings → Appearance, leaves thinking out on that device.
 
-`bun scripts/demo-session.ts` seeds a session with every kind of row.
+`bun server/scripts/demo-session.ts` seeds a session with every kind of row.
 
 ## Queue, push, stop
 

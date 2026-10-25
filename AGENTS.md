@@ -35,6 +35,7 @@ There is no time to prove every idea here, so borrow from people who already bui
 ## Stack
 
 - Bun 1.4.3 or newer runs the server, installs packages, type-checks, and runs Vite in development.
+- Three Bun workspace packages: `client` (the Solid app), `server` (plain Bun), and `shared` (the code both run, as `@bica/shared/...`). See [architecture.md](docs/architecture.md#packages).
 - Solid 2 (release candidate) through `@solidjs/vite-plugin` in client start mode: the app renders only in the browser, with no server-side rendering. This is not SolidStart.
 - Pi Durable, with `pi-ai` for models, runs the agent and stores it in SQLite.
 - Tailwind v4 with no component library, see [docs/UI.md](docs/UI.md).
@@ -48,7 +49,7 @@ There is no time to prove every idea here, so borrow from people who already bui
 - `bun run checks` runs every check: types, lint, the format check, and the tests. Run it before every commit, and fix what fails.
 - `bun run typecheck` type-checks with `bun check`, Bun's built-in checker, so `typescript` is not a dependency. `bun run lint` lints, and `bun run fmt` formats.
 - `bun run test` runs the behavior tests with `bun test`, each file in its own process. `bun test <path>` runs one file. See [docs/testing.md](docs/testing.md) before writing a test.
-- `bun run dev` is the dev server on port 3142. It usually runs already, see Verifying UI below.
+- `bun run dev` is the dev server: Vite on port 3142, forwarding the socket to the server on 3143. It usually runs already, see Verifying UI below.
 - `bun run build` and `bun run start` run a built copy, see [docs/deploy.md](docs/deploy.md).
 - `bun run build:bica` compiles the `bica` binary into `dist/bica/bica`, and the `release` workflow publishes it as a draft GitHub release, see the same doc.
 
@@ -102,7 +103,7 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 
 - [fast-loading.md](docs/explorations/fast-loading.md): opening, switching, and reconnecting faster on the phone.
 - [distribution.md](docs/explorations/distribution.md): installing and updating `bica`.
-- [source-layout.md](docs/explorations/source-layout.md): the source tree by feature, server and browser code in one folder, and the checks that keep them apart. Read before moving code or adding a feature folder.
+- [source-layout.md](docs/explorations/source-layout.md): feature folders with the same names inside each package. Read before moving code or adding a feature folder.
 - [self-hosted-auth.md](docs/explorations/self-hosted-auth.md): a token for the socket, and the DNS rebinding hole.
 - [themes.md](docs/explorations/themes.md): editor color themes.
 - [ui-hierarchy.md](docs/explorations/ui-hierarchy.md): what the side panel next to a session belongs to.
@@ -112,6 +113,7 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 `docs/records/` holds decisions worth remembering: what was tried, what was found, and what was decided. Read the matching one before reopening its question.
 
 - [extensibility.md](docs/records/extensibility.md): why features aren't extensions.
+- [packages-per-side.md](docs/records/packages-per-side.md): why the repo is client, server, and shared packages instead of feature folders with markers.
 
 `docs/inspiration/` holds screenshots of other agent UIs, as ideas, not specs.
 
@@ -129,7 +131,7 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 
 After UI changes, check them in a real browser with `agent-browser`, a global CLI configured in `~/.agent-browser/config.json`. Its skill explains how to use it. These are the facts for this repo:
 
-- The dev server (`bun run dev`, port 3142) usually hosts the Bica session you are running in. Don't restart or stop it. It has no live updates (`server.ws: false`), so reload the page to see page edits, but server code (`src/server`) runs as it started until Bica restarts: test server changes on your own dev server on another port. Another dev server may run on a different port; inspect running terminals before starting one.
+- The dev server (`bun run dev`: Vite on 3142, the server on 3143) usually hosts the Bica session you are running in. Don't restart or stop it. It has no live updates (`server.ws: false`), so reload the page to see page edits, but server code (`server/src`) runs as it started until Bica restarts: test server changes on your own dev server on another port, such as `BICA_PORT=3199 BICA_DATA_DIR=/tmp/bica-test bun run dev`, which puts its server on 3200. Another dev server may run on a different port; inspect running terminals before starting one.
 - Open `http://localhost:3142`, then check `errors` and `console` for Solid warnings and socket errors.
 - For the phone layout, run `set viewport 390 844` and check again.
 - For worst-case data, open the page with `?data=worst`. See Test data in `docs/UI.md`.

@@ -1,0 +1,14 @@
+{
+  // The app, which runs in the browser: DOM types, no Bun or Node.
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "jsx": "preserve",
+    "jsxImportSource": "@solidjs/web",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
+    // The same alias as "imports" in package.json, which Vite reads.
+    // TypeScript needs it here too to find a folder's index.ts.
+    "paths": { "#lib/*": ["./src/lib/*"] }
+  },
+  "include": ["src", "file-routes.d.ts"]
+}

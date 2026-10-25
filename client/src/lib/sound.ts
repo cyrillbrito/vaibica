@@ -1,0 +1,113 @@
+import { createEffect, createSignal, type Accessor } from 'solid-js';
+
+import type { SessionStatus, SessionSummary } from '@bica/shared/protocol';
+
+// Per device, like the theme: the laptop may chime while the phone stays quiet.
+const KEY = 'sound';
+
+const [soundOn, set] = createSignal(localStorage.getItem(KEY) !== 'off', {
+  name: 'soundOn',
+});
+export { soundOn };
+
+export function setSoundOn(on: boolean) {
+  set(on);
+  if (on) localStorage.removeItem(KEY);
+  else localStorage.setItem(KEY, 'off');
+  if (on) play('done');
+}
+
+type Chime = 'done' | 'waiting' | 'error' | 'cheer';
+
+// [frequency Hz, start s] per note: rising for done, a double tap when it
+// needs you, falling when it failed.
+const NOTES: Record<Chime, [number, number][]> = {
+  done: [
+    [659.25, 0],
+    [987.77, 0.09],
+  ],
+  waiting: [
+    [880, 0],
+    [880, 0.14],
+  ],
+  error: [
+    [392, 0],
+    [261.63, 0.12],
+  ],
+  // A major arpeggio: a session got compacted.
+  cheer: [
+    [523.25, 0],
+    [659.25, 0.08],
+    [783.99, 0.16],
+    [1046.5, 0.24],
+  ],
+};
+
+export function cheer() {
+  if (soundOn()) play('cheer');
+}
+
+let ctx: AudioContext | undefined;
+
+// Synthesized, so there is no asset to load. Browsers only let audio start
+// once the page has had a click or key press; before that this stays silent.
+function play(chime: Chime) {
+  ctx ??= new AudioContext();
+  if (ctx.state === 'suspended') void ctx.resume();
+  const now = ctx.currentTime;
+  for (const [freq, at] of NOTES[chime]) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, now + at);
+    gain.gain.linearRampToValueAtTime(0.18, now + at + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + at + 0.5);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now + at);
+    osc.stop(now + at + 0.5);
+  }
+}
+
+const busy = (s: SessionStatus | undefined) =>
+  s === 'running' || s === 'retrying';
+
+function chimeFor(s: SessionStatus): Chime | undefined {
+  if (s === 'waiting') return 'waiting';
+  if (s === 'error') return 'error';
+  // Idle too: a session you're looking at is marked read as it finishes.
+  if (s === 'done' || s === 'idle') return 'done';
+}
+
+export function useChimes(sessions: Accessor<SessionSummary[]>) {
+  let last = new Map<string, SessionStatus>();
+  createEffect(
+    () => ({
+      on: soundOn(),
+      list: sessions().map((s) => [s.id, s.status] as const),
+    }),
+    ({ on, list }) => {
+      const prev = last;
+      last = new Map(list);
+      if (!on) return;
+      // One sound per batch, the most urgent one.
+      let chime: Chime | undefined;
+      for (const [id, status] of list) {
+        if (!busy(prev.get(id)) || busy(status)) continue;
+        const c = chimeFor(status);
+        if (c === 'error' || (c === 'waiting' && chime !== 'error')) chime = c;
+        else chime ??= c;
+      }
+      if (chime && firstTab(list)) play(chime);
+    },
+    { name: 'chimes' },
+  );
+}
+
+// Every open tab sees the same change; the first to write the mark plays it.
+function firstTab(list: readonly (readonly [string, SessionStatus])[]) {
+  const mark = JSON.stringify(list);
+  if (localStorage.getItem('chimed') === mark) return false;
+  localStorage.setItem('chimed', mark);
+  return true;
+}
