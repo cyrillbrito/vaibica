@@ -46,15 +46,25 @@ The words Bica uses for its concepts, one name per concept. Docs, code names, co
 
 **Archive**: Hiding a finished session from the list, keeping everything. _Avoid_: delete, close
 
-**Parent**: The session that started another session. _Avoid_: starter, owner, orchestrator
+## Orchestration
 
-**Worker**: A session another session started, as in Anthropic's orchestrator and workers. _Avoid_: subagent (Bica has none hidden), child, helper
+[orchestration.md](./orchestration.md)
 
-**In charge**: Who prompts a worker and hears of its runs: its parent at first, you once you take it over, and the parent again when you hand it back. _Avoid_: driver, owner, handoff (that is the voice's)
+**Orchestration**: Sessions working with other sessions: starting, reading, messaging, and hearing of each other's runs. _Avoid_: delegation, multi-agent
+
+**Parent**: The session in charge of a child session: it hears each run the child ends. A session gets one only when another starts it, and loses it for good when you detach it. _Avoid_: starter (the session that started it may not be its parent), owner, orchestrator
+
+**Child session**: A session with a parent, which another session started to orchestrate several things at once. "Child" for short once the context is clear. _Avoid_: worker, subagent (Bica has none hidden), helper
+
+**In charge**: Who leads a session: its parent while it has one, and you otherwise. _Avoid_: driver, owner, handoff (that is the voice's)
+
+**Detach**: Taking a child session from its parent, so it's yours and the parent hears no more of it. A session started detached never had a parent. _Avoid_: take over, unlink, release
+
+**Watch**: The hub following a session it doesn't lead, hearing each run it ends, until it or you stop. _Avoid_: subscribe, follow, notify
 
 **Message**: A prompt one session sends another with `session_send`, signed with the sender, like Claude Code's `SendMessage`. _Avoid_: note (that is Bica's), mail
 
-**Note**: A prompt from Bica itself, such as a worker's finished run or that you took over a session. _Avoid_: alert, event
+**Note**: A prompt from Bica itself, such as a child session's finished run or that you detached a session. _Avoid_: alert, event
 
 ## Agents
 
@@ -140,7 +150,7 @@ The words Bica uses for its concepts, one name per concept. Docs, code names, co
 
 **The voice**: GPT-Live, which listens, talks, and decides when something needs the agent. It does no work. _Avoid_: voice agent
 
-**Handoff**: Passing work on to an agent, as OpenAI's Agents SDK names it: the voice passing your words to the session, or a session starting a worker with a prompt that stands alone. _Avoid_: hand-off, request, delegation
+**Handoff**: Passing work on to an agent, as OpenAI's Agents SDK names it: the voice passing your words to the session, or a session starting a child session with a prompt that stands alone. _Avoid_: hand-off, request, delegation
 
 **Hold music**: The quiet radio stream that plays during a call while the agent works in silence.
 

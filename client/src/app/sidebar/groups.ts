@@ -145,21 +145,21 @@ export function workspaceGroups(
 }
 
 /**
- * Sessions in their order, except that one another session started sits
- * right under it, when both work in the same workspace.
+ * Sessions in their order, except that a child session sits right under its
+ * parent, when both work in the same workspace.
  */
 function underParents(list: SessionSummary[]) {
   const here = new Set(list.map((s) => s.id));
   const children = new Map<string, SessionSummary[]>();
   for (const s of list)
-    if (s.startedBy && here.has(s.startedBy))
-      children.set(s.startedBy, [...(children.get(s.startedBy) ?? []), s]);
+    if (s.parent && here.has(s.parent))
+      children.set(s.parent, [...(children.get(s.parent) ?? []), s]);
   if (!children.size) return list;
   const out: SessionSummary[] = [];
   const add = (s: SessionSummary) => {
     out.push(s);
     for (const c of children.get(s.id) ?? []) add(c);
   };
-  for (const s of list) if (!s.startedBy || !here.has(s.startedBy)) add(s);
+  for (const s of list) if (!s.parent || !here.has(s.parent)) add(s);
   return out;
 }

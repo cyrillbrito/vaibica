@@ -32,16 +32,11 @@ While the agent works, sending queues the prompt as a follow-up, which starts th
 - Edit takes a prompt back into the composer, and Remove drops it.
 - When the agent takes a prompt from the queue, it glides from its line into the transcript, after affectUI's [Agent Steering](https://www.affectui.com/components/agent-steering), so you see which note went in (`sessions/queue-glide.ts`).
 - Stop ends the run, and follow-ups come back into the composer. Esc twice in the composer stops too.
-- A run that fails doesn't hold up the queue: the next follow-up runs anyway, so notes to an unwatched session still get read.
+- A run that fails doesn't hold up the queue: the next follow-up runs anyway, so notes to a session nobody has open still get read.
 
-## Who's in charge
+## Other sessions
 
-A worker, a session another session started, is in its parent's charge at first: the parent gets a note after every run. A strip above the composer says "Parent in charge".
-
-- Sending takes over, so the send button reads "Take over". From then on the worker answers you, and your words come before the parent's plan. The parent hears nothing more, and can't message or stop it unless you tell it to.
-- The arrow beside the send button holds a plain Send, which leaves the parent in charge and gives it a copy of your words.
-- Answering a question the session asks doesn't take it over.
-- Hand back, in the strip, returns the session to the parent with its last reply.
+Agents start and follow sessions of their own, which stay normal sessions you can open and write to. A session an agent started shows a "Parent in charge" strip, and one the hub watches a "Hub watching" strip. [orchestration.md](./orchestration.md) covers who leads a session and who hears of its runs.
 
 ## Composer
 
@@ -53,7 +48,7 @@ A worker, a session another session started, is in its parent's charge at first:
 
 ## Forks
 
-A fork is a new session with another one's history up to a chosen reply. It runs in the same workspace, so files are shared, not rolled back. It keeps the project, agent, and voice of the original, and it is yours: whoever started the original isn't told of its runs.
+A fork is a new session with another one's history up to a chosen reply. It runs in the same workspace, so files are shared, not rolled back. It keeps the project, agent, and voice of the original, and it is yours: it has no [parent](./orchestration.md).
 
 ## Status
 
@@ -74,6 +69,6 @@ Read state lives on the server, so opening a session on the phone marks it read 
 
 ## Archiving
 
-Archive moves a session to the sidebar's Archived section, and unarchive brings it back. Nothing is deleted. A running session can't be archived. Archiving a session that started others asks which of them go with it.
+Archive moves a session to the sidebar's Archived section, and unarchive brings it back. Nothing is deleted. A running session can't be archived. Archiving a parent asks which of its child sessions go with it.
 
 To archive many at once, ⌘ click or shift click sessions in the sidebar, then use the bar at the bottom.

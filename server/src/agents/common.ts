@@ -150,10 +150,17 @@ const TOOL_GUIDE: { tools: string[]; line: string; rules?: string[] }[] = [
   {
     tools: ['session_read'],
     line: "Another session's status, the question it waits on, and its last messages",
+    rules: [
+      'Name sessions to the user by their title, never by id alone: he knows titles, not ids.',
+    ],
   },
   {
     tools: ['session_start', 'session_send', 'session_stop', 'session_archive'],
     line: 'Start, message, stop, and archive other sessions',
+  },
+  {
+    tools: ['session_watch'],
+    line: 'Hear each turn a session ends, until you stop',
   },
   { tools: ['ask'], line: 'Put multiple-choice questions to the user' },
 ];
@@ -208,12 +215,12 @@ ${lines.join('\n')}
 Before sending, cut an opening that announces and a closing that recaps or offers more help, and end with at most one question or next step. The first and last lines alone should say what happened and what to do next.`;
 }
 
-// For agents that hand work to workers, assistant and hub: what makes a
-// worker's start and report work without the conversation behind them
+// For agents that hand work to child sessions, assistant and hub: what makes
+// a child session's start and report work without the conversation behind them
 // (docs/hub.md, Sources).
 export const HANDOFFS = `Handoffs to other sessions:
 - A session_start prompt stands alone, like a ticket: the goal, the files and findings it needs, the boundaries (what not to touch, when to ask, and no merging, pushing, or committing to main unless the user asked), what done looks like, and the report it ends with: status, result, the checks it ran and couldn't run, where long output went, and what it needs next.
-- When a worker finishes, check its report against the ticket before you call it done.
+- When a child session finishes, check its report against the ticket before you call it done.
 - One session per thread: continue a thread with session_send to its session, so its context stays warm. Code work gets its own worktree (\`worktree: true\`).`;
 
 // For the long-lived agents, assistant and hub, which Bica keeps small while

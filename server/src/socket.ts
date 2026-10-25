@@ -32,11 +32,12 @@ import {
   configure,
   push as pushSubmission,
   stop,
+  submit,
   withdraw,
 } from './sessions/prompts';
 import { createSession, fork } from './sessions/create';
 import { retryStuck } from './sessions/stuck';
-import { fromUser, handBack, watchRuns } from './sessions/notes';
+import { detach, unwatch, watchRuns } from './orchestration/notes';
 import { conversationDetail, watchConversation } from './sessions/conversation';
 import { watchSessions } from './sessions/store';
 import { installAgents } from './agents/extensions';
@@ -151,18 +152,22 @@ const calls: Handlers = {
     removeWorktree(args.projectId, args.cwd, args.force === true),
   'fs.dirs': async ({ path }) => listDirs(path),
   'session.submit': async (args) => {
-    await fromUser(
+    await submit(
       args.id,
       args.prompt.trim(),
       args.images ?? [],
       args.requestId,
+      'user',
       args.whenBusy,
-      args.keep === true,
     );
     return null;
   },
-  'session.handBack': async ({ id }) => {
-    await handBack(id);
+  'session.detach': async ({ id }) => {
+    await detach(id);
+    return null;
+  },
+  'session.unwatch': async ({ id }) => {
+    await unwatch(id);
     return null;
   },
   'session.withdraw': async ({ id, submission }) => withdraw(id, submission),

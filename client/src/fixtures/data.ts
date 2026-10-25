@@ -123,8 +123,9 @@ function session(
     forkedFrom: null,
     forkedAt: null,
     startedBy: null,
-    parentDrives: false,
+    parent: null,
     handoffs: [],
+    watchedBy: [],
     cleanedUp: null,
     agent: 'coding',
     voice: null,
@@ -272,6 +273,7 @@ function demo(): Dataset {
       }),
       session('vaibica', keys, 'Keyboard shortcuts for sessions', 'idle', MIN, {
         id: 'demo-shortcuts',
+        watchedBy: ['demo-hub'],
       }),
       session(
         'vaibica',
@@ -282,7 +284,7 @@ function demo(): Dataset {
         {
           id: 'demo-terminals',
           startedBy: 'demo-hub',
-          parentDrives: true,
+          parent: 'demo-hub',
         },
       ),
       session(
@@ -294,7 +296,7 @@ function demo(): Dataset {
         {
           id: 'demo-reconnect',
           startedBy: 'demo-hub',
-          parentDrives: true,
+          parent: 'demo-hub',
         },
       ),
       session('vaibica', bica, 'Research offline drafts', 'idle', 30 * MIN, {
@@ -306,7 +308,7 @@ function demo(): Dataset {
       session('vaibica', bica, 'Release notes for 0.9', 'idle', 2 * HOUR, {
         id: 'demo-release',
         startedBy: 'demo-shortcuts',
-        parentDrives: true,
+        parent: 'demo-shortcuts',
       }),
       session(
         'vaibica',
@@ -317,14 +319,14 @@ function demo(): Dataset {
         {
           id: 'demo-handoff',
           startedBy: 'demo-hub',
-          parentDrives: true,
+          parent: 'demo-hub',
         },
       ),
       session('vaibica', voice, 'Pick a calmer voice', 'done', 25 * MIN, {
         id: 'demo-voice',
         startedBy: 'demo-shortcuts',
-        // You took over before your follow-up, the fourth turn (20s apart).
-        parentDrives: false,
+        // You detached it before your follow-up, the fourth turn (20s apart).
+        parent: null,
         handoffs: [{ at: now - 26 * MIN + 70_000, to: 'you' }],
       }),
       session(
@@ -347,7 +349,7 @@ function demo(): Dataset {
         {
           id: 'demo-flaky',
           startedBy: 'demo-hub',
-          parentDrives: true,
+          parent: 'demo-hub',
         },
       ),
       session(
@@ -359,7 +361,7 @@ function demo(): Dataset {
         {
           id: 'demo-bisect',
           startedBy: 'demo-flaky',
-          parentDrives: true,
+          parent: 'demo-flaky',
         },
       ),
       session(
@@ -535,7 +537,7 @@ function worst(): Dataset {
         'error',
         1 * HOUR,
         // Its parent's title runs to 200 characters.
-        { startedBy: 'worst-long', parentDrives: true },
+        { startedBy: 'worst-long', parent: 'worst-long' },
       ),
       session(
         'nw',
@@ -555,7 +557,7 @@ function worst(): Dataset {
           forkedFrom: 'worst-long',
           forkedAt: 6,
           startedBy: 'worst-ask',
-          parentDrives: true,
+          parent: 'worst-ask',
         },
       ),
       session(

@@ -77,12 +77,11 @@ export function renameSession(id: string, title: string) {
   return request('session.rename', { id, title });
 }
 
-// keep: in a session its parent drives, leave it with the parent.
 export function sendPrompt(
   id: string,
   prompt: string,
   images: PromptImage[],
-  opts: { steer?: boolean; keep?: boolean } = {},
+  opts: { steer?: boolean } = {},
 ) {
   return request('session.submit', {
     id,
@@ -90,12 +89,7 @@ export function sendPrompt(
     images,
     requestId: requestId(),
     whenBusy: opts.steer ? 'steer' : undefined,
-    keep: opts.keep || undefined,
   });
-}
-
-export function handBack(id: string) {
-  return request('session.handBack', { id });
 }
 
 export function withdrawQueued(id: string, submission: number) {

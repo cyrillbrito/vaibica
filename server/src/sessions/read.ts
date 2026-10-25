@@ -5,6 +5,14 @@ import { ASK } from '../tools/ask';
 import { context, getHarness } from '../harness';
 import { getConversation, listSessions, sessionMeta, summarize } from './store';
 
+/**
+ * How agents and notes name a session: the title first, which the user
+ * knows, then the id, which the tools take.
+ */
+export function named(s: { id: string; title: string }) {
+  return `"${s.title || 'Untitled'}" (session ${s.id})`;
+}
+
 /** A session's title, status, and last reply, as an agent reads it. */
 export async function readSession(id: string) {
   const { id: conversationId } = await getConversation(id);
@@ -49,17 +57,9 @@ export async function recentMessages(id: string, count: number) {
   return { messages: messages.toReversed(), questions: questions ?? [] };
 }
 
-/**
- * Who sent a session's prompts: `last`, the newest sender ("user", "bica",
- * or a session id), and `user`, whether the user prompted it himself.
- * Tickets from session_start, session_send messages, and notes aren't his.
- */
-export async function prompters(id: string) {
-  const meta = await sessionMeta(Number(id) as ConversationId);
-  return {
-    last: meta?.lastFrom,
-    user: meta?.userPrompted ?? !meta?.startedBy,
-  };
+/** Who sent a session's newest prompt: "user", "bica", or a session id. */
+export async function lastSender(id: string) {
+  return (await sessionMeta(Number(id) as ConversationId))?.lastFrom;
 }
 
 async function lastReply(id: ConversationId) {

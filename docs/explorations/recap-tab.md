@@ -61,7 +61,7 @@ Most of what such a tab would show is already stored, and costs the agent nothin
 - Every tool call carries a summary of what it is for ([tools.md](../tools.md)), so the done half of a to-do list already exists as a trail of intentions. The latest summary is what the agent is doing now.
 - Edit and write calls name the files this session changed, which is option 2 in [ui-hierarchy.md](./ui-hierarchy.md).
 - Bash calls that run checks or tests have exit codes.
-- Workers, terminals, questions, answers, context, and spend are all per session.
+- Child sessions, terminals, questions, answers, context, and spend are all per session.
 - The fast model already names sessions, so it can write a recap.
 - Pi Durable documents give a session its own state that forks see as it was at the fork, as Pi's todo example does with tool results.
 

@@ -6,7 +6,7 @@ The system prompt is built from named prompt sections that every [agent](./agent
 2. The tools the session has, one line each, with their rules, such as git staying read-only unless asked. A session without a tool gets neither its line nor its rules.
 3. The declarations of the tools code mode scripts can call.
 4. Project instructions: your `~/.bica/AGENTS.md`, then the `AGENTS.md` or `CLAUDE.md` of each folder down to the workspace, then the memory index, the hub's project list, the skills, and the workspace's path.
-5. Rules shared by kind: handoffs to workers, and keeping memory for long-lived sessions such as [assistant mode](./assistant-mode.md) and the [hub](./hub.md).
+5. Rules shared by kind: handoffs to child sessions, and keeping memory for long-lived sessions such as [assistant mode](./assistant-mode.md) and the [hub](./hub.md).
 6. The agent's own role, such as a [night run](./night-runs.md)'s rules to finish alone.
 7. How to reply, below.
 

@@ -20,7 +20,12 @@ import ContextNag from '../../context-usage/ContextNag';
 import MessageRow, { RULE } from '../../sessions/MessageRow';
 import ModelPicker from '../../models/ModelPicker';
 import OpenFile from '../../files/OpenFile';
-import ParentStrip from '../../sessions/ParentStrip';
+import {
+  detachSession,
+  unwatchSession,
+} from '../../orchestration/orchestration';
+import ParentStrip from '../../orchestration/ParentStrip';
+import WatchStrip from '../../orchestration/WatchStrip';
 import StuckStrip from '../../sessions/StuckStrip';
 import TonightStrip from '../../sessions/TonightStrip';
 import Queue from '../../sessions/Queue';
@@ -41,7 +46,6 @@ import {
   forkSession,
   isPruning,
   markSeen,
-  handBack,
   sendPrompt,
   stopSession,
   tonightAction,
@@ -174,13 +178,11 @@ export default function Session(props: RouteProps<'/s/:id'>) {
     { name: 'forkedFrom' },
   );
   const parent = createMemo(
-    () => sessions().find((s) => s.id === summary()?.startedBy),
+    () => sessions().find((s) => s.id === summary()?.parent),
     { name: 'parent' },
   );
-  const drives = () => !!summary()?.parentDrives;
   // The prompt held for tonight, which the composer edits.
   const held = () => summary()?.tonight ?? null;
-  // "Keep parent in charge", for the open session only.
   // Hovering any part of a reply shows the fork button at its end, or the
   // next compaction or pruning line, which has its own.
   let shown: Element | undefined;
@@ -379,7 +381,7 @@ export default function Session(props: RouteProps<'/s/:id'>) {
             class="-mx-1.5 max-w-120 py-0.5 font-semibold"
           />
         </Show>
-        <Show when={drives() && parent()}>
+        <Show when={parent()}>
           {(parent) => (
             <a
               class="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-meta text-accent-ink transition-colors hover:bg-hover [&_svg]:size-3.5"
@@ -454,10 +456,7 @@ export default function Session(props: RouteProps<'/s/:id'>) {
                           onFork={forkAt}
                           onAnswer={(text) => {
                             stick.follow();
-                            // Answering what it asks leaves it with its parent.
-                            return sendPrompt(props.params.id!, text, [], {
-                              keep: true,
-                            });
+                            return sendPrompt(props.params.id!, text, []);
                           }}
                           forkedFrom={forkedFrom()}
                           cwd={summary()?.cwd ?? undefined}
@@ -488,36 +487,21 @@ export default function Session(props: RouteProps<'/s/:id'>) {
               <div hidden={call()?.sessionId === props.params.id}>
                 <Composer
                   draft={props.params.id!}
-                  onSend={(prompt, images, steer, alternate) => {
+                  onSend={(prompt, images, steer) => {
                     // Sending means wanting to see the reply.
                     stick.follow();
                     if (held() !== null)
                       return tonightAction(props.params.id!, 'run', prompt);
                     return sendPrompt(props.params.id!, prompt, images, {
                       steer,
-                      keep: drives() && alternate,
                     });
                   }}
                   hold={held()}
                   onHoldEdit={(id, text) => tonightAction(id, 'save', text)}
                   placeholder={
-                    held() !== null
-                      ? 'What to do tonight…'
-                      : drives()
-                        ? 'Write to take over…'
-                        : undefined
+                    held() !== null ? 'What to do tonight…' : undefined
                   }
-                  busyPlaceholder={
-                    drives() ? 'Queue a follow-up to take over…' : undefined
-                  }
-                  sendLabel={
-                    held() !== null
-                      ? 'Run now'
-                      : drives()
-                        ? 'Take over'
-                        : undefined
-                  }
-                  alternate={held() === null && drives() ? 'Send' : undefined}
+                  sendLabel={held() !== null ? 'Run now' : undefined}
                   busy={busy()}
                   // The stop drops queued prompts; give them back to edit.
                   onStop={() =>
@@ -545,11 +529,15 @@ export default function Session(props: RouteProps<'/s/:id'>) {
                               />
                             )}
                           </Show>
-                          <Show when={summary()?.startedBy}>
+                          <Show when={summary()?.parent}>
                             <ParentStrip
                               parent={parent()}
-                              parentDrives={drives()}
-                              onHandBack={() => handBack(props.params.id!)}
+                              onDetach={() => detachSession(props.params.id!)}
+                            />
+                          </Show>
+                          <Show when={summary()?.watchedBy.length}>
+                            <WatchStrip
+                              onStop={() => unwatchSession(props.params.id!)}
                             />
                           </Show>
                           <ContextNag

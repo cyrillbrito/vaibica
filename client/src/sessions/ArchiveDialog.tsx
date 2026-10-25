@@ -1,4 +1,4 @@
-import { For, createSignal } from 'solid-js';
+import { For, Show, createSignal } from 'solid-js';
 
 import type { SessionSummary } from '@bica/shared/protocol';
 import { archiveSession } from './sessions';
@@ -20,14 +20,14 @@ function busy(s: SessionSummary) {
   return s.status === 'running' || s.status === 'retrying';
 }
 
-/** Every open session `id` started, and the ones those started. */
+/** Every open child session of `id`, and their children. */
 function descendants(id: string, all: readonly SessionSummary[]) {
   const out: SessionSummary[] = [];
   const queue = [id];
   while (queue.length) {
     const from = queue.shift();
     for (const s of all)
-      if (s.startedBy === from && !s.archivedAt && !out.includes(s)) {
+      if (s.parent === from && !s.archivedAt && !out.includes(s)) {
         out.push(s);
         queue.push(s.id);
       }
@@ -37,8 +37,8 @@ function descendants(id: string, all: readonly SessionSummary[]) {
 
 /**
  * The ids to archive along with `s`, itself included; empty when cancelled.
- * Asks only when `s` started sessions that are still open: the finished ones
- * their parent leads come picked, the ones the user took over don't.
+ * Asks only when `s` has child sessions that are still open: the finished ones
+ * come picked. Ones detached from it are the user's, so they aren't offered.
  */
 function askArchive(
   s: SessionSummary,
@@ -48,9 +48,7 @@ function askArchive(
   if (!kids.length) return Promise.resolve([s.id]);
   setParent(s);
   setChildren(kids);
-  setPicked(
-    new Set(kids.filter((k) => !busy(k) && k.parentDrives).map((k) => k.id)),
-  );
+  setPicked(new Set(kids.filter((k) => !busy(k)).map((k) => k.id)));
   dialog?.showModal();
   return new Promise((resolve) => (settle = resolve));
 }
@@ -106,7 +104,7 @@ export default function ArchiveDialog() {
       }
     >
       <p class="px-4 pt-3 pb-1 text-muted">
-        This session started others. The checked ones are archived with it.
+        This session leads others. The checked ones are archived with it.
       </p>
       <OptionList inset={2} class="flex-1">
         <For each={children()} keyed={(s) => s.id}>
@@ -124,13 +122,9 @@ export default function ArchiveDialog() {
               <span class="min-w-0 flex-1 truncate">
                 {s().title || 'Untitled'}
               </span>
-              <span class="shrink-0 text-meta text-muted">
-                {busy(s())
-                  ? 'Running'
-                  : s().parentDrives
-                    ? ''
-                    : "You're in charge"}
-              </span>
+              <Show when={busy(s())}>
+                <span class="shrink-0 text-meta text-muted">Running</span>
+              </Show>
             </button>
           )}
         </For>

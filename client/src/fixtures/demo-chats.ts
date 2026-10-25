@@ -325,7 +325,7 @@ export const calmerVoice: Turn[] = [
       },
     ],
   },
-  // The user took over from the hub here (data.ts).
+  // The user detached it here (data.ts).
   { user: 'Still a bit fast for me. Make it 0.85.' },
   {
     agent: [

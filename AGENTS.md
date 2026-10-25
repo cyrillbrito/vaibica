@@ -79,7 +79,8 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 - [GLOSSARY.md](docs/GLOSSARY.md): one name per concept, and the words to avoid. Read before naming anything, in code, docs, or the UI.
 - [architecture.md](docs/architecture.md): concepts, server modules, the folder layout, how a prompt travels, where data lives. Start here for anything that crosses areas, and read its Feature folders before moving code or adding a folder.
 - [sessions.md](docs/sessions.md): the transcript, queue, composer, forks, status, archive. Read for transcript or composer work.
-- [tools.md](docs/tools.md): the agent's tools, code mode, `ask`, and the session tools. Read before adding or changing a tool.
+- [tools.md](docs/tools.md): the agent's tools, code mode, and `ask`. Read before adding or changing a tool.
+- [orchestration.md](docs/orchestration.md): sessions working with other sessions: parents and child sessions, Detach, watching, notes, and the session tools. Read before changing how sessions start, message, or hear of each other.
 - [system-prompt.md](docs/system-prompt.md): the system prompt's sections, project instructions, skills, and reply rules. Read before changing what the agent is told.
 - [context-usage.md](docs/context-usage.md): the context chip, prompt cache, spend, compaction, pruning.
 - [agents.md](docs/agents.md): the Coding, Assistant, Night, and Hub agents, what an agent holds, and what Bica does around it. Read before changing what a kind of session gets.

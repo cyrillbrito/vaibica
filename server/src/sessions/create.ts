@@ -53,8 +53,8 @@ export interface NewSession {
   // chat); `cwd` is ignored.
   worktree?: boolean;
   agent?: AgentId;
-  // Its parent hears nothing of its runs.
-  quiet?: boolean;
+  // Started by a session that doesn't take charge of it: no parent.
+  detached?: boolean;
   // Holds the prompt for tonight's run (docs/night-runs.md) instead of
   // sending it, as the Night agent.
   tonight?: boolean;
@@ -70,7 +70,7 @@ export async function createSession({
   startedBy,
   worktree,
   agent: agentId = 'coding',
-  quiet,
+  detached,
   tonight,
 }: NewSession) {
   if (tonight) {
@@ -132,9 +132,8 @@ export async function createSession({
         doc.seenEntry = 0;
         doc.profile = agentId;
         if (startedBy) doc.startedBy = startedBy;
-        if (quiet) doc.quiet = true;
+        doc.parent = (!detached && startedBy) || null;
         if (tonight) doc.tonight = prompt;
-        doc.userPrompted = !startedBy;
       },
     },
     context,
@@ -166,7 +165,7 @@ export async function spawnSession(
   requestId: string,
   folder?: string,
   worktree?: boolean,
-  quiet?: boolean,
+  detached?: boolean,
   agent: Exclude<AgentId, 'hub'> = 'coding',
   tonight?: boolean,
   effort?: ThinkingLevel,
@@ -206,7 +205,7 @@ export async function spawnSession(
     choice,
     startedBy: String(parent),
     worktree,
-    quiet,
+    detached,
     agent,
     tonight,
   });
@@ -234,15 +233,16 @@ export async function fork(id: string, at?: number) {
         doc.forkedFrom = id;
         doc.forkedAt = entry;
         doc.seenEntry = entry;
-        doc.userPrompted = true;
+        doc.parent = null;
         for (const field of [
           'archivedAt',
           'startedBy',
           'quiet',
+          'userPrompted',
           'lastFrom',
           'handoffs',
           'cleanedUp',
-          'watchers',
+          'watchedBy',
           'messaged',
           'memory',
           'projects',

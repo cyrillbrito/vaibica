@@ -37,13 +37,15 @@ export interface SessionSummary {
   forkedFrom: string | null;
   // The last entry it took from there.
   forkedAt: number | null;
-  // Its parent, the session whose agent started it; null: started by the user.
+  // The session whose agent started it; null: started by the user.
   startedBy: string | null;
-  // Its parent still drives it: the user hasn't taken it over, or handed it
-  // back.
-  parentDrives: boolean;
-  // Each time you took it over or handed it back.
+  // The session in charge of it, which hears each run it ends; null: none,
+  // so it's yours (docs/sessions.md).
+  parent: string | null;
+  // Each time it left its parent, or went back to it.
   handoffs: InCharge[];
+  // The hubs that watch it and hear each run it ends.
+  watchedBy: string[];
   // Its worktree was removed: the branch and PR it had then; null: not. Named
   // when removing was called clean up, and stored so.
   cleanedUp: { branch: string | null; pr: PullRequest | null } | null;
@@ -66,7 +68,10 @@ export interface SessionSummary {
 // Missing: its code is gone from this Bica, so only stopping ends it.
 export type Stuck = 'crashed' | 'missing';
 
-/** Who is in charge of a worker from `at` on: you took it over, or handed it back. */
+/**
+ * Who is in charge of a child session from `at` on: you detached it, or (before
+ * detaching was final) handed it back. `you` was called taking over.
+ */
 export type InCharge = { at: number; to: 'you' | 'parent' };
 
 /** A session's voice calls (docs/voice.md). */
@@ -415,14 +420,13 @@ export interface Calls {
       // While a run works: wait for it to answer (default), or join it after
       // the current step.
       whenBusy?: 'followUp' | 'steer';
-      // In a session its parent drives: leave it with the parent instead of
-      // taking it over.
-      keep?: boolean;
     };
     result: null;
   };
-  // Gives a session the user took over back to the session that started it.
-  'session.handBack': { args: { id: string }; result: null };
+  // Takes a session from its parent: it's yours from now on.
+  'session.detach': { args: { id: string }; result: null };
+  // Ends every hub's watch on a session.
+  'session.unwatch': { args: { id: string }; result: null };
   // Takes a queued prompt back; null: it was already sent.
   'session.withdraw': {
     args: { id: string; submission: number };

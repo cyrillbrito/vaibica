@@ -22,8 +22,13 @@ export type SessionMeta = {
   forkedFrom?: string;
   // Its last entry from that session.
   forkedAt?: number;
-  // The session whose agent started this one (session_start).
+  // The session whose agent started this one (session_start). History only:
+  // `parent` says who is in charge now.
   startedBy?: string;
+  // The session in charge of it, which hears each run it ends
+  // (docs/sessions.md); null: none, so it's the user's. Unset: from before
+  // the field, read through parentOf.
+  parent?: string | null;
   // Its worktree was removed: the branch and PR it had then. Named when
   // removing was called clean up.
   cleanedUp?: { branch: string | null; pr: PullRequest | null };
@@ -32,21 +37,19 @@ export type SessionMeta = {
   // keeps the name so stored sessions read as they are. Unset: from before
   // the field, coding.
   profile?: string;
-  // Started with session_start's `notify: false`: its parent hears nothing.
+  // From before `parent`: started with `notify: false`, so it had none.
   quiet?: boolean;
   // Who sent the newest prompt: "user", "bica" for a note, or the id of a
   // session that sent a message.
   lastFrom?: string;
-  // The user drives it: he started it, or took it over from the session that
-  // did, until he hands it back (docs/sessions.md). Unset: from before the
-  // field, so a session the user started counts as his.
+  // From before `parent`: the user had taken it over, so it had none.
   userPrompted?: boolean;
-  // Each time you took it over or handed it back.
+  // Each time it left its parent, or went back to it. Named when leaving
+  // was called taking over, and stored so.
   handoffs?: InCharge[];
   voice?: VoiceSettings;
-  // Sessions that asked to hear when its current or next run ends
-  // (session_send's `notify`). Stored, so a restart doesn't lose them.
-  watchers?: string[];
+  // The hubs that watch it (session_watch), which hear each run it ends.
+  watchedBy?: string[];
   // Sessions it messaged during its current run: they need no note that
   // repeats what it told them.
   messaged?: string[];
@@ -70,6 +73,15 @@ export const SessionDoc = defineDoc<SessionMeta>({
   // Small and often changed: a base now and then keeps replay short.
   checkpointWhen: (_value, _ops, { deltasSinceBase }) => deltasSinceBase >= 32,
 });
+
+/** The session in charge of it; null: none, so it's the user's. */
+export function parentOf(meta?: SessionMeta): string | null {
+  if (!meta) return null;
+  if (meta.parent !== undefined) return meta.parent;
+  return meta.startedBy && !meta.quiet && !meta.userPrompted
+    ? meta.startedBy
+    : null;
+}
 
 /** The agent a session runs as; one this Bica doesn't know runs as Coding. */
 export function agentIdOf(meta?: { profile?: string }) {

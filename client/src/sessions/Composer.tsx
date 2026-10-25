@@ -14,13 +14,11 @@ import { imageUrl, toPromptImage } from './images';
 import type { PromptImage } from '@bica/shared/protocol';
 import { imageMarker, imageMarkers } from '@bica/shared/images';
 import Alert from '../ui/Alert';
-import { openContextMenu } from '../ui/ContextMenu';
 import { createDropZone } from '../ui/DropZone';
 import { Button, IconButton } from '../ui/Button';
 import {
   ArrowUpIcon,
   CheckIcon,
-  ChevronIcon,
   CloseIcon,
   ImageIcon,
   MicIcon,
@@ -90,7 +88,7 @@ export interface ComposerApi {
 
 export default function Composer(props: {
   // steer: join the current run after its step, instead of queuing.
-  // alternate: sent with the `alternate` send instead of the main one.
+  // alternate: sent through `sendAlternate` instead of the send button.
   onSend: (
     prompt: string,
     images: PromptImage[],
@@ -105,13 +103,9 @@ export default function Composer(props: {
   hold?: string | null;
   // `key` is the draft's, since a late edit can land after moving on.
   onHoldEdit?: (key: string, text: string) => Promise<unknown>;
-  // A second way to send, in a menu on the send button's side.
-  alternate?: string;
   // Where the draft is kept, e.g. the session id.
   draft: string;
   placeholder?: string;
-  // Instead of "Queue a follow-up…" while a run is working.
-  busyPlaceholder?: string;
   // Next to attach, e.g. the model picker.
   controls?: JSX.Element;
   // Just left of stop and send, e.g. the voice call button.
@@ -487,7 +481,7 @@ export default function Composer(props: {
           ]}
           placeholder={
             props.busy
-              ? (props.busyPlaceholder ?? 'Queue a follow-up…')
+              ? 'Queue a follow-up…'
               : (props.placeholder ?? 'Ask anything…')
           }
           onInput={() => {
@@ -716,7 +710,6 @@ export default function Composer(props: {
                 // for screen readers and the placeholder says what it does.
                 class={[
                   'ml-1 pr-2.5 pl-3 @max-sm/composer:pl-2.5 [&_svg]:size-3.5 [&_svg]:stroke-[2.5]',
-                  props.alternate && 'rounded-r-none pr-2',
                   empty() && 'opacity-30',
                 ]}
                 variant="primary"
@@ -733,32 +726,6 @@ export default function Composer(props: {
                 </Show>
               </Button>
             )}
-          </Show>
-          <Show when={props.sendLabel && props.alternate}>
-            <IconButton
-              class={[
-                'rounded-l-none border-l border-bg/25 [&_svg]:size-3.5 [&_svg]:rotate-90',
-                empty() && 'opacity-30',
-              ]}
-              variant="primary"
-              size="md"
-              round
-              title="More ways to send"
-              aria-haspopup="menu"
-              onClick={(e) => {
-                const r = e.currentTarget.getBoundingClientRect();
-                openContextMenu(r.right - 240, r.top - 52, [
-                  {
-                    label: props.alternate!,
-                    icon: <ArrowUpIcon />,
-                    disabled: empty() ? 'Type a message first' : undefined,
-                    onSelect: () => void send(false, true),
-                  },
-                ]);
-              }}
-            >
-              <ChevronIcon />
-            </IconButton>
           </Show>
           {/* Faded while there's nothing to send, solid once there is; while
             the agent works, the arrow turns into "queue". */}

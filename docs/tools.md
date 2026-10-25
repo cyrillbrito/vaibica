@@ -5,6 +5,7 @@ The agent works through tools. Every call carries a short summary of what it is 
 - Read, write, edit, and bash work in the session's workspace. Read also shows images to the model, shrunk when they are too big.
 - Web search and fetch go through Exa, once its key is set ([models.md](./models.md#providers)).
 - Terminal tools share the workspace's terminals with you ([terminals.md](./terminals.md)).
+- The session tools start, read, message, and stop other sessions ([orchestration.md](./orchestration.md#the-session-tools)).
 
 ## Code mode
 
@@ -16,22 +17,7 @@ Scripts can also call classifier models, which answer typed yes/no, choice, or s
 
 `ask` puts one to four multiple-choice questions to you and ends the run. Nothing waits, so a question can be answered hours later from another device. Typing in the composer answers too, and number keys pick options. A note or another session's message that comes first doesn't answer: it runs the agent with word that your answer is still to come. Once answered, the card folds into one row.
 
-## Other sessions
-
-Agents can work with other sessions the way they work with terminals: start, read, send, and stop. Bica has no hidden subagents: every worker is a normal session you can open and steer.
-
-- `list` shows every project, workspace, session, and terminal. Agents are told to leave the rest alone unless you name it.
-- `session_start` starts a session with a prompt that stands on its own, in any workspace or a new worktree, optionally in [assistant mode](./assistant-mode.md) or held for the [night run](./night-runs.md).
-- `session_read` returns a session's status, the questions it waits on, and its last reply.
-- `session_send` sends a message, signed so the receiver can reply. With `notify`, the sender gets a note when the receiver's run ends.
-- `session_stop` stops a session's run.
-- `session_archive` archives a finished session, and can remove its worktree when nothing would be lost.
-
-A parent gets a note whenever one of its workers finishes a run, with its last reply, until you take that session over ([sessions.md](./sessions.md#whos-in-charge)). Notes arrive as follow-ups, and ones that pile up merge into one.
-
 ## Sources
 
-- Claude Code's `SendMessage` with `notify_when_idle`, and Codex's `send_input` and `wait_agent`, which the session tools follow.
-- Taking over a session: Zendesk and Intercom stop their bot once a human takes a conversation, and [`pi-cmux-orchestrator`](https://www.npmjs.com/package/@mporenta/pi-cmux-orchestrator) holds back the orchestrator once you type in a worker.
 - Pi Durable's [`codemode`](https://github.com/earendil-works/pi/tree/main/packages/durable).
 - The [web search benchmark for coding agents](https://github.com/openbenchmarks-labs/web-search-for-coding-agents), where Exa leads search and fetch.

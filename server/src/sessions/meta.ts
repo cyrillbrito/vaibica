@@ -109,6 +109,7 @@ export async function retireSessions(
     await editSession(Number(s.id) as ConversationId, (meta) => {
       meta.archivedAt ||= Date.now();
       meta.cleanedUp = { branch, pr };
+      delete meta.watchedBy;
     });
 }
 
@@ -116,8 +117,11 @@ export async function retireSessions(
 export async function archive(id: string, archived: boolean) {
   const { id: conversationId } = await getConversation(id);
   await editSession(conversationId, (meta) => {
-    if (archived) meta.archivedAt ||= Date.now();
-    else delete meta.archivedAt;
+    // Done with, so nobody watches it any more.
+    if (archived) {
+      meta.archivedAt ||= Date.now();
+      delete meta.watchedBy;
+    } else delete meta.archivedAt;
   });
   // Its dev servers and shells go with it.
   if (archived)

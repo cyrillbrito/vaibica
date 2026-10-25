@@ -8,12 +8,17 @@ import type { SessionStatus } from '@bica/shared/protocol';
 import { CHATS_ID, getProject, listProjects } from '../projects/projects';
 import { allTerminals } from '../terminals/terminals';
 import { terminalState } from '../terminals/tools';
-import { spawnSession } from './create';
-import { archive, removeWorktree } from './meta';
-import { noteMessage, notifyWhenIdle } from './notes';
-import { stop, submit } from './prompts';
-import { prompters, readSession, recentMessages } from './read';
-import { listSessions } from './store';
+import { spawnSession } from '../sessions/create';
+import { archive, removeWorktree } from '../sessions/meta';
+import { noteMessage, watch } from './notes';
+import { stop, submit } from '../sessions/prompts';
+import {
+  lastSender,
+  named,
+  readSession,
+  recentMessages,
+} from '../sessions/read';
+import { listSessions } from '../sessions/store';
 
 function text(value: string) {
   return {
@@ -40,22 +45,31 @@ function other(id: string, self: ConversationId) {
 const USER_ASKED = Type.Optional(
   Type.Boolean({
     description:
-      'true: the user told you to, in a session of yours he took over. Only then',
+      'true: the user told you to, for a session you started that is his now. Only then',
   }),
 );
 
-/** A parent backs off from a session the user took over, unless he says so. */
+/**
+ * A session's starter backs off once it's no longer the parent, unless the
+ * user says so.
+ */
 function checkInCharge(
-  target: { id: string; startedBy: string | null; parentDrives: boolean },
+  target: {
+    id: string;
+    title: string;
+    startedBy: string | null;
+    parent: string | null;
+  },
   me: string,
   userAsked: boolean | undefined,
   action: 'archive' | 'message' = 'message',
 ) {
-  if (target.startedBy !== me || target.parentDrives || userAsked) return;
+  if (target.startedBy !== me || target.parent === me || userAsked) return;
+  const why = `You started ${named(target)}, but it has no parent now, so it's the user's`;
   throw new Error(
     action === 'archive'
-      ? `The user took over session ${target.id}, so it's his, and he may still want it. Leave it open, or ask him in your reply. Pass \`user_asked\` only if he told you to archive it.`
-      : `The user took over session ${target.id}, so he drives it now. Leave it to him: tell him what you wanted it to know instead. Pass \`user_asked\` only if he told you to do this.`,
+      ? `${why}, and he may still want it. Leave it open, or ask him in your reply. Pass \`user_asked\` only if he told you to archive it.`
+      : `${why}. Leave it to him: tell him what you wanted it to know instead. Pass \`user_asked\` only if he told you to do this.`,
   );
 }
 
@@ -64,8 +78,8 @@ function sessionTools(hub: boolean): ToolRegistration[] {
   const sessionStart = defineTool({
     name: 'session_start',
     description: hub
-      ? "Start a session for one thread of work, when the user asked for it: a normal session in the user's session list, which he can watch and steer too. Pass `folder`, a project folder or worktree from your projects list; with `worktree`, it gets a new worktree of that folder's project. It runs on the user's default model. You get a note whenever it finishes a turn, unless `notify` is false. Its prompt must stand alone, like a ticket: it sees nothing of this conversation. Sessions in one folder share its files, so code work gets its own worktree."
-      : "Start a new, separate session in the user's session list: same model as you, in your folder unless you pass `folder` or `worktree`. Use it when the user asks to split work across sessions, e.g. one session per bug. The user watches and steers it too. You get a note whenever it finishes a turn, unless `notify` is false, and can talk to it with session_send. Its prompt must stand alone: it sees nothing of this conversation. Sessions in one folder share its files, so give each its own part of the code, or its own worktree.",
+      ? "Start a session for one thread of work, when the user asked for it: a normal session in the user's session list, which he can watch and steer too. Pass `folder`, a project folder or worktree from your projects list; with `worktree`, it gets a new worktree of that folder's project. It runs on the user's default model. It's your child session: you get a note whenever it finishes a turn, until the user detaches it. With `detached`, it's the user's from the start and you hear nothing of it. Its prompt must stand alone, like a ticket: it sees nothing of this conversation. Sessions in one folder share its files, so code work gets its own worktree."
+      : "Start a new, separate session in the user's session list: same model as you, in your folder unless you pass `folder` or `worktree`. Use it when the user asks to split work across sessions, e.g. one session per bug. The user watches and steers it too. It's your child session: you get a note whenever it finishes a turn, until the user detaches it, and can talk to it with session_send. With `detached`, it's the user's from the start and you hear nothing of it. Its prompt must stand alone: it sees nothing of this conversation. Sessions in one folder share its files, so give each its own part of the code, or its own worktree.",
     parameters: Type.Object({
       prompt: Type.String({
         description:
@@ -85,9 +99,10 @@ function sessionTools(hub: boolean): ToolRegistration[] {
             : 'true: start in a new git worktree of your project, on a new branch from the default branch, named after the session. Ignores `folder`',
         }),
       ),
-      notify: Type.Optional(
+      detached: Type.Optional(
         Type.Boolean({
-          description: 'false: no note when it finishes a turn. Default: true',
+          description:
+            "true: hand it off instead of leading it: no parent, so it's the user's and you hear nothing of its turns. Default: your child session",
         }),
       ),
       assistant: Type.Optional(
@@ -113,17 +128,22 @@ function sessionTools(hub: boolean): ToolRegistration[] {
       ),
     }),
     execute: async (
-      { prompt, folder, worktree, notify, assistant, tonight, effort },
+      { prompt, folder, worktree, detached, assistant, tonight, effort },
       api,
     ) => {
       if (!prompt.trim()) throw new Error('The prompt is empty');
+      const me = named(await readSession(String(api.conversationId)));
       const id = await spawnSession(
         api.conversationId,
-        `${prompt}\n\n(Session ${api.conversationId} started this session and drives it: report back and ask it things with session_send. Once the user writes to you himself, you're his: answer him in your replies, and his words come before session ${api.conversationId}'s plan.)`,
+        `${prompt}\n\n(${
+          detached
+            ? `${me} started this session and handed it off: it hears nothing of your turns, so work for the user and answer him in your replies. Message it with session_send only if this task asks you to.`
+            : `${me} started this session and is in charge of it: it reads each turn you end, so report in your replies, and ask it things with session_send. The user may write to you too: answer him in your replies, and his words come before its plan.`
+        })`,
         `start_session:${api.callId}`,
         folder,
         worktree,
-        notify === false,
+        detached,
         assistant ? 'assistant' : 'coding',
         tonight,
         effort,
@@ -155,27 +175,30 @@ function sessionTools(hub: boolean): ToolRegistration[] {
     execute: async ({ id, messages }, api) => {
       const s = await readSession(other(id, api.conversationId));
       const count = Math.min(Math.max(Math.round(messages ?? 1), 1), 50);
-      const [recent, from] = await Promise.all([
+      const [recent, sender, all] = await Promise.all([
         recentMessages(s.id, count),
-        prompters(s.id),
+        lastSender(s.id),
+        listSessions(),
       ]);
       const me = String(api.conversationId);
-      const by = !s.startedBy
-        ? ''
+      const name = (id: string) => {
+        const found = all.find((o) => o.id === id);
+        return found ? named(found) : `session ${id}`;
+      };
+      const whose = s.parent
+        ? s.parent === me
+          ? ' It is your child session: you hear each turn it ends.'
+          : ` Its parent is ${name(s.parent)}.`
         : s.startedBy === me
-          ? ' You started it.'
-          : ` Session ${s.startedBy} started it.`;
+          ? " You started it, but it has no parent now, so it is the user's."
+          : " It has no parent, so it is the user's.";
+      const watched = s.watchedBy.includes(me) ? ' You watch it.' : '';
       const last =
-        from.last === undefined
+        sender === undefined
           ? ''
-          : ` Last prompt from: ${from.last === 'user' ? 'the user' : from.last === 'bica' ? 'a Bica note' : from.last === me ? 'you' : `session ${from.last}`}.`;
-      const whose = !from.user
-        ? ''
-        : s.startedBy
-          ? ' The user took it over, so it is his.'
-          : ' The user prompts it himself, so it is his.';
+          : ` Last prompt from: ${sender === 'user' ? 'the user' : sender === 'bica' ? 'a Bica note' : sender === me ? 'you' : name(sender)}.`;
       const parts = [
-        `Session ${s.id} "${s.title}" in ${s.cwd}: ${s.archivedAt ? 'archived' : STATUS[s.status]}.${by}${last}${whose}`,
+        `${named(s)} in ${s.cwd}: ${s.archivedAt ? 'archived' : STATUS[s.status]}.${whose}${watched}${last}`,
       ];
       if (s.status === 'waiting' && recent.questions.length)
         parts.push(
@@ -212,7 +235,7 @@ function sessionTools(hub: boolean): ToolRegistration[] {
 
   const sessionArchive = defineTool({
     name: 'session_archive',
-    description: `Archive another session once its work is done: it leaves the session list (the user can bring it back), and the terminals it started close. With \`remove_worktree\`, its worktree folder and local branch go too, unless another open session works there, or it has uncommitted files or commits no other branch has.${hub ? ' Only when the user asked for it.' : " Only archive sessions you started or the user named. Archive one you started once its result is in your reply and the user wouldn't want to open it himself: a lookup, a check, one worker of many. Keep it when he might want to read or continue it: he asked for it, it holds a decision, a long back and forth, unmerged work, or a question for him. Name what you archived in your reply, so he can bring it back. A session he took over is his: archive it only if he told you to."}`,
+    description: `Archive another session once its work is done: it leaves the session list (the user can bring it back), and the terminals it started close. With \`remove_worktree\`, its worktree folder and local branch go too, unless another open session works there, or it has uncommitted files or commits no other branch has.${hub ? ' Only when the user asked for it.' : " Only archive sessions you started or the user named. Archive one you started once its result is in your reply and the user wouldn't want to open it himself: a lookup, a check, one child session of many. Keep it when he might want to read or continue it: he asked for it, it holds a decision, a long back and forth, unmerged work, or a question for him. Name what you archived in your reply, so he can bring it back. A session you started that has no parent now is his: archive it only if he told you to."}`,
     parameters: Type.Object({
       id: Type.String({ description: 'The session id' }),
       remove_worktree: Type.Optional(
@@ -229,10 +252,10 @@ function sessionTools(hub: boolean): ToolRegistration[] {
       checkInCharge(s, String(api.conversationId), user_asked, 'archive');
       if (s.status === 'running' || s.status === 'retrying')
         throw new Error(
-          `Session ${id} is still running. Wait for it, or stop it first.`,
+          `${named(s)} is still running. Wait for it, or stop it first.`,
         );
       await archive(id, true);
-      const done = `Archived session ${id} "${s.title}".`;
+      const done = `Archived ${named(s)}.`;
       if (!remove_worktree || !s.cwd || !s.projectId) return text(done);
       const project = await getProject(s.projectId);
       if (!project.workspaces.some((w) => w.path === s.cwd && !w.main))
@@ -244,7 +267,7 @@ function sessionTools(hub: boolean): ToolRegistration[] {
       );
       if (others.length)
         return text(
-          `${done} Kept the worktree: session ${others.map((o) => o.id).join(', ')} still works there.`,
+          `${done} Kept the worktree: ${others.map(named).join(', ')} still works there.`,
         );
       const risk = await removeWorktree(s.projectId, s.cwd, false);
       return text(
@@ -257,7 +280,7 @@ function sessionTools(hub: boolean): ToolRegistration[] {
 
   const sessionSend = defineTool({
     name: 'session_send',
-    description: `Send a message to another session, signed with your session id so it can answer with session_send. It waits for that session's current turn to end, or with \`steer\` lands at its next step; an idle session starts a turn.${hub ? ' New work, decisions, and steering only when the user asked for it.' : ' Only message sessions you started, the one that started you, or ones the user named.'}`,
+    description: `Send a message to another session, signed with your name so it can answer with session_send. It waits for that session's current turn to end, or with \`steer\` lands at its next step; an idle session starts a turn. You hear back only when it answers with session_send, or when it's your child session${hub ? ' or you watch it' : ''}: then you get a note at the end of each turn.${hub ? ' New work, decisions, and steering only when the user asked for it.' : ' Only message your child sessions, your parent, or sessions the user named. To get an answer from another session, ask it to reply with session_send.'}`,
     parameters: Type.Object({
       id: Type.String({ description: 'The session id' }),
       message: Type.String({ description: 'What to tell or ask it' }),
@@ -267,16 +290,9 @@ function sessionTools(hub: boolean): ToolRegistration[] {
             'true: deliver it at its next step instead of after its current turn, to correct work in progress',
         }),
       ),
-      notify: Type.Optional(
-        Type.Boolean({
-          description: hub
-            ? 'false: no note with its reply when it finishes the turn. Default: true'
-            : 'true: get a note with its reply when it finishes the turn. Sessions you started notify you anyway, until the user takes them over',
-        }),
-      ),
       user_asked: USER_ASKED,
     }),
-    execute: async ({ id, message, steer, notify, user_asked }, api) => {
+    execute: async ({ id, message, steer, user_asked }, api) => {
       other(id, api.conversationId);
       const [me, target] = await Promise.all([
         readSession(String(api.conversationId)),
@@ -284,21 +300,21 @@ function sessionTools(hub: boolean): ToolRegistration[] {
       ]);
       if (target.archivedAt)
         throw new Error(
-          `Session ${id} is archived, so nothing reads it. Say it in your reply instead, or ask the user to bring the session back.`,
+          `${named(target)} is archived, so nothing reads it. Say it in your reply instead, or ask the user to bring the session back.`,
         );
       checkInCharge(target, me.id, user_asked);
       await noteMessage(api.conversationId, id);
+      // A sender that reads its turns anyway needs no answer by message.
+      const hears = target.parent === me.id || target.watchedBy.includes(me.id);
       await submit(
         id,
-        `[Message from session ${me.id} "${me.title}"] ${message}`,
+        `[Message from ${named(me)}${hears ? ', which reads your replies' : ". It doesn't see your replies: if it asks for something, answer with session_send, and don't answer a reply that needs none"}] ${message}`,
         [],
         `session_send:${api.callId}`,
         me.id,
         steer ? 'steer' : 'followUp',
       );
-      // The hub hears back from what it messages, unless told not to.
-      if (notify ?? hub) await notifyWhenIdle(id, api.conversationId);
-      return text(`Sent to session ${id}.`);
+      return text(`Sent to ${named(target)}.`);
     },
   });
 
@@ -311,13 +327,34 @@ function sessionTools(hub: boolean): ToolRegistration[] {
     }),
     execute: async ({ id, user_asked }, api) => {
       other(id, api.conversationId);
-      checkInCharge(
-        await readSession(id),
-        String(api.conversationId),
-        user_asked,
-      );
+      const s = await readSession(id);
+      checkInCharge(s, String(api.conversationId), user_asked);
       await stop(id);
-      return text(`Stopped session ${id}.`);
+      return text(`Stopped ${named(s)}.`);
+    },
+  });
+
+  const sessionWatch = defineTool({
+    name: 'session_watch',
+    description:
+      "Start or stop watching a session: while you watch it, you get a note at the end of each of its turns, with its reply, as with your child sessions. Watch one when the user wants to hear how its work goes, or you messaged it and need its result; stop once that thread closes, since every note costs you a turn. Archiving ends a watch. Your child sessions report anyway, and any session's questions and errors reach you without a watch.",
+    parameters: Type.Object({
+      id: Type.String({ description: 'The session id' }),
+      watch: Type.Boolean({ description: 'true: start watching; false: stop' }),
+    }),
+    execute: async ({ id, watch: on }, api) => {
+      other(id, api.conversationId);
+      const s = await readSession(id);
+      if (on && s.archivedAt)
+        throw new Error(
+          `${named(s)} is archived, so it has no turns to watch.`,
+        );
+      await watch(id, String(api.conversationId), on);
+      return text(
+        on
+          ? `Watching ${named(s)}: you hear each turn it ends, until you stop or it's archived.`
+          : `Stopped watching ${named(s)}.`,
+      );
     },
   });
 
@@ -335,6 +372,16 @@ function sessionTools(hub: boolean): ToolRegistration[] {
     execute: async ({ archived }, api) => {
       const me = String(api.conversationId);
       const mine = (by: string | null) => (by === me ? ', started by you' : '');
+      const yours = (s: {
+        startedBy: string | null;
+        parent: string | null;
+        watchedBy: string[];
+      }) =>
+        (s.parent === me
+          ? ', your child session'
+          : s.startedBy === me
+            ? ", started by you, now the user's"
+            : '') + (s.watchedBy.includes(me) ? ', watched by you' : '');
       const [projects, all] = await Promise.all([
         listProjects(),
         listSessions(),
@@ -348,7 +395,7 @@ function sessionTools(hub: boolean): ToolRegistration[] {
           gone
             .map(
               (s) =>
-                `session ${s.id} "${s.title}" in ${s.cwd}, archived ${new Date(s.archivedAt ?? 0).toISOString().slice(0, 10)}${mine(s.startedBy)}`,
+                `${named(s)} in ${s.cwd}, archived ${new Date(s.archivedAt ?? 0).toISOString().slice(0, 10)}${mine(s.startedBy)}`,
             )
             .join('\n') || 'No archived sessions.',
         );
@@ -357,7 +404,7 @@ function sessionTools(hub: boolean): ToolRegistration[] {
       const terminals = allTerminals();
       const lines: string[] = [];
       const self = open.find((s) => s.id === me);
-      if (self) lines.push(`You are session ${me}, in ${self.cwd}.`, '');
+      if (self) lines.push(`You are ${named(self)}, in ${self.cwd}.`, '');
       for (const p of projects) {
         if (p.id === CHATS_ID) continue;
         lines.push(p.name);
@@ -370,7 +417,7 @@ function sessionTools(hub: boolean): ToolRegistration[] {
           );
           for (const s of here)
             lines.push(
-              `    session ${s.id} "${s.title}": ${STATUS[s.status]}${s.id === me ? ' (you)' : mine(s.startedBy)}`,
+              `    ${named(s)}: ${STATUS[s.status]}${s.id === me ? ' (you)' : yours(s)}`,
             );
           for (const t of shells)
             lines.push(
@@ -388,6 +435,7 @@ function sessionTools(hub: boolean): ToolRegistration[] {
     sessionSend,
     sessionStop,
     sessionArchive,
+    ...(hub ? [sessionWatch] : []),
     list,
   ].map((tool) => ({
     ...(tool as unknown as ToolRegistration),

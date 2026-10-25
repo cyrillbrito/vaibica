@@ -13,7 +13,7 @@ import { createWebTools } from '../tools/web';
 import { exaKey } from '../models/credentials';
 import { install } from '../harness';
 import { SessionDoc, agentIdOf } from '../sessions/session-doc';
-import { HubSessionTools, SessionTools } from '../sessions/tools';
+import { HubSessionTools, SessionTools } from '../orchestration/tools';
 import { HubTerminalTools, TerminalTools } from '../terminals/tools';
 import { coding } from './coding';
 import {

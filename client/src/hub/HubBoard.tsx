@@ -36,7 +36,7 @@ function byRank(a: SessionSummary, b: SessionSummary) {
 }
 
 /**
- * The listed sessions as branches: each holds the sessions it started, and a
+ * The listed sessions as branches: each holds its child sessions, and a
  * listed session with a listed ancestor hangs under it rather than on top.
  * Archived sessions leave the rows, not the branch's cost.
  */
@@ -47,8 +47,8 @@ function growTree(
 ) {
   const kids = new Map<string, SessionSummary[]>();
   for (const s of all)
-    if (s.startedBy && s.id !== hubId)
-      kids.set(s.startedBy, [...(kids.get(s.startedBy) ?? []), s]);
+    if (s.parent && s.id !== hubId)
+      kids.set(s.parent, [...(kids.get(s.parent) ?? []), s]);
   const seen = new Set<string>();
   const grow = (s: SessionSummary): Branch => {
     seen.add(s.id);
@@ -66,9 +66,9 @@ function growTree(
   const ids = new Set(listed.map((s) => s.id));
   const byId = new Map(all.map((s) => [s.id, s]));
   const under = (s: SessionSummary) => {
-    for (let p = s.startedBy, hops = 0; p && hops < 20; hops++) {
+    for (let p = s.parent, hops = 0; p && hops < 20; hops++) {
       if (ids.has(p)) return true;
-      p = byId.get(p)?.startedBy ?? null;
+      p = byId.get(p)?.parent ?? null;
     }
     return false;
   };
@@ -76,11 +76,11 @@ function growTree(
 }
 
 /**
- * Above the hub's chat: the sessions it tracks with their live status, what needs
- * you first (docs/hub.md). It tracks the sessions it started, and any
- * session that asks or failed, since the hub hears of those too. Sessions a
- * worker started hang under it, after affectUI's Agent Tree, and each row's
- * cost is its whole branch.
+ * Above the hub's chat: the sessions it tracks with their live status, what
+ * needs you first (docs/hub.md). It tracks its child sessions, the sessions it
+ * watches, and any session that asks or failed: the ones the hub hears of. A
+ * child session's own children hang under it, after affectUI's Agent Tree,
+ * and each row's cost is its whole branch.
  */
 export default function HubBoard(props: { hubId: string }) {
   const sessions = useSessions();
@@ -91,7 +91,8 @@ export default function HubBoard(props: { hubId: string }) {
           (s) =>
             !s.archivedAt &&
             s.id !== props.hubId &&
-            (s.startedBy === props.hubId ||
+            (s.parent === props.hubId ||
+              s.watchedBy.includes(props.hubId) ||
               s.status === 'waiting' ||
               s.status === 'error'),
         )

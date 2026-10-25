@@ -7,7 +7,7 @@ What OpenAI's GPT-Live and ChatGPT's voice for Codex teach Bica's voice calls an
 OpenAI landed on the same three layers as Bica. GPT-Live is the voice and hands deeper work to a backend. For Codex, that backend gets thread tools (list, create, read, wait, message, fork, read a terminal) and the tasks do the work. Bica has GPT-Live, the hub with its session tools and board, and the sessions.
 
 ```
- you ──▶ GPT-Live ── handoff ──▶ hub ── session tools ──▶ workers
+ you ──▶ GPT-Live ── handoff ──▶ hub ── session tools ──▶ child sessions
      ◀──          ◀── reply ────     ◀── notes, reports ──
 ```
 
@@ -17,7 +17,7 @@ The voice gives presence: full duplex, interruptions, timing. The hub gives judg
 
 - Move the call. "Let me talk to the palette session" points the call's handoffs at that session and refreshes the voice's context with its recent conversation and project names; "back to the hub" points them back, as ChatGPT Voice does for Codex tasks. Medium: `startCall` binds a call to one session, and the transcript would have to follow.
 - The board as quiet context. Send the board's lines to the voice at the start of a hub call, so "what waits on me" needs no hub turn. Cheap, but the board goes stale within minutes, and the hub answers fast anyway.
-- Forking a worker. Codex has `fork_thread`. A new session whose ticket carries what the first one found covers most of it.
+- Forking a child session. Codex has `fork_thread`. A new session whose ticket carries what the first one found covers most of it.
 - A wait tool. Codex has `wait_threads`; notes do the same without the hub blocking.
 
 ## What not to copy
@@ -29,7 +29,7 @@ The voice gives presence: full duplex, interruptions, timing. The hub gives judg
 
 ## Open questions
 
-- When the call moves to a worker, should its lines go in the hub's transcript, the worker's, or both?
+- When the call moves to a child session, should its lines go in the hub's transcript, the child session's, or both?
 - Does steering by default ever join two requests that should have run apart? Codex steers too, so watch for it before adding a "do this next" marker.
 
 ## Sources
@@ -39,4 +39,4 @@ The voice gives presence: full duplex, interruptions, timing. The hub gives judg
 - ChatGPT, [ChatGPT Voice](https://learn.chatgpt.com/docs/features/voice): moving the call to a task and back.
 - openai/codex [#36404](https://github.com/openai/codex/issues/36404): the voice backend's thread tools.
 - OpenClaw, [Talk realtime sessions](https://docs.openclaw.ai/nodes/talk/realtime-sessions): status, steer, cancel, follow-up, and detach versus abort.
-- [gamechat](https://github.com/zdql/gamechat): one worker per slug, and rate-limited progress checks.
+- [gamechat](https://github.com/zdql/gamechat): one agent per slug, and rate-limited progress checks.

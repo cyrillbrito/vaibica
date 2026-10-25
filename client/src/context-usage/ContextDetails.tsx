@@ -196,7 +196,7 @@ function Cache(props: {
           ]}
           option={measure()}
           onOption={(id) => setMeasure(id as 'cost' | 'tokens')}
-          footer="Priced at API rates, also with a subscription. Workers not included."
+          footer="Priced at API rates, also with a subscription. Child sessions not included."
         />
         <details class="group/row -mx-1.5">
           <Summary class="text-meta">

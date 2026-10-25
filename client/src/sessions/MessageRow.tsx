@@ -13,7 +13,7 @@ import {
   InfoIcon,
   ParentIcon,
   SessionIcon,
-  TakeOverIcon,
+  DetachIcon,
   VoiceIcon,
 } from '../ui/icons';
 import Chevron from '../ui/Chevron';
@@ -275,8 +275,8 @@ export default function MessageRow(props: {
                   </>
                 }
               >
-                <TakeOverIcon />
-                You took over
+                <DetachIcon />
+                Detached from its parent
               </Show>
               <div class="h-px flex-1 bg-line" />
             </div>

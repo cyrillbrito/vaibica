@@ -14,10 +14,15 @@ import type { SessionSummary } from '@bica/shared/protocol';
 import { isTurn, statusOf } from '@bica/shared/transcript';
 import { context, getHarness } from '../harness';
 import { live } from '../live';
-import { SessionDoc, type SessionMeta, agentIdOf } from './session-doc';
+import {
+  SessionDoc,
+  type SessionMeta,
+  agentIdOf,
+  parentOf,
+} from './session-doc';
 import { stuckOf, watchStuck } from './stuck';
 
-export { SessionDoc, agentIdOf };
+export { SessionDoc, agentIdOf, parentOf };
 
 // Summaries by conversation, kept between reads. Every commit marks the
 // conversations it touched; a read re-summarizes only those.
@@ -151,8 +156,9 @@ export async function summarize(
     forkedFrom: meta?.forkedFrom ?? null,
     forkedAt: meta?.forkedAt ?? null,
     startedBy: meta?.startedBy || null,
-    parentDrives: !!meta?.startedBy && !meta.userPrompted,
+    parent: parentOf(meta),
     handoffs: meta?.handoffs ?? [],
+    watchedBy: meta?.watchedBy ?? [],
     cleanedUp: meta?.cleanedUp ?? null,
     agent: agentIdOf(meta),
     voice: meta?.voice ?? null,

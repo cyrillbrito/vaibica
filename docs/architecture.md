@@ -39,7 +39,8 @@ The client can't import the server, because its `package.json` doesn't list it.
 
 Inside the client and the server, code is grouped by feature, and a feature has the same folder name on both sides: terminals is `client/src/terminals` and `server/src/terminals`. A feature gets a folder on a side once it has two files there. A single file joins the feature it builds on: the Tonight strip sits in `client/src/sessions`, and housekeeping in `server/src/sessions`.
 
-- `sessions/`: the transcript, the composer, prompts and the queue, notes, archive, housekeeping, and the session tools ([sessions.md](./sessions.md)).
+- `sessions/`: the transcript, the composer, prompts and the queue, notes from Bica, archive, and housekeeping ([sessions.md](./sessions.md)).
+- `orchestration/`: sessions working with other sessions, built on `sessions/`: the session tools, parents and child sessions, Detach, watching, and the notes when a run ends ([orchestration.md](./orchestration.md)). The hub builds on it from its own folder.
 - `agents/` (server): Coding and Assistant, the shared prompt sections, the registry that lists every agent, and `extensions.ts`, which installs the extensions behind the names agents pick into Pi Durable's registry at startup ([agents.md](./agents.md), [system-prompt.md](./system-prompt.md)). `tools/` holds the agent's general tools, and `harness.ts` opens Pi Durable ([tools.md](./tools.md)).
 - `models/`: models, keys, sign-ins, and plan accounts ([models.md](./models.md)).
 - `projects/`: projects, worktrees, chats, pull requests, and the workspace the current page is about ([projects.md](./projects.md)).
@@ -53,7 +54,7 @@ A client feature folder mixes components (`PascalCase.tsx`) with stores and help
 
 Some folders aren't features. In the client, `app/` is the frame around pages (sidebar, ⌘K, top bar, side panel), `ui/` the design system and DOM helpers, `socket/` the browser end of the socket, `fixtures/` the test data, and `routes/` the pages, one file per URL. On the server, the root files do one job each, `socket.ts` is the one table of calls and topics, and `testing/` starts a real Bica for the tests.
 
-Features call each other directly, by relative path to the file they need, with no `index.ts` in between. Only `routes/` and `App.tsx` import `app/`, and `router.ts` is open to all. No package has import cycles, and lint fails on one. The session tools start sessions, and sessions need the tools, so nothing in `sessions/` imports the tools: `socket.ts` installs them through `agents/extensions.ts` before the harness opens, and sessions find them by name in Pi Durable's registry.
+Features call each other directly, by relative path to the file they need, with no `index.ts` in between. Only `routes/` and `App.tsx` import `app/`, and `router.ts` is open to all. No package has import cycles, and lint fails on one. The session tools start sessions, and sessions need the tools, so nothing in `sessions/` imports `orchestration/`: `socket.ts` installs them through `agents/extensions.ts` before the harness opens, and sessions find them by name in Pi Durable's registry.
 
 The app renders only in the browser. In development, `bun run dev` runs two processes: Vite serves the pages on 3142 and forwards the socket to the server one port up. `bun run start` and the `bica` binary run one server that serves the built app too. The server doesn't hot-reload: it runs as it started until Bica restarts. Page edits still reload.
 

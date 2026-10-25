@@ -32,7 +32,7 @@ export type Message = { key: string } & (
   | { kind: 'end'; at: number; text?: string }
   // Where a forked session's own messages start.
   | { kind: 'forked' }
-  // Who is in charge of a worker changed here.
+  // Who is in charge of a child session changed here.
   | { kind: 'in-charge'; to: 'you' | 'parent' }
   // Everything above was swapped for this summary.
   // `before`: the last measured request size; `after`: the summary's estimate.

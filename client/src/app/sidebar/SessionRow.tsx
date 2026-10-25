@@ -70,7 +70,7 @@ export default function SessionRow(props: {
               >
                 {s().title || '…'}
               </span>
-              <Show when={!props.archived && s().parentDrives}>
+              <Show when={!props.archived && s().parent}>
                 <span
                   class="text-accent-ink [&_svg]:size-3.5"
                   title="Its parent session is in charge"
