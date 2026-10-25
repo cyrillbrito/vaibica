@@ -4,13 +4,14 @@ import type { SessionSummary } from '@bica/shared/protocol';
 import { context, getHarness } from '../harness';
 import { accountsOf, openWindows } from '../models/plans';
 import { models } from '../models/registry';
-import { modelSettings } from '../models/models';
+import { settings } from '../settings';
 import { setAgent } from '../sessions/meta';
 import { stop, submit } from '../sessions/prompts';
 import {
-  SessionDoc,
+  editSession,
   getConversation,
   listSessions,
+  sessionMeta,
   sessions,
 } from '../sessions/store';
 
@@ -78,7 +79,7 @@ async function tick() {
     }
     return;
   }
-  if (!inWindow(new Date(), (await modelSettings()).nightStart)) return;
+  if (!inWindow(new Date(), settings().nightStart)) return;
   // Oldest first: the order they were planned in.
   const next = night
     .filter((s) => s.tonight)
@@ -126,13 +127,10 @@ export async function runTonight(id: string, prompt?: string) {
 export async function saveTonight(id: string, prompt: string) {
   if (!prompt.trim()) throw new Error('A night run needs a prompt');
   const { id: conversationId } = await getConversation(id);
-  await (
-    await getHarness()
-  ).commit(async (tx) => {
-    const doc = await tx.doc(SessionDoc, conversationId);
-    if (!doc.tonight) throw new Error('This night run already started');
-    doc.tonight = prompt.trim();
-  }, context);
+  await editSession(conversationId, (meta) => {
+    if (!meta.tonight) throw new Error('This night run already started');
+    meta.tonight = prompt.trim();
+  });
   await sessions.refresh();
 }
 
@@ -145,9 +143,7 @@ async function send(id: string, prompt: string) {
   starting.add(id);
   try {
     // As its parent, so a session the hub planned stays the hub's.
-    const meta = await (
-      await getHarness()
-    ).snapshot(SessionDoc, (await getConversation(id)).id, context);
+    const meta = await sessionMeta((await getConversation(id)).id);
     await submit(id, prompt, [], `night:${id}`, meta?.startedBy ?? 'user');
   } catch (error) {
     starting.delete(id);
@@ -174,25 +170,18 @@ export async function cancelTonight(id: string) {
 
 async function hold(id: string, prompt: string) {
   const { id: conversationId } = await getConversation(id);
-  await (
-    await getHarness()
-  ).commit(async (tx) => {
-    (await tx.doc(SessionDoc, conversationId)).tonight = prompt;
-  }, context);
+  await editSession(conversationId, (meta) => void (meta.tonight = prompt));
   await sessions.refresh();
 }
 
 /** The held prompt, cleared so it can't run twice. */
 async function takePrompt(id: string) {
   const { id: conversationId } = await getConversation(id);
-  let prompt = '';
-  await (
-    await getHarness()
-  ).commit(async (tx) => {
-    const doc = await tx.doc(SessionDoc, conversationId);
-    prompt = doc.tonight ?? '';
-    doc.tonight = '';
-  }, context);
+  const prompt = await editSession(conversationId, (meta) => {
+    const held = meta.tonight ?? '';
+    meta.tonight = '';
+    return held;
+  });
   await sessions.refresh();
   return prompt;
 }

@@ -21,7 +21,7 @@ import {
   listProjects,
   setupCommand,
 } from '../projects/projects';
-import { checkChoice } from '../models/models';
+import { checkChoice } from '../models/registry';
 import { fastModelId } from '../models/fast-model';
 import {
   commandDone,
@@ -35,6 +35,7 @@ import {
   getConversation,
   agentIdOf,
   newestEntry,
+  sessionMeta,
   sessions,
 } from './store';
 
@@ -172,7 +173,7 @@ export async function spawnSession(
 ) {
   const harness = await getHarness();
   const [meta, parentAgent] = await Promise.all([
-    harness.snapshot(SessionDoc, parent, context),
+    sessionMeta(parent),
     harness.snapshot(AgentDoc, parent, context),
   ]);
   let projectId = meta?.projectId;
@@ -223,19 +224,31 @@ export async function fork(id: string, at?: number) {
     entry as EntryId,
     {
       ownership: { kind: 'ownerless' },
-      // SessionDoc forks with the parent's current value: title, project.
+      // SessionDoc forks with the parent's current value. It keeps the
+      // project, agent, and voice; what belongs to the parent's runs, its
+      // starter, or its prompt cache goes. Only the user forks, so it's his.
       init: async (tx, newId) => {
         const doc = await tx.doc(SessionDoc, newId);
         doc.title = `${doc.title || 'Session'} (fork)`.slice(0, 200);
         doc.createdAt = Date.now();
-        doc.archivedAt = 0;
         doc.forkedFrom = id;
         doc.forkedAt = entry;
-        doc.startedBy = '';
         doc.seenEntry = entry;
-        delete doc.watchers;
-        delete doc.messaged;
-        delete doc.handoffs;
+        doc.userPrompted = true;
+        for (const field of [
+          'archivedAt',
+          'startedBy',
+          'quiet',
+          'lastFrom',
+          'handoffs',
+          'cleanedUp',
+          'watchers',
+          'messaged',
+          'memory',
+          'projects',
+          'tonight',
+        ] as const)
+          delete doc[field];
       },
     },
     context,

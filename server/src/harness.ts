@@ -4,9 +4,9 @@ import { NodeExecutionEnv } from '@earendil-works/pi-durable/env/node';
 import { openNodeSqliteStorage } from '@earendil-works/pi-durable/storage/sqlite/node';
 
 import { accountsReady, models } from './models/registry';
-import { cacheRetention } from './models/models';
+import { settings } from './settings';
 import { timeTools } from './tools/tool-time';
-import { dataFile } from './paths';
+import { dataPath } from './storage';
 import { ALL_EXTENSIONS, DEFAULT_EXTENSIONS } from './agents/registry';
 
 export const context = BACKGROUND_CONTEXT;
@@ -19,7 +19,7 @@ async function open(): Promise<Harness> {
   for (const extension of ALL_EXTENSIONS)
     registry.install(timeTools(extension));
   const harness = await Harness.open(
-    await openNodeSqliteStorage(dataFile('harness.sqlite')),
+    await openNodeSqliteStorage(dataPath('harness.sqlite')),
     {
       models,
       registry,
@@ -35,7 +35,11 @@ async function open(): Promise<Harness> {
         // sessions work unwatched, and a note left waiting is never read.
         afterFailedRun: 'continue',
         get stream() {
-          return { cacheRetention: cacheRetention() };
+          return {
+            cacheRetention: settings().longCache
+              ? ('long' as const)
+              : ('short' as const),
+          };
         },
       },
     },

@@ -1,8 +1,7 @@
 import type { ConversationId } from '@earendil-works/pi-durable';
 
-import { context, getHarness } from '../harness';
 import { askFast, fastModelId } from '../models/fast-model';
-import { SessionDoc } from './store';
+import { editSession } from './store';
 
 // The fallback when there is no fast model or it fails: the prompt's first words.
 export const promptTitle = (prompt: string) =>
@@ -23,13 +22,11 @@ export async function retitle(
   if (!fastModelId()) return;
   const title = await nameSession(prompt);
   try {
-    const harness = await getHarness();
-    await harness.commit(async (tx) => {
-      const doc = await tx.doc(SessionDoc, id);
+    await editSession(id, (meta) => {
       // Renamed by hand in the meantime: that name wins.
-      if ((doc.title ?? '') === standIn)
-        doc.title = title || promptTitle(prompt);
-    }, context);
+      if ((meta.title ?? '') === standIn)
+        meta.title = title || promptTitle(prompt);
+    });
   } catch (error) {
     console.error('[title]', error);
   }

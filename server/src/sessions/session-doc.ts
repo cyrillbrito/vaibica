@@ -8,7 +8,8 @@ import type {
 } from '@bica/shared/protocol';
 
 // App metadata stored next to each conversation; Pi Durable has no titles.
-export const SessionDoc = defineDoc<{
+// Read and changed through sessionMeta and editSession (store.ts).
+export type SessionMeta = {
   title: string;
   createdAt: number;
   projectId?: string;
@@ -57,7 +58,9 @@ export const SessionDoc = defineDoc<{
   // The first prompt, held for tonight's run (docs/night-runs.md); '' or
   // unset: none waiting.
   tonight?: string;
-}>({
+};
+
+export const SessionDoc = defineDoc<SessionMeta>({
   kind: 'bica.session',
   version: 1,
   scope: 'conversation',

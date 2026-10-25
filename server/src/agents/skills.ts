@@ -1,4 +1,4 @@
-import { BICA_HOME } from '../paths';
+import { BICA_HOME } from '../storage';
 import { readdir, readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';

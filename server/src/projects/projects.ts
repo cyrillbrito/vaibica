@@ -1,12 +1,6 @@
 import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import {
-  mkdir,
-  readFile,
-  readdir,
-  realpath,
-  writeFile,
-} from 'node:fs/promises';
+import { mkdir, readdir, realpath } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { promisify } from 'node:util';
@@ -19,9 +13,7 @@ import type {
 } from '@bica/shared/protocol';
 import { pullRequests } from './github';
 import { live } from '../live';
-import { dataFile, BICA_HOME } from '../paths';
-
-const FILE = dataFile('projects.json');
+import { BICA_HOME, jsonFile } from '../storage';
 
 // Chats: sessions with no project, each in a fresh empty folder of its own.
 export const CHATS_ID = 'chats';
@@ -37,12 +29,12 @@ const POLL_MS = 5000;
 type Stored = Omit<Project, 'git' | 'workspaces'> & { setup?: string };
 
 // Read every time, so a hand edit (like `setup`) applies without a restart.
-function load(): Promise<Stored[]> {
-  return readFile(FILE, 'utf8').then(
-    (text) => JSON.parse(text) as Stored[],
-    () => [],
-  );
-}
+const file = jsonFile<Stored[]>('projects.json', {
+  initial: () => [],
+  reread: true,
+});
+
+const load = async () => file.read();
 
 // Checked on every read: a folder can become (or stop being) a repo.
 const isGit = (path: string) => existsSync(join(path, '.git'));
@@ -191,32 +183,28 @@ export async function addProject(path: string) {
     name: basename(real),
     path: real,
   };
-  list.push(project);
-  await mkdir(dirname(FILE), { recursive: true });
-  await writeFile(FILE, JSON.stringify(list, null, 2));
+  await file.update((list) => void list.push(project));
   await projects.refresh();
   return project.id;
 }
 
 /** The sidebar's order is the file's order. */
 export async function reorderProjects(ids: string[]) {
-  const list = await load();
   const rank = (p: Stored) => {
     const i = ids.indexOf(p.id);
     return i < 0 ? ids.length : i;
   };
-  list.sort((a, b) => rank(a) - rank(b));
-  await writeFile(FILE, JSON.stringify(list, null, 2));
+  await file.update((list) => void list.sort((a, b) => rank(a) - rank(b)));
   await projects.refresh();
 }
 
 export async function pinProject(id: string, pinned: boolean) {
-  const list = await load();
-  const p = list.find((p) => p.id === id);
-  if (!p) throw new Error(`No project ${id}`);
-  if (pinned) p.pinned = true;
-  else delete p.pinned;
-  await writeFile(FILE, JSON.stringify(list, null, 2));
+  await file.update((list) => {
+    const p = list.find((p) => p.id === id);
+    if (!p) throw new Error(`No project ${id}`);
+    if (pinned) p.pinned = true;
+    else delete p.pinned;
+  });
   await projects.refresh();
 }
 

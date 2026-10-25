@@ -13,7 +13,7 @@ import { isTurn, statusOf } from '@bica/shared/transcript';
 import { context, getHarness } from '../harness';
 import { live } from '../live';
 import { runChanged, runState } from './notes';
-import { SessionDoc, agentIdOf } from './session-doc';
+import { SessionDoc, type SessionMeta, agentIdOf } from './session-doc';
 import { stuckOf, watchStuck } from './stuck';
 
 export { SessionDoc, agentIdOf };
@@ -47,6 +47,17 @@ export function load() {
         if (change.type === 'document' && change.record.kind === 'pi.live') {
           runChanged(change.conversationId, !!change.value?.run);
         }
+        // Automatic ones too. The prompt cache starts over anyway, so the next
+        // prompt takes a fresh memory index and project list (prompts.ts).
+        if (
+          change.type === 'entry' &&
+          change.value.kind === 'pi.compaction' &&
+          !subagents.has(change.value.conversationId)
+        )
+          void editSession(change.value.conversationId, (meta) => {
+            delete meta.memory;
+            delete meta.projects;
+          }).catch((error) => console.error('[sessions]', error));
       }
       scheduled ??= setTimeout(() => {
         scheduled = undefined;
@@ -117,7 +128,7 @@ export async function summarize(
   const harness = await getHarness();
   if (!(await harness.conversation(id, context))) return undefined;
   const [meta, live, agent, newest] = await Promise.all([
-    harness.snapshot(SessionDoc, id, context),
+    sessionMeta(id),
     harness.snapshot(LiveDoc, id, context),
     harness.snapshot(AgentDoc, id, context),
     newestTurn(id),
@@ -225,14 +236,29 @@ export const watchSessions = sessions.watch;
 
 /** The project and workspace a session works in; throws if it has none. */
 export async function sessionWorkspace(id: ConversationId) {
-  const harness = await getHarness();
   const [meta, agent] = await Promise.all([
-    harness.snapshot(SessionDoc, id, context),
-    harness.snapshot(AgentDoc, id, context),
+    sessionMeta(id),
+    (await getHarness()).snapshot(AgentDoc, id, context),
   ]);
   if (!meta?.projectId || !agent?.cwd)
     throw new Error('This session has no workspace');
   return { projectId: meta.projectId, cwd: agent.cwd, agent };
+}
+
+/** A session's own fields (session-doc.ts); undefined for a missing session. */
+export async function sessionMeta(id: ConversationId) {
+  return (await getHarness()).snapshot(SessionDoc, id, context);
+}
+
+/** Changes a session's own fields in one commit; resolves to what `change` returns. */
+export async function editSession<R>(
+  id: ConversationId,
+  change: (meta: SessionMeta) => R | Promise<R>,
+) {
+  return (await getHarness()).commit(
+    async (tx) => change(await tx.doc(SessionDoc, id)),
+    context,
+  );
 }
 
 export async function getConversation(id: string) {

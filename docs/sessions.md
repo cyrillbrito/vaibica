@@ -47,7 +47,7 @@ A worker, a session another session started, is in its parent's charge at first:
 
 ## Forks
 
-A fork is a new session with another one's history up to a chosen reply. It runs in the same workspace, so files are shared, not rolled back.
+A fork is a new session with another one's history up to a chosen reply. It runs in the same workspace, so files are shared, not rolled back. It keeps the project, agent, and voice of the original, and it is yours: whoever started the original isn't told of its runs.
 
 ## Status
 

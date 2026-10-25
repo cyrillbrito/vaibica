@@ -1,5 +1,5 @@
 import { models } from './registry';
-import { fastModel } from './models';
+import { settings } from '../settings';
 
 /**
  * A small, cheap model for quick side jobs (session titles, commit
@@ -8,7 +8,7 @@ import { fastModel } from './models';
  * without.
  */
 export const fastModelId = () => {
-  const ref = fastModel();
+  const ref = settings().fastModel;
   return ref && `${ref.provider}/${ref.modelId}`;
 };
 

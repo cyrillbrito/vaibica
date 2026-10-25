@@ -9,7 +9,7 @@ import {
 } from 'solid-js';
 
 import { closeDrawer } from '../ui/layout';
-import { useModels } from '../models/models';
+import { useSettings } from '../settings';
 import type { Workspace, WorkspaceRef } from '@bica/shared/protocol';
 import { closeKept, isKept, keepOpen, workspaceHref, type Open } from './files';
 import { repos, stage, useGitStatus } from '../git/git';
@@ -47,7 +47,7 @@ export default function OpenFile(props: {
   actions?: JSX.Element;
 }) {
   const navigate = useNavigate();
-  const catalog = useModels();
+  const settings = useSettings();
   const ref = () => props.workspace.ref;
   const status = useGitStatus(ref);
   // The change behind an open diff: its version re-reads the view.
@@ -69,7 +69,7 @@ export default function OpenFile(props: {
     () => {
       const o = props.open;
       const x = change();
-      if (!catalog().settings.stageOnView) return undefined;
+      if (!settings().stageOnView) return undefined;
       // Staging a conflict would mark it resolved.
       if (o.view !== 'changes' || !x || x.status === '!') return;
       return o.path;

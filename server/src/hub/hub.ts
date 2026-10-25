@@ -4,9 +4,10 @@ import { AgentDoc } from '@earendil-works/pi-durable';
 import { context, getHarness } from '../harness';
 import { agentChoice } from '../agents/choice';
 import { getAgent, selection } from '../agents/registry';
-import { modelSettings } from '../models/models';
+import { settings } from '../settings';
+import { SessionDoc } from '../sessions/session-doc';
 import {
-  SessionDoc,
+  editSession,
   getConversation,
   listSessions,
   sessions,
@@ -16,11 +17,10 @@ import {
 // Settings → Hub, on the model picked there.
 
 /** The hub's folder from Settings, or null before one is picked. */
-const hubFolder = async () => (await modelSettings()).hubFolder;
+const hubFolder = async () => settings().hubFolder;
 
 /** The model from Settings when it is reachable, else the agent's own. */
-const hubChoice = async () =>
-  agentChoice(getAgent('hub'), (await modelSettings()).hubModel);
+const hubChoice = async () => agentChoice(getAgent('hub'), settings().hubModel);
 
 /** The newest open hub session outside any project. */
 async function findHub() {
@@ -87,11 +87,8 @@ export async function updateHub() {
   );
   // A new folder holds other memory files.
   if (moved)
-    await (
-      await getHarness()
-    ).commit(async (tx) => {
-      const doc = await tx.doc(SessionDoc, conversation.id);
-      delete doc.memory;
-      delete doc.projects;
-    }, context);
+    await editSession(conversation.id, (meta) => {
+      delete meta.memory;
+      delete meta.projects;
+    });
 }

@@ -1,8 +1,6 @@
-import { readFile, writeFile } from 'node:fs/promises';
-
 import type { PlanUsage } from '@bica/shared/protocol';
 import { live } from '../live';
-import { dataFile } from '../paths';
+import { jsonFile } from '../storage';
 import { emailOf, nameOf } from './account-info';
 import {
   accountsOf,
@@ -19,17 +17,18 @@ import { models } from './registry';
  * rate-limit headers of each account's last reply (plans.ts). Saved, so the
  * meters survive a restart; an account that hasn't answered yet has none.
  */
-const FILE = dataFile('plan-usage.json');
+const file = jsonFile<ReturnType<typeof allLimits>>('plan-usage.json', {
+  initial: () => [],
+});
 
-const restored = readFile(FILE, 'utf8')
-  .then((text) => {
-    const saved = JSON.parse(text);
-    if (Array.isArray(saved)) restoreLimits(saved);
-  })
-  .catch(() => {});
+try {
+  restoreLimits(file.read());
+} catch (error) {
+  // Only meters: the next reply's limits replace it.
+  console.error('[usage]', error);
+}
 
 async function read(): Promise<PlanUsage> {
-  await restored;
   // In the order you prefer the accounts.
   const place = (id: string) => accountsOf(models, baseOf(id)).indexOf(id);
   return allLimits()
@@ -53,12 +52,9 @@ async function read(): Promise<PlanUsage> {
 
 const feed = live(read);
 
-let saving = Promise.resolve();
 onLimits(() => {
   void feed.refresh();
-  saving = saving
-    .then(() => writeFile(FILE, JSON.stringify(allLimits())))
-    .catch((error) => console.error('[usage]', error));
+  file.write(allLimits()).catch((error) => console.error('[usage]', error));
 });
 
 export const watchPlanUsage = feed.watch;

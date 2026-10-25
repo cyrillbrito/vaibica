@@ -15,8 +15,8 @@ import { VOICE_TITLE, retitle } from '../sessions/names';
 import { keepCopies, keepModel, recordSender } from '../sessions/prompts';
 import { textOf } from '../sessions/read';
 import {
-  SessionDoc,
   getConversation,
+  sessionMeta,
   sessionWorkspace,
 } from '../sessions/store';
 
@@ -34,8 +34,7 @@ export async function voiceSession(sessionId: string) {
   const harness = await getHarness();
   let named = false;
   return {
-    settings: async () =>
-      (await harness.snapshot(SessionDoc, id, context))?.voice,
+    settings: async () => (await sessionMeta(id))?.voice,
     cwd: async () => (await sessionWorkspace(id)).cwd,
     busy: async () => !!(await harness.snapshot(LiveDoc, id, context))?.run,
     abort: () => conversation.abort(context),

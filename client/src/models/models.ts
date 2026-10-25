@@ -1,11 +1,7 @@
 import type { ConversationView } from '@earendil-works/pi-durable';
 import { createSignal } from 'solid-js';
 
-import type {
-  ModelCatalog,
-  ModelChoice,
-  ModelSettings,
-} from '@bica/shared/protocol';
+import type { ModelCatalog, ModelChoice } from '@bica/shared/protocol';
 import { request, useTopic } from '../socket/socket';
 
 export const useModels = () => useTopic('models', () => ({}));
@@ -15,9 +11,6 @@ const [openModel, setOpenModel] = createSignal<
   ModelChoice['model'] | undefined
 >(undefined, { name: 'openModel' });
 export { openModel, setOpenModel };
-
-export const updateSettings = (change: Partial<ModelSettings>) =>
-  request('settings.update', change);
 
 export const modelKey = (provider: string, modelId: string) =>
   `${provider}/${modelId}`;
@@ -61,9 +54,13 @@ export function shortName(model: Named, models: Named[]) {
 }
 
 /** The models a picker offers: the enabled ones (all if none), plus `current`. */
-export function pickable(catalog: ModelCatalog, current?: ModelChoice) {
-  const enabled = new Set(catalog.settings.enabled);
-  return catalog.models.filter(
+export function pickable(
+  models: ModelCatalog['models'],
+  enabledKeys: string[],
+  current?: ModelChoice,
+) {
+  const enabled = new Set(enabledKeys);
+  return models.filter(
     (m) =>
       !enabled.size ||
       enabled.has(modelKey(m.provider, m.id)) ||

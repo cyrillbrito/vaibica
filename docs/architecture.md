@@ -72,8 +72,14 @@ Bica's data sits in the repo's `.data/`. The browser keeps small preferences per
 | Sessions, transcripts, queues | `harness.sqlite` |
 | Projects | `projects.json` |
 | Settings | `settings.json` |
-| Keys and sign-ins | `auth.json` |
+| Keys and sign-ins | `auth.json`, readable only by you |
+| Plan accounts' emails and order | `accounts.json` |
+| Plan limits for the meters | `plan-usage.json` |
 | Worktrees, branches, files | git and the disk |
+
+`server/src/storage.ts` is the one way to these files: it knows where `.data` is, keeps keys private, saves through a temporary file so a crash never leaves half a file, and refuses to overwrite a file it can't read. In `harness.sqlite`, each session has Pi Durable's documents (`pi.agent`, `pi.live`, `pi.inbox`, and more) and Bica's own, `bica.session`, with its title, project, archive, and what the features around it keep. Code reads and changes it through `sessionMeta` and `editSession` in `server/src/sessions/store.ts`.
+
+Settings are the same on every device, and the server sends them as their own topic. Preferences of one device, like the theme, stay in its browser.
 
 Your own files for Bica live in `~/.bica/`: an `AGENTS.md` and skills for every session ([system-prompt.md](./system-prompt.md)), and the chat folders ([projects.md](./projects.md#chats)).
 

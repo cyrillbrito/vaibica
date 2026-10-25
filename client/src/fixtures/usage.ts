@@ -1,5 +1,5 @@
 // Test data for what fills a session's context, the model catalog, the
-// providers in Settings, and plan usage (`?data=demo`, `?data=worst`). Compact
+// settings, the providers in Settings, and plan usage (`?data=demo`, `?data=worst`). Compact
 // and pruning play out on the test sessions, so the context field can be
 // seen shimmering and clearing.
 import { createSignal } from 'solid-js';
@@ -9,6 +9,7 @@ import type {
   Accounts,
   ModelCatalog,
   PlanUsage,
+  Settings,
   ThinkingLevel,
 } from '@bica/shared/protocol';
 
@@ -336,19 +337,6 @@ export function fixtureCatalog(worst: boolean): ModelCatalog {
         cost: { input: 0.042 },
       },
     ],
-    settings: {
-      model: { provider: 'anthropic', modelId: 'claude-opus-4-5' },
-      thinkingLevel: 'medium',
-      enabled: [],
-      fastModel: { provider: 'anthropic', modelId: 'claude-haiku-4-5' },
-      decisionModel: null,
-      stageOnView: false,
-      longCache: true,
-      hubFolder: null,
-      hubModel: null,
-      nightStart: '01:00',
-    },
-    fromEnv: { model: false, fastModel: false },
     compaction: { reserveTokens: RESERVE, backgroundTokens: BACKGROUND },
   };
 }
@@ -542,4 +530,20 @@ export function fixturePlanUsage(worst: boolean): PlanUsage {
       ],
     },
   ];
+}
+
+export function fixtureSettings(): Settings {
+  return {
+    model: { provider: 'anthropic', modelId: 'claude-opus-4-5' },
+    thinkingLevel: 'medium',
+    enabled: [],
+    fastModel: { provider: 'anthropic', modelId: 'claude-haiku-4-5' },
+    decisionModel: null,
+    stageOnView: false,
+    longCache: true,
+    hubFolder: null,
+    hubModel: null,
+    nightStart: '01:00',
+    fromEnv: { model: false, fastModel: false },
+  };
 }

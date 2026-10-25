@@ -1,6 +1,6 @@
 import { appendFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { BICA_HOME } from './paths';
+import { BICA_HOME } from './storage';
 
 // Creating the file turns the log on and deleting it turns it off, so it
 // works on a running server without a restart.

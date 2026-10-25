@@ -96,8 +96,11 @@ export interface ModelChoice {
   thinkingLevel: ThinkingLevel;
 }
 
-/** What new sessions start with, which models the pickers offer, git habits. */
-export interface ModelSettings extends ModelChoice {
+/**
+ * Bica's settings, the same on every device: the models new sessions and side
+ * jobs use, the hub, night runs, and git habits.
+ */
+export interface Settings extends ModelChoice {
   // `provider/modelId`s; empty: every available model.
   enabled: string[];
   // The small model for titles and commit messages; null: none.
@@ -116,7 +119,13 @@ export interface ModelSettings extends ModelChoice {
   hubModel: ModelChoice | null;
   // When night runs start, as local "HH:MM" (docs/night-runs.md).
   nightStart: string;
+  // Which defaults still come from the server's env (PI_MODEL, PI_FAST_MODEL)
+  // because nothing was picked in Settings.
+  fromEnv: { model: boolean; fastModel: boolean };
 }
+
+/** What the Settings page changes; the rest stays as saved. */
+export type SettingsChange = Partial<Omit<Settings, 'fromEnv'>>;
 
 /** The providers with a key on the server, and the models they reach. */
 export interface ModelCatalog {
@@ -141,10 +150,6 @@ export interface ModelCatalog {
     contextWindow: number;
     cost: { input: number };
   }[];
-  settings: ModelSettings;
-  // Which defaults still come from the server's env (PI_MODEL, PI_FAST_MODEL)
-  // because nothing was picked in Settings.
-  fromEnv: { model: boolean; fastModel: boolean };
   // Auto-compaction: blocks at contextWindow - reserveTokens, starts in the
   // background backgroundTokens before that.
   compaction: { reserveTokens: number; backgroundTokens: number };
@@ -392,7 +397,7 @@ export interface Calls {
     result: string;
   };
   'session.configure': { args: { id: string } & ModelChoice; result: null };
-  'settings.update': { args: Partial<ModelSettings>; result: null };
+  'settings.update': { args: SettingsChange; result: null };
   'project.add': { args: { path: string }; result: string };
   // Project ids in their new sidebar order; ids left out keep their place after.
   'project.reorder': { args: { ids: string[] }; result: null };
@@ -565,6 +570,7 @@ export interface Topics {
   sessions: { params: Record<string, never>; value: SessionSummary[] };
   projects: { params: Record<string, never>; value: Project[] };
   models: { params: Record<string, never>; value: ModelCatalog };
+  settings: { params: Record<string, never>; value: Settings };
   accounts: { params: Record<string, never>; value: Accounts };
   // null: no such conversation.
   conversation: { params: { id: string }; value: ConversationView | null };

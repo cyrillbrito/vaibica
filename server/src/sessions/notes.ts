@@ -4,7 +4,13 @@ import { context, getHarness } from '../harness';
 import type { PromptImage } from '@bica/shared/protocol';
 import { queued, submit, type QueuedInput } from './prompts';
 import { prompters, readSession, recentMessages } from './read';
-import { SessionDoc, getConversation, listSessions, load } from './store';
+import {
+  editSession,
+  getConversation,
+  listSessions,
+  load,
+  sessionMeta,
+} from './store';
 
 // When a run ends, its parent (`startedBy`) gets a note, and so do the
 // sessions in its `watchers`, for that run only. The last run state seen of
@@ -16,12 +22,10 @@ function addTo(
   field: 'watchers' | 'messaged',
   who: string,
 ) {
-  return getHarness().then((harness) =>
-    harness.commit(async (tx) => {
-      const doc = await tx.doc(SessionDoc, id);
-      if (!doc[field]?.includes(who)) doc[field] = [...(doc[field] ?? []), who];
-    }, context),
-  );
+  return editSession(id, (meta) => {
+    if (!meta[field]?.includes(who))
+      meta[field] = [...(meta[field] ?? []), who];
+  });
 }
 
 /** Session `from` messaged `to` during its current run. */
@@ -53,19 +57,16 @@ export function runChanged(id: ConversationId | undefined, running: boolean) {
  */
 async function runEnded(id: ConversationId) {
   // Taken and cleared at once: these were for the run that just ended.
-  let once: string[] = [];
-  let told: string[] = [];
-  let quiet: boolean | undefined;
-  await (
-    await getHarness()
-  ).commit(async (tx) => {
-    const doc = await tx.doc(SessionDoc, id);
-    once = doc.watchers ?? [];
-    told = doc.messaged ?? [];
-    quiet = doc.quiet;
-    if (doc.watchers) delete doc.watchers;
-    if (doc.messaged) delete doc.messaged;
-  }, context);
+  const { once, told, quiet } = await editSession(id, (meta) => {
+    const taken = {
+      once: meta.watchers ?? [],
+      told: meta.messaged ?? [],
+      quiet: meta.quiet,
+    };
+    if (meta.watchers) delete meta.watchers;
+    if (meta.messaged) delete meta.messaged;
+    return taken;
+  });
   const s = await readSession(String(id)).catch(() => undefined);
   // Archived: done with, so it doesn't report.
   if (!s || s.archivedAt) return;
@@ -138,16 +139,15 @@ export async function fromUser(
 /** The user gives a session he took over back to the session that started it. */
 export async function handBack(id: string) {
   const conversation = await getConversation(id);
-  let parent: string | undefined;
-  await (
-    await getHarness()
-  ).commit(async (tx) => {
-    const doc = await tx.doc(SessionDoc, conversation.id);
-    if (!doc.startedBy || !doc.userPrompted) return;
-    parent = doc.startedBy;
-    doc.userPrompted = false;
-    doc.handoffs = [...(doc.handoffs ?? []), { at: Date.now(), to: 'parent' }];
-  }, context);
+  const parent = await editSession(conversation.id, (meta) => {
+    if (!meta.startedBy || !meta.userPrompted) return undefined;
+    meta.userPrompted = false;
+    meta.handoffs = [
+      ...(meta.handoffs ?? []),
+      { at: Date.now(), to: 'parent' },
+    ];
+    return meta.startedBy;
+  });
   if (!parent) return;
   const s = await readSession(id);
   await tell(
@@ -169,9 +169,7 @@ const NOTE_REQUEST = 'note:';
 export async function tell(id: string, text: string) {
   try {
     const conversation = await getConversation(id);
-    const meta = await (
-      await getHarness()
-    ).snapshot(SessionDoc, conversation.id, context);
+    const meta = await sessionMeta(conversation.id);
     if (!meta || meta.archivedAt) return;
     let note = `${NOTE} ${text}`;
     const harness = await getHarness();

@@ -10,7 +10,7 @@ import type {
   WorkspaceRef,
 } from '@bica/shared/protocol';
 import { getProject } from '../projects/projects';
-import { dataFile } from '../paths';
+import { dataPath } from '../storage';
 
 /**
  * Shells and long-running processes (dev servers, game servers) in a
@@ -129,7 +129,7 @@ let zdotdir: string | undefined;
 function integration(): Record<string, string> {
   if (!shell().endsWith('/zsh')) return {};
   if (!zdotdir) {
-    zdotdir = resolve(dataFile('shell', 'zsh'));
+    zdotdir = resolve(dataPath('shell', 'zsh'));
     mkdirSync(zdotdir, { recursive: true });
     writeFileSync(`${zdotdir}/.zshenv`, ZSHENV);
   }

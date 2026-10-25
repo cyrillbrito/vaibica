@@ -1,6 +1,7 @@
 import { For, Show, createMemo, createSignal } from 'solid-js';
 
 import { formatTokens } from '@bica/shared/context-usage';
+import { useSettings } from '../settings';
 import { modelKey, pickable, shortName, useModels } from './models';
 import type {
   ModelCatalog,
@@ -81,11 +82,12 @@ export default function ModelPicker(props: {
   const id = `model-picker-${++nextId}`;
   let popover: HTMLDivElement | undefined;
   const catalog = useModels();
+  const settings = useSettings();
   const options = createMemo<Model[]>(
     () => [
       // Absent from a server that predates decision models.
       ...(props.decision ? (catalog().classifiers ?? []).map(asModel) : []),
-      ...pickable(catalog(), props.value),
+      ...pickable(catalog().models, settings().enabled, props.value),
     ],
     {
       name: 'modelOptions',

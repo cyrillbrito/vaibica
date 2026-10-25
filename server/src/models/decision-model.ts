@@ -1,7 +1,7 @@
 import type { JsonObject } from '@earendil-works/pi-ai';
 
 import { models } from './registry';
-import { decisionModel } from './models';
+import { settings } from '../settings';
 
 /**
  * Yes or no questions about one state, answered by the decision model picked
@@ -18,7 +18,7 @@ const BATCH = 40;
 
 const SYSTEM = `You are a decision model. Read the state and answer every question with true or false. Reply with one JSON object that maps each question id to true or false, and nothing else.`;
 
-export const hasDecisionModel = () => !!decisionModel();
+export const hasDecisionModel = () => !!settings().decisionModel;
 
 /** The probability of yes per question id; rejects when the model fails. */
 export async function decide(
@@ -26,7 +26,7 @@ export async function decide(
   questions: Record<string, Question>,
   signal?: AbortSignal,
 ): Promise<Record<string, number>> {
-  const ref = decisionModel();
+  const ref = settings().decisionModel;
   if (!ref) throw new Error('No decision model set (Settings → Models)');
   const ids = Object.keys(questions);
   const classifier = models.getModelOfType(

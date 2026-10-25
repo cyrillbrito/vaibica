@@ -1,6 +1,7 @@
 import { For, Show, createMemo, createSignal } from 'solid-js';
 
-import { modelKey, updateSettings, useModels } from './models';
+import { updateSettings, useSettings } from '../settings';
+import { modelKey, useModels } from './models';
 import { Card } from '../ui/Card';
 import { CheckMark } from '../ui/CheckMark';
 import { CloseIcon, PlusIcon } from '../ui/icons';
@@ -15,7 +16,8 @@ const PER_PROVIDER = 30;
  */
 export default function ModelFavorites() {
   const catalog = useModels();
-  const enabled = createMemo(() => catalog().settings.enabled, {
+  const settings = useSettings();
+  const enabled = createMemo(() => settings().enabled, {
     name: 'enabledModels',
   });
   const set = (keys: string[]) => void updateSettings({ enabled: keys });

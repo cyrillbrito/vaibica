@@ -16,7 +16,12 @@ import type {
 import { chat, type Chat, type Turn } from './conversation';
 import { MODES, datasets, type Dataset, type Mode } from './data';
 import { fixtureDiff, gitFixtures } from './git';
-import { fixtureAccounts, fixtureCatalog, fixturePlanUsage } from './usage';
+import {
+  fixtureAccounts,
+  fixtureCatalog,
+  fixturePlanUsage,
+  fixtureSettings,
+} from './usage';
 
 export { MODES, type Mode };
 
@@ -207,6 +212,8 @@ export function fixture(topic: Topic, params: unknown) {
     const worst = m === 'worst';
     if (topic === 'models')
       return { value: cached(m, 'models', () => fixtureCatalog(worst)) };
+    if (topic === 'settings')
+      return { value: cached(m, 'settings', fixtureSettings) };
     if (topic === 'accounts')
       return { value: cached(m, 'accounts', () => fixtureAccounts(worst)) };
     if (topic === 'plan.usage')

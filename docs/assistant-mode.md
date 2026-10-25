@@ -22,7 +22,7 @@ The agent is told it is a long-running helper for its project, for notes, planni
 
 ## The memory index
 
-Every session, assistant or not, starts with the memory index in its system prompt: `MEMORY.md`, or `PROFILE.md`, in the session's workspace. Bica takes a copy when the session starts and refreshes it only after a compaction, so the prompt cache holds. A long index is cut, and the agent is told so.
+Every session, assistant or not, starts with the memory index in its system prompt: `MEMORY.md`, or `PROFILE.md`, in the session's workspace. Bica takes a copy when the session starts and refreshes it only after a compaction, automatic or not, so the prompt cache holds. A long index is cut, and the agent is told so.
 
 ## Why it works this way
 

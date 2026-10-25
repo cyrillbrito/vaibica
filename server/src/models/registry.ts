@@ -1,4 +1,11 @@
+import { clampThinkingLevel } from '@earendil-works/pi-ai';
 import { builtinModels } from '@earendil-works/pi-ai/providers/all';
+
+import type {
+  ModelChoice,
+  ModelRef,
+  ThinkingLevel,
+} from '@bica/shared/protocol';
 
 import { credentials } from './credentials';
 import { baseOf, extraAccount, isExtra, routeAccounts } from './plans';
@@ -31,3 +38,43 @@ export const accountsReady = credentials.list().then((saved) => {
     if (isExtra(providerId) && models.getProvider(baseOf(providerId)))
       addExtraAccount(providerId);
 });
+
+const LEVELS: readonly ThinkingLevel[] = [
+  'off',
+  'minimal',
+  'low',
+  'medium',
+  'high',
+  'xhigh',
+  'max',
+];
+
+const key = (ref: ModelRef) => `${ref.provider}/${ref.modelId}`;
+
+/** A model the providers' keys reach, and an effort it supports. */
+export function checkChoice({
+  model,
+  thinkingLevel,
+}: ModelChoice): ModelChoice {
+  const found = models.getModel(model.provider, model.modelId);
+  if (!found) throw new Error(`Unknown model ${key(model)}`);
+  if (!LEVELS.includes(thinkingLevel))
+    throw new Error(`Unknown effort ${thinkingLevel}`);
+  return {
+    model: { provider: found.provider, modelId: found.id },
+    thinkingLevel: clampThinkingLevel(found, thinkingLevel),
+  };
+}
+
+/** A chat model, or with `classifier` a decision model, the keys reach. */
+export function checkRef(ref: ModelRef, classifier = false) {
+  if (
+    !models.getModel(ref.provider, ref.modelId) &&
+    !(
+      classifier &&
+      models.getModelOfType('classifier', ref.provider, ref.modelId)
+    )
+  )
+    throw new Error(`Unknown model ${key(ref)}`);
+  return ref;
+}

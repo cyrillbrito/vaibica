@@ -1,7 +1,7 @@
 import { useNavigate } from '@solidjs/router';
 import { createSignal } from 'solid-js';
 
-import { useModels } from '../models/models';
+import { useSettings } from '../settings';
 import type { AgentId } from '@bica/shared/agents';
 import type { PromptImage } from '@bica/shared/protocol';
 import { startSession } from './sessions';
@@ -33,13 +33,13 @@ export default function StartComposer(props: {
   ref?: (api: { call: () => void }) => void;
 }) {
   const navigate = useNavigate();
-  const models = useModels();
+  const settings = useSettings();
   // Picking here sets only the session about to start; Settings holds the
   // default, so one session's pick never leaks into the next.
   const [choice, setChoice] = createSignal(
     () => ({
-      model: models().settings.model,
-      thinkingLevel: models().settings.thinkingLevel,
+      model: settings().model,
+      thinkingLevel: settings().thinkingLevel,
     }),
     { name: 'startChoice' },
   );
@@ -88,7 +88,7 @@ export default function StartComposer(props: {
         <>
           <IconButton
             size="md"
-            title={`Run tonight at ${models().settings.nightStart}, on its own, and report in the morning`}
+            title={`Run tonight at ${settings().nightStart}, on its own, and report in the morning`}
             onClick={() => composer?.sendAlternate()}
           >
             <MoonIcon />

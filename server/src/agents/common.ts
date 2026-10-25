@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import type { AgentId } from '@bica/shared/agents';
 import type { ModelChoice, ThinkingLevel } from '@bica/shared/protocol';
-import { BICA_HOME } from '../paths';
+import { BICA_HOME } from '../storage';
 import { CHATS_ID, listProjects } from '../projects/projects';
 
 // What every agent is made of, and the parts they share (docs/agents.md).

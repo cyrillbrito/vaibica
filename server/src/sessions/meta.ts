@@ -2,7 +2,7 @@ import type { ConversationId } from '@earendil-works/pi-durable';
 
 import type { AgentId } from '@bica/shared/agents';
 import type { PullRequest, VoiceSettings } from '@bica/shared/protocol';
-import { context, getHarness } from '../harness';
+import { context } from '../harness';
 import { getAgent, selection } from '../agents/registry';
 import {
   getProject,
@@ -15,7 +15,7 @@ import {
   terminalsIn,
 } from '../terminals/terminals';
 import {
-  SessionDoc,
+  editSession,
   getConversation,
   listSessions,
   newestEntry,
@@ -28,11 +28,7 @@ import {
  */
 export async function setAgent(id: string, agent: AgentId) {
   const conversation = await getConversation(id);
-  await (
-    await getHarness()
-  ).commit(async (tx) => {
-    (await tx.doc(SessionDoc, conversation.id)).profile = agent;
-  }, context);
+  await editSession(conversation.id, (meta) => void (meta.profile = agent));
   await conversation.configure(
     { extensions: selection(getAgent(agent)) },
     context,
@@ -43,14 +39,12 @@ export async function setAgent(id: string, agent: AgentId) {
 /** How the session's next voice calls sound. */
 export async function setVoice(id: string, voice: VoiceSettings) {
   const { id: conversationId } = await getConversation(id);
-  await (
-    await getHarness()
-  ).commit(async (tx) => {
-    (await tx.doc(SessionDoc, conversationId)).voice = {
+  await editSession(conversationId, (meta) => {
+    meta.voice = {
       speed: Math.min(1.5, Math.max(0.25, voice.speed)),
       instructions: voice.instructions.trim().slice(0, 4000),
     };
-  }, context);
+  });
   await sessions.refresh();
 }
 
@@ -59,11 +53,7 @@ export async function rename(id: string, title: string) {
   const clean = title.replace(/\s+/g, ' ').trim().slice(0, 200);
   if (!clean) throw new Error('A title cannot be empty');
   const { id: conversationId } = await getConversation(id);
-  await (
-    await getHarness()
-  ).commit(async (tx) => {
-    (await tx.doc(SessionDoc, conversationId)).title = clean;
-  }, context);
+  await editSession(conversationId, (meta) => void (meta.title = clean));
   // The list goes out before the reply, so the new name never flickers back.
   // (Commit listeners run before commit() resolves: the id is already stale.)
   await sessions.refresh();
@@ -75,13 +65,10 @@ export async function markSeen(id: string, seen = true) {
   if (!Number.isInteger(conversationId)) throw new Error(`No session ${id}`);
   const newest = await newestEntry(conversationId);
   if (!newest) return;
-  await (
-    await getHarness()
-  ).commit(async (tx) => {
-    const doc = await tx.doc(SessionDoc, conversationId);
-    if (!seen) doc.seenEntry = newest.id - 1;
-    else if ((doc.seenEntry ?? 0) < newest.id) doc.seenEntry = newest.id;
-  }, context);
+  await editSession(conversationId, (meta) => {
+    if (!seen) meta.seenEntry = newest.id - 1;
+    else if ((meta.seenEntry ?? 0) < newest.id) meta.seenEntry = newest.id;
+  });
 }
 
 /**
@@ -118,27 +105,20 @@ export async function retireSessions(
   const here = (await listSessions()).filter((s) => s.cwd === cwd);
   if (here.some((s) => s.status === 'running' || s.status === 'retrying'))
     throw new Error('A session there is still running');
-  await (
-    await getHarness()
-  ).commit(async (tx) => {
-    for (const s of here) {
-      const doc = await tx.doc(SessionDoc, Number(s.id) as ConversationId);
-      doc.archivedAt ||= Date.now();
-      doc.cleanedUp = { branch, pr };
-    }
-  }, context);
+  for (const s of here)
+    await editSession(Number(s.id) as ConversationId, (meta) => {
+      meta.archivedAt ||= Date.now();
+      meta.cleanedUp = { branch, pr };
+    });
 }
 
 /** Hides a session from the list, or brings it back. Nothing is deleted. */
 export async function archive(id: string, archived: boolean) {
   const { id: conversationId } = await getConversation(id);
-  await (
-    await getHarness()
-  ).commit(async (tx) => {
-    const doc = await tx.doc(SessionDoc, conversationId);
-    // 0, not delete: docs hold plain JSON values.
-    doc.archivedAt = archived ? doc.archivedAt || Date.now() : 0;
-  }, context);
+  await editSession(conversationId, (meta) => {
+    if (archived) meta.archivedAt ||= Date.now();
+    else delete meta.archivedAt;
+  });
   // Its dev servers and shells go with it.
   if (archived)
     for (const t of allTerminals())

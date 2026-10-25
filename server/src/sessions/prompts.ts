@@ -13,10 +13,10 @@ import type { ModelChoice, PromptImage } from '@bica/shared/protocol';
 import { context, getHarness } from '../harness';
 import { getAgent } from '../agents/registry';
 import { loadMemory, projectList } from '../agents/common';
-import { checkChoice, defaultChoice } from '../models/models';
-import { models } from '../models/registry';
+import { defaultChoice } from '../models/models';
+import { checkChoice, models } from '../models/registry';
 import { keepers } from './prune-judge';
-import { SessionDoc, agentIdOf, getConversation } from './store';
+import { agentIdOf, editSession, getConversation, sessionMeta } from './store';
 
 /** Who sends a prompt: the user, Bica's own notes, or another session's id. */
 export type Sender = 'user' | 'bica' | (string & {});
@@ -36,10 +36,7 @@ export async function submit(
 ) {
   const conversation = await getConversation(id);
   // Its one prompt waits for tonight (docs/night-runs.md); a second would run now.
-  if (
-    (await (await getHarness()).snapshot(SessionDoc, conversation.id, context))
-      ?.tonight
-  )
+  if ((await sessionMeta(conversation.id))?.tonight)
     throw new Error(
       'This session is held for tonight: edit its prompt, or run it now',
     );
@@ -64,34 +61,28 @@ export async function recordSender(
   from: Sender,
   keep = false,
 ) {
-  let parent: string | undefined;
-  await (
-    await getHarness()
-  ).commit(async (tx) => {
-    const doc = await tx.doc(SessionDoc, id);
-    doc.lastFrom = from;
-    if (from !== 'user' || keep || doc.userPrompted) return;
-    doc.userPrompted = true;
-    if (!doc.startedBy) return;
-    parent = doc.startedBy;
-    doc.handoffs = [...(doc.handoffs ?? []), { at: Date.now(), to: 'you' }];
-  }, context);
-  return parent;
+  return editSession(id, (meta) => {
+    meta.lastFrom = from;
+    if (from !== 'user' || keep || meta.userPrompted) return undefined;
+    meta.userPrompted = true;
+    if (!meta.startedBy) return undefined;
+    meta.handoffs = [...(meta.handoffs ?? []), { at: Date.now(), to: 'you' }];
+    return meta.startedBy;
+  });
 }
 
 /**
  * Takes the memory index, and the project list for an agent with a
  * `projects` section such as the hub's, when the session holds
- * no copy: at its first prompt and after a compaction. The prompt sections
+ * no copy: at its first prompt and after a compaction (store.ts). The prompt sections
  * show the copies (server/src/agents/registry.ts), since the agent
  * edits memory mid-session and every change would be sent again. Every
  * prompt path calls it, voice included.
  */
 export async function keepCopies(id: ConversationId) {
-  const harness = await getHarness();
   const [agent, meta] = await Promise.all([
-    harness.snapshot(AgentDoc, id, context),
-    harness.snapshot(SessionDoc, id, context),
+    (await getHarness()).snapshot(AgentDoc, id, context),
+    sessionMeta(id),
   ]);
   if (!agent?.cwd) return;
   // Sessions from before the prompt sections stored their instructions.
@@ -106,9 +97,7 @@ export async function keepCopies(id: ConversationId) {
       meta?.projects ??
       (getAgent(agentIdOf(meta)).sections.projects ? await projectList() : ''),
   };
-  await harness.commit(async (tx) => {
-    Object.assign(await tx.doc(SessionDoc, id), taken);
-  }, context);
+  await editSession(id, (meta) => void Object.assign(meta, taken));
 }
 
 /**
@@ -230,15 +219,6 @@ export async function configure(id: string, choice: ModelChoice) {
 export async function compact(id: string, instructions?: string) {
   const conversation = await getConversation(id);
   await conversation.compact(instructions?.trim() || undefined, context);
-  // The cache starts over anyway: the next prompt takes a fresh memory index
-  // and project list.
-  await (
-    await getHarness()
-  ).commit(async (tx) => {
-    const doc = await tx.doc(SessionDoc, conversation.id);
-    delete doc.memory;
-    delete doc.projects;
-  }, context);
 }
 
 /**

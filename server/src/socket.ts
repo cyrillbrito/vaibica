@@ -47,7 +47,8 @@ import {
   startNight,
 } from './night-runs/night';
 import { startHousekeeping } from './sessions/housekeeping';
-import { updateSettings, watchModels } from './models/models';
+import { watchModels } from './models/models';
+import { updateSettings, watchSettings } from './settings';
 import { wsLogger } from './ws-log';
 import {
   addAccount,
@@ -336,6 +337,7 @@ const topics: {
   sessions: (_params, sink) => watchSessions(sink.snapshot),
   projects: (_params, sink) => watchProjects(sink.snapshot),
   models: (_params, sink) => watchModels(sink.snapshot),
+  settings: (_params, sink) => watchSettings(sink.snapshot),
   accounts: (_params, sink) => watchAccounts(sink.snapshot),
   'plan.usage': (_params, sink) => watchPlanUsage(sink.snapshot),
   conversation: ({ id }, sink, have) => watchConversation(id, sink, have),

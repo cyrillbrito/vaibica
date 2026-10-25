@@ -1,6 +1,6 @@
 import { createSignal } from 'solid-js';
 
-import { useModels } from '../models/models';
+import { useSettings } from '../settings';
 import { tonightAction } from './sessions';
 import { IconButton } from '../ui/Button';
 import { toast } from '../ui/Toast';
@@ -16,7 +16,7 @@ export default function TonightStrip(props: {
   // Before cancelling, so the composer keeps the prompt as a draft.
   onCancel: () => void;
 }) {
-  const models = useModels();
+  const settings = useSettings();
   const [busy, setBusy] = createSignal(false, { name: 'tonightBusy' });
   const cancel = async () => {
     if (busy()) return;
@@ -34,9 +34,7 @@ export default function TonightStrip(props: {
     <div class="appear flex min-h-8 items-center gap-x-2 py-1 pr-1 pl-1.5 touch:min-h-11">
       <span class="flex min-w-0 flex-1 items-center gap-1 text-meta text-accent-ink [&_svg]:size-3.5">
         <MoonIcon />
-        <span class="truncate">
-          Runs tonight at {models().settings.nightStart}
-        </span>
+        <span class="truncate">Runs tonight at {settings().nightStart}</span>
       </span>
       <IconButton
         size="sm"

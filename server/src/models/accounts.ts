@@ -9,7 +9,6 @@ import { refreshModels } from './models';
 import {
   emailOf,
   forgetAccount,
-  infoReady,
   learn,
   nameOf,
   newAccountId,
@@ -56,7 +55,6 @@ async function status(id: string): Promise<Account['status']> {
 }
 
 async function accounts(): Promise<Account[]> {
-  await infoReady;
   const signedIn = new Set((await credentials.list()).map((c) => c.providerId));
   // Where an account stands among the signed-in ones of its plan.
   const placeOf = (id: string) => {

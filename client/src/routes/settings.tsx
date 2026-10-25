@@ -17,7 +17,8 @@ import {
   mode as testMode,
   openWithTestData,
 } from '../fixtures';
-import { updateSettings, useModels } from '../models/models';
+import { useModels } from '../models/models';
+import { updateSettings, useSettings } from '../settings';
 import { motion, setMotion, type Motion } from '../ui/motion';
 import { setSoundOn, soundOn } from '../ui/sound';
 import { setTheme, theme, type Theme } from '../ui/theme';
@@ -37,8 +38,9 @@ const MOTIONS: { value: Motion; label: string }[] = [
 
 export default function Settings() {
   const catalog = useModels();
+  const settings = useSettings();
   const hasKey = () =>
-    catalog().providers.some((p) => p.id === catalog().settings.model.provider);
+    catalog().providers.some((p) => p.id === settings().model.provider);
 
   return (
     <>
@@ -129,7 +131,7 @@ export default function Settings() {
               hint={
                 <>
                   The model and effort a session starts with.
-                  <Show when={catalog().fromEnv.model}>
+                  <Show when={settings().fromEnv.model}>
                     {' '}
                     Not picked yet: using <code>PI_MODEL</code> from the
                     environment.
@@ -140,8 +142,8 @@ export default function Settings() {
               <ModelPicker
                 provider
                 value={{
-                  model: catalog().settings.model,
-                  thinkingLevel: catalog().settings.thinkingLevel,
+                  model: settings().model,
+                  thinkingLevel: settings().thinkingLevel,
                 }}
                 onChange={(choice) => void updateSettings(choice)}
               />
@@ -152,7 +154,7 @@ export default function Settings() {
                 <>
                   A small, cheap model that titles sessions and drafts commit
                   messages. Without one, titles are the prompt's first words.
-                  <Show when={catalog().fromEnv.fastModel}>
+                  <Show when={settings().fromEnv.fastModel}>
                     {' '}
                     Using <code>PI_FAST_MODEL</code> from the environment.
                   </Show>
@@ -164,16 +166,16 @@ export default function Settings() {
                 effort={false}
                 empty="None"
                 value={
-                  catalog().settings.fastModel
+                  settings().fastModel
                     ? {
-                        model: catalog().settings.fastModel!,
+                        model: settings().fastModel!,
                         thinkingLevel: 'off',
                       }
                     : undefined
                 }
                 onChange={(c) => void updateSettings({ fastModel: c.model })}
               />
-              <Show when={catalog().settings.fastModel}>
+              <Show when={settings().fastModel}>
                 <Button
                   size="sm"
                   onClick={() => void updateSettings({ fastModel: null })}
@@ -192,9 +194,9 @@ export default function Settings() {
                 effort={false}
                 empty="None"
                 value={
-                  catalog().settings.decisionModel
+                  settings().decisionModel
                     ? {
-                        model: catalog().settings.decisionModel!,
+                        model: settings().decisionModel!,
                         thinkingLevel: 'off',
                       }
                     : undefined
@@ -203,7 +205,7 @@ export default function Settings() {
                   void updateSettings({ decisionModel: c.model })
                 }
               />
-              <Show when={catalog().settings.decisionModel}>
+              <Show when={settings().decisionModel}>
                 <Button
                   size="sm"
                   onClick={() => void updateSettings({ decisionModel: null })}
@@ -215,7 +217,7 @@ export default function Settings() {
             <Toggle
               label="Keep the cache for an hour"
               hint="The context stays cached through breaks of up to an hour instead of 5 minutes, so coming back doesn't resend it all. Cache writes cost 2x input instead of 1.25x. Some OpenAI models keep it 24 hours instead."
-              checked={catalog().settings.longCache}
+              checked={settings().longCache}
               onChange={(on) => void updateSettings({ longCache: on })}
             />
           </Card>
@@ -235,7 +237,7 @@ export default function Settings() {
                   class="h-8 w-64 max-w-full touch:h-11"
                   placeholder="~/Vault/Hub"
                   aria-label="Hub folder"
-                  value={catalog().settings.hubFolder ?? ''}
+                  value={settings().hubFolder ?? ''}
                   onChange={(e) =>
                     void updateSettings({
                       hubFolder: e.currentTarget.value || null,
@@ -254,10 +256,10 @@ export default function Settings() {
                 <ModelPicker
                   provider
                   empty="Unset"
-                  value={catalog().settings.hubModel ?? undefined}
+                  value={settings().hubModel ?? undefined}
                   onChange={(hubModel) => void updateSettings({ hubModel })}
                 />
-                <Show when={catalog().settings.hubModel}>
+                <Show when={settings().hubModel}>
                   <Button
                     size="sm"
                     onClick={() => void updateSettings({ hubModel: null })}
@@ -277,7 +279,7 @@ export default function Settings() {
               <Input
                 type="time"
                 class="h-7"
-                value={catalog().settings.nightStart}
+                value={settings().nightStart}
                 onChange={(e) =>
                   void updateSettings({
                     nightStart: e.currentTarget.value,
@@ -292,7 +294,7 @@ export default function Settings() {
             <Toggle
               label="Stage on view"
               hint="Opening a diff under Changes stages the file. Staged is what you reviewed; whatever the agent writes after shows up under Changes again."
-              checked={catalog().settings.stageOnView}
+              checked={settings().stageOnView}
               onChange={(on) => void updateSettings({ stageOnView: on })}
             />
           </Card>

@@ -3,7 +3,7 @@ import type { ConversationId, Cursor } from '@earendil-works/pi-durable';
 import type { Question } from '@bica/shared/transcript';
 import { ASK } from '../tools/ask';
 import { context, getHarness } from '../harness';
-import { SessionDoc, getConversation, listSessions, summarize } from './store';
+import { getConversation, listSessions, sessionMeta, summarize } from './store';
 
 /** A session's title, status, and last reply, as an agent reads it. */
 export async function readSession(id: string) {
@@ -55,9 +55,7 @@ export async function recentMessages(id: string, count: number) {
  * Tickets from session_start, session_send messages, and notes aren't his.
  */
 export async function prompters(id: string) {
-  const meta = await (
-    await getHarness()
-  ).snapshot(SessionDoc, Number(id) as ConversationId, context);
+  const meta = await sessionMeta(Number(id) as ConversationId);
   return {
     last: meta?.lastFrom,
     user: meta?.userPrompted ?? !meta?.startedBy,
