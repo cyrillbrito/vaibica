@@ -1,6 +1,5 @@
 import {
   type AssistantMessage,
-  type AssistantMessageEventStream,
   createAssistantMessageEventStream,
   lazyStream,
   type MutableModels,
@@ -192,7 +191,12 @@ function said(content: AssistantMessage['content']) {
 // Errors another account might not have: limits, sign-ins, and keys. Not
 // overloaded: that's the provider's, and moving would only cost the cache.
 const ACCOUNT_ERROR =
-  /\b(401|402|403|429)\b|rate.?limit|usage limit|quota|not configured|oauth|credential|billing/i;
+  /\b(401|402|403|429)\b|rate.?limit|usage limit|quota|not configured|not signed in|oauth|credential|billing/i;
+
+function coolDown(id: string, reason: unknown) {
+  if (tier(id, Date.now()) < 2) cooling.set(id, Date.now() + COOL_DOWN_MS);
+  console.error('[accounts]', id, reason);
+}
 
 /**
  * Wraps `streamSimple` so requests on a provider with extra accounts go to
@@ -202,87 +206,69 @@ const ACCOUNT_ERROR =
 export function routeAccounts(models: MutableModels) {
   const stream = models.streamSimple.bind(models);
 
-  const recorded =
-    (
-      id: string,
-      options: SimpleStreamOptions | undefined,
-    ): SimpleStreamOptions['onResponse'] =>
-    (response, model) => {
-      recordLimits(id, response.headers);
-      return options?.onResponse?.(response, model);
-    };
-
-  const attempt = async (
+  // One account's request. A sign-in that fails here ends the stream with an
+  // error, as any other failure does.
+  const send = (
     id: string,
     ...[model, context, options]: Parameters<typeof stream>
-  ): Promise<AssistantMessageEventStream> => {
-    const onResponse = recorded(id, options);
+  ) => {
+    const onResponse: SimpleStreamOptions['onResponse'] = (response, m) => {
+      recordLimits(id, response.headers);
+      return options?.onResponse?.(response, m);
+    };
     if (id === model.provider)
       return stream(model, context, { ...options, onResponse });
-    const resolved = await models.getAuth(id, { signal: options?.signal });
-    if (!resolved?.auth.apiKey) throw new Error(`${id} is not signed in`);
-    const { apiKey, headers, baseUrl } = resolved.auth;
-    return stream(baseUrl ? { ...model, baseUrl } : model, context, {
-      ...options,
-      onResponse,
-      apiKey,
-      headers: { ...headers, ...options?.headers },
-      env: resolved.env ? { ...resolved.env, ...options?.env } : options?.env,
+    return lazyStream(model, async () => {
+      const resolved = await models.getAuth(id, { signal: options?.signal });
+      if (!resolved?.auth.apiKey) throw new Error(`${id} is not signed in`);
+      const { apiKey, headers, baseUrl } = resolved.auth;
+      return stream(baseUrl ? { ...model, baseUrl } : model, context, {
+        ...options,
+        onResponse,
+        apiKey,
+        headers: { ...headers, ...options?.headers },
+        env: resolved.env ? { ...resolved.env, ...options?.env } : options?.env,
+      });
     });
   };
 
   models.streamSimple = (model, context, options) => {
     const order = pickOrder(models, model.provider);
-    if (order.length < 2)
-      return stream(model, context, {
-        ...options,
-        onResponse: recorded(model.provider, options),
-      });
+    if (order.length < 2) return send(model.provider, model, context, options);
     const out = createAssistantMessageEventStream();
     void (async () => {
       for (const [i, id] of order.entries()) {
         const last = i === order.length - 1;
-        let source: AssistantMessageEventStream;
-        try {
-          source = await attempt(id, model, context, options);
-        } catch (error) {
-          cooling.set(id, Date.now() + COOL_DOWN_MS);
-          console.error('[accounts]', id, error);
-          if (!last) continue;
-          // Not the plain call: that would go out on the first account,
-          // which may be the one that's full.
-          source = lazyStream(model, () => Promise.reject(error));
-        }
+        const source = send(id, model, context, options);
         // Events wait until the reply says something, so a failure before
         // that can still move to the next account without the reader noticing.
         const held: Parameters<typeof out.push>[0][] = [];
         let flowing = false;
-        let moved = false;
         for await (const event of source) {
-          if (!flowing && event.type !== 'error' && event.type !== 'done') {
-            if (!said(event.partial.content)) {
+          if (!flowing) {
+            if (
+              event.type === 'error' &&
+              !last &&
+              !options?.signal?.aborted &&
+              ACCOUNT_ERROR.test(event.error.errorMessage ?? '')
+            ) {
+              coolDown(id, event.error.errorMessage);
+              break;
+            }
+            if (
+              event.type !== 'error' &&
+              event.type !== 'done' &&
+              !said(event.partial.content)
+            ) {
               held.push(event);
               continue;
             }
+            for (const e of held) out.push(e);
+            flowing = true;
           }
-          if (
-            !flowing &&
-            !last &&
-            event.type === 'error' &&
-            !options?.signal?.aborted &&
-            ACCOUNT_ERROR.test(event.error.errorMessage ?? '')
-          ) {
-            if (tier(id, Date.now()) < 2)
-              cooling.set(id, Date.now() + COOL_DOWN_MS);
-            console.error('[accounts]', id, event.error.errorMessage);
-            moved = true;
-            break;
-          }
-          if (!flowing) for (const e of held.splice(0)) out.push(e);
-          flowing = true;
           out.push(event);
         }
-        if (moved) continue;
+        if (!flowing) continue;
         out.end(await source.result());
         return;
       }

@@ -21,7 +21,6 @@ const file = jsonFile<{
 
 setPreferred(file.read().order);
 
-// Where the provider's own name isn't the one people know it by.
 /** The provider's name: every account of a plan shares it, the email tells them apart. */
 export function nameOf(id: string) {
   const base = baseOf(id);
