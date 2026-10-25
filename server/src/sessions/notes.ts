@@ -86,9 +86,10 @@ function runChanged(id: ConversationId | undefined, running: boolean) {
 async function runEnded(id: ConversationId) {
   // Taken and cleared at once: these were for the run that just ended.
   const { once, told, quiet } = await editSession(id, (meta) => {
+    // Copies: the draft's arrays can't be read once the commit settles.
     const taken = {
-      once: meta.watchers ?? [],
-      told: meta.messaged ?? [],
+      once: [...(meta.watchers ?? [])],
+      told: [...(meta.messaged ?? [])],
       quiet: meta.quiet,
     };
     if (meta.watchers) delete meta.watchers;
