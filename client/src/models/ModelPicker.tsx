@@ -15,16 +15,7 @@ import Input from '../ui/Input';
 import { Segmented, segmentClass } from '../ui/Segmented';
 import { Switch } from '../ui/Switch';
 
-type Model = ModelCatalog['models'][number] & { decision?: boolean };
-
-// A decision model in the picker's shape: no thinking, no output price.
-const asModel = (m: ModelCatalog['classifiers'][number]): Model => ({
-  ...m,
-  levels: [],
-  cost: { input: m.cost.input, output: 0 },
-  cacheTtl: {},
-  decision: true,
-});
+type Model = ModelCatalog['models'][number];
 
 const dollars = (n: number) =>
   `$${n >= 10 ? Math.round(n) : n.toFixed(2).replace(/\.?0+$/, '')}`;
@@ -76,19 +67,13 @@ export default function ModelPicker(props: {
   effort?: boolean;
   // Name the provider on the chip: the same model can come through several.
   provider?: boolean;
-  // Offer decision models first, then chat models that can stand in.
-  decision?: boolean;
 }) {
   const id = `model-picker-${++nextId}`;
   let popover: HTMLDivElement | undefined;
   const catalog = useModels();
   const settings = useSettings();
   const options = createMemo<Model[]>(
-    () => [
-      // Absent from a server that predates decision models.
-      ...(props.decision ? (catalog().classifiers ?? []).map(asModel) : []),
-      ...pickable(catalog().models, settings().enabled, props.value),
-    ],
+    () => pickable(catalog().models, settings().enabled, props.value),
     {
       name: 'modelOptions',
     },
@@ -101,19 +86,13 @@ export default function ModelPicker(props: {
       for (const m of options().filter((m) =>
         words.every((w) => `${m.name} ${m.id}`.toLowerCase().includes(w)),
       )) {
-        const key = `${m.decision ? 'decision:' : ''}${m.provider}`;
-        byProvider.set(key, [...(byProvider.get(key) ?? []), m]);
+        byProvider.set(m.provider, [...(byProvider.get(m.provider) ?? []), m]);
       }
-      return [...byProvider].map(([id, models]) => {
-        const provider = models[0]!.provider;
-        const name =
-          catalog().providers.find((p) => p.id === provider)?.name ?? provider;
-        return {
-          id,
-          name: models[0]!.decision ? `Decision models · ${name}` : name,
-          models,
-        };
-      });
+      return [...byProvider].map(([id, models]) => ({
+        id,
+        name: catalog().providers.find((p) => p.id === id)?.name ?? id,
+        models,
+      }));
     },
     { name: 'modelGroups' },
   );

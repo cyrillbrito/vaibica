@@ -15,7 +15,6 @@ import { getAgent } from '../agents/registry';
 import { loadMemory, projectList } from '../agents/common';
 import { defaultChoice } from '../models/models';
 import { checkChoice, models } from '../models/registry';
-import { keepers } from './prune-judge';
 import { agentIdOf, editSession, getConversation, sessionMeta } from './store';
 
 /** Who sends a prompt: the user, Bica's own notes, or another session's id. */
@@ -241,7 +240,7 @@ export async function pruneContext(id: string) {
     view.entries.map((e, i) => [e.id, view.contributions[i]] as const),
   );
   const of = (e: EntryRecord) => current.get(e.id);
-  const edits = pruneEdits(view.entries, of, await keepers(view.entries, of));
+  const edits = pruneEdits(view.entries, of);
   if (!edits.length) return 0;
   const size = (messages: readonly Message[] = []) =>
     messages.reduce((n, m) => n + chars(m), 0);

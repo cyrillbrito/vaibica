@@ -57,7 +57,7 @@ export function chars(message: Message): number {
   );
 }
 
-// The newest messages stay whole, as in fast-jev-compaction: the answer and
+// The newest messages stay whole: the answer and
 // its last steps are what a follow-up refers to. Older steps clear even
 // inside a long turn.
 export const KEEP_RECENT = 6;
@@ -88,13 +88,11 @@ export function oldCalls(
  * Edits that prune all but the newest messages (KEEP_RECENT): tool output
  * and images give way to a note, and long tool arguments shrink to their
  * summary and first line. Prompts, thinking and replies stay. `current` is
- * what each entry adds to the context now, after earlier edits. Outputs whose
- * tool call id is in `keep` stay verbatim (server/src/sessions/prune-judge.ts).
+ * what each entry adds to the context now, after earlier edits.
  */
 export function pruneEdits(
   entries: readonly EntryRecord[],
   current: (entry: EntryRecord) => readonly Message[] | undefined,
-  keep: ReadonlySet<string> = new Set(),
 ): ContextEdit[] {
   const old = oldCalls(entries, current);
   const edits: ContextEdit[] = [];
@@ -103,9 +101,7 @@ export function pruneEdits(
     if (!messages) continue;
     const cleaned = messages.map((m) => {
       if (m.role === 'toolResult')
-        return old.has(m.toolCallId) && !keep.has(m.toolCallId)
-          ? pruneResult(m)
-          : m;
+        return old.has(m.toolCallId) ? pruneResult(m) : m;
       if (m.role === 'assistant') return pruneCalls(m, old);
       return m;
     });

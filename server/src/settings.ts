@@ -42,7 +42,6 @@ export function settings(): Settings {
       saved.fastModel === undefined
         ? parseRef(env.PI_FAST_MODEL ?? '')
         : saved.fastModel,
-    decisionModel: saved.decisionModel ?? null,
     // Long by default, like Claude Code on a subscription: pauses of 5 to 60
     // minutes are rare, but each one rewrites the whole context.
     longCache: saved.longCache ?? true,
@@ -77,9 +76,6 @@ export async function updateSettings(change: SettingsChange) {
     if (change.enabled) next.enabled = [...new Set(change.enabled)];
     if (change.fastModel !== undefined)
       next.fastModel = change.fastModel && checkRef(change.fastModel);
-    if (change.decisionModel !== undefined)
-      next.decisionModel =
-        change.decisionModel && checkRef(change.decisionModel, true);
     if (change.longCache !== undefined) next.longCache = !!change.longCache;
     if (change.stageOnView !== undefined)
       next.stageOnView = !!change.stageOnView;

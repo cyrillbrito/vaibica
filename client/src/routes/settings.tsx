@@ -184,36 +184,6 @@ export default function Settings() {
                 </Button>
               </Show>
             </Setting>
-            <Setting
-              label="Decision model"
-              hint="Answers quick yes or no questions, such as which old tool output pruning keeps. A decision model like Jev answers in a fraction of a second for a fraction of a cent. A chat model like Haiku works too, slower and pricier. Without one, Clean up clears every old output."
-            >
-              <ModelPicker
-                provider
-                decision
-                effort={false}
-                empty="None"
-                value={
-                  settings().decisionModel
-                    ? {
-                        model: settings().decisionModel!,
-                        thinkingLevel: 'off',
-                      }
-                    : undefined
-                }
-                onChange={(c) =>
-                  void updateSettings({ decisionModel: c.model })
-                }
-              />
-              <Show when={settings().decisionModel}>
-                <Button
-                  size="sm"
-                  onClick={() => void updateSettings({ decisionModel: null })}
-                >
-                  Clear
-                </Button>
-              </Show>
-            </Setting>
             <Toggle
               label="Keep the cache for an hour"
               hint="The context stays cached through breaks of up to an hour instead of 5 minutes, so coming back doesn't resend it all. Cache writes cost 2x input instead of 1.25x. Some OpenAI models keep it 24 hours instead."

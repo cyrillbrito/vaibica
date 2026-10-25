@@ -66,15 +66,9 @@ export function checkChoice({
   };
 }
 
-/** A chat model, or with `classifier` a decision model, the keys reach. */
-export function checkRef(ref: ModelRef, classifier = false) {
-  if (
-    !models.getModel(ref.provider, ref.modelId) &&
-    !(
-      classifier &&
-      models.getModelOfType('classifier', ref.provider, ref.modelId)
-    )
-  )
+/** A chat model the keys reach. */
+export function checkRef(ref: ModelRef) {
+  if (!models.getModel(ref.provider, ref.modelId))
     throw new Error(`Unknown model ${key(ref)}`);
   return ref;
 }

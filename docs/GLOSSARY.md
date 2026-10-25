@@ -178,7 +178,7 @@ The words Bica uses for its concepts, one name per concept. Docs, code names, co
 
 **Effort**: How hard a model thinks on a request, as Anthropic and OpenAI name it. _Avoid_: thinking level (pi-ai's name), reasoning
 
-**Default model**, **fast model**, **decision model**: The model that starts new sessions, the one that writes titles and commit messages, and the one that answers Bica's own yes or no questions. _Avoid_: small model, title model
+**Default model**, **fast model**: The model that starts new sessions, and the one that writes titles and commit messages. _Avoid_: small model, title model
 
 ## Command palette
 

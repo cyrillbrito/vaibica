@@ -94,7 +94,7 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 - [git.md](docs/git.md): the Git tab and commit messages.
 - [command-palette.md](docs/command-palette.md): ⌘K and every keyboard shortcut. Read before adding a shortcut.
 - [terminals.md](docs/terminals.md): shared shells and the agent's terminal tools.
-- [models.md](docs/models.md): providers and sign-ins, more than one plan account, Exa, the default, fast, and decision models, and the model picker.
+- [models.md](docs/models.md): providers and sign-ins, more than one plan account, Exa, the default and fast models, and the model picker.
 - [realtime-communication.md](docs/realtime-communication.md): the WebSocket protocol, projection, and caching. Read before adding a topic or request.
 - [deploy.md](docs/deploy.md): running Bica, Tailscale, the `bica` binary, releases.
 - [UI.md](docs/UI.md): design rules, tokens, components, test data. Read before any UI work.

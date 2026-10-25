@@ -23,9 +23,6 @@ export async function getCatalog(): Promise<ModelCatalog> {
     )
   ).filter((p) => !!p);
   const available = await models.getAvailable();
-  const classifiers = await models
-    .getAvailableOfType('classifier')
-    .catch(() => []);
   return {
     providers,
     models: available.map((m) => ({
@@ -36,13 +33,6 @@ export async function getCatalog(): Promise<ModelCatalog> {
       contextWindow: m.contextWindow,
       cost: { input: m.cost.input, output: m.cost.output },
       cacheTtl: { ...m.promptCache },
-    })),
-    classifiers: classifiers.map((m) => ({
-      provider: m.provider,
-      id: m.id,
-      name: m.name,
-      contextWindow: m.contextWindow,
-      cost: { input: m.cost.input },
     })),
     // The harness doesn't override the policy (server/src/harness.ts).
     compaction: {

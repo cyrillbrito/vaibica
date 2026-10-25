@@ -18,7 +18,6 @@ Add provider offers a signed-in plan again as Another account. Each request goes
 
 - The default model starts new sessions. `PI_MODEL` fills in until one is picked.
 - The fast model writes session titles and [commit messages](./git.md#commit-messages). `PI_FAST_MODEL` fills in. Without one, titles are the prompt's first words.
-- The decision model answers Bica's own yes or no questions, such as what [pruning](./context-usage.md#compaction-and-pruning) keeps. Decision models such as Jev are fastest and cheapest, and a chat model such as Haiku works too.
 
 ## The picker
 

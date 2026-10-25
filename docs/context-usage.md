@@ -32,8 +32,6 @@ Compaction summarizes the older part of the context. Pi Durable does it on its o
 
 Pruning clears old tool output from what the model reads, with no model call, as opencode's prune does. Long tool results and images become a short note that keeps their first and last lines, while prompts, replies, thinking, and the latest turns stay whole. Old sessions lose about three quarters of their size this way. The transcript still shows everything. Pruning can run while the agent works, and is best on a cold cache, where compacting would first reread the whole session at full price.
 
-With a [decision model](./models.md#which-model-does-what) set, pruning first asks it which old outputs the work still needs, and keeps those.
-
 Both lines in the transcript have a fork button, which starts a new session from the context as it is after them.
 
 ## Sources
@@ -41,6 +39,5 @@ Both lines in the transcript have a fork button, which starts a new session from
 - affectUI's [Context Window](https://www.affectui.com/components/context-window) and [Compact Breakdown](https://www.affectui.com/components/compact-breakdown) for the field of cells and the spend per model.
 - Pi's context extensions ([`pi-context-usage`](https://pi.dev/packages/pi-context-usage), `@that-yolanda/pi-context`, `pi-context-breakup`) for the breakdown method.
 - Claude Code's `/context` for the categories, and OpenCode's `/context` for marking estimates.
-- [fast-jev-compaction](https://github.com/tamaratran/fast-jev-compaction) and [pi-fast-jev-compaction](https://github.com/KamilPostrozny/pi-fast-jev-compaction) for asking a decision model which outputs must stay.
 - [tool-output-pruning-lab](https://github.com/Dymyt-ry/tool-output-pruning-lab): on about 1,000 real tool calls, nothing beat keeping the start and end of each output.
 - Claude Code's [prompt caching docs](https://code.claude.com/docs/en/prompt-caching): compacting after the cache expired rereads the whole history uncached.

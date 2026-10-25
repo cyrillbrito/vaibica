@@ -328,15 +328,6 @@ export function fixtureCatalog(worst: boolean): ModelCatalog {
       { id: 'openrouter', name: 'OpenRouter', source: 'stored credential' },
     ],
     models,
-    classifiers: [
-      {
-        provider: 'openrouter',
-        id: 'typesafe/jev-1.14',
-        name: 'TypeSafe: Jev 1.14',
-        contextWindow: 262_144,
-        cost: { input: 0.042 },
-      },
-    ],
     compaction: { reserveTokens: RESERVE, backgroundTokens: BACKGROUND },
   };
 }
@@ -538,7 +529,6 @@ export function fixtureSettings(): Settings {
     thinkingLevel: 'medium',
     enabled: [],
     fastModel: { provider: 'anthropic', modelId: 'claude-haiku-4-5' },
-    decisionModel: null,
     stageOnView: false,
     longCache: true,
     hubFolder: null,
