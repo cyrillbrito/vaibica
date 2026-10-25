@@ -14,13 +14,45 @@ How Bica looks and is built. Read before touching UI.
 - Tailwind v4 is configured in `client/src/App.css` (`@theme`), with no config file. Design tokens live there, and reusable class groups as `@utility`.
 - There is no component library. Platform features come first: `<dialog>`, `popover`, CSS anchor positioning, `<details>`, `field-sizing: content`, view transitions.
 - Components live in their feature's folder, such as `client/src/sessions/`, and building blocks with no app knowledge (buttons, inputs, menus, toasts, icons) in `client/src/ui/`. Reach for those before styling a raw `<button>` or `<input>`. If two places style the same control by hand, it belongs there.
-- Moving parts ready to reuse: `RollingNumber` (a number whose digits roll when it changes), `Segmented` with `SegmentCount` and `SegmentBadge`, `ThinkingLoader` (the working pill), `Button`'s `loading`, and `toast` with `.success`, `.error`, `.info`, `.loading`, `.promise` and `.dismiss`, `CopyButton` (the icon turns into a drawn check, no toast), `Kbd` (a key hint, hidden on touch), `Breakdown` (a total split into ranked parts with a gliding bar and an optional switch, whose rows slide to their new rank), `Sparkline` (a bar per day of a month, the hovered day read out), `Switch` (an on/off pill), `Field` with `checkUrl` and `checkKey` (a labelled input whose check draws in when the value looks right and rings red with the reason when it doesn't), `Card`, `Setting`, `Toggle` (a settings section: a grey tray with the title, holding a white card of rows), `createHighlight` (a hover fill that glides from row to row in a list or menu), `createFlip` (rows that glide to their new place when a list's order changes, new ones fading in), `Empty` with `icon`, `title` and `action` for a small empty state, `ProgressRing` (one segment per part, done ones filled, a rolling number in the middle; one segment can be lifted from elsewhere), `Trend` (a change on a tinted arrow tile, up and green or down and red), `FilterMenu` with `FilterChips` and `passes` (a Filter button opening grouped checkboxes, the picks as removable chips), `Tag` with `tagClass` (a calm tinted label for a state: Waiting, Failed, Running, Open #42), `CheckMark` (the box or dot of a checkbox or radio row, its check drawing in), `createSortable` (drag to reorder on `@dnd-kit/dom`: a copy of the handle follows the pointer and the app draws a line where it lands), and `createDropZone` (handlers to spread on a positioned element and an `Overlay` that fans out little documents while files are dragged over), and `Popover` with `PopoverSearch` (a menu card under its button with a search on top, a sheet on the phone: Add provider, Add models).
+- The building blocks are listed under [Building blocks](#building-blocks) below, and every one of them shows in light and dark side by side at `/ui` in development (`client/src/playground/`). Add a new one there too.
 - Live timers come from `createStopwatch` and `formatLive` in `client/src/ui/time.ts`, and stay hidden until a wait gets long. The per-second `tick` is enough for anything else.
 - Button variants: `soft` for a main action that stays on screen, like commit, and `danger` to end something live, like a call.
 - Overrides go through `class` and must not fight the base (no second `h-*`, `px-*`, `gap-*`). Add a variant or size instead. Longhands like `rounded-r-none` or `pl-*` are fine, since Tailwind orders them after the shorthand.
 - Buttons, selects, summaries, tabs, menu items and checkbox labels get `cursor: pointer` from a base rule in `App.css`, since Tailwind v4 dropped it. Don't add `cursor-pointer` by hand.
 - Third-party views (`@pierre/diffs`, `@pierre/trees`) are themed through their CSS variables, not Tailwind classes.
 - Icons are [Lucide](https://lucide.dev/icons), 16px, stroke 1.75, from `ui/icons.tsx`. Never hand-draw an SVG icon: import the shape from `lucide` and add one line there. `lucide-solid` is built for Solid 1, so a small wrapper draws the shapes.
+
+## Building blocks
+
+Everything in `client/src/ui/`, by job. Reach for these before styling a raw element.
+
+| Job | Parts |
+| --- | --- |
+| Actions | `Button` (variants `primary`, `soft`, `outline`, `ghost`, `danger`; sizes `sm`, `md`, `lg`; `loading`), `IconButton` (`title` is its label; `loading` too), `CopyButton` (the icon turns into a drawn check, no toast), `Kbd` (a key hint, hidden on touch) |
+| Fields | `Input` and `fieldFrame`, `TextArea` (grows as you type; `framed` or bare inside a box), `Field` with `checkKey` (a labelled input whose check draws in when the value looks right, and rings red with the reason when it doesn't), `InlineInput` (rename in place), `Select`, `Switch`, `CheckMark` (the box or dot of a checkbox or radio row), `Segmented` with `SegmentCount` |
+| Lists and menus | `optionClass`, `OptionList` (its hover fill glides from row to row), `OptionGroup`, `NoMatches`, `ContextMenu` with `MenuButton`, `FilterMenu` with `FilterChips`, `Summary` and `summaryClass` (the row of a `<details>`), `Chevron`, `Divider` (a list heading drawn as a rule) |
+| Surfaces | `Dialog` and `dialogBody`, `Popover` with `PopoverSearch`, `Card` with `Setting` and `Toggle` (a settings section: a grey tray with the title, holding a white card of rows), `Strip` (one line on a tray: an icon, a label, an action), `Empty` (a quiet message, or with `icon`, `title`, and `action` a small empty state), `Failed` |
+| Status | `Spinner`, `ThinkingLoader`, `Tag` with `tagClass` (a calm tinted label: Waiting, Failed, Open #42), `Alert`, `toast` with `.success`, `.error` (takes whatever was thrown), `.info`, `.loading`, `.promise`, and `.dismiss` |
+| Numbers | `RollingNumber` (digits roll when it changes), `ProgressRing` (one segment per part, a rolling number in the middle), `Trend` (a change on a tinted arrow tile), `Breakdown` (a total split into ranked parts with a gliding bar) |
+| Motion helpers | `createHighlight` (the gliding hover fill), `createFlip` (rows glide to their new place), `createSortable` (drag to reorder on `@dnd-kit/dom`), `createDropZone` (files dragged over fan out as little documents), `arrive` (text the fast model wrote fades in with an accent tint) |
+
+### Shells
+
+- A modal is a `Dialog`: a bottom sheet on the phone, a centred card from `md` up, with a titled header, a close button, and an optional footer for its actions. The command palette is the one exception, since it fills the phone screen.
+- A menu that opens from a button is a `Popover`: a card on a tray under (or above) its button, a sheet on the phone. Its rows go in an `OptionList`.
+- Menu and picker rows are 32px (`optionClass`), unlike the 28px rows of the sidebar and the transcript, since they are read one by one. Pickers driven from a search field (the workspace picker, ⌘K) fill the row the keyboard is on instead of gliding.
+- A note above the composer (night run, parent in charge, stuck) is a `Strip`.
+- Errors that block a form show as an `Alert` in place; failures with nowhere to show go to `toast.error`. `errorText` turns whatever was thrown into its message.
+
+### Loading and busy
+
+One look per kind of wait, so a wait reads the same everywhere.
+
+- Something is working: the `Spinner`, eight rays lit in turn (`ThinkingLoader` is the spinner and a label that rolls to the next step and settles on a check). It is the only spinner; the sidebar's status ring and the toast's arc are status shapes, not spinners.
+- A label for work in progress shimmers (`shimmer`): Working, Compacting context, Waiting for the result.
+- An action in flight is a `loading` button: the leading icon becomes the spinner and the label shines. It isn't `disabled`, which says "you can't" rather than "it's happening".
+- Data on its way shows nothing: the frame of the page with blank areas. Most data is cached or quick, and a skeleton or spinner that flashes for a moment reads slower than nothing (affectUI's Shimmer Loader draws the line at about 300ms).
+- A wait that gets long shows a live timer (`formatLive`), not a bigger spinner.
 
 ## Tokens
 
@@ -91,8 +123,11 @@ The utilities in `App.css`:
 - `rise-in`: rows of a summary arriving one after another on first view. Set `--i` to the row's place.
 - `animate-chip-in`: a filter chip or a comment arriving, fading and growing in a little.
 - `animate-breathe`: a halo swelling around a dot that waits on you (a session asking a question). It is `motion-safe` only, since the ring shape already says it.
+- `animate-ray`: the rays of the `Spinner`, lit one after another, so it turns without rotating.
+- `animate-nudge`: a small shake every few seconds, for the context chip of a session that grew too big.
+- `context-target`: a row held on touch sinks and darkens until its context menu opens.
 
-Buttons sink to 97% while pressed and spring back in 150ms (`ui/Button`), but not while `loading`. Toasts slide in from the top edge, stack with the older ones peeking out below, fan into a list on hover, focus, or a tap, and swipe away sideways or up. The hover fill of menus and lists glides to the row under the pointer (`createHighlight`), while keyboard moves land at once. Sidebar rows glide to their new place when the order changes, as with a new session, one archived, or a filter picked (`createFlip`, also the ranked rows of a `Breakdown`), but not when switching sessions.
+Buttons sink to 97% while pressed and spring back in 150ms (`ui/Button`), but not while `loading`. Toasts slide in from the top edge, stack with the older ones peeking out below, fan into a list on hover, focus, or a tap, and swipe away sideways or up. The hover fill of menus and option lists glides to the row under the pointer (`createHighlight`, built into `OptionList`), while keyboard moves land at once. Sidebar rows glide to their new place when the order changes, as with a new session, one archived, or a filter picked (`createFlip`, also the ranked rows of a `Breakdown`), but not when switching sessions.
 
 ## Layout
 
@@ -159,7 +194,8 @@ When something doesn't update, updates too often, or is slow, record what happen
 ## Accessibility
 
 - Semantic HTML first (`nav`, `main`, `aside`, `button`, `a`); ARIA only to fill gaps.
-- Visible `:focus-visible` everywhere; full keyboard operation.
+- Visible `:focus-visible` everywhere; full keyboard operation. Text fields show focus as a darker frame with a soft accent ring (`fieldFrame`), and option rows fill with `active`; everything else gets the accent outline.
+- Tabs follow the ARIA tabs pattern: arrow keys move between them, and only the picked one is in the Tab order. A search field that drives a list is a combobox naming the row it's on.
 - Dialogs and sheets trap focus and close on Escape (native `<dialog>` does this).
 - Respect reduced motion for decorative motion. Settings → Appearance → Motion (System, Full, Reduced; per device, `client/src/ui/motion.ts`) can override the system setting, like the theme: it sets `data-motion` on `<html>`. So gate CSS with Tailwind's `motion-safe:` / `motion-reduce:` (redefined in `App.css` to follow it) and JS with `reducedMotion()`, never `prefers-reduced-motion` directly. Progress signals (spinner, `shimmer` on running work) stay on: they carry state, and the author runs macOS with reduced motion on.
 - Text contrast WCAG AA in both themes; status is never color-only (pair with label or shape).

@@ -132,6 +132,7 @@ After UI changes, check them in a real browser with `agent-browser`, a global CL
 
 - The dev server (`bun run dev`: Vite on 3142, the server on 3143) usually hosts the Bica session you are running in. Don't restart or stop it. It has no live updates (`server.ws: false`), so reload the page to see page edits, but server code (`server/src`) runs as it started until Bica restarts: test server changes on your own dev server on another port, such as `BICA_PORT=3199 BICA_DATA_DIR=/tmp/bica-test bun run dev`, which puts its server on 3200. Another dev server may run on a different port; inspect running terminals before starting one.
 - Open `http://localhost:3142`, then check `errors` and `console` for Solid warnings and socket errors.
+- For a change to a building block in `client/src/ui/`, open `http://localhost:3142/ui`: the playground shows every one in light and dark side by side.
 - For the phone layout, run `set viewport 390 844` and check again.
 - For worst-case data, open the page with `?data=worst`. See Test data in `docs/UI.md`.
 - The data is real. Don't create, send to, or delete sessions, and don't commit, unless that is what you are testing.

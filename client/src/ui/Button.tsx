@@ -1,5 +1,7 @@
 import type { JSX } from '@solidjs/web';
-import { omit } from 'solid-js';
+import { Show, omit } from 'solid-js';
+
+import { Spinner } from './Spinner';
 
 export type Variant = 'primary' | 'soft' | 'outline' | 'ghost' | 'danger';
 export type Size = 'sm' | 'md' | 'lg';
@@ -42,7 +44,8 @@ const ICON_SIZE: Record<Size, string> = {
   lg: 'size-8 touch:size-11',
 };
 
-const DISABLED = 'disabled:opacity-40';
+// One faded look for every control that can't be used now (docs/UI.md).
+export const DISABLED = 'disabled:opacity-40';
 const DISABLED_PRIMARY = 'disabled:opacity-100';
 
 type Look = { variant?: Variant; size?: Size };
@@ -63,7 +66,7 @@ export function buttonClass(look: Look & { round?: boolean } = {}) {
 }
 
 /** Classes for a square icon button; also for links that look like one. */
-export function iconButtonClass(look: Look & { round?: boolean } = {}) {
+function iconButtonClass(look: Look & { round?: boolean } = {}) {
   return [
     'grid shrink-0 place-items-center',
     VARIANT[look.variant ?? 'ghost'],
@@ -80,10 +83,25 @@ export function iconButtonClass(look: Look & { round?: boolean } = {}) {
 
 type ButtonProps = Look & JSX.ButtonHTMLAttributes<HTMLButtonElement>;
 
+// Clicks on a busy button do nothing, without the faded look of `disabled`.
+function guard(
+  props: {
+    loading?: boolean;
+    onClick?: JSX.EventHandlerUnion<HTMLButtonElement, MouseEvent>;
+  },
+  e: MouseEvent & { currentTarget: HTMLButtonElement; target: Element },
+) {
+  if (props.loading) return e.preventDefault();
+  const h = props.onClick;
+  if (typeof h === 'function') h(e);
+  else if (Array.isArray(h)) h[0](h[1], e);
+}
+
 /**
- * `loading` keeps the label and dims it under a sweeping band of light
- * (affectUI's Button), and swallows clicks without greying the button out
- * the way `disabled` does. Focus stays, so a keyboard user isn't dropped.
+ * `loading` swaps the leading icon for the spinner and dims the label under
+ * a sweeping band of light (affectUI's Button). It swallows clicks without
+ * greying the button out the way `disabled` does, and focus stays, so a
+ * keyboard user isn't dropped. Use it for any action in flight.
  */
 export function Button(
   props: ButtonProps & { loading?: boolean; round?: boolean },
@@ -105,37 +123,56 @@ export function Button(
       class={[buttonClass(props), props.class]}
       aria-busy={props.loading ? 'true' : undefined}
       aria-disabled={props.loading ? 'true' : props['aria-disabled']}
-      onClick={(e) => {
-        if (props.loading) return e.preventDefault();
-        const h = props.onClick;
-        if (typeof h === 'function') h(e);
-        else if (Array.isArray(h)) h[0](h[1], e);
-      }}
+      onClick={(e) => guard(props, e)}
     >
-      {/* `contents` until busy, so the children lay out as direct ones. */}
+      {/* `contents` until busy, so the children lay out as direct ones. A
+          button without an icon only shines: a spinner would widen it. */}
       <span
         class={
           props.loading
-            ? 'shine flex min-w-0 items-center justify-[inherit] gap-[inherit]'
+            ? 'shine flex min-w-0 items-center justify-[inherit] gap-[inherit] [&>[data-spinner]+svg]:hidden'
             : 'contents'
         }
       >
+        <Show when={props.loading}>
+          <Spinner class="hidden [&:has(+svg)]:block" />
+        </Show>
         {props.children}
       </span>
     </button>
   );
 }
 
-/** An icon-only button. `title` is required: it's the only label. */
+/**
+ * An icon-only button. `title` is required: it's the only label. `loading`
+ * shows the spinner in place of the icon, like `Button`'s.
+ */
 export function IconButton(
-  props: ButtonProps & { title: string; round?: boolean },
+  props: ButtonProps & { title: string; round?: boolean; loading?: boolean },
 ) {
-  const rest = omit(props, 'variant', 'size', 'round', 'class');
+  const rest = omit(
+    props,
+    'variant',
+    'size',
+    'round',
+    'class',
+    'loading',
+    'children',
+    'onClick',
+  );
   return (
     <button
       {...rest}
       type={props.type ?? 'button'}
+      aria-label={props['aria-label'] ?? props.title}
       class={[iconButtonClass(props), props.class]}
-    />
+      aria-busy={props.loading ? 'true' : undefined}
+      aria-disabled={props.loading ? 'true' : props['aria-disabled']}
+      onClick={(e) => guard(props, e)}
+    >
+      <Show when={props.loading} fallback={props.children}>
+        <Spinner />
+      </Show>
+    </button>
   );
 }

@@ -182,14 +182,6 @@
   --text-display: 22px;
   --text-display--line-height: 1.25;
 
-  --animate-pulse-soft: pulse-soft 1.6s ease-in-out infinite;
-
-  @keyframes pulse-soft {
-    50% {
-      opacity: 0.4;
-    }
-  }
-
   /* A halo swelling and fading around a dot that waits on you (a session
      asking a question), after affectUI's Agent Inbox. */
   --animate-breathe: breathe 2s ease-in-out infinite;
@@ -235,15 +227,6 @@
     }
   }
 
-  /* A bar growing up from its base on first view (a sparkline's days). */
-  --animate-grow: grow 300ms var(--ease-out) backwards;
-
-  @keyframes grow {
-    from {
-      scale: 1 0;
-    }
-  }
-
   /* A filter chip or a comment arriving: fades and grows in a little. */
   --animate-chip-in: chip-in 200ms var(--ease-out) backwards;
 
@@ -269,7 +252,7 @@
 /* Touch: 44px hit areas, and 16px inputs so iOS doesn't zoom on focus. */
 @custom-variant touch (@media (pointer: coarse));
 
-/* Motion follows Settings → Appearance (src/lib/motion.ts): `data-motion` on
+/* Motion follows Settings → Appearance (ui/motion.ts): `data-motion` on
    <html> wins over the system's reduced-motion setting. */
 @custom-variant motion-safe {
   &:where([data-motion='full'] *) {
@@ -296,7 +279,7 @@
   :root {
     color-scheme: light dark;
   }
-  /* A forced theme from Settings (src/lib/theme.ts). */
+  /* A forced theme from Settings (ui/theme.ts). */
   :root[data-theme='light'] {
     color-scheme: light;
   }
@@ -328,7 +311,8 @@
     summary,
     [role='button'],
     [role='tab'],
-    [role='menuitem']
+    [role='menuitem'],
+    [role='option']
   ):not(:disabled),
   label:has(> input:is([type='checkbox'], [type='radio'])),
   input:is([type='checkbox'], [type='radio']):not(:disabled) {
@@ -694,7 +678,7 @@
   @apply mx-auto w-full max-w-180 px-3 md:px-6;
 }
 
-/* Rendered Markdown (src/components/Markdown.tsx). Blocks are flex items,
+/* Rendered Markdown (files/Markdown.tsx). Blocks are flex items,
    so spacing is the gap, not margins. */
 @layer components {
   /* Read for minutes at a time: book face, 16px, generous leading. Headings

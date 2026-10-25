@@ -97,9 +97,7 @@ export default function ContextChip(props: {
             : usage().prunable < MIN_PRUNE &&
               'No long output past the last few steps',
         onSelect: () =>
-          void pruneSession(props.id).catch((e) =>
-            toast(e instanceof Error ? e.message : String(e)),
-          ),
+          void pruneSession(props.id).catch((e) => toast.error(e)),
       },
       ...(props.agent === 'assistant'
         ? [

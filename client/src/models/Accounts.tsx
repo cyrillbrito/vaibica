@@ -15,7 +15,9 @@ import Alert from '../ui/Alert';
 import { Button, buttonClass } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Field, checkKey } from '../ui/Field';
-import { ExternalIcon, PlusIcon, SpinnerIcon } from '../ui/icons';
+import { ExternalIcon, PlusIcon } from '../ui/icons';
+import { Spinner } from '../ui/Spinner';
+import { NoMatches, OptionGroup, OptionList, optionClass } from '../ui/Option';
 import { Popover, PopoverSearch } from '../ui/Popover';
 import { Tag } from '../ui/Tag';
 import { providerLogo } from './provider-logos';
@@ -326,21 +328,19 @@ function AddProvider(props: {
           value={query()}
           onInput={setQuery}
         />
-        <div class="flex max-h-[60dvh] flex-col overflow-y-auto overscroll-contain p-1 md:max-h-96">
+        <OptionList class="max-h-[60dvh] md:max-h-96">
           <Show when={!groups().length}>
-            <p class="px-2.5 py-3 text-meta text-muted">No provider matches.</p>
+            <NoMatches>No provider matches.</NoMatches>
           </Show>
           <For each={groups()}>
             {(g) => (
               <>
-                <div class="px-2.5 pt-2 pb-1 text-meta text-muted">
-                  {g.label}
-                </div>
+                <OptionGroup>{g.label}</OptionGroup>
                 <For each={g.items}>
                   {(item) => (
                     <button
                       type="button"
-                      class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left transition-colors hover:bg-hover focus-visible:bg-active touch:py-2.5"
+                      class={optionClass}
                       onClick={() => {
                         document.getElementById(id)?.hidePopover();
                         props.onChoose({
@@ -370,7 +370,7 @@ function AddProvider(props: {
               </>
             )}
           </For>
-        </div>
+        </OptionList>
       </Popover>
     </>
   );
@@ -525,7 +525,7 @@ function Panel(props: {
       </Show>
       <Show when={props.signIn.progress && !props.signIn.error}>
         <p class="flex items-center gap-1.5 text-meta text-muted">
-          <SpinnerIcon />
+          <Spinner />
           {props.signIn.progress}
         </p>
       </Show>

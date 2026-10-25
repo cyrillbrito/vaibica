@@ -13,12 +13,8 @@ import { Button } from '../ui/Button';
 import { CheckMark } from '../ui/CheckMark';
 import Input from '../ui/Input';
 import Kbd from '../ui/Kbd';
-import {
-  CheckIcon,
-  ChevronIcon,
-  DrawnCheckIcon,
-  QuestionIcon,
-} from '../ui/icons';
+import { CheckIcon, DrawnCheckIcon, QuestionIcon } from '../ui/icons';
+import Chevron from '../ui/Chevron';
 
 const MAC = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform);
 
@@ -309,9 +305,7 @@ function Resolved(props: {
             <span class="text-muted"> · +{more()} more</span>
           </Show>
         </span>
-        <span class="shrink-0 text-muted transition-[rotate] duration-200 ease-out group-open/ask:rotate-90">
-          <ChevronIcon />
-        </span>
+        <Chevron class="text-muted group-open/ask:rotate-90" />
       </summary>
       <div class="flex flex-col gap-3 px-3 pt-3 pb-2">
         <For each={props.questions} keyed={false}>

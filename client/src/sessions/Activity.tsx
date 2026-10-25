@@ -13,7 +13,8 @@ import {
 import { useStepDetail } from './step-detail';
 import { createStopwatch, formatDuration, formatLive } from '../ui/time';
 import type { Activity as ActivityData, Step } from '@bica/shared/transcript';
-import { ChevronIcon, StepsIcon, ThoughtIcon } from '../ui/icons';
+import { StepsIcon, ThoughtIcon } from '../ui/icons';
+import Chevron from '../ui/Chevron';
 import { ThinkingLoader } from '../ui/ThinkingLoader';
 import ToolCalls, { LABEL, ROW, RowChevron, toolIcon } from './ToolCalls';
 
@@ -146,7 +147,6 @@ function Header(props: { activity: ActivityData; seen: boolean }) {
       aria-label={`${props.activity.active ? 'Working' : doneLabel()}, ${counts()}${failed() ? `, ${failed()} failed` : ''}`}
     >
       <ThinkingLoader
-        variant="plain"
         label="Working"
         done={!props.activity.active}
         doneLabel={doneLabel()}
@@ -184,9 +184,7 @@ function Header(props: { activity: ActivityData; seen: boolean }) {
           }}
         </For>
       </span>
-      <span class="shrink-0 transition-[rotate] duration-200 ease-out group-open/act:rotate-90">
-        <ChevronIcon />
-      </span>
+      <Chevron class="group-open/act:rotate-90" />
     </summary>
   );
 }
@@ -229,7 +227,6 @@ function StepRow(props: { step: Step; live: boolean }) {
                 }
               >
                 <ThinkingLoader
-                  variant="plain"
                   fit={false}
                   labelClass={LABEL}
                   label="Thinking"

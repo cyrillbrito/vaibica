@@ -9,6 +9,7 @@ import { Button } from '../ui/Button';
 import { RollingNumber } from '../ui/RollingNumber';
 import { toast } from '../ui/Toast';
 import { CommentIcon, SendIcon } from '../ui/icons';
+import { errorText } from '../ui/errors';
 
 /**
  * Prototype: the comments written on this workspace's diffs, sent to an
@@ -47,7 +48,7 @@ export default function ReviewBar(props: { workspace: WorkspaceRef }) {
           },
           error: (e) => ({
             title: 'Not sent',
-            description: e instanceof Error ? e.message : String(e),
+            description: errorText(e),
           }),
         },
         {

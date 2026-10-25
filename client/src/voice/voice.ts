@@ -3,6 +3,7 @@ import { createSignal, untrack } from 'solid-js';
 import { request } from '../socket/socket';
 import { toPromptImage } from '../sessions/images';
 import { soundOn } from '../ui/sound';
+import { errorText } from '../ui/errors';
 
 // Hold music: SomaFM's Groove Salad, https://somafm.com. An <audio> element
 // like the voice, because iOS suspends Web Audio when the phone locks.
@@ -328,7 +329,7 @@ export async function startCall(session: string | Promise<string>) {
       name: error instanceof Error ? error.name : undefined,
       message: String(error),
     });
-    end(error instanceof Error ? error.message : String(error));
+    end(errorText(error));
   }
 }
 
@@ -354,7 +355,7 @@ export async function addPhotos(files: File[]) {
       error: String(error),
     });
     note = {
-      text: error instanceof Error ? error.message : String(error),
+      text: errorText(error),
       failed: true,
     };
   }

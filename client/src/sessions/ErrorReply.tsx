@@ -2,7 +2,8 @@ import { For, Show, createMemo } from 'solid-js';
 import { readError } from './error-message';
 import { CopyButton } from '../ui/CopyButton';
 import Summary from '../ui/Summary';
-import { AlertIcon, ChevronIcon } from '../ui/icons';
+import { AlertIcon } from '../ui/icons';
+import Chevron from '../ui/Chevron';
 
 /** A failed turn: the readable reason up front, the raw response folded away. */
 export default function ErrorReply(props: { text: string }) {
@@ -34,9 +35,7 @@ export default function ErrorReply(props: { text: string }) {
         {(details) => (
           <details class="group/err expand mt-1.5 md:ml-4">
             <Summary class="w-fit text-meta">
-              <span class="transition-transform group-open/err:rotate-90">
-                <ChevronIcon />
-              </span>
+              <Chevron class="group-open/err:rotate-90" />
               Full response
             </Summary>
             <pre class="mt-1 rounded-md md:max-h-80 md:overflow-auto md:overscroll-contain border border-line bg-bg px-2.5 py-2 font-mono text-code whitespace-pre-wrap wrap-anywhere text-muted">

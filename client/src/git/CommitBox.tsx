@@ -4,9 +4,11 @@ import { Show, createSignal, onCleanup } from 'solid-js';
 import { arrive } from '../ui/arrive';
 import Alert from '../ui/Alert';
 import { Button, IconButton } from '../ui/Button';
+import TextArea from '../ui/TextArea';
 import Chevron from '../ui/Chevron';
 import { openContextMenu, type MenuEntry } from '../ui/ContextMenu';
 import { DiscardIcon, DrawnCheckIcon, SparkleIcon } from '../ui/icons';
+import { errorText } from '../ui/errors';
 
 // The summary line git tools truncate at.
 const SUBJECT_MAX = 72;
@@ -82,8 +84,7 @@ export default function CommitBox(props: {
       setOwnError('');
       return text;
     } catch (e) {
-      if (id === draftRun)
-        setOwnError(e instanceof Error ? e.message : String(e));
+      if (id === draftRun) setOwnError(errorText(e));
       return null;
     } finally {
       if (id === draftRun) setDrafting(false);
@@ -163,15 +164,12 @@ export default function CommitBox(props: {
           drafting() ? 'border-line-strong' : 'border-line',
         ]}
       >
-        <textarea
+        <TextArea
           ref={(el) => (box = el)}
           name="message"
           rows="3"
           aria-label="Commit message"
-          class={[
-            'max-h-60 min-h-[4.75rem] resize-none bg-transparent px-3 pt-2.5 pb-1 leading-snug outline-none [field-sizing:content] placeholder:text-muted touch:text-read',
-            drafting() && !message() && 'placeholder:animate-pulse-soft',
-          ]}
+          class="max-h-60 min-h-[4.75rem] px-3 pt-2.5 pb-1"
           placeholder={
             drafting() && !message()
               ? 'Writing a message…'

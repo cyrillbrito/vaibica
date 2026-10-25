@@ -11,6 +11,7 @@ import {
 
 import { Button } from './Button';
 import { CloseIcon } from './icons';
+import { errorText } from './errors';
 
 // Short messages for actions with nothing else to show for them (a copy from
 // a menu that has already closed), and background work you want to hear back
@@ -189,6 +190,16 @@ function promise<T>(
   return p;
 }
 
+/** A failure. Takes a message, or whatever was thrown. */
+function fail(m: unknown, o?: ToastOptions) {
+  const message =
+    typeof m === 'string' ||
+    (typeof m === 'object' && m !== null && 'title' in m)
+      ? (m as Message)
+      : errorText(m);
+  return show('error', message, o);
+}
+
 function kind(k: ToastKind) {
   return function (m: Message, o?: ToastOptions) {
     return show(k, m, o);
@@ -196,7 +207,7 @@ function kind(k: ToastKind) {
 }
 
 toast.success = kind('success');
-toast.error = kind('error');
+toast.error = fail;
 toast.info = kind('info');
 toast.loading = kind('loading');
 toast.promise = promise;

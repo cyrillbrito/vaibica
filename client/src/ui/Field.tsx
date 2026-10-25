@@ -2,6 +2,7 @@ import type { JSX } from '@solidjs/web';
 import { Show, createSignal, createUniqueId } from 'solid-js';
 
 import { DrawnCheckIcon } from './icons';
+import { fieldFrame } from './Input';
 
 /** What a field says about its value: an error blocks, a note only hints. */
 export type Check = { error?: string; note?: string; ok?: boolean };
@@ -40,7 +41,10 @@ export function Field(props: {
         {props.label}
       </label>
       <span
-        class="flex h-9 items-center gap-1 rounded-lg border border-line bg-surface px-2.5 transition-[border-color,box-shadow] duration-150 focus-within:border-line-strong focus-within:ring-3 focus-within:ring-accent/12 data-invalid:border-danger data-invalid:ring-3 data-invalid:ring-danger/12 touch:h-11"
+        class={[
+          fieldFrame,
+          'flex h-9 items-center gap-1 rounded-lg px-2.5 data-invalid:border-danger data-invalid:ring-3 data-invalid:ring-danger/15 touch:h-11',
+        ]}
         data-invalid={error() ? '' : undefined}
       >
         <Show when={props.prefix}>
@@ -77,18 +81,6 @@ export function Field(props: {
       </Show>
     </div>
   );
-}
-
-/** A server address: http or https, with a host. */
-export function checkUrl(value: string): Check {
-  try {
-    const url = new URL(value.trim());
-    if (url.protocol !== 'http:' && url.protocol !== 'https:')
-      return { error: 'Use an http:// or https:// address' };
-    return { ok: !!url.hostname };
-  } catch {
-    return { error: 'Not an address yet: start with https://' };
-  }
 }
 
 // What each provider's keys start with, to catch a key pasted in the wrong

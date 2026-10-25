@@ -273,7 +273,7 @@ export default function Sidebar() {
       next.splice(at.side === 'before' ? i : i + 1, 0, id);
       setSavingOrder(next);
       reorderProjects(next)
-        .catch((e) => toast(e instanceof Error ? e.message : String(e)))
+        .catch((e) => toast.error(e))
         .finally(() => setSavingOrder(undefined));
     },
   });
@@ -543,7 +543,7 @@ export default function Sidebar() {
             icon: <PinIcon />,
             onSelect: () =>
               void pinProject(g.projectKey, !g.pinned).catch((e) =>
-                toast(e instanceof Error ? e.message : String(e)),
+                toast.error(e),
               ),
           },
         ] satisfies MenuEntry[])
@@ -596,7 +596,7 @@ export default function Sidebar() {
         navigate(paths());
       toast(`Removed ${label}`);
     } catch (e) {
-      toast(e instanceof Error ? e.message : String(e));
+      toast.error(e);
     }
   };
 

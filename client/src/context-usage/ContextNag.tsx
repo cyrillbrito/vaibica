@@ -56,7 +56,7 @@ const dismissed = new Map<string, string>();
  * warm and the session is big. Cheers when it shrinks.
  */
 function fail(e: unknown) {
-  return toast(e instanceof Error ? e.message : String(e));
+  return toast.error(e);
 }
 
 export default function ContextNag(props: {

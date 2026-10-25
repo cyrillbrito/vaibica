@@ -24,9 +24,9 @@ import {
   ImageIcon,
   MicIcon,
   QueueIcon,
-  SpinnerIcon,
   StopIcon,
 } from '../ui/icons';
+import { errorText } from '../ui/errors';
 
 type Attached = PromptImage & { id: number };
 let nextId = 0;
@@ -165,9 +165,7 @@ export default function Composer(props: {
     if (pending)
       props
         .onHoldEdit?.(pending.key, pending.text)
-        .catch((error) =>
-          setProblem(error instanceof Error ? error.message : String(error)),
-        );
+        .catch((error) => setProblem(errorText(error)));
   };
   onCleanup(flushEdit);
 
@@ -243,7 +241,7 @@ export default function Composer(props: {
     try {
       await props.onStop();
     } catch (error) {
-      setProblem(error instanceof Error ? error.message : String(error));
+      setProblem(errorText(error));
     } finally {
       setStopping(false);
     }
@@ -265,11 +263,7 @@ export default function Composer(props: {
   const dictating = () => dictation.phase() !== 'idle';
   const dictate = () => {
     setProblem('');
-    dictation
-      .toggle()
-      ?.catch((error) =>
-        setProblem(error instanceof Error ? error.message : String(error)),
-      );
+    dictation.toggle()?.catch((error) => setProblem(errorText(error)));
   };
 
   const drop = createDropZone({
@@ -286,7 +280,7 @@ export default function Composer(props: {
         const image = { ...(await toPromptImage(file)), id: ++nextId };
         setImages((list) => [...list, image]);
       } catch (error) {
-        setProblem(error instanceof Error ? error.message : String(error));
+        setProblem(errorText(error));
       }
     }
   };
@@ -569,36 +563,27 @@ export default function Composer(props: {
                 : 'Dictate'
             }
             aria-pressed={dictation.phase() === 'recording' ? 'true' : 'false'}
-            disabled={dictation.phase() === 'transcribing'}
+            loading={dictation.phase() === 'transcribing'}
             onClick={dictate}
           >
             <Show
-              when={dictation.phase() === 'transcribing'}
-              fallback={
-                <Show
-                  when={dictation.phase() === 'recording'}
-                  fallback={<MicIcon />}
-                >
-                  <CheckIcon />
-                </Show>
-              }
+              when={dictation.phase() === 'recording'}
+              fallback={<MicIcon />}
             >
-              <SpinnerIcon />
+              <CheckIcon />
             </Show>
           </IconButton>
           <div class={dictating() ? 'hidden' : 'contents'}>{props.actions}</div>
           <Show when={props.busy && props.onStop}>
             <IconButton
-              class="ml-1 bg-active text-fg [&_svg]:size-3"
+              class="ml-1 bg-active text-fg [&_svg:not([data-spinner])]:size-3"
               size="md"
               round
               title="Stop (Esc twice)"
-              disabled={stopping()}
+              loading={stopping()}
               onClick={() => void stop()}
             >
-              <Show when={stopping()} fallback={<StopIcon />}>
-                <SpinnerIcon />
-              </Show>
+              <StopIcon />
             </IconButton>
           </Show>
           <Show when={props.sendLabel}>

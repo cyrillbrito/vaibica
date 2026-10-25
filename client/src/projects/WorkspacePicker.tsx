@@ -16,7 +16,8 @@ import {
   PlusIcon,
   SparkleIcon,
 } from '../ui/icons';
-import Input from '../ui/Input';
+import { NoMatches, OptionGroup } from '../ui/Option';
+import { Popover, PopoverSearch } from '../ui/Popover';
 import Kbd from '../ui/Kbd';
 
 interface Item {
@@ -247,8 +248,9 @@ export default function WorkspacePicker(props: {
     return (
       <div
         data-index={index()}
+        id={`${id}-opt-${index()}`}
         class={[
-          'flex min-h-8 w-full shrink-0 cursor-pointer items-center gap-1.5 rounded-lg pr-2.5 pl-2.5 touch:min-h-11',
+          'flex min-h-8 w-full shrink-0 items-center gap-1.5 rounded-lg pr-2.5 pl-2.5 touch:min-h-11',
           lit() && 'bg-hover',
         ]}
         // A row, not a button: the + inside it is one. The search field
@@ -378,14 +380,13 @@ export default function WorkspacePicker(props: {
         <span class="truncate">{label()}</span>
         <Chevron class="rotate-90 text-muted/70" />
       </button>
-      <div
+      <Popover
         ref={(el) => (popover = el)}
         id={id}
-        popover="auto"
-        aria-label="Where to start"
-        style={{ '--anchor': `--${id}` }}
-        onToggle={(e) => {
-          if (e.newState !== 'open') return;
+        label="Where to start"
+        width="lg"
+        onToggle={(open) => {
+          if (!open) return;
           setQuery('');
           if (input) input.value = '';
           setActive(Math.max(0, flat().findIndex(isOn)));
@@ -393,80 +394,69 @@ export default function WorkspacePicker(props: {
           // On a phone the keyboard would cover the list.
           if (matchMedia('(pointer: fine)').matches) input?.focus();
         }}
-        class={[
-          'm-0 flex-col overflow-hidden bg-panel p-1 text-fg shadow-menu open:flex max-md:sheet max-md:shadow-sheet md:pop md:origin-top-left',
-          'inset-x-0 top-auto bottom-0 w-full max-w-none rounded-t-tray pb-[env(safe-area-inset-bottom)] backdrop:bg-black/40',
-          'md:inset-auto md:mt-1 md:w-96 md:rounded-tray md:pb-1 md:backdrop:bg-transparent md:[position-anchor:var(--anchor)] md:[position-area:bottom_span-right] md:[position-try-fallbacks:flip-block]',
-        ]}
       >
-        <div class="flex min-h-0 flex-col overflow-hidden rounded-sheet border border-line bg-surface">
-          <div class="border-b border-line p-1.5">
-            <Input
-              ref={(el) => (input = el)}
-              class="h-8 w-full touch:h-11"
-              type="search"
-              placeholder="Search projects, branches, pull requests…"
-              autocomplete="off"
-              spellcheck={false}
-              onInput={(e) => {
-                setQuery(e.currentTarget.value);
-                move(0);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-                  e.preventDefault();
-                  move(active() + (e.key === 'ArrowDown' ? 1 : -1));
-                } else if (e.key === 'Enter' && !e.isComposing) {
-                  e.preventDefault();
-                  choose(flat()[active()], e.metaKey || e.ctrlKey);
-                }
-              }}
-            />
-          </div>
-          <div
-            ref={(el) => (list = el)}
-            role="listbox"
-            aria-label="Workspaces"
-            class="flex max-h-[60dvh] flex-col overflow-y-auto overscroll-contain p-1 md:max-h-[min(28rem,60dvh)]"
-          >
-            <Show when={!flat().length}>
-              <p class="px-2.5 py-3 text-meta text-muted">Nothing matches.</p>
-            </Show>
-            <For each={groups()} keyed={(g) => g.id}>
-              {(g, gi) => (
-                <div class={['flex shrink-0 flex-col', gi() > 0 && 'mt-1.5']}>
-                  <Show when={g().label}>
-                    <div class="truncate px-2.5 pt-1 pb-1 text-meta text-muted">
-                      {g().label}
-                    </div>
-                  </Show>
-                  <Show when={!g().label && !g().project && gi() > 0}>
-                    <div class="mx-2.5 mb-1.5 border-t border-line" />
-                  </Show>
-                  <Show
-                    when={g().project}
-                    fallback={
-                      <For each={g().items} keyed={(i) => i.key}>
+        <PopoverSearch
+          ref={(el) => (input = el)}
+          controls={`${id}-list`}
+          activeId={flat().length ? `${id}-opt-${active()}` : undefined}
+          label="Search projects, branches, pull requests"
+          placeholder="Search projects, branches, pull requests…"
+          onInput={(v) => {
+            setQuery(v);
+            move(0);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+              e.preventDefault();
+              move(active() + (e.key === 'ArrowDown' ? 1 : -1));
+            } else if (e.key === 'Enter' && !e.isComposing) {
+              e.preventDefault();
+              choose(flat()[active()], e.metaKey || e.ctrlKey);
+            }
+          }}
+        />
+        <div
+          ref={(el) => (list = el)}
+          id={`${id}-list`}
+          role="listbox"
+          aria-label="Workspaces"
+          class="flex max-h-[60dvh] flex-col overflow-y-auto overscroll-contain p-1 md:max-h-[min(28rem,60dvh)]"
+        >
+          <Show when={!flat().length}>
+            <NoMatches />
+          </Show>
+          <For each={groups()} keyed={(g) => g.id}>
+            {(g, gi) => (
+              <div class={['flex shrink-0 flex-col', gi() > 0 && 'mt-1.5']}>
+                <Show when={g().label}>
+                  <OptionGroup>{g().label}</OptionGroup>
+                </Show>
+                <Show when={!g().label && !g().project && gi() > 0}>
+                  <div class="mx-2.5 mb-1.5 border-t border-line" />
+                </Show>
+                <Show
+                  when={g().project}
+                  fallback={
+                    <For each={g().items} keyed={(i) => i.key}>
+                      {(i) => <Row item={i()} />}
+                    </For>
+                  }
+                >
+                  <Row item={g().items[0]} />
+                  <Show when={g().items.length > 1}>
+                    {/* A guide line, like the sidebar's, says whose they are. */}
+                    <div class="ml-4.5 flex flex-col border-l border-line pl-1">
+                      <For each={g().items.slice(1)} keyed={(i) => i.key}>
                         {(i) => <Row item={i()} />}
                       </For>
-                    }
-                  >
-                    <Row item={g().items[0]} />
-                    <Show when={g().items.length > 1}>
-                      {/* A guide line, like the sidebar's, says whose they are. */}
-                      <div class="ml-4.5 flex flex-col border-l border-line pl-1">
-                        <For each={g().items.slice(1)} keyed={(i) => i.key}>
-                          {(i) => <Row item={i()} />}
-                        </For>
-                      </div>
-                    </Show>
+                    </div>
                   </Show>
-                </div>
-              )}
-            </For>
-          </div>
+                </Show>
+              </div>
+            )}
+          </For>
         </div>
-      </div>
+      </Popover>
     </>
   );
 }

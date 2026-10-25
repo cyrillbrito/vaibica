@@ -95,12 +95,3 @@ export function SegmentCount(props: { value: number }) {
     </span>
   );
 }
-
-/** A small tinted tag after a segment's label, e.g. "New". */
-export function SegmentBadge(props: { children: JSX.Element }) {
-  return (
-    <span class="rounded-sm bg-accent/12 px-1 font-medium text-accent">
-      {props.children}
-    </span>
-  );
-}

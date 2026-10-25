@@ -18,7 +18,6 @@ import type { ToolCall, ToolStatus } from '@bica/shared/transcript';
 import DiffBlock, { type DiffSource } from '../files/DiffBlock';
 import { CopyButton } from '../ui/CopyButton';
 import {
-  ChevronIcon,
   CodeIcon,
   DrawnCheckIcon,
   FileEditIcon,
@@ -27,10 +26,12 @@ import {
   GlobeIcon,
   SearchIcon,
   SessionIcon,
-  SpinnerIcon,
   TerminalIcon,
   ToolIcon,
 } from '../ui/icons';
+import { summaryClass } from '../ui/Summary';
+import Chevron from '../ui/Chevron';
+import { Spinner } from '../ui/Spinner';
 
 /** One round of tool calls; calls in the same round ran in parallel. */
 export default function ToolCalls(props: { calls: ToolCall[] }) {
@@ -158,7 +159,7 @@ function CallStatus(props: { call: ToolCall }) {
       <Switch>
         <Match when={running()}>
           <span class="flex items-center gap-1 text-muted [&_svg]:size-3.5">
-            <SpinnerIcon />
+            <Spinner />
             <Show when={live()}>{(t) => <span>{t()}</span>}</Show>
           </span>
         </Match>
@@ -183,15 +184,12 @@ function CallStatus(props: { call: ToolCall }) {
 const SLOW_MS = 3000;
 
 /** A foldable step: a tool call or a thought. */
-export const ROW =
-  'flex h-7 cursor-pointer list-none items-center gap-2 rounded-md px-1.5 text-muted transition-colors select-none hover:bg-hover hover:text-fg touch:h-11 [&::-webkit-details-marker]:hidden';
+export const ROW = summaryClass;
 
 /** Hidden until hover, turned while open; the parent is `group/row`. */
 export function RowChevron() {
   return (
-    <span class="ml-auto shrink-0 opacity-0 transition-[rotate,opacity] duration-200 ease-out group-open/row:rotate-90 group-hover/row:opacity-100 group-focus-visible/row:opacity-100">
-      <ChevronIcon />
-    </span>
+    <Chevron class="ml-auto opacity-0 transition-[rotate,opacity] group-open/row:rotate-90 group-hover/row:opacity-100 group-focus-visible/row:opacity-100" />
   );
 }
 

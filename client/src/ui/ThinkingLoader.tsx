@@ -3,72 +3,33 @@ import {
   For,
   Show,
   createEffect,
-  createMemo,
   createSignal,
   onSettled,
   untrack,
 } from 'solid-js';
 
-const RAYS = [0, 1, 2, 3, 4, 5, 6, 7];
+import { Spinner } from './Spinner';
 
 /**
- * "The agent is working": eight rays turning and a shimmering label. A new
- * label rolls in as the old one rolls out, and the pill glides to its width.
- * When done, the rays give way to a check (or `doneIcon`) and the label to
- * `doneLabel`. After affectUI's Thinking Loader. The rays and shimmer stay
- * on under reduced motion (they say work is happening); the rest is instant.
+ * "The agent is working": the spinner and a shimmering label, laid out by the
+ * parent (`display: contents`). A new label rolls in as the old one rolls
+ * out, and the box glides to its width. When done, the spinner gives way to
+ * a check (or `doneIcon`) and the label to `doneLabel`. After affectUI's
+ * Thinking Loader. No live region of its own: a transcript holds many, and
+ * the row around it carries the name.
  */
 export function ThinkingLoader(props: {
   /** What it's doing now. Changing it rolls the new text in. */
-  label?: string;
-  /** Labels to walk through on a timer when no `label` is given; holds the last. */
-  phases?: string[];
-  /** Milliseconds per phase. */
-  interval?: number;
+  label: string;
   done?: boolean;
-  /** Text once done; a function gets the seconds since work started. */
-  doneLabel?: string | ((seconds: number) => string);
+  doneLabel?: string;
   /** Shown instead of the check once done, e.g. the step's own icon. */
   doneIcon?: JSX.Element;
-  /** `pill`: a bordered capsule. `plain`: icon and label only, laid out by the parent (`display: contents`). */
-  variant?: 'pill' | 'plain';
   /** Off when the label already has a fixed width (`labelClass`). */
   fit?: boolean;
-  class?: string;
   labelClass?: string;
 }) {
-  const [step, setStep] = createSignal(0);
-  const [started, setStarted] = createSignal(Date.now());
-  createEffect(
-    () => !props.done && props.label === undefined && props.phases?.length,
-    (n) => {
-      if (!n || n < 2) return;
-      const id = setInterval(
-        () => setStep((s) => Math.min(s + 1, n - 1)),
-        props.interval ?? 2200,
-      );
-      return () => clearInterval(id);
-    },
-  );
-  // Work starting again restarts the clock and the phases.
-  createEffect(
-    () => !!props.done,
-    (done, was) => {
-      if (!done && was) {
-        setStarted(Date.now());
-        setStep(0);
-      }
-    },
-  );
-
-  const text = createMemo(() => {
-    if (props.done) {
-      const d = props.doneLabel ?? 'Done';
-      if (typeof d === 'string') return d;
-      return d(Math.max(1, Math.round((Date.now() - started()) / 1000)));
-    }
-    return props.label ?? props.phases?.[step()] ?? '';
-  });
+  const text = () => (props.done ? (props.doneLabel ?? 'Done') : props.label);
 
   // The label on screen plus the one rolling out. The first one just shows.
   let n = 0;
@@ -111,40 +72,14 @@ export function ThinkingLoader(props: {
   });
 
   return (
-    <span
-      role="status"
-      class={[
-        props.variant === 'plain'
-          ? 'contents'
-          : 'inline-flex h-8 items-center gap-2 rounded-full border border-line bg-surface pr-3.5 pl-3 align-middle text-muted',
-        props.class,
-      ]}
-      data-done={props.done ? '' : undefined}
-    >
+    <span class="contents" data-done={props.done ? '' : undefined}>
       <span class="relative size-4 shrink-0" aria-hidden="true">
-        <svg
-          viewBox="0 0 16 16"
+        <Spinner
           class={[
-            'absolute inset-0 size-full stroke-current transition-[opacity,scale,rotate] duration-200 ease-out',
+            'absolute inset-0 size-full transition-[opacity,scale,rotate] duration-200 ease-out',
             props.done && 'scale-60 -rotate-45 opacity-0',
           ]}
-        >
-          <For each={RAYS}>
-            {(i) => (
-              <line
-                x1="8"
-                y1="1.75"
-                x2="8"
-                y2="4.75"
-                stroke-width="1.6"
-                stroke-linecap="round"
-                transform={`rotate(${i * 45} 8 8)`}
-                class="animate-ray opacity-20"
-                style={{ 'animation-delay': `${(i - 8) * 100}ms` }}
-              />
-            )}
-          </For>
-        </svg>
+        />
         <Show when={props.done}>
           <Show
             when={props.doneIcon}
@@ -194,15 +129,7 @@ export function ThinkingLoader(props: {
               }
             >
               {/* Its own layer: the shimmer is an animation too. */}
-              <span
-                class={[
-                  !l().out && !props.done && 'shimmer',
-                  !l().out &&
-                    props.done &&
-                    props.variant !== 'plain' &&
-                    'text-fg',
-                ]}
-              >
+              <span class={!l().out && !props.done ? 'shimmer' : undefined}>
                 {l().text}
               </span>
             </span>

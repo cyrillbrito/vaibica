@@ -11,7 +11,8 @@ import type {
 import { buttonClass } from '../ui/Button';
 import Chevron from '../ui/Chevron';
 import { CheckIcon, ThoughtIcon } from '../ui/icons';
-import Input from '../ui/Input';
+import { NoMatches, OptionGroup, OptionList, optionClass } from '../ui/Option';
+import { Popover, PopoverSearch } from '../ui/Popover';
 import { Segmented, segmentClass } from '../ui/Segmented';
 import { Switch } from '../ui/Switch';
 
@@ -162,176 +163,155 @@ export default function ModelPicker(props: {
         </Show>
         <Chevron class="-rotate-90 text-muted/70" />
       </button>
-      <div
+      <Popover
         ref={(el) => (popover = el)}
         id={id}
-        popover="auto"
-        aria-label="Model and effort"
-        style={{ '--anchor': `--${id}` }}
-        onToggle={(e) => e.newState !== 'open' && setPointed(null)}
-        class={[
-          'm-0 flex-col overflow-hidden bg-panel p-1 text-fg shadow-menu open:flex max-md:sheet max-md:shadow-sheet md:pop md:origin-bottom-left',
-          // Phone: a sheet from the bottom, reachable with the thumb.
-          'inset-x-0 top-auto bottom-0 w-full max-w-none rounded-t-tray pb-[env(safe-area-inset-bottom)] backdrop:bg-black/40',
-          // Wider: floats above the chip, flips below when there's no room.
-          'md:inset-auto md:mb-1 md:w-80 md:rounded-tray md:pb-1 md:backdrop:bg-transparent md:[position-anchor:var(--anchor)] md:[position-area:top_span-right] md:[position-try-fallbacks:flip-block]',
-        ]}
-      >
-        <div class="flex min-h-0 flex-col overflow-hidden rounded-sheet border border-line bg-surface">
-          <Show when={options().length > 12}>
-            <div class="border-b border-line p-1.5">
-              <Input
-                class="h-8 w-full touch:h-11"
-                type="search"
-                placeholder="Search models…"
-                value={query()}
-                onInput={(e) => setQuery(e.currentTarget.value)}
-              />
-            </div>
+        label="Model and effort"
+        place="top-start"
+        onToggle={(open) => !open && setPointed(null)}
+        tray={
+          <Show when={shown()}>
+            {(m) => (
+              <div
+                class="truncate px-3 pt-1.5 pb-0.5 text-meta text-muted tabular-nums"
+                aria-hidden="true"
+              >
+                {facts(m())}
+              </div>
+            )}
           </Show>
-          <div
-            class="flex max-h-[50dvh] flex-col overflow-y-auto overscroll-contain p-1 md:max-h-80"
-            onPointerLeave={() => setPointed(null)}
-          >
-            <Show when={!groups().length}>
-              <p class="px-2.5 py-3 text-meta text-muted">No model matches.</p>
+        }
+      >
+        <Show when={options().length > 12}>
+          <PopoverSearch
+            label="Search models"
+            value={query()}
+            onInput={setQuery}
+          />
+        </Show>
+        <OptionList class="max-h-[50dvh] md:max-h-80">
+          <Show when={!groups().length}>
+            <NoMatches>No model matches.</NoMatches>
+          </Show>
+          <For each={groups()} keyed={(g) => g.id}>
+            {(g) => (
+              <>
+                {/* Labels only help when there is more than one provider. */}
+                <Show when={groups().length > 1}>
+                  <OptionGroup>{g().name}</OptionGroup>
+                </Show>
+                <For each={g().models} keyed={(m) => m.id}>
+                  {(m) => {
+                    const on = () => !!props.value && current() === m();
+                    const key = () => modelKey(m().provider, m().id);
+                    return (
+                      <button
+                        type="button"
+                        class={optionClass}
+                        title={key()}
+                        aria-pressed={on() ? 'true' : 'false'}
+                        onPointerEnter={() => setPointed(key())}
+                        onFocus={() => setPointed(key())}
+                        onClick={() => {
+                          popover?.hidePopover();
+                          if (on()) return;
+                          props.onChange({
+                            model: {
+                              provider: m().provider,
+                              modelId: m().id,
+                            },
+                            thinkingLevel: levelFor(
+                              m(),
+                              props.value?.thinkingLevel ?? 'medium',
+                            ),
+                          });
+                        }}
+                      >
+                        <span class="truncate">{m().name}</span>
+                        <Show when={on()}>
+                          <span class="swap-in shrink-0 text-muted">
+                            <CheckIcon />
+                          </span>
+                        </Show>
+                      </button>
+                    );
+                  }}
+                </For>
+              </>
+            )}
+          </For>
+        </OptionList>
+        <Show when={effortOn()}>
+          <div class="border-t border-line p-1">
+            <Show when={canSwitch()}>
+              <label class="flex h-8 items-center gap-2.5 rounded-lg px-2 transition-colors hover:bg-hover touch:h-11">
+                <span
+                  class={[
+                    'grid w-5 place-items-center transition-colors',
+                    thinking() ? 'text-fg' : 'text-muted',
+                  ]}
+                >
+                  <ThoughtIcon />
+                </span>
+                <span class="flex-1" title="How hard the model thinks">
+                  Thinking
+                </span>
+                <Switch
+                  checked={thinking()}
+                  label="Thinking"
+                  onChange={(next) =>
+                    props.onChange({
+                      model: props.value!.model,
+                      thinkingLevel: next
+                        ? levelFor(current()!, lastEffort)
+                        : 'off',
+                    })
+                  }
+                />
+              </label>
             </Show>
-            <For each={groups()} keyed={(g) => g.id}>
-              {(g) => (
-                <>
-                  {/* Labels only help when there is more than one provider. */}
-                  <Show when={groups().length > 1}>
-                    <div class="px-2.5 pt-2 pb-1 text-meta text-muted">
-                      {g().name}
-                    </div>
-                  </Show>
-                  <For each={g().models} keyed={(m) => m.id}>
-                    {(m) => {
-                      const on = () => !!props.value && current() === m();
-                      const key = () => modelKey(m().provider, m().id);
-                      const lit = () => pointed() === key();
-                      return (
+            <div
+              class="fold"
+              data-open={thinking() || !canSwitch() || undefined}
+              inert={canSwitch() && !thinking()}
+            >
+              <div>
+                <div
+                  class={[
+                    'flex items-center gap-2 py-1 pr-1',
+                    canSwitch() ? 'pl-9.5' : 'pl-2',
+                  ]}
+                >
+                  <span class="flex-1 text-meta text-muted">Effort</span>
+                  <Segmented>
+                    <For each={efforts()}>
+                      {(level) => (
                         <button
                           type="button"
-                          class={[
-                            'flex h-8 w-full items-center gap-1.5 rounded-lg px-2.5 text-left transition-colors duration-150 focus-visible:bg-active touch:h-11',
-                            lit() && 'bg-hover',
-                          ]}
-                          title={key()}
-                          aria-pressed={on() ? 'true' : 'false'}
-                          onPointerEnter={() => setPointed(key())}
-                          onFocus={() => setPointed(key())}
+                          class={segmentClass}
+                          title={EFFORT[level][1]}
+                          data-on={
+                            props.value!.thinkingLevel === level || undefined
+                          }
                           onClick={() => {
-                            popover?.hidePopover();
-                            if (on()) return;
+                            lastEffort = level;
                             props.onChange({
-                              model: {
-                                provider: m().provider,
-                                modelId: m().id,
-                              },
-                              thinkingLevel: levelFor(
-                                m(),
-                                props.value?.thinkingLevel ?? 'medium',
-                              ),
+                              model: props.value!.model,
+                              thinkingLevel: level,
                             });
                           }}
                         >
-                          <span class="truncate">{m().name}</span>
-                          <Show when={on()}>
-                            <span class="swap-in shrink-0 text-muted">
-                              <CheckIcon />
-                            </span>
-                          </Show>
+                          {EFFORT[level][0]}
                         </button>
-                      );
-                    }}
-                  </For>
-                </>
-              )}
-            </For>
-          </div>
-          <Show when={effortOn()}>
-            <div class="border-t border-line p-1">
-              <Show when={canSwitch()}>
-                <label class="flex h-8 items-center gap-2.5 rounded-lg px-2 transition-colors hover:bg-hover touch:h-11">
-                  <span
-                    class={[
-                      'grid w-5 place-items-center transition-colors',
-                      thinking() ? 'text-fg' : 'text-muted',
-                    ]}
-                  >
-                    <ThoughtIcon />
-                  </span>
-                  <span class="flex-1" title="How hard the model thinks">
-                    Thinking
-                  </span>
-                  <Switch
-                    checked={thinking()}
-                    label="Thinking"
-                    onChange={(next) =>
-                      props.onChange({
-                        model: props.value!.model,
-                        thinkingLevel: next
-                          ? levelFor(current()!, lastEffort)
-                          : 'off',
-                      })
-                    }
-                  />
-                </label>
-              </Show>
-              <div
-                class="fold"
-                data-open={thinking() || !canSwitch() || undefined}
-                inert={canSwitch() && !thinking()}
-              >
-                <div>
-                  <div
-                    class={[
-                      'flex items-center gap-2 py-1 pr-1',
-                      canSwitch() ? 'pl-9.5' : 'pl-2',
-                    ]}
-                  >
-                    <span class="flex-1 text-meta text-muted">Effort</span>
-                    <Segmented>
-                      <For each={efforts()}>
-                        {(level) => (
-                          <button
-                            type="button"
-                            class={segmentClass}
-                            title={EFFORT[level][1]}
-                            data-on={
-                              props.value!.thinkingLevel === level || undefined
-                            }
-                            onClick={() => {
-                              lastEffort = level;
-                              props.onChange({
-                                model: props.value!.model,
-                                thinkingLevel: level,
-                              });
-                            }}
-                          >
-                            {EFFORT[level][0]}
-                          </button>
-                        )}
-                      </For>
-                    </Segmented>
-                  </div>
+                      )}
+                    </For>
+                  </Segmented>
                 </div>
               </div>
             </div>
-          </Show>
-        </div>
-        <Show when={shown()}>
-          {(m) => (
-            <div
-              class="truncate px-3 pt-1.5 pb-0.5 text-meta text-muted tabular-nums"
-              aria-hidden="true"
-            >
-              {facts(m())}
-            </div>
-          )}
+          </div>
         </Show>
-      </div>
+      </Popover>
     </Show>
   );
 }

@@ -29,6 +29,7 @@ import TitleInput from '../../sessions/TitleInput';
 import TopBar from '../../app/TopBar';
 import { IconButton } from '../../ui/Button';
 import Empty from '../../ui/Empty';
+import { Spinner } from '../../ui/Spinner';
 import { CloseIcon, ParentIcon, SessionIcon, VoiceIcon } from '../../ui/icons';
 import { drawer, hasPanels, setNoPanels } from '../../ui/layout';
 import { openFromSearch, sameOpen, sessionFileHref } from '../../files/files';
@@ -64,9 +65,10 @@ import {
 } from '@bica/shared/transcript';
 
 /**
- * The agent is on it but nothing has streamed yet: a shimmering word and a
- * live timer, after affectUI's Thinking State. A failed attempt waiting to
- * retry says so, with the reason on hover.
+ * The agent is on it but nothing has streamed yet: the spinner, a shimmering
+ * word, and a live timer, after affectUI's Thinking State. Laid out like the
+ * steps row that takes its place once a step arrives, so nothing moves. A
+ * failed attempt waiting to retry says so, with the reason on hover.
  */
 function Working(props: {
   since?: number;
@@ -76,9 +78,15 @@ function Working(props: {
   return (
     <div
       role="status"
-      class="appear flex min-w-0 items-center gap-2 text-meta text-muted"
+      class="appear flex h-7 min-w-0 items-center gap-2 px-1.5 text-meta text-muted touch:h-11"
     >
-      <span class={['text-ui', props.retry ? 'text-warn-ink' : 'shimmer']}>
+      <Spinner class={props.retry && 'text-warn-ink'} />
+      <span
+        class={[
+          'text-ui font-medium',
+          props.retry ? 'text-warn-ink' : 'shimmer',
+        ]}
+      >
         {props.retry ? 'Retrying' : 'Working'}
       </span>
       <Show

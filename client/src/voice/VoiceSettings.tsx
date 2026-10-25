@@ -4,10 +4,12 @@ import type { VoiceSettings as Settings } from '@bica/shared/protocol';
 import { setVoiceSettings } from '../sessions/sessions';
 import { musicLevel, setMusicLevel, type MusicLevel } from './voice';
 import Alert from '../ui/Alert';
-import { Button, IconButton } from '../ui/Button';
+import { Button } from '../ui/Button';
+import { Dialog } from '../ui/Dialog';
 import { Segmented, segmentClass } from '../ui/Segmented';
 import Select from '../ui/Select';
-import { CloseIcon } from '../ui/icons';
+import TextArea from '../ui/TextArea';
+import { errorText } from '../ui/errors';
 
 const SPEEDS = [
   { label: 'Slow', value: 0.75 },
@@ -37,27 +39,18 @@ export default function VoiceSettings(props: {
   let instructions!: HTMLTextAreaElement;
 
   return (
-    <dialog
+    <Dialog
       ref={(el) => {
         dialog = el;
         props.ref(el);
       }}
-      onToggle={(e) => {
-        if (e.newState !== 'open') return;
+      title="Voice"
+      onOpen={() => {
         setSpeed(props.voice?.speed ?? 1);
         setError('');
         instructions.value = props.voice?.instructions ?? '';
       }}
-      class="mx-0 mt-auto mb-0 flex max-h-[85dvh] w-full max-w-none flex-col overflow-hidden rounded-t-sheet border border-line bg-panel text-fg shadow-sheet backdrop:bg-black/40 not-open:hidden max-md:sheet md:pop md:m-auto md:max-h-[min(44rem,85dvh)] md:w-[32rem] md:rounded-card"
-      aria-label="Voice"
-      onClick={(e) => e.target === e.currentTarget && dialog.close()}
     >
-      <header class="flex h-12 shrink-0 items-center gap-1 border-b border-line pr-2 pl-4">
-        <h2 class="flex-1 font-semibold">Voice</h2>
-        <IconButton title="Close" onClick={() => dialog.close()}>
-          <CloseIcon />
-        </IconButton>
-      </header>
       <form
         class="flex flex-col gap-4 overflow-y-auto overscroll-contain p-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
         onSubmit={async (e) => {
@@ -71,7 +64,7 @@ export default function VoiceSettings(props: {
             });
             dialog.close();
           } catch (err) {
-            setError(err instanceof Error ? err.message : String(err));
+            setError(errorText(err));
           } finally {
             setBusy(false);
           }
@@ -97,10 +90,11 @@ export default function VoiceSettings(props: {
         </div>
         <label class="flex flex-col gap-1.5">
           <span class="text-meta text-muted">Instructions</span>
-          <textarea
+          <TextArea
             ref={(el) => (instructions = el)}
             rows="4"
-            class="max-h-60 min-h-24 resize-none rounded-card border border-line bg-surface px-3 py-2.5 leading-snug outline-none [field-sizing:content] placeholder:text-muted focus:border-line-strong touch:text-read"
+            framed
+            class="max-h-60 min-h-24 px-3 py-2.5"
             placeholder="E.g. I'm learning French. Talk with me yourself in simple French, speak slowly with clear pauses, and gently correct my mistakes."
           />
         </label>
@@ -136,6 +130,6 @@ export default function VoiceSettings(props: {
           </Button>
         </div>
       </form>
-    </dialog>
+    </Dialog>
   );
 }

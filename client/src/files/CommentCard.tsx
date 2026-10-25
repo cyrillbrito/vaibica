@@ -2,6 +2,7 @@ import { Show, createMemo, onSettled } from 'solid-js';
 
 import { comments, editComment, removeComment, saveComment } from './review';
 import { Button, IconButton } from '../ui/Button';
+import TextArea from '../ui/TextArea';
 import Kbd from '../ui/Kbd';
 import { CommentIcon, DeleteIcon, PencilIcon } from '../ui/icons';
 
@@ -104,7 +105,7 @@ function Draft(props: {
         props.onSave();
       }}
     >
-      <textarea
+      <TextArea
         ref={(t) => {
           el = t;
           props.ref(t);
@@ -112,7 +113,7 @@ function Draft(props: {
         rows="2"
         aria-label={`Comment on ${props.lines.toLowerCase()}`}
         placeholder={`Comment on ${props.lines.toLowerCase()} for the agent…`}
-        class="max-h-48 min-h-14 resize-none bg-transparent px-2.5 pt-2 pb-1 leading-snug outline-none [field-sizing:content] placeholder:text-muted touch:text-read"
+        class="max-h-48 min-h-14 px-2.5 pt-2 pb-1"
         value={props.text}
         onKeyDown={(e) => {
           e.stopPropagation();

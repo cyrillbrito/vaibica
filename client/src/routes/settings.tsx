@@ -211,11 +211,7 @@ export default function Settings() {
                   onChange={(e) =>
                     void updateSettings({
                       hubFolder: e.currentTarget.value || null,
-                    }).catch((error: unknown) =>
-                      toast(
-                        error instanceof Error ? error.message : String(error),
-                      ),
-                    )
+                    }).catch((error: unknown) => toast.error(error))
                   }
                 />
               </Setting>
@@ -253,11 +249,7 @@ export default function Settings() {
                 onChange={(e) =>
                   void updateSettings({
                     nightStart: e.currentTarget.value,
-                  }).catch((error) =>
-                    toast.error(
-                      error instanceof Error ? error.message : String(error),
-                    ),
-                  )
+                  }).catch((error) => toast.error(error))
                 }
               />
             </Setting>

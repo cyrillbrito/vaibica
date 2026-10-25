@@ -11,6 +11,7 @@ import Composer, { type ComposerApi } from './Composer';
 import ModelPicker from '../models/ModelPicker';
 import { IconButton } from '../ui/Button';
 import { MoonIcon, VoiceIcon } from '../ui/icons';
+import { errorText } from '../ui/errors';
 
 export interface StartTarget {
   projectId: string;
@@ -69,9 +70,7 @@ export default function StartComposer(props: {
   // An empty session with a call on it: the first thing said is the prompt.
   const call = () => {
     const id = create('', []);
-    id.catch((error) =>
-      composer?.problem(error instanceof Error ? error.message : String(error)),
-    );
+    id.catch((error) => composer?.problem(errorText(error)));
     void startCall(id);
   };
   props.ref?.({ call });

@@ -5,6 +5,8 @@ import { pushQueued, withdrawQueued } from './sessions';
 import type { ComposerApi } from './Composer';
 import { IconButton } from '../ui/Button';
 import { CloseIcon, PencilIcon, PushIcon, QueueIcon } from '../ui/icons';
+import { Spinner } from '../ui/Spinner';
+import { errorText } from '../ui/errors';
 
 type Queued = Extract<InboxItem, { content: unknown }>;
 
@@ -44,9 +46,7 @@ export default function Queue(props: {
       else if (action === 'edit')
         props.composer()?.restore(taken.prompt, taken.images);
     } catch (error) {
-      props
-        .composer()
-        ?.problem(error instanceof Error ? error.message : String(error));
+      props.composer()?.problem(errorText(error));
     } finally {
       setBusy((list) => list.filter((i) => i !== id));
     }
@@ -66,7 +66,7 @@ export default function Queue(props: {
               <li
                 class={[
                   'appear flex min-h-8 items-center gap-2 rounded-lg py-0.5 pl-1.5 transition-colors hover:bg-hover touch:min-h-11',
-                  pending() && 'opacity-50',
+                  pending() && 'opacity-60',
                 ]}
               >
                 <span
@@ -80,7 +80,13 @@ export default function Queue(props: {
                       : 'Sent when the run ends'
                   }
                 >
-                  {steer() ? <PushIcon /> : <QueueIcon />}
+                  {pending() ? (
+                    <Spinner />
+                  ) : steer() ? (
+                    <PushIcon />
+                  ) : (
+                    <QueueIcon />
+                  )}
                   {steer() ? 'Next step' : 'Queued'}
                 </span>
                 <button

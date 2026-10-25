@@ -21,6 +21,7 @@ import { readFile, type View } from './files';
 import CommentCard from './CommentCard';
 import { THEME } from './DiffBlock';
 import FilePreview, { previewKind, type PreviewKind } from './FilePreview';
+import { errorText } from '../ui/errors';
 
 type Diffs = typeof import('@pierre/diffs');
 type Instance = InstanceType<Diffs['File']> | InstanceType<Diffs['FileDiff']>;
@@ -376,7 +377,7 @@ export default function CodeView(props: {
         drop();
         setRendered(undefined);
         showMedia([]);
-        setNote(error instanceof Error ? error.message : String(error));
+        setNote(errorText(error));
       },
     },
   );

@@ -39,12 +39,24 @@ export default function SidePanel() {
   const location = useLocation();
   const current = useCurrentWorkspace();
 
+  // Arrow keys move between the tabs, and only the picked one is in the Tab
+  // order, as the ARIA tabs pattern has it.
   const TabButton = (props: { id: Tab; children: JSX.Element }) => (
     <button
+      id={`side-tab-${props.id}`}
       class="flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-muted transition-colors hover:text-fg aria-selected:bg-active aria-selected:text-fg touch:h-11"
       role="tab"
       aria-selected={tab() === props.id ? 'true' : 'false'}
+      aria-controls="side-panel"
+      tabindex={tab() === props.id ? 0 : -1}
       onClick={() => setTab(props.id)}
+      onKeyDown={(e) => {
+        if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+        e.preventDefault();
+        const next = tab() === 'files' ? 'git' : 'files';
+        setTab(next);
+        document.getElementById(`side-tab-${next}`)?.focus();
+      }}
     >
       {props.children}
     </button>
@@ -55,16 +67,19 @@ export default function SidePanel() {
       class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden border-line bg-panel xl:border-l"
       aria-label="Workspace"
     >
-      <header
-        class="flex h-12 shrink-0 items-center gap-1 border-b border-line px-2 touch:h-14"
-        role="tablist"
-      >
-        <TabButton id="files">
-          <FilesIcon /> Files
-        </TabButton>
-        <TabButton id="git">
-          <DiffIcon /> Git
-        </TabButton>
+      <header class="flex h-12 shrink-0 items-center gap-1 border-b border-line px-2 touch:h-14">
+        <div
+          class="flex items-center gap-1"
+          role="tablist"
+          aria-label="Side panel"
+        >
+          <TabButton id="files">
+            <FilesIcon /> Files
+          </TabButton>
+          <TabButton id="git">
+            <DiffIcon /> Git
+          </TabButton>
+        </div>
         <Show when={tab() === 'git'}>
           <IconButton
             class="ml-auto"
@@ -113,7 +128,12 @@ function WorkspacePanel(props: { workspace: WorkspaceRef }) {
   );
 
   return (
-    <div class="flex min-h-0 min-w-0 flex-1 flex-col" role="tabpanel">
+    <div
+      id="side-panel"
+      class="flex min-h-0 min-w-0 flex-1 flex-col"
+      role="tabpanel"
+      aria-labelledby={`side-tab-${tab()}`}
+    >
       <Show when={tab() === 'files'}>
         <FileTree
           paths={files()}

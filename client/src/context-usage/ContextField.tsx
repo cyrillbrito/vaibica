@@ -19,12 +19,8 @@ import {
 import { pruneSession, compactSession } from '../sessions/sessions';
 import { buttonClass } from '../ui/Button';
 import Chevron from '../ui/Chevron';
-import {
-  PruneIcon,
-  CompactIcon,
-  DrawnCheckIcon,
-  SpinnerIcon,
-} from '../ui/icons';
+import { PruneIcon, CompactIcon, DrawnCheckIcon } from '../ui/icons';
+import { Spinner } from '../ui/Spinner';
 import { RollingNumber } from '../ui/RollingNumber';
 
 // What the field shows, in the order it fills. Tool output is its own kind
@@ -476,7 +472,7 @@ function Action(props: {
           <>
             <span class={['inline-flex', s !== 'idle' && 'swap-in']}>
               {s === 'busy' ? (
-                <SpinnerIcon />
+                <Spinner />
               ) : s === 'done' ? (
                 <DrawnCheckIcon />
               ) : (

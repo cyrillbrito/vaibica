@@ -46,7 +46,6 @@ import ListChecks from 'lucide/dist/esm/icons/list-checks.mjs';
 import ListPlus from 'lucide/dist/esm/icons/list-plus.mjs';
 import MessageCircleQuestion from 'lucide/dist/esm/icons/message-circle-question-mark.mjs';
 import ListTree from 'lucide/dist/esm/icons/list-tree.mjs';
-import LoaderCircle from 'lucide/dist/esm/icons/loader-circle.mjs';
 import MessageSquarePlus from 'lucide/dist/esm/icons/message-square-plus.mjs';
 import Mail from 'lucide/dist/esm/icons/mail.mjs';
 import MailOpen from 'lucide/dist/esm/icons/mail-open.mjs';
@@ -133,7 +132,6 @@ export const CloseIcon = icon(X);
 export const CheckIcon = icon(Check);
 /** A check that draws itself in each time it mounts (`draw`). */
 export const DrawnCheckIcon = drawn(Check);
-export const SpinnerIcon = icon(LoaderCircle, 'animate-spin');
 export const ChevronIcon = icon(ChevronRight);
 export const ArchiveIcon = icon(Archive);
 export const RestoreIcon = icon(RotateCcw);

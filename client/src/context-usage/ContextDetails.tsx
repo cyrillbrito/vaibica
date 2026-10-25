@@ -15,11 +15,12 @@ import { tick } from '../ui/time';
 import ContextField, { percent } from './ContextField';
 import { Breakdown } from '../ui/Breakdown';
 import Alert from '../ui/Alert';
-import { Button, IconButton } from '../ui/Button';
+import { Button } from '../ui/Button';
 import Chevron from '../ui/Chevron';
+import { Dialog, dialogBody } from '../ui/Dialog';
 import Input from '../ui/Input';
 import Summary from '../ui/Summary';
-import { CloseIcon } from '../ui/icons';
+import { errorText } from '../ui/errors';
 
 export interface Spend {
   model: string;
@@ -56,22 +57,16 @@ export default function ContextDetails(props: {
 }) {
   let dialog!: HTMLDialogElement;
   return (
-    <dialog
+    <Dialog
       ref={(el) => {
         dialog = el;
         props.ref(el);
       }}
-      class="mx-0 mt-auto mb-0 flex max-h-[85dvh] w-full max-w-none flex-col overflow-hidden rounded-t-sheet border border-line bg-panel text-fg shadow-sheet backdrop:bg-black/40 not-open:hidden max-md:sheet md:pop md:m-auto md:max-h-[min(44rem,85dvh)] md:w-[32rem] md:rounded-card"
-      aria-label="Context"
-      onClick={(e) => e.target === e.currentTarget && dialog.close()}
+      title="Context"
     >
-      <header class="flex h-12 shrink-0 items-center gap-1 border-b border-line pr-2 pl-4">
-        <h2 class="flex-1 font-semibold">Context</h2>
-        <IconButton title="Close" onClick={() => dialog.close()}>
-          <CloseIcon />
-        </IconButton>
-      </header>
-      <div class="flex flex-col divide-y divide-line overflow-y-auto overscroll-contain px-4 pb-[env(safe-area-inset-bottom)] *:py-4">
+      <div
+        class={[dialogBody, 'flex flex-col divide-y divide-line px-4 *:py-4']}
+      >
         <ContextField id={props.id} usage={props.usage} />
         <Biggest
           items={props.usage.biggest}
@@ -83,16 +78,12 @@ export default function ContextDetails(props: {
         <Cache usage={props.usage} spend={props.spend} />
         <Compact id={props.id} usage={props.usage} />
       </div>
-    </dialog>
+    </Dialog>
   );
 }
 
 function Heading(props: { children: JSX.Element }) {
-  return (
-    <h3 class="text-meta font-medium tracking-wide text-muted uppercase">
-      {props.children}
-    </h3>
-  );
+  return <h3 class="text-meta font-medium text-muted">{props.children}</h3>;
 }
 
 function Biggest(props: {
@@ -289,7 +280,7 @@ function Compact(props: { id: string; usage: ContextUsage }) {
             await compactSession(props.id, focus.value);
             focus.value = '';
           } catch (err) {
-            setError(err instanceof Error ? err.message : String(err));
+            setError(errorText(err));
           } finally {
             setBusy(false);
           }

@@ -6,7 +6,7 @@ import { useSessions } from '../sessions/sessions';
 import { timeAgo } from '../ui/time';
 import { paths } from '../router';
 import StatusDot from '../sessions/StatusDot';
-import { ChevronIcon } from '../ui/icons';
+import Chevron from '../ui/Chevron';
 
 // What needs you comes first: a question, then a failure, then a reply.
 const RANK: Record<SessionStatus, number> = {
@@ -74,9 +74,7 @@ export default function HubBoard(props: { hubId: string }) {
         }
       >
         <summary class="chat-column flex h-10 items-center gap-2 text-meta text-muted hover:text-fg touch:h-11">
-          <span class="transition-transform group-open/board:rotate-90">
-            <ChevronIcon />
-          </span>
+          <Chevron class="group-open/board:rotate-90" />
           <span class="font-medium text-fg">Threads</span>
           <span class="min-w-0 flex-1 truncate">
             {[

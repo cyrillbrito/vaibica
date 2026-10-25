@@ -1,6 +1,7 @@
 import { Loading, Match, Switch, createMemo, lazy } from 'solid-js';
 
 import Markdown from './Markdown';
+import { errorText } from '../ui/errors';
 
 export type PreviewKind = 'markdown' | 'html' | 'mermaid';
 
@@ -33,8 +34,7 @@ const Mermaid = lazy(async () => {
           } catch (error) {
             const p = document.createElement('p');
             p.className = 'text-muted';
-            p.textContent =
-              error instanceof Error ? error.message : String(error);
+            p.textContent = errorText(error);
             return p.outerHTML;
           }
         },

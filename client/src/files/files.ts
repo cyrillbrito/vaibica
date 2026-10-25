@@ -16,13 +16,13 @@ export function useFiles(ref: () => WorkspaceRef) {
 /** On the dev machine, so it only helps when you sit at it. */
 export function openInEditor(ref: WorkspaceRef, path?: string) {
   return request('editor.open', { ...ref, path }).catch((e: unknown) =>
-    toast(e instanceof Error ? e.message : String(e)),
+    toast.error(e),
   );
 }
 
 export function openPath(path: string, cwd?: string, reveal?: boolean) {
   return request('path.open', { path, cwd, reveal }).catch((e: unknown) =>
-    toast(e instanceof Error ? e.message : String(e)),
+    toast.error(e),
   );
 }
 

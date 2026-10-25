@@ -41,6 +41,7 @@ import {
   DeleteIcon,
   DiscardIcon,
 } from '../ui/icons';
+import { errorText } from '../ui/errors';
 
 function plural(n: number, word: string) {
   return `${n} ${word}${n === 1 ? '' : 's'}`;
@@ -135,14 +136,14 @@ function Repo(props: {
             success: say.success,
             error: (e) => ({
               title: say.error,
-              description: e instanceof Error ? e.message : String(e),
+              description: errorText(e),
             }),
           })
         : p);
       setError('');
       return true;
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(errorText(e));
       return false;
     } finally {
       setBusy(false);

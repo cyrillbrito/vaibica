@@ -5,6 +5,7 @@ import { modelKey, useModels } from './models';
 import { Card } from '../ui/Card';
 import { CheckMark } from '../ui/CheckMark';
 import { CloseIcon, PlusIcon } from '../ui/icons';
+import { NoMatches, OptionGroup, OptionList, optionClass } from '../ui/Option';
 import { Popover, PopoverSearch } from '../ui/Popover';
 
 // OpenRouter alone has hundreds: past this, a provider waits for a search.
@@ -152,16 +153,14 @@ function AddModels(props: {
           value={query()}
           onInput={setQuery}
         />
-        <div class="flex max-h-[60dvh] flex-col overflow-y-auto overscroll-contain p-1 md:max-h-96">
+        <OptionList class="max-h-[60dvh] md:max-h-96">
           <Show when={!groups().length}>
-            <p class="px-2.5 py-3 text-meta text-muted">No model matches.</p>
+            <NoMatches>No model matches.</NoMatches>
           </Show>
           <For each={groups()} keyed={(g) => g.id}>
             {(g) => (
               <>
-                <div class="px-2.5 pt-2 pb-1 text-meta text-muted">
-                  {g().name}
-                </div>
+                <OptionGroup>{g().name}</OptionGroup>
                 <For each={g().models} keyed={(m) => m.id}>
                   {(m) => {
                     const key = () => modelKey(m().provider, m().id);
@@ -170,7 +169,7 @@ function AddModels(props: {
                         type="button"
                         role="checkbox"
                         aria-checked={on().has(key()) ? 'true' : 'false'}
-                        class="group/opt flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left transition-colors hover:bg-hover focus-visible:bg-active touch:py-2.5"
+                        class={['group/opt', optionClass]}
                         title={key()}
                         onClick={() => toggle(key())}
                       >
@@ -188,7 +187,7 @@ function AddModels(props: {
               </>
             )}
           </For>
-        </div>
+        </OptionList>
       </Popover>
     </>
   );

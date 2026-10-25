@@ -35,7 +35,7 @@ export default function Hub() {
       if (!missing || starting) return;
       starting = true;
       request('hub.open', {}).catch((error: unknown) => {
-        toast(error instanceof Error ? error.message : String(error));
+        toast.error(error);
         navigate(`${paths.settings()}#hub`, { replace: true });
       });
     },

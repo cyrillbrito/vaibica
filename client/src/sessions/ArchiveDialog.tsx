@@ -3,9 +3,10 @@ import { For, createSignal } from 'solid-js';
 import type { SessionSummary } from '@bica/shared/protocol';
 import { archiveSession } from './sessions';
 import StatusDot from './StatusDot';
-import { Button, IconButton } from '../ui/Button';
+import { Button } from '../ui/Button';
 import { CheckMark } from '../ui/CheckMark';
-import { CloseIcon } from '../ui/icons';
+import { Dialog } from '../ui/Dialog';
+import { OptionList, optionClass } from '../ui/Option';
 
 let dialog: HTMLDialogElement | undefined;
 const [parent, setParent] = createSignal<SessionSummary>();
@@ -85,64 +86,55 @@ export default function ArchiveDialog() {
   const count = () => 1 + picked().size;
 
   return (
-    <dialog
+    <Dialog
       ref={(el) => (dialog = el)}
-      class="m-auto flex max-h-[85dvh] w-[min(28rem,calc(100vw-2rem))] flex-col overflow-hidden pop rounded-card border border-line bg-panel text-fg shadow-sheet backdrop:bg-black/40 not-open:hidden"
-      aria-label="Archive session"
+      title={parent()?.title || 'Archive session'}
+      class="md:w-[28rem]"
       onClose={() => finish([])}
-      onClick={(e) => e.target === e.currentTarget && finish([])}
+      footer={
+        <>
+          <Button variant="ghost" onClick={() => finish([])}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={() => finish([parent()!.id, ...picked()])}
+          >
+            {count() > 1 ? `Archive ${count()} sessions` : 'Archive'}
+          </Button>
+        </>
+      }
     >
-      <header class="flex h-12 shrink-0 items-center gap-1 border-b border-line pr-2 pl-4">
-        <h2 class="min-w-0 flex-1 truncate font-semibold">
-          {parent()?.title || 'Archive session'}
-        </h2>
-        <IconButton title="Close" onClick={() => finish([])}>
-          <CloseIcon />
-        </IconButton>
-      </header>
       <p class="px-4 pt-3 pb-1 text-muted">
         This session started others. The checked ones are archived with it.
       </p>
-      <ul class="flex-1 overflow-y-auto overscroll-contain p-2">
+      <OptionList inset={2} class="flex-1">
         <For each={children()} keyed={(s) => s.id}>
           {(s) => (
-            <li>
-              <button
-                type="button"
-                role="checkbox"
-                aria-checked={picked().has(s().id) ? 'true' : 'false'}
-                disabled={busy(s())}
-                class="group/opt flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left transition-colors not-disabled:hover:bg-hover disabled:opacity-50 touch:py-3"
-                onClick={() => toggle(s().id)}
-              >
-                <CheckMark on={picked().has(s().id)} />
-                <StatusDot status={s().status} />
-                <span class="min-w-0 flex-1 truncate">
-                  {s().title || 'Untitled'}
-                </span>
-                <span class="shrink-0 text-meta text-muted">
-                  {busy(s())
-                    ? 'Running'
-                    : s().parentDrives
-                      ? ''
-                      : "You're in charge"}
-                </span>
-              </button>
-            </li>
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={picked().has(s().id) ? 'true' : 'false'}
+              disabled={busy(s())}
+              class={['group/opt', optionClass]}
+              onClick={() => toggle(s().id)}
+            >
+              <CheckMark on={picked().has(s().id)} />
+              <StatusDot status={s().status} />
+              <span class="min-w-0 flex-1 truncate">
+                {s().title || 'Untitled'}
+              </span>
+              <span class="shrink-0 text-meta text-muted">
+                {busy(s())
+                  ? 'Running'
+                  : s().parentDrives
+                    ? ''
+                    : "You're in charge"}
+              </span>
+            </button>
           )}
         </For>
-      </ul>
-      <footer class="flex shrink-0 justify-end gap-2 border-t border-line p-3 pb-[max(--spacing(3),env(safe-area-inset-bottom))]">
-        <Button variant="ghost" onClick={() => finish([])}>
-          Cancel
-        </Button>
-        <Button
-          variant="primary"
-          onClick={() => finish([parent()!.id, ...picked()])}
-        >
-          {count() > 1 ? `Archive ${count()} sessions` : 'Archive'}
-        </Button>
-      </footer>
-    </dialog>
+      </OptionList>
+    </Dialog>
   );
 }

@@ -6,7 +6,6 @@ import Markdown from '../files/Markdown';
 import { IconButton } from '../ui/Button';
 import { CopyButton } from '../ui/CopyButton';
 import {
-  ChevronIcon,
   PruneIcon,
   CompactIcon,
   CopyIcon,
@@ -14,10 +13,11 @@ import {
   InfoIcon,
   ParentIcon,
   SessionIcon,
-  SpinnerIcon,
   TakeOverIcon,
   VoiceIcon,
 } from '../ui/icons';
+import Chevron from '../ui/Chevron';
+import { Spinner } from '../ui/Spinner';
 import { copyText } from '../ui/clipboard';
 import { paths } from '../router';
 import { imageUrl, openImage } from './images';
@@ -91,9 +91,7 @@ export default function MessageRow(props: {
                     · {clockTime(note().timestamp)}
                   </time>
                   <Show when={rest()}>
-                    <span class="shrink-0 transition-transform group-open/note:rotate-90">
-                      <ChevronIcon />
-                    </span>
+                    <Chevron class="group-open/note:rotate-90" />
                   </Show>
                 </summary>
                 <Show when={rest()}>
@@ -294,9 +292,7 @@ export default function MessageRow(props: {
                     · {c().before ? `${formatTokens(c().before!)} → ` : ''}
                     {formatTokens(c().after)}
                   </span>
-                  <span class="transition-transform group-open/row:rotate-90">
-                    <ChevronIcon />
-                  </span>
+                  <Chevron class="group-open/row:rotate-90" />
                   <div class="h-px flex-1 bg-line" />
                 </summary>
                 <div class="mt-3 rounded-card border border-line bg-panel/50 px-4 py-3">
@@ -348,7 +344,7 @@ export default function MessageRow(props: {
               role="status"
             >
               <div class="h-px flex-1 bg-line" />
-              <SpinnerIcon />
+              <Spinner />
               <span class={c().retry ? undefined : 'shimmer'}>
                 {c().retry
                   ? 'Compacting failed, retrying…'
@@ -366,7 +362,7 @@ export default function MessageRow(props: {
           {(c) => (
             <div class={RULE} role="status">
               <div class="h-px flex-1 bg-line" />
-              <SpinnerIcon />
+              <Spinner />
               <span class="shimmer">
                 {c().running
                   ? 'Pruning old output at the next turn…'
