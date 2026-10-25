@@ -12,7 +12,7 @@ export const ASK = 'ask';
 const ask = defineTool({
   name: ASK,
   description:
-    'Ask the user one to four multiple-choice questions, then stop and wait for the answer, which arrives as the user\'s next message. Use it for decisions that are genuinely the user\'s (what to build, which approach, scope), not for facts you can look up. Call it alone, as the last thing in your turn. Put your recommended option first and end its label with " (Recommended)". The user can pick, write their own answer or a note per question, or skip a question (it comes back as "(skipped)": decide it yourself or ask again later).',
+    'Ask the user one to four multiple-choice questions and end your turn; the answer arrives as their next message. Use it for decisions that are genuinely theirs (what to build, which approach, scope), not for facts you can look up. Put your recommended option first and end its label with " (Recommended)". A skipped question comes back as "(skipped)": decide it yourself or ask again later.',
   parameters: Type.Object({
     questions: Type.Array(
       Type.Object({
