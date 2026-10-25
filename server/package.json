@@ -2,9 +2,6 @@
   "name": "@bica/server",
   "private": true,
   "type": "module",
-  "imports": {
-    "#server/*": "./src/*"
-  },
   "scripts": {
     "dev": "bun dev.ts"
   },

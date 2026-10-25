@@ -84,7 +84,7 @@ export function senderOf(text: string): { from?: Sender; text: string } {
 }
 
 /**
- * One thing said in a voice call (server/src/voice.ts). Stored as an entry
+ * One thing said in a voice call (server/src/voice/voice.ts). Stored as an entry
  * without model messages, so the agent never reads it.
  */
 export const VOICE_ENTRY = 'bica.voice';
@@ -108,7 +108,7 @@ export const withoutCallWords = (text: string) => text.replace(CALL_WORDS, '');
 export const isTurn = (entry: EntryRecord) =>
   entry.kind !== VOICE_ENTRY && entry.kind !== PRUNE_ENTRY;
 
-/** One question of the `ask` tool (server/src/agent/tools/ask.ts). */
+/** One question of the `ask` tool (server/src/tools/ask.ts). */
 export interface Question {
   question: string;
   header: string;
@@ -134,7 +134,7 @@ export type ToolStatus = 'pending' | 'running' | 'done' | 'error';
 export interface ToolCall {
   id: string;
   name: string;
-  /** Short strings only until the row opens and loads the rest (client/src/lib/step-detail.ts). */
+  /** Short strings only until the row opens and loads the rest (client/src/sessions/step-detail.ts). */
   args: Record<string, unknown>;
   status: ToolStatus;
   output?: string;
@@ -143,7 +143,7 @@ export interface ToolCall {
   stats?: { added: number; removed: number };
   /** The model is still writing its arguments. */
   streaming?: boolean;
-  /** While it runs, stamped by the server (server/src/agent/tools/tool-time.ts). */
+  /** While it runs, stamped by the server (server/src/tools/tool-time.ts). */
   startedAt?: number;
   durationMs?: number;
 }
@@ -247,7 +247,7 @@ export function toMessages(
           key: `${key}:${i}`,
           kind: 'thinking',
           text: block.thinking,
-          // Stamped by the server as the block streams (server/src/providers/thinking-time.ts).
+          // Stamped by the server as the block streams (server/src/models/thinking-time.ts).
           durationMs: (block as { durationMs?: number }).durationMs,
         });
       // Shown as a card of its own, not a row in the activity list.
@@ -410,7 +410,7 @@ export function promptAt(m: { kind: string }): number | undefined {
 
 const num = (v: unknown) => (typeof v === 'number' ? v : undefined);
 
-// Kept in step with server/src/agent/tools/ask.ts, which the browser can't import.
+// Kept in step with server/src/tools/ask.ts, which the browser can't import.
 const ASK = 'ask';
 
 /** The arguments as they stream in: any field may still be missing. */

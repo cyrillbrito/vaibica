@@ -9,8 +9,8 @@ import type {
   TerminalOutput,
   WorkspaceRef,
 } from '@bica/shared/protocol';
-import { getProject } from '#server/projects';
-import { dataFile } from '#server/paths';
+import { getProject } from '../projects/projects';
+import { dataFile } from '../paths';
 
 /**
  * Shells and long-running processes (dev servers, game servers) in a

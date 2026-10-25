@@ -10,8 +10,8 @@ import {
 
 import type { SessionSummary } from '@bica/shared/protocol';
 import { isTurn, statusOf } from '@bica/shared/transcript';
-import { context, getHarness } from '#server/agent';
-import { live } from '#server/live';
+import { context, getHarness } from '../harness';
+import { live } from '../live';
 import { runChanged, runState } from './notes';
 import { SessionDoc, agentIdOf } from './session-doc';
 import { stuckOf, watchStuck } from './stuck';

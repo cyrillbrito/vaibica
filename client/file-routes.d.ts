@@ -38,7 +38,7 @@ declare module "virtual:file-routes" {
       path: "/*404";
       page: true;
       $component: FileRouteLazyRef<Pick<typeof import("./src/routes/[...404]"), Extract<"default", keyof typeof import("./src/routes/[...404]")>>>;
-      $$route: FileRouteEagerRef<Pick<typeof import("./src/routes/[...404]"), Extract<"route", keyof typeof import("./src/routes/[...404]")>>>;
+      $$route?: undefined;
     },
     {
       path: "/hub";
@@ -102,7 +102,7 @@ declare module "virtual:file-routes" {
       id: "/*404";
       page: true;
       $component: FileRouteLazyRef<Pick<typeof import("./src/routes/[...404]"), Extract<"default", keyof typeof import("./src/routes/[...404]")>>>;
-      $$route: FileRouteEagerRef<Pick<typeof import("./src/routes/[...404]"), Extract<"route", keyof typeof import("./src/routes/[...404]")>>>;
+      $$route?: undefined;
       children?: undefined;
     },
     {

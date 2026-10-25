@@ -5,10 +5,7 @@
     "jsx": "preserve",
     "jsxImportSource": "@solidjs/web",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
-    "types": ["vite/client"],
-    // The same alias as "imports" in package.json, which Vite reads.
-    // TypeScript needs it here too to find a folder's index.ts.
-    "paths": { "#lib/*": ["./src/lib/*"] }
+    "types": ["vite/client"]
   },
   "include": ["src", "file-routes.d.ts"]
 }

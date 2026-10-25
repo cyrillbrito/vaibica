@@ -1,9 +1,9 @@
 import type { ConversationId } from '@earendil-works/pi-durable';
 
 import { MIN_PRUNE, contextUsage } from '@bica/shared/context-usage';
-import { isLongLived } from '@bica/shared/housekeeping';
-import { context, getHarness } from '#server/agent';
-import { getCatalog } from '#server/providers';
+import { isLongLived } from '@bica/shared/agents';
+import { context, getHarness } from '../harness';
+import { getCatalog } from '../models/models';
 import { markSeen } from './meta';
 import { pruneContext, compact, submit } from './prompts';
 import { listSessions } from './store';

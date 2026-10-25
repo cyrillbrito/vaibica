@@ -1,3 +1,3 @@
-// Its own file because vite.config.ts imports it: Vite restarts on every
-// change to a config import, which closes the module runner live agents use.
+// Its own file because vite.config.ts imports it, and Vite restarts whenever a
+// file its config imports changes. Here, that's never.
 export const SOCKET_PATH = '/ws';

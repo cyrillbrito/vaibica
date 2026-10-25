@@ -21,34 +21,34 @@ import {
 import {
   archive,
   removeWorktree,
+  markSeen,
+  rename,
+  setAgent,
+  setVoice,
+} from './sessions/meta';
+import {
   pruneContext,
   compact,
   configure,
-  createSession,
-  fork,
-  markSeen,
-  openHub,
-  updateHub,
+  push as pushSubmission,
+  stop,
+  withdraw,
+} from './sessions/prompts';
+import { createSession, fork } from './sessions/create';
+import { retryStuck } from './sessions/stuck';
+import { fromUser, handBack } from './sessions/notes';
+import { conversationDetail, watchConversation } from './sessions/conversation';
+import { watchSessions } from './sessions/store';
+import { openHub, updateHub } from './hub/hub';
+import {
   cancelTonight,
   runTonight,
   saveTonight,
   startNight,
-  startHousekeeping,
-  push as pushSubmission,
-  rename,
-  retryStuck,
-  setAgent,
-  setVoice,
-  stop,
-  fromUser,
-  handBack,
-  withdraw,
-  conversationDetail,
-  watchConversation,
-  watchSessions,
-} from '#server/sessions';
-import { updateSettings, watchModels } from '#server/providers';
-import { wsLogger } from '#server/ws-log';
+} from './night-runs/night';
+import { startHousekeeping } from './sessions/housekeeping';
+import { updateSettings, watchModels } from './models/models';
+import { wsLogger } from './ws-log';
 import {
   addAccount,
   answer,
@@ -57,19 +57,19 @@ import {
   signOut,
   useFirst,
   watchAccounts,
-} from '#server/providers';
-import { startCall, stopCall, transcribe } from '#server/voice';
-import { getHarness } from '#server/agent';
-import { watchPlanUsage } from '#server/providers';
+} from './models/accounts';
+import { startCall, stopCall, transcribe } from './voice/voice';
+import { getHarness } from './harness';
+import { watchPlanUsage } from './models/usage';
 import {
   addProject,
   listDirs,
   reorderProjects,
   pinProject,
   watchProjects,
-} from '#server/projects';
-import { suggestCommitMessage } from '#server/git';
-import { openInEditor, openPath } from '#server/git';
+} from './projects/projects';
+import { suggestCommitMessage } from './git/commit-message';
+import { openInEditor, openPath } from './git/editor';
 import {
   createTerminal,
   removeTerminal,
@@ -79,7 +79,7 @@ import {
   watchTerminal,
   watchTerminals,
   writeTerminal,
-} from '#server/terminals';
+} from './terminals/terminals';
 import {
   commit,
   diff,
@@ -91,19 +91,12 @@ import {
   unstage,
   watchFiles,
   watchStatus,
-} from '#server/git';
+} from './git/workspace';
 
-// Boot: this module loads at start, in dev and in production. Editing
-// vite.config.ts loads it again in the same process, where the first copy's
-// timers still run, so the jobs start once per process, like the harness.
-const booted = globalThis as { bicaBooted?: boolean };
-if (!booted.bicaBooted) {
-  booted.bicaBooted = true;
-  startHousekeeping();
-  startNight();
-  // Opening the harness resumes runs a restart left unfinished.
-  void getHarness().catch((error) => console.error('[harness]', error));
-}
+startHousekeeping();
+startNight();
+// Opening the harness resumes runs a restart left unfinished.
+void getHarness().catch((error) => console.error('[harness]', error));
 
 type Sink = {
   snapshot: (value: unknown, kept?: number) => void;

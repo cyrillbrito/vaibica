@@ -2,7 +2,8 @@ import { Type } from '@earendil-works/pi-ai';
 import { defineExtension, defineTool } from '@earendil-works/pi-durable';
 import type { ToolRegistration } from '@earendil-works/pi-durable';
 import type { TerminalInfo } from '@bica/shared/protocol';
-import { sessionWorkspace, tell } from '#server/sessions';
+import { sessionWorkspace } from '../sessions/store';
+import { tell } from '../sessions/notes';
 import {
   commandDone,
   createTerminal,
@@ -67,8 +68,7 @@ async function notifyWhenDone(id: string, session: string) {
   } catch {
     return;
   }
-  // Nothing awaits this, so a throw here would take the server down, e.g.
-  // after a Vite restart closed the module runner this import goes through.
+  // Nothing awaits this, so a throw here would take the server down.
   try {
     await tell(session, note);
   } catch (error) {

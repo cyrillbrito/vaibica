@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
 
 import type { WorkspaceRef } from '@bica/shared/protocol';
-import { askFast, fastModelId } from '#server/providers';
-import { recentPrompts } from '#server/sessions';
+import { askFast, fastModelId } from '../models/fast-model';
+import { recentPrompts } from '../sessions/read';
 import { pendingChanges } from './workspace';
 
 const SYSTEM = `You write git commit messages. You get the changes the commit will record (<changes>), the repository's recent commit subjects (<recent_commits>), and sometimes what the developer asked their coding agents to do since the last commit (<agent_requests>).

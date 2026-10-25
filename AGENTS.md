@@ -60,6 +60,8 @@ There is no time to prove every idea here, so borrow from people who already bui
 - Installing as an app on the phone.
 - A file watcher instead of polling.
 - A file mode in the command palette: `/` searches the workspace's files, and ⌘P opens straight into it.
+- An untangled `server/src/sessions/`: no import cycles between its files, and the session tools reaching sessions without a loop through the agent registry ([architecture.md](docs/architecture.md#feature-folders)).
+- `app/Sidebar.tsx` and `app/CommandPalette.tsx` split into smaller files, each when a feature next changes it ([feature-folders.md](docs/records/feature-folders.md)).
 
 ## Library docs
 
@@ -103,7 +105,6 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 
 - [fast-loading.md](docs/explorations/fast-loading.md): opening, switching, and reconnecting faster on the phone.
 - [distribution.md](docs/explorations/distribution.md): installing and updating `bica`.
-- [source-layout.md](docs/explorations/source-layout.md): feature folders with the same names inside each package. Read before moving code or adding a feature folder.
 - [self-hosted-auth.md](docs/explorations/self-hosted-auth.md): a token for the socket, and the DNS rebinding hole.
 - [themes.md](docs/explorations/themes.md): editor color themes.
 - [ui-hierarchy.md](docs/explorations/ui-hierarchy.md): what the side panel next to a session belongs to.
@@ -114,6 +115,7 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 
 - [extensibility.md](docs/records/extensibility.md): why features aren't extensions.
 - [packages-per-side.md](docs/records/packages-per-side.md): why the repo is client, server, and shared packages instead of feature folders with markers.
+- [feature-folders.md](docs/records/feature-folders.md): when a feature gets a folder, and why the protocol, socket table, sidebar, and ⌘K stay whole. Read before moving code or adding a feature folder.
 
 `docs/inspiration/` holds screenshots of other agent UIs, as ideas, not specs.
 

@@ -10,9 +10,11 @@ import {
 import type { Message } from '@earendil-works/pi-ai';
 import { PRUNE_ENTRY, chars, pruneEdits } from '@bica/shared/prune';
 import type { ModelChoice, PromptImage } from '@bica/shared/protocol';
-import { context, getHarness } from '#server/agent';
-import { getAgent, loadMemory, projectList } from '#server/agents';
-import { checkChoice, defaultChoice, models } from '#server/providers';
+import { context, getHarness } from '../harness';
+import { getAgent } from '../agents/registry';
+import { loadMemory, projectList } from '../agents/common';
+import { checkChoice, defaultChoice } from '../models/models';
+import { models } from '../models/registry';
 import { keepers } from './prune-judge';
 import { SessionDoc, agentIdOf, getConversation } from './store';
 

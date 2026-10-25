@@ -3,18 +3,18 @@ import { useLocation } from '@solidjs/router';
 import type { JSX } from '@solidjs/web';
 import { Errored, Loading, Show, createMemo, onSettled } from 'solid-js';
 
-import { HoldMusic } from './components/CallBar';
-import CommandPalette from './components/CommandPalette';
-import ContextMenu from './components/ui/ContextMenu';
-import DataToggle from './components/DataToggle';
-import Toaster from './components/ui/Toast';
-import Failed from './components/ui/Failed';
-import SidePanel from './components/SidePanel';
-import ProjectPicker from './components/ProjectPicker';
-import ArchiveDialog from './components/ArchiveDialog';
-import Resizer from './components/ui/Resizer';
-import Sidebar from './components/Sidebar';
-import TopBar from './components/TopBar';
+import { HoldMusic } from './voice/CallBar';
+import CommandPalette from './app/CommandPalette';
+import ContextMenu from './ui/ContextMenu';
+import DataToggle from './app/DataToggle';
+import Toaster from './ui/Toast';
+import Failed from './ui/Failed';
+import SidePanel from './app/SidePanel';
+import ProjectPicker from './projects/ProjectPicker';
+import ArchiveDialog from './sessions/ArchiveDialog';
+import Resizer from './ui/Resizer';
+import Sidebar from './app/Sidebar';
+import TopBar from './app/TopBar';
 import {
   closeDrawer,
   drawer,
@@ -30,7 +30,7 @@ import {
   sidebarW,
   sidebarWidth,
   sliding,
-} from '#lib/layout';
+} from './ui/layout';
 import { Router } from './router';
 import './App.css';
 

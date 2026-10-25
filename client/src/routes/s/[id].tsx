@@ -11,39 +11,30 @@ import {
   onSettled,
 } from 'solid-js';
 import type { JSX } from '@solidjs/web';
-import { createStickToBottom } from '#lib/stick-to-bottom';
-import { arriveOnChange } from '#lib/arrive';
-import CallBar from '../../components/CallBar';
-import Composer, { type ComposerApi } from '../../components/Composer';
-import ContextChip from '../../components/ContextChip';
-import ContextNag from '../../components/ContextNag';
-import MessageRow, { RULE } from '../../components/MessageRow';
-import ModelPicker from '../../components/ModelPicker';
-import OpenFile from '../../components/OpenFile';
-import ParentStrip from '../../components/ParentStrip';
-import StuckStrip from '../../components/StuckStrip';
-import TonightStrip from '../../components/TonightStrip';
-import Queue from '../../components/Queue';
-import StatusDot from '../../components/StatusDot';
-import TitleInput from '../../components/TitleInput';
-import TopBar from '../../components/TopBar';
-import { IconButton } from '../../components/ui/Button';
-import Empty from '../../components/ui/Empty';
-import {
-  CloseIcon,
-  ParentIcon,
-  SessionIcon,
-  VoiceIcon,
-} from '../../components/ui/icons';
-import { drawer, hasPanels, setNoPanels } from '#lib/layout';
-import {
-  openFromSearch,
-  sameOpen,
-  sessionFileHref,
-  useCurrentWorkspace,
-} from '#lib/workspace';
+import { createStickToBottom } from '../../ui/stick-to-bottom';
+import { arriveOnChange } from '../../ui/arrive';
+import CallBar from '../../voice/CallBar';
+import Composer, { type ComposerApi } from '../../sessions/Composer';
+import ContextChip from '../../context-usage/ContextChip';
+import ContextNag from '../../context-usage/ContextNag';
+import MessageRow, { RULE } from '../../sessions/MessageRow';
+import ModelPicker from '../../models/ModelPicker';
+import OpenFile from '../../files/OpenFile';
+import ParentStrip from '../../sessions/ParentStrip';
+import StuckStrip from '../../sessions/StuckStrip';
+import TonightStrip from '../../sessions/TonightStrip';
+import Queue from '../../sessions/Queue';
+import StatusDot from '../../sessions/StatusDot';
+import TitleInput from '../../sessions/TitleInput';
+import TopBar from '../../app/TopBar';
+import { IconButton } from '../../ui/Button';
+import Empty from '../../ui/Empty';
+import { CloseIcon, ParentIcon, SessionIcon, VoiceIcon } from '../../ui/icons';
+import { drawer, hasPanels, setNoPanels } from '../../ui/layout';
+import { openFromSearch, sameOpen, sessionFileHref } from '../../files/files';
+import { useCurrentWorkspace } from '../../projects/projects';
 import { paths } from '../../router';
-import { sessionChoice, setOpenModel } from '#lib/models';
+import { sessionChoice, setOpenModel } from '../../models/models';
 import {
   configureSession,
   forkSession,
@@ -56,14 +47,14 @@ import {
   useConversation,
   useHub,
   useSessions,
-} from '#lib/sessions';
-import { pageFocused } from '#lib/badge';
-import { createStopwatch, formatLive } from '#lib/time';
-import { readError } from '#lib/error-message';
+} from '../../sessions/sessions';
+import { pageFocused } from '../../ui/badge';
+import { createStopwatch, formatLive } from '../../ui/time';
+import { readError } from '../../sessions/error-message';
 import { type ContextUsage } from '@bica/shared/context-usage';
-import { SessionId } from '#lib/step-detail';
-import { hideThinking } from '#lib/thinking';
-import { call, startCall } from '#lib/voice';
+import { SessionId } from '../../sessions/step-detail';
+import { hideThinking } from '../../sessions/thinking';
+import { call, startCall } from '../../voice/voice';
 import {
   promptAt,
   toMessages,

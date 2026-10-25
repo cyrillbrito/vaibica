@@ -35,18 +35,22 @@ The repo is three Bun workspace packages, one per side, so each runs and type-ch
 
 The client can't import the server, because its `package.json` doesn't list it. See [the record](./records/packages-per-side.md) for why.
 
-## Server modules
+## Feature folders
 
-`server/src` is grouped into modules. Each module is a folder with one `index.ts`, and code outside the folder imports only that file, through the `#server/...` alias.
+Inside the client and the server, code is grouped by feature, and a feature has the same folder name on both sides: terminals is `client/src/terminals` and `server/src/terminals`. A feature gets a folder on a side once it has two files there. A single file joins the feature it builds on: the Tonight strip sits in `client/src/sessions`, and housekeeping in `server/src/sessions`.
 
-- `agent/`: the harness and the agent's own tools ([tools.md](./tools.md)).
-- `providers/`: models, keys, sign-ins, and plan accounts ([models.md](./models.md)).
-- `sessions/`: what Bica adds to a conversation: titles, prompts and the queue, notes, voice handoffs, the session tools, and what runs around them, such as night runs, housekeeping, and the hub ([sessions.md](./sessions.md)).
-- `agents/`: one file per agent, with its extensions, model, and system prompt ([agents.md](./agents.md), [system-prompt.md](./system-prompt.md)).
-- `git/`: status, diffs, staging, and commits ([git.md](./git.md)).
-- `terminals/`: shells and the agent's terminal tools ([terminals.md](./terminals.md)).
+- `sessions/`: the transcript, the composer, prompts and the queue, notes, archive, housekeeping, and the session tools ([sessions.md](./sessions.md)).
+- `agents/` (server): Coding and Assistant, the shared prompt sections, and the registry that lists every agent and the extensions it picks ([agents.md](./agents.md), [system-prompt.md](./system-prompt.md)). `tools/` holds the agent's general tools, and `harness.ts` opens Pi Durable ([tools.md](./tools.md)).
+- `models/`: models, keys, sign-ins, and plan accounts ([models.md](./models.md)).
+- `projects/`: projects, worktrees, chats, pull requests, and the workspace the current page is about ([projects.md](./projects.md)).
+- `files/` and `git/`: file and diff views, kept files, and review comments; status, staging, and commits ([files.md](./files.md), [git.md](./git.md)).
+- `terminals/`, `voice/`, `hub/`, `night-runs/`, `context-usage/`: one feature each, with its doc. Hub and Night define their agents in their own folders.
 
-The flat files next to them each do one job. `socket.ts` is the one table of calls and topics.
+A client feature folder mixes components (`PascalCase.tsx`) with stores and helpers (`kebab-case.ts`). The file named after the feature, such as `sessions/sessions.ts`, holds its state and its requests to the server. The `shared` package stays flat: `protocol.ts` holds every call and topic in one file.
+
+Some folders aren't features. In the client, `app/` is the frame around pages (sidebar, ⌘K, top bar, side panel), `ui/` the design system and DOM helpers, `socket/` the browser end of the socket, `fixtures/` the test data, and `routes/` the pages, one file per URL. On the server, the root files do one job each, `socket.ts` is the one table of calls and topics, and `testing/` starts a real Bica for the tests.
+
+Features call each other directly, by relative path to the file they need, with no `index.ts` in between. Only `routes/` and `App.tsx` import `app/`, and `router.ts` is open to all. The client and `shared` have no import cycles, and lint fails on one. The server keeps a single loop on purpose: the session tools start sessions, and a session needs the list of tools.
 
 The app renders only in the browser. In development, `bun run dev` runs two processes: Vite serves the pages on 3142 and forwards the socket to the server one port up. `bun run start` and the `bica` binary run one server that serves the built app too. The server doesn't hot-reload: it runs as it started until Bica restarts. Page edits still reload.
 

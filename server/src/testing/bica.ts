@@ -53,9 +53,9 @@ export async function startBica({ root }: { root?: string } = {}) {
   delete process.env.PI_FAST_MODEL;
 
   const faux = fauxProvider({ tokensPerSecond: 0 });
-  const { models } = await import('#server/providers');
+  const { models } = await import('../models/registry');
   models.setProvider(faux.provider);
-  const socket = await import('#server/socket');
+  const socket = await import('../socket');
 
   const server = createServer();
   socket.attach(server);

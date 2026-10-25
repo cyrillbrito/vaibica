@@ -9,9 +9,9 @@ import type {
 } from '@earendil-works/pi-durable';
 
 import type { EntriesHeld, ModelCatalog } from '@bica/shared/protocol';
-import { context, getHarness } from '#server/agent';
+import { context, getHarness } from '../harness';
 import { projector, stepDetail } from '@bica/shared/projection';
-import { watchModels } from '#server/providers';
+import { watchModels } from '../models/models';
 
 /**
  * The conversation's view now, then the ops of every commit that changes it;

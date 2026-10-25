@@ -2,18 +2,14 @@ import { Title } from '@solidjs/meta';
 import { useLocation, type RouteProps } from '@solidjs/router';
 import { Show, createMemo } from 'solid-js';
 
-import OpenFile from '../../components/OpenFile';
-import PullRequestBadge from '../../components/PullRequestBadge';
-import TopBar from '../../components/TopBar';
-import WorkspaceOverview from '../../components/WorkspaceOverview';
-import Empty from '../../components/ui/Empty';
-import { workspaceName } from '#lib/projects';
-import {
-  openFromSearch,
-  sameOpen,
-  useCurrentWorkspace,
-  workspaceHref,
-} from '#lib/workspace';
+import OpenFile from '../../files/OpenFile';
+import PullRequestBadge from '../../projects/PullRequestBadge';
+import TopBar from '../../app/TopBar';
+import WorkspaceOverview from '../../projects/WorkspaceOverview';
+import Empty from '../../ui/Empty';
+import { workspaceName } from '../../projects/projects';
+import { openFromSearch, sameOpen, workspaceHref } from '../../files/files';
+import { useCurrentWorkspace } from '../../projects/projects';
 
 export default function WorkspacePage(_props: RouteProps<'/p/:id'>) {
   const location = useLocation();

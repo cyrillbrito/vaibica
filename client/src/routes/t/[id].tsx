@@ -2,25 +2,20 @@ import { Title } from '@solidjs/meta';
 import { useNavigate, type RouteProps } from '@solidjs/router';
 import { Show, createMemo } from 'solid-js';
 
-import TerminalView from '../../components/TerminalView';
-import TopBar from '../../components/TopBar';
-import { Button } from '../../components/ui/Button';
-import Empty from '../../components/ui/Empty';
-import { Tag } from '../../components/ui/Tag';
-import {
-  RestoreIcon,
-  StopIcon,
-  CloseIcon,
-  TerminalIcon,
-} from '../../components/ui/icons';
-import { useProjects, workspaceName } from '#lib/projects';
-import { useSessions } from '#lib/sessions';
+import TerminalView from '../../terminals/TerminalView';
+import TopBar from '../../app/TopBar';
+import { Button } from '../../ui/Button';
+import Empty from '../../ui/Empty';
+import { Tag } from '../../ui/Tag';
+import { RestoreIcon, StopIcon, CloseIcon, TerminalIcon } from '../../ui/icons';
+import { useProjects, workspaceName } from '../../projects/projects';
+import { useSessions } from '../../sessions/sessions';
 import {
   removeTerminal,
   restartTerminal,
   stopTerminal,
   useTerminals,
-} from '#lib/terminals';
+} from '../../terminals/terminals';
 import { paths } from '../../router';
 
 export default function TerminalPage(props: RouteProps<'/t/:id'>) {

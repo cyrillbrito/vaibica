@@ -1,7 +1,7 @@
 import type { ParentProps } from 'solid-js';
 
-import { motionBootScript } from '#lib/motion';
-import { themeBootScript } from '#lib/theme';
+import { motionBootScript } from './ui/motion';
+import { themeBootScript } from './ui/theme';
 
 // The page in place of index.html, picked up by the src/Document.* convention.
 // The build renders it once into dist/client/index.html; the app renders into

@@ -2,10 +2,18 @@ import type { ConversationId } from '@earendil-works/pi-durable';
 
 import type { AgentId } from '@bica/shared/agents';
 import type { PullRequest, VoiceSettings } from '@bica/shared/protocol';
-import { context, getHarness } from '#server/agent';
-import { getAgent, selection } from '#server/agents';
-import { getProject, removeGitWorktree, worktreeRisk } from '#server/projects';
-import { allTerminals, removeTerminal, terminalsIn } from '#server/terminals';
+import { context, getHarness } from '../harness';
+import { getAgent, selection } from '../agents/registry';
+import {
+  getProject,
+  removeGitWorktree,
+  worktreeRisk,
+} from '../projects/projects';
+import {
+  allTerminals,
+  removeTerminal,
+  terminalsIn,
+} from '../terminals/terminals';
 import {
   SessionDoc,
   getConversation,

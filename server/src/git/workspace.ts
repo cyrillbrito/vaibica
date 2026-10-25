@@ -9,8 +9,8 @@ import type {
   GitStatus,
   WorkspaceRef,
 } from '@bica/shared/protocol';
-import { live, type Live } from '#server/live';
-import { getProject } from '#server/projects';
+import { live, type Live } from '../live';
+import { getProject } from '../projects/projects';
 
 const exec = promisify(execFile);
 const MAX_FILE = 2 * 1024 * 1024;

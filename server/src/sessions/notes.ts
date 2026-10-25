@@ -1,6 +1,6 @@
 import type { ConversationId } from '@earendil-works/pi-durable';
 
-import { context, getHarness } from '#server/agent';
+import { context, getHarness } from '../harness';
 import type { PromptImage } from '@bica/shared/protocol';
 import { queued, submit, type QueuedInput } from './prompts';
 import { prompters, readSession, recentMessages } from './read';

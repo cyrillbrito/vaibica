@@ -2,9 +2,6 @@
   "name": "@bica/client",
   "private": true,
   "type": "module",
-  "imports": {
-    "#lib/*": "./src/lib/*"
-  },
   "scripts": {
     "dev": "bunx --bun vite dev",
     "build": "bunx --bun vite build"

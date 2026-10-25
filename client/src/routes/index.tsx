@@ -1,20 +1,20 @@
 import { Show, createMemo, createSignal } from 'solid-js';
 
-import HomeTips from '../components/HomeTips';
-import NeedsYou from '../components/NeedsYou';
-import { openProjectPicker } from '../components/ProjectPicker';
-import StartComposer from '../components/StartComposer';
-import TopBar from '../components/TopBar';
-import { Button } from '../components/ui/Button';
-import { AssistantIcon } from '../components/ui/icons';
-import WorkspacePicker from '../components/WorkspacePicker';
+import HomeTips from '../app/HomeTips';
+import NeedsYou from '../sessions/NeedsYou';
+import { openProjectPicker } from '../projects/ProjectPicker';
+import StartComposer from '../sessions/StartComposer';
+import TopBar from '../app/TopBar';
+import { Button } from '../ui/Button';
+import { AssistantIcon } from '../ui/icons';
+import WorkspacePicker from '../projects/WorkspacePicker';
 import {
   currentTarget,
   resolveTarget,
   setCurrentTarget,
   useProjects,
-} from '#lib/projects';
-import { useSessions } from '#lib/sessions';
+} from '../projects/projects';
+import { useSessions } from '../sessions/sessions';
 
 const ASSISTANT_HINT =
   'Assistant mode: for a session that keeps going, such as notes or a small coordinator in this project. It compacts on its own and keeps memory in files. Less about code, more about help.';

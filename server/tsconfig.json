@@ -2,10 +2,7 @@
   // The server, which runs in Bun: no DOM types.
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "types": ["bun"],
-    // The same alias as "imports" in package.json, which Bun reads.
-    // TypeScript needs it here too to find a folder's index.ts.
-    "paths": { "#server/*": ["./src/*"] }
+    "types": ["bun"]
   },
   "include": ["src", "cli", "scripts", "dev.ts", "start.js"]
 }

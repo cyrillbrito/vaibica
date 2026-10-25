@@ -1,27 +1,27 @@
 import { Title } from '@solidjs/meta';
 import { For, Show } from 'solid-js';
 
-import Accounts from '../components/Accounts';
-import { Card, Setting, Toggle } from '../components/ui/Card';
-import Alert from '../components/ui/Alert';
-import { Button } from '../components/ui/Button';
-import ModelFavorites from '../components/ModelFavorites';
-import ModelPicker from '../components/ModelPicker';
-import TopBar from '../components/TopBar';
-import Input from '../components/ui/Input';
-import { toast } from '../components/ui/Toast';
-import { Segmented, segmentClass } from '../components/ui/Segmented';
+import Accounts from '../models/Accounts';
+import { Card, Setting, Toggle } from '../ui/Card';
+import Alert from '../ui/Alert';
+import { Button } from '../ui/Button';
+import ModelFavorites from '../models/ModelFavorites';
+import ModelPicker from '../models/ModelPicker';
+import TopBar from '../app/TopBar';
+import Input from '../ui/Input';
+import { toast } from '../ui/Toast';
+import { Segmented, segmentClass } from '../ui/Segmented';
 import {
   MODE_LABELS,
   MODES,
   mode as testMode,
   openWithTestData,
-} from '#lib/fixtures';
-import { updateSettings, useModels } from '#lib/models';
-import { motion, setMotion, type Motion } from '#lib/motion';
-import { setSoundOn, soundOn } from '#lib/sound';
-import { setTheme, theme, type Theme } from '#lib/theme';
-import { hideThinking, setHideThinking } from '#lib/thinking';
+} from '../fixtures';
+import { updateSettings, useModels } from '../models/models';
+import { motion, setMotion, type Motion } from '../ui/motion';
+import { setSoundOn, soundOn } from '../ui/sound';
+import { setTheme, theme, type Theme } from '../ui/theme';
+import { hideThinking, setHideThinking } from '../sessions/thinking';
 
 const THEMES: { value: Theme; label: string }[] = [
   { value: 'system', label: 'System' },

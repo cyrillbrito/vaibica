@@ -4,7 +4,7 @@ October 2026. Decision: the repo is three workspace packages, `client`, `server`
 
 ## What it replaced
 
-The plan in `docs/explorations/source-layout.md` put each feature's server and browser code in one folder. To keep server code out of the browser, every server file started with `import 'server-only'`, Solid's Vite plugin failed when the browser reached one, and a lint rule spread the marker up the import chain. Bun didn't know the marker, so the server needed a shim at runtime, in tests, and in the binary build.
+The first source-layout plan put each feature's server and browser code in one folder. To keep server code out of the browser, every server file started with `import 'server-only'`, Solid's Vite plugin failed when the browser reached one, and a lint rule spread the marker up the import chain. Bun didn't know the marker, so the server needed a shim at runtime, in tests, and in the binary build.
 
 ## Why it changed
 
@@ -16,7 +16,7 @@ Packages make that separation the structure instead of a check:
 - Each package type-checks with its own types, so the server can't use `document` and the client can't use `Bun` or `node:fs`.
 - The dev server became two processes. Vite only serves pages and forwards the socket, so restarting it no longer touches running agents.
 
-The cost is that a feature spans folders again: terminals are `client/src/terminals`, `server/src/terminals`, and a slice of `shared`. With the same names on every side and agents doing most edits, that's cheap. opencode and T3 Code, the apps the source-layout plan compared against, are laid out this way.
+The cost is that a feature spans folders again: terminals are `client/src/terminals`, `server/src/terminals`, and their types in `shared`. [Feature folders](./feature-folders.md) covers how the folders inside each package are cut. With the same names on every side and agents doing most edits, that's cheap. opencode and T3 Code, the apps the plan compared against, are laid out this way.
 
 ## Sources
 

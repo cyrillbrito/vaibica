@@ -1,5 +1,6 @@
 import type { ModelChoice } from '@bica/shared/protocol';
-import { checkChoice, defaultChoice, models } from '#server/providers';
+import { checkChoice, defaultChoice } from '../models/models';
+import { models } from '../models/registry';
 import type { Agent } from './common';
 
 const LEVELS = ['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'];

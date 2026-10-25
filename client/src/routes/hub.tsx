@@ -2,19 +2,19 @@ import { Title } from '@solidjs/meta';
 import { useNavigate } from '@solidjs/router';
 import { Show, createEffect, onSettled } from 'solid-js';
 
-import HubBoard from '../components/hub/HubBoard';
-import HubChat from '../components/hub/HubChat';
-import StatusDot from '../components/StatusDot';
-import VoiceSettings from '../components/VoiceSettings';
-import TopBar from '../components/TopBar';
-import { IconButton } from '../components/ui/Button';
-import Empty from '../components/ui/Empty';
-import { openContextMenu } from '../components/ui/ContextMenu';
-import { toast } from '../components/ui/Toast';
-import { HubIcon, SettingsIcon, VoiceIcon } from '../components/ui/icons';
-import { setNoPanels } from '#lib/layout';
-import { request } from '#lib/socket';
-import { useHub } from '#lib/sessions';
+import HubBoard from '../hub/HubBoard';
+import HubChat from '../hub/HubChat';
+import StatusDot from '../sessions/StatusDot';
+import VoiceSettings from '../voice/VoiceSettings';
+import TopBar from '../app/TopBar';
+import { IconButton } from '../ui/Button';
+import Empty from '../ui/Empty';
+import { openContextMenu } from '../ui/ContextMenu';
+import { toast } from '../ui/Toast';
+import { HubIcon, SettingsIcon, VoiceIcon } from '../ui/icons';
+import { setNoPanels } from '../ui/layout';
+import { request } from '../socket/socket';
+import { useHub } from '../sessions/sessions';
 import { paths } from '../router';
 
 /**

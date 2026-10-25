@@ -5,8 +5,9 @@ import type {
   ToolRegistration,
 } from '@earendil-works/pi-durable';
 import type { SessionStatus } from '@bica/shared/protocol';
-import { CHATS_ID, getProject, listProjects } from '#server/projects';
-import { allTerminals, terminalState } from '#server/terminals';
+import { CHATS_ID, getProject, listProjects } from '../projects/projects';
+import { allTerminals } from '../terminals/terminals';
+import { terminalState } from '../terminals/tools';
 import { spawnSession } from './create';
 import { archive, removeWorktree } from './meta';
 import { noteMessage, notifyWhenIdle } from './notes';
@@ -398,7 +399,7 @@ export const SessionTools = defineExtension({
   tools: sessionTools(false),
 });
 
-// Only the hub agent selects it (server/src/agents/hub.ts).
+// Only the hub agent selects it (server/src/hub/agent.ts).
 export const HubSessionTools = defineExtension({
   name: 'hub-session-tools',
   tools: sessionTools(true),

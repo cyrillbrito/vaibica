@@ -1,6 +1,6 @@
 // The agents a session can run as (docs/agents.md): what goes into it. This
 // is the half the browser needs; the rest of each one, its model, tools, and
-// instructions, is a file in server/src/agents/.
+// instructions, is on the server, listed in server/src/agents/registry.ts.
 export const AGENTS = {
   coding: {
     label: 'Coding',
@@ -25,3 +25,10 @@ export type AgentId = keyof typeof AGENTS;
 
 export const isAgent = (value: unknown): value is AgentId =>
   typeof value === 'string' && Object.hasOwn(AGENTS, value);
+
+// Long-lived sessions, which housekeeping prunes and compacts while they sit
+// idle (server/src/sessions/housekeeping.ts): assistant mode
+// (docs/assistant-mode.md) and the hub (docs/hub.md). Their instructions say
+// so, in `long_lived`.
+export const isLongLived = (agent: AgentId) =>
+  agent === 'assistant' || agent === 'hub';

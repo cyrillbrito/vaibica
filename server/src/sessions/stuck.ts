@@ -6,7 +6,7 @@ import type {
 } from '@earendil-works/pi-durable';
 
 import type { Stuck } from '@bica/shared/protocol';
-import { context, getHarness } from '#server/agent';
+import { context, getHarness } from '../harness';
 
 // Work Pi Durable won't run: parked after it was cut off by crashes again and
 // again, or left without its code, as by a removed extension. Its session

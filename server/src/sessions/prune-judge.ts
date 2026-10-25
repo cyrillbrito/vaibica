@@ -2,7 +2,7 @@ import type { Message, ToolCall } from '@earendil-works/pi-ai';
 import type { EntryRecord } from '@earendil-works/pi-durable';
 
 import { KEEP_OUTPUT, chars, isCleared, oldCalls } from '@bica/shared/prune';
-import { decide, hasDecisionModel } from '#server/providers';
+import { decide, hasDecisionModel } from '../models/decision-model';
 
 // Smart pruning: with a decision model set (Settings → Models), it reads the
 // whole session and names the old tool outputs that must stay word for word. The rest clear as usual. Modeled on

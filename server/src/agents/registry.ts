@@ -6,15 +6,15 @@ import {
   type PromptInput,
 } from '@earendil-works/pi-durable';
 import type { AgentId } from '@bica/shared/agents';
-import { AskTool } from '#server/agent/tools/ask';
-import { Codemode } from '#server/agent/tools/codemode';
-import { CodingTools, HubFileTools } from '#server/agent/tools/coding';
-import { ToolSummary } from '#server/agent/tools/summary';
-import { createWebTools } from '#server/agent/tools/web';
-import { exaKey } from '#server/providers';
-import { SessionDoc, agentIdOf } from '#server/sessions/session-doc';
-import { HubSessionTools, SessionTools } from '#server/sessions/tools';
-import { HubTerminalTools, TerminalTools } from '#server/terminals';
+import { AskTool } from '../tools/ask';
+import { Codemode } from '../tools/codemode';
+import { CodingTools, HubFileTools } from '../tools/coding';
+import { ToolSummary } from '../tools/summary';
+import { createWebTools } from '../tools/web';
+import { exaKey } from '../models/credentials';
+import { SessionDoc, agentIdOf } from '../sessions/session-doc';
+import { HubSessionTools, SessionTools } from '../sessions/tools';
+import { HubTerminalTools, TerminalTools } from '../terminals/tools';
 import { assistant } from './assistant';
 import { coding } from './coding';
 import {
@@ -25,8 +25,8 @@ import {
   type SectionKey,
   type ExtensionName,
 } from './common';
-import { hub } from './hub';
-import { night } from './night';
+import { hub } from '../hub/agent';
+import { night } from '../night-runs/agent';
 import { skillsSection } from './skills';
 
 const AGENTS: Record<AgentId, Agent> = { coding, assistant, night, hub };

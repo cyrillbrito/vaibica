@@ -10,8 +10,9 @@ import type {
   PromptImage,
   ThinkingLevel,
 } from '@bica/shared/protocol';
-import { context, getHarness } from '#server/agent';
-import { agentChoice, atLeast, getAgent, selection } from '#server/agents';
+import { context, getHarness } from '../harness';
+import { agentChoice, atLeast } from '../agents/choice';
+import { getAgent, selection } from '../agents/registry';
 import {
   CHATS_ID,
   createChatFolder,
@@ -19,9 +20,14 @@ import {
   getProject,
   listProjects,
   setupCommand,
-} from '#server/projects';
-import { checkChoice, fastModelId } from '#server/providers';
-import { commandDone, createTerminal, removeTerminal } from '#server/terminals';
+} from '../projects/projects';
+import { checkChoice } from '../models/models';
+import { fastModelId } from '../models/fast-model';
+import {
+  commandDone,
+  createTerminal,
+  removeTerminal,
+} from '../terminals/terminals';
 import { VOICE_TITLE, nameSession, promptTitle, retitle } from './names';
 import { submit } from './prompts';
 import {

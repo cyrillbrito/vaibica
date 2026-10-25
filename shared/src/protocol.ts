@@ -1,5 +1,5 @@
 // The wire format of the one WebSocket (docs/realtime-communication.md).
-// Shared by server/src/socket.ts and client/src/lib/socket.ts; types only.
+// Shared by server/src/socket.ts and client/src/socket/socket.ts; types only.
 import type { Op } from '@earendil-works/chord/delta';
 import type { ConversationView } from '@earendil-works/pi-durable';
 import type { AgentId } from './agents';

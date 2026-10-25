@@ -1,7 +1,7 @@
 import type { ConversationId } from '@earendil-works/pi-durable';
 
-import { context, getHarness } from '#server/agent';
-import { askFast, fastModelId } from '#server/providers';
+import { context, getHarness } from '../harness';
+import { askFast, fastModelId } from '../models/fast-model';
 import { SessionDoc } from './store';
 
 // The fallback when there is no fast model or it fails: the prompt's first words.

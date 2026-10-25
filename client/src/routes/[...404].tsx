@@ -1,5 +1,5 @@
-import TopBar from '../components/TopBar';
-import Empty from '../components/ui/Empty';
+import TopBar from '../app/TopBar';
+import Empty from '../ui/Empty';
 
 export default function NotFound() {
   return (

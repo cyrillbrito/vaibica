@@ -1,8 +1,8 @@
 import type { ConversationId, Cursor } from '@earendil-works/pi-durable';
 
 import type { Question } from '@bica/shared/transcript';
-import { ASK } from '#server/agent';
-import { context, getHarness } from '#server/agent';
+import { ASK } from '../tools/ask';
+import { context, getHarness } from '../harness';
 import { SessionDoc, getConversation, listSessions, summarize } from './store';
 
 /** A session's title, status, and last reply, as an agent reads it. */
