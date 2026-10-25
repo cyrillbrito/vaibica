@@ -14,7 +14,6 @@ The transcript shows your prompts with their images, the agent's replies, its th
 
 - Thinking and tool calls between two replies fold into one activity list, with a header such as "Worked for 18s · 6 tools, 1 thought". Each call opens to its command and output, its diff, or its arguments.
 - Running calls show a spinner, slow ones a timer, and failed ones say "Failed" in red.
-- Once a list of calls is over, a hairline under each call shows when it ran within the list, after affectUI's [Trace Waterfall](https://www.affectui.com/components/trace-waterfall): calls that ran side by side overlap, and the slow one is the long bar. Lists shorter than 2s, or with fewer than two timed calls, get none.
 - Before the first words stream, a "Working" pill sits at the bottom. A provider error waiting to retry shows there too, with a countdown.
 - A streaming reply types in. Pi Durable saves it in chunks every ~100 ms, and the browser reveals each chunk over the next frames, faster when it falls behind, so it trails the model by at most about a quarter second (`markdown/smooth-text.ts`, after [assistant-ui's `useSmooth`](https://github.com/assistant-ui/assistant-ui/blob/main/packages/react/src/utils/smooth/useSmooth.ts)). Replies already there when the page opens show at once, and so does a catch-up of more than 400 characters, such as a reply that grew while its session was closed.
 - Each new paragraph, list item, or code block of a streaming reply fades in as it starts, except in a catch-up.
@@ -49,6 +48,8 @@ A worker, a session another session started, is in its parent's charge at first:
 - Each session, the home page, and each workspace page keep their own draft on the device. Attached images last until a reload.
 - ↑ at the very start of the box steps back through the prompts you sent, and ↓ at the very end steps forward again.
 - A long paste folds into a marker like `[Pasted text #1 · 40 lines]` and goes out in full.
+- A pasted, picked, or dropped image puts a marker like `[Image #1]` at the caret, and its thumbnail shows the same number. The model gets each image right after its marker, so you can talk about images in order, as with Claude Code's `[Image #N]`. Removing the thumbnail removes the marker, and one Backspace right after a marker removes it with its image, as in Codex. An image whose marker you edit away goes after the text.
+- An image shows at once, dimmed with a spinner, while the browser shrinks it, which takes seconds for a phone photo. While a prompt's images upload, the send button spins.
 
 ## Forks
 

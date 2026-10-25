@@ -16,40 +16,10 @@ import type { Activity as ActivityData, Step } from '@bica/shared/transcript';
 import { StepsIcon, ThoughtIcon } from '../ui/icons';
 import Chevron from '../ui/Chevron';
 import { ThinkingLoader } from '../ui/ThinkingLoader';
-import ToolCalls, {
-  LABEL,
-  ROW,
-  RowChevron,
-  toolIcon,
-  type Span,
-} from './ToolCalls';
+import ToolCalls, { LABEL, ROW, RowChevron, toolIcon } from './ToolCalls';
 
 // Finished groups this long load folded to their header.
 const FOLD_AT = 4;
-// Shorter groups, or ones with fewer timed calls, get no time bars: there's
-// nothing to compare.
-const WATERFALL_MS = 2000;
-const WATERFALL_CALLS = 2;
-
-/** The span a finished group's timed calls ran in, worth drawing. */
-function spanOf(activity: ActivityData) {
-  if (activity.active) return undefined;
-  let from = Infinity;
-  let to = -Infinity;
-  let timed = 0;
-  for (const s of activity.steps) {
-    if (s.kind !== 'tools') continue;
-    for (const c of s.calls) {
-      if (c.startedAt === undefined || c.durationMs === undefined) continue;
-      from = Math.min(from, c.startedAt);
-      to = Math.max(to, c.startedAt + c.durationMs);
-      timed++;
-    }
-  }
-  return timed >= WATERFALL_CALLS && to - from >= WATERFALL_MS
-    ? { from, to }
-    : undefined;
-}
 
 /**
  * Thinking and tool calls between two pieces of prose, as one tight list.
@@ -75,10 +45,6 @@ export default function Activity(props: { activity: ActivityData }) {
   const steps = () => props.activity.steps;
   const grouped = () => steps().length > 1 || seen();
   const open = untrack(() => props.activity.active || steps().length < FOLD_AT);
-  const span = createMemo(() => spanOf(props.activity), {
-    name: 'activitySpan',
-    equals: (a, b) => a?.from === b?.from && a?.to === b?.to,
-  });
   const list = (
     <div class="flex flex-col">
       <For each={steps()} keyed={(s) => s.key}>
@@ -86,7 +52,6 @@ export default function Activity(props: { activity: ActivityData }) {
           <StepRow
             step={step()}
             live={props.activity.active && i() === steps().length - 1}
-            span={span()}
           />
         )}
       </For>
@@ -224,7 +189,7 @@ function Header(props: { activity: ActivityData; seen: boolean }) {
   );
 }
 
-function StepRow(props: { step: Step; live: boolean; span?: Span }) {
+function StepRow(props: { step: Step; live: boolean }) {
   // A timed block has ended, even if the message is still streaming.
   const thinking = (step: { durationMs?: number }) =>
     props.live && step.durationMs === undefined;
@@ -243,7 +208,7 @@ function StepRow(props: { step: Step; live: boolean; span?: Span }) {
   return (
     <Switch>
       <Match when={props.step.kind === 'tools' ? props.step.calls : undefined}>
-        {(calls) => <ToolCalls calls={calls()} span={props.span} />}
+        {(calls) => <ToolCalls calls={calls()} />}
       </Match>
       <Match when={props.step.kind === 'thinking' ? props.step : undefined}>
         {(step) => (
