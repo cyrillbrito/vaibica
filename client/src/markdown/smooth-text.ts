@@ -13,11 +13,15 @@ import {
 // pace. The numbers are assistant-ui's `useSmooth`.
 const DRAIN_MS = 250;
 const MAX_CHAR_MS = 5;
+// More text than one save brings is a catch-up, such as a session opened
+// mid-reply that its live copy then extends: it shows at once.
+const JUMP_CHARS = 400;
 
 /**
- * The part of `text` to show: all of it on mount, so history and switching
- * sessions stay still, then text added later types in. A tab in the
- * background gets no frames and catches up at once when it's back.
+ * The part of `text` to show: all of it on mount or after a catch-up, so
+ * history and switching sessions stay still, then text added later types in.
+ * A tab in the background gets no frames and catches up at once when it's
+ * back.
  */
 export function createSmoothText(text: () => string) {
   const [revealed, setRevealed] = createSignal(untrack(text).length, {
@@ -25,6 +29,8 @@ export function createSmoothText(text: () => string) {
   });
   let frame: number | undefined;
   let last = 0;
+  let previous = untrack(text).length;
+  let jumped = false;
 
   const tick = (now: number) => {
     frame = undefined;
@@ -44,6 +50,14 @@ export function createSmoothText(text: () => string) {
   createEffect(
     () => text().length,
     (length) => {
+      jumped = length - previous > JUMP_CHARS;
+      previous = length;
+      if (jumped) {
+        if (frame !== undefined) cancelAnimationFrame(frame);
+        frame = undefined;
+        setRevealed(length);
+        return;
+      }
       if (frame !== undefined || length <= untrack(revealed)) return;
       last = performance.now();
       frame = requestAnimationFrame(tick);
@@ -53,7 +67,12 @@ export function createSmoothText(text: () => string) {
     if (frame !== undefined) cancelAnimationFrame(frame);
   });
 
-  return createMemo(() => text().slice(0, revealed()), {
+  const shown = createMemo(() => text().slice(0, revealed()), {
     name: 'smoothText',
   });
+  return {
+    text: shown,
+    // Whether the last growth was a catch-up, for anything else that animates.
+    jumped: () => jumped,
+  };
 }

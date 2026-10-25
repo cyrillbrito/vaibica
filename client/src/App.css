@@ -601,13 +601,6 @@
   }
 }
 
-/* Text a streaming reply just added to its last block (markdown/fade-chunks.ts
-   sets a negative delay to resume a fade across re-renders). A fade, so it
-   stays under reduced motion. */
-.fade-chunk {
-  animation: stream-in 400ms ease-out both;
-}
-
 /* A cell of a field or a segment of a meter (the context window). A new
    fill sweeps through cell by cell (--i is its index), so a compaction
    clears from the end instead of blinking. While a part is being compacted
