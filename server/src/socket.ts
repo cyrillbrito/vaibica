@@ -38,7 +38,7 @@ import { createSession, fork } from './sessions/create';
 import { retryStuck } from './sessions/stuck';
 import { fromUser, handBack } from './sessions/notes';
 import { conversationDetail, watchConversation } from './sessions/conversation';
-import { watchSessions } from './sessions/store';
+import { load, watchSessions } from './sessions/store';
 import { openHub, updateHub } from './hub/hub';
 import {
   cancelTonight,
@@ -60,7 +60,6 @@ import {
   watchAccounts,
 } from './models/accounts';
 import { startCall, stopCall, transcribe } from './voice/voice';
-import { getHarness } from './harness';
 import { watchPlanUsage } from './models/usage';
 import {
   addProject,
@@ -96,8 +95,9 @@ import {
 
 startHousekeeping();
 startNight();
-// Opening the harness resumes runs a restart left unfinished.
-void getHarness().catch((error) => console.error('[harness]', error));
+// Opens the harness, which resumes runs a restart left unfinished, and
+// follows them at once: a parent hears when one ends, open tab or not.
+void load().catch((error) => console.error('[sessions]', error));
 
 type Sink = {
   snapshot: (value: unknown, kept?: number) => void;

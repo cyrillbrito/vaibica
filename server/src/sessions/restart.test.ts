@@ -27,7 +27,8 @@ async function launch(root: string, ...mode: string[]) {
   const printed = async (pattern: RegExp) => {
     while (!pattern.test(out)) {
       const { value, done } = await reader.read();
-      if (done) throw new Error(`Bica exited before printing ${pattern}`);
+      if (done)
+        throw new Error(`Bica exited before printing ${pattern}:\n${out}`);
       out += new TextDecoder().decode(value);
     }
   };
@@ -35,6 +36,7 @@ async function launch(root: string, ...mode: string[]) {
   return {
     child,
     port: Number(out.match(/port (\d+)/)![1]),
+    printed,
     working: () => printed(/working/),
     async crash() {
       child.kill('SIGKILL');
@@ -52,17 +54,18 @@ async function startWork(port: number, root: string) {
   await mkdir(cwd);
   const tab = await connect(port);
   const projectId = await tab.request('project.add', { path: cwd });
-  return tab.request('session.create', {
+  const id = await tab.request('session.create', {
     projectId,
     prompt: 'Work through the crash',
     requestId: crypto.randomUUID(),
   });
+  return { id, tab };
 }
 
 test('a run cut off by a crash finishes after Bica restarts', async () => {
   const root = await scratch();
   const first = await launch(root, 'hang');
-  const id = await startWork(first.port, root);
+  const { id } = await startWork(first.port, root);
   await first.working();
   await first.crash();
 
@@ -77,10 +80,33 @@ test('a run cut off by a crash finishes after Bica restarts', async () => {
   }
 }, 20_000);
 
+test('a parent hears of a session it started that finishes after a restart, with no tab open', async () => {
+  const root = await scratch();
+  const first = await launch(root, 'start-child');
+  const { id, tab } = await startWork(first.port, root);
+  await first.working();
+  await tab
+    .watch('sessions', {})
+    .until((l) =>
+      l.some(
+        (s) => s.id === id && s.status !== 'running' && s.status !== 'retrying',
+      ),
+    );
+  await first.crash();
+
+  // No tab connects: the note has to reach the parent on its own.
+  const second = await launch(root, 'answer', 'Child finished');
+  try {
+    await second.printed(/asked: \[Note from Bica/);
+  } finally {
+    await second.stop();
+  }
+}, 20_000);
+
 test('a run that keeps crashing Bica pauses, and Retry runs it again', async () => {
   const root = await scratch();
   const first = await launch(root, 'hang');
-  const id = await startWork(first.port, root);
+  const { id } = await startWork(first.port, root);
   await first.working();
   await first.crash();
   // Each restart resumes the run, which crashes Bica again: five crashes in
