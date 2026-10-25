@@ -1,4 +1,5 @@
 import {
+  AgentDoc,
   defineExtension,
   GenerationTask,
   hook,
@@ -19,14 +20,16 @@ const summary = {
     'What this call does and why, in plain words, shown to the user next to the tool name. At most ~10 words, no trailing period. E.g. "Find where sessions are created", "Run the type checker", "Add summary param to tools".',
 };
 
-function withSummary(message: Message): Message {
+function withSummary(message: Message, grammar: boolean): Message {
   if (message.role !== 'system' || !message.toolsAdded) return message;
   return {
     ...message,
     toolsAdded: message.toolsAdded.map((tool) => {
-      // A grammar tool's model writes one raw string, like codemode's script,
-      // and pi-ai rejects it with a second required field.
+      // A model that takes grammar tools, such as GPT-5, writes codemode's
+      // script as one raw string, and pi-ai rejects a second required field.
+      // Other models get the tool as plain JSON, so it takes a summary too.
       if (
+        grammar &&
         tool.constrainedSampling &&
         tool.constrainedSampling.type === 'grammar'
       )
@@ -54,9 +57,19 @@ export const ToolSummary = defineExtension({
     // Tool declarations travel in the transcript's system messages, so adding
     // the field per request keeps the stored ones as Durable made them.
     hook(GenerationTask, {
-      beforeRequest: ({ messages }) => ({
-        messages: messages.map(withSummary),
-      }),
+      beforeRequest: async ({ messages }, api, context) => {
+        const ref = (await api.snapshot(AgentDoc, api.conversationId, context))
+          ?.model;
+        const model = ref && api.models.getModel(ref.provider, ref.modelId);
+        // Unknown model: skip grammar tools, since a request without a
+        // summary still works and one pi-ai rejects doesn't.
+        const grammar = model
+          ? !!model.compat &&
+            'supportsOpenAIGrammarTools' in model.compat &&
+            model.compat.supportsOpenAIGrammarTools === true
+          : true;
+        return { messages: messages.map((m) => withSummary(m, grammar)) };
+      },
     }),
     hook(ToolTask, {
       beforeTool: ({ arguments: args }) => {

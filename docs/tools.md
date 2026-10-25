@@ -1,6 +1,6 @@
 # Agent tools
 
-The agent works through tools. Every call carries a short summary of what it is for, so the transcript reads as a list of intentions. The exception is `codemode` on models that write its script as raw text, such as GPT-5, which take no other field. What the agent is told about using them is in [system-prompt.md](./system-prompt.md).
+The agent works through tools. Every call carries a short summary of what it is for, so the transcript reads as a list of intentions. The exception is `codemode` on models that write its script as raw text, such as GPT-5, which take no other field. Other models, such as Claude, get codemode as a plain JSON tool, so its calls carry a summary too. What the agent is told about using them is in [system-prompt.md](./system-prompt.md).
 
 - Read, write, edit, and bash work in the session's workspace. Read also shows images to the model, shrunk when they are too big.
 - Web search and fetch go through Exa, once its key is set ([models.md](./models.md#providers)).
