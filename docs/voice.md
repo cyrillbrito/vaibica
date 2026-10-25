@@ -40,6 +40,8 @@ Calls and dictation need the OpenAI Codex (legacy) provider in Settings → Prov
 
 Every call logs each step to `.data/voice-log.jsonl` (the data folder's `voice-log.jsonl` for the `bica` binary). The browser adds the mic's state, the connection, and errors. The server adds the signaling, the sideband opening and closing, and the first event of each kind. A call's lines share one `trace` id. The file rolls over to `voice-log.jsonl.1` at 2 MB.
 
+Skipped or garbled words usually mean a bad network. The browser checks the call's audio every 5 seconds and writes an `audio trouble` line for each 5 seconds that lost packets or had to make up sound. The line shows both directions: `lost` and `concealedMs` for the voice reaching you, `sentLost` for your mic reaching OpenAI, and `jitterMs` and `rttMs` for the connection. At hang-up, an `audio` line gives the totals. A call with only the `audio` line had clean audio, so the problem lies elsewhere.
+
 If the mic sends pure silence from the start, without even room noise, the call panel says "No sound from your mic". Once it has heard you, only the system muting or ending the mic brings that back, since iOS sends pure silence between words. In that case the browser or the system isn't passing the mic through, and the server and OpenAI aren't to blame.
 
 ## Limits

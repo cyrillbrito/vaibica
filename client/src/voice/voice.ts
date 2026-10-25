@@ -99,6 +99,58 @@ function trackState(track: MediaStreamTrack | undefined) {
   );
 }
 
+type AudioStats = {
+  // The voice reaching you.
+  received: number;
+  lost: number;
+  // Audio the browser had to make up for late or lost packets, while the
+  // voice was talking: what you hear as skipped or garbled words.
+  concealedMs: number;
+  jitterMs: number;
+  // Your mic reaching OpenAI, as OpenAI reports it back.
+  sent: number;
+  sentLost: number;
+  rttMs?: number;
+};
+
+const STATS_MS = 5000;
+
+async function audioStats(pc: RTCPeerConnection): Promise<AudioStats> {
+  const s: AudioStats = {
+    received: 0,
+    lost: 0,
+    concealedMs: 0,
+    jitterMs: 0,
+    sent: 0,
+    sentLost: 0,
+  };
+  const report = await pc.getStats();
+  report.forEach((r) => {
+    if (r.kind !== undefined && r.kind !== 'audio') return;
+    if (r.type === 'inbound-rtp') {
+      s.received = r.packetsReceived ?? 0;
+      s.lost = r.packetsLost ?? 0;
+      s.jitterMs = Math.round((r.jitter ?? 0) * 1000);
+      const rate = r.clockRate || 48000;
+      const audible =
+        (r.concealedSamples ?? 0) - (r.silentConcealedSamples ?? 0);
+      s.concealedMs = Math.round((audible / rate) * 1000);
+    } else if (r.type === 'outbound-rtp') {
+      s.sent = r.packetsSent ?? 0;
+    } else if (r.type === 'remote-inbound-rtp') {
+      s.sentLost = r.packetsLost ?? 0;
+    } else if (
+      r.type === 'candidate-pair' &&
+      r.nominated &&
+      r.state === 'succeeded'
+    ) {
+      if (r.currentRoundTripTime !== undefined)
+        s.rttMs = Math.round(r.currentRoundTripTime * 1000);
+    }
+  });
+  return s;
+}
+
 const [call, setCall] = createSignal<CallState | undefined>(undefined, {
   name: 'voiceCall',
 });
@@ -192,6 +244,29 @@ export async function startCall(session: string | Promise<string>) {
   };
   let callId: string | undefined;
   let watch: ReturnType<typeof setInterval> | undefined;
+  // Logged only when a window loses packets or makes up audio, so a clean
+  // call adds one summary line, and a bad one shows when it went bad.
+  let stats: AudioStats | undefined;
+  let statsWatch: ReturnType<typeof setInterval> | undefined;
+  const sampleStats = async () => {
+    if (pc.connectionState !== 'connected') return;
+    const now = await audioStats(pc).catch(() => undefined);
+    if (!now) return;
+    const was = stats;
+    stats = now;
+    if (!was) return;
+    const span = {
+      lost: now.lost - was.lost,
+      received: now.received - was.received,
+      concealedMs: now.concealedMs - was.concealedMs,
+      sentLost: now.sentLost - was.sentLost,
+      sent: now.sent - was.sent,
+      jitterMs: now.jitterMs,
+      rttMs: now.rttMs,
+    };
+    if (span.lost > 0 || span.sentLost > 0 || span.concealedMs >= 100)
+      log('audio trouble', span);
+  };
   const self: NonNullable<typeof current> = {
     end: () => end(),
     log,
@@ -205,6 +280,9 @@ export async function startCall(session: string | Promise<string>) {
     current = undefined;
     log('end', { error, track: trackState(self.mic?.getAudioTracks()[0]) });
     clearInterval(watch);
+    clearInterval(statsWatch);
+    // From the last sample, up to a few seconds old: the connection closes now.
+    if (stats) log('audio', stats);
     pc.close();
     self.mic?.getTracks().forEach((t) => t.stop());
     audio.srcObject = null;
@@ -274,7 +352,10 @@ export async function startCall(session: string | Promise<string>) {
       log('ice', { state: pc.iceConnectionState });
     pc.onconnectionstatechange = () => {
       log('connection', { state: pc.connectionState });
-      if (pc.connectionState === 'connected') update({ phase: 'live' });
+      if (pc.connectionState === 'connected') {
+        update({ phase: 'live' });
+        statsWatch ??= setInterval(() => void sampleStats(), STATS_MS);
+      }
       if (pc.connectionState === 'failed') end('Connection lost');
     };
 
