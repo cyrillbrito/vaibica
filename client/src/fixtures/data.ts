@@ -130,6 +130,8 @@ function session(
     voice: null,
     tonight: null,
     stuck: null,
+    // Varied, so branch totals on the hub board differ.
+    cost: ((n * 37) % 290) / 100,
     ...extra,
   };
 }
@@ -345,6 +347,18 @@ function demo(): Dataset {
         {
           id: 'demo-flaky',
           startedBy: 'demo-hub',
+          parentDrives: true,
+        },
+      ),
+      session(
+        'vaibica',
+        bica,
+        'Bisect the reconnect test across 40 commits',
+        'done',
+        45 * MIN,
+        {
+          id: 'demo-bisect',
+          startedBy: 'demo-flaky',
           parentDrives: true,
         },
       ),

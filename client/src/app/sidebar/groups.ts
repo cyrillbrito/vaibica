@@ -4,8 +4,8 @@ import type {
   SessionSummary,
   TerminalInfo,
 } from '@bica/shared/protocol';
-import type { Kept } from '../files/files';
-import { CHATS_ID, folderName, type Target } from '../projects/projects';
+import type { Kept } from '../../files/files';
+import { CHATS_ID, folderName, type Target } from '../../projects/projects';
 
 export interface Group {
   key: string;

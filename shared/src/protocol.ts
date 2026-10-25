@@ -57,6 +57,9 @@ export interface SessionSummary {
   tonight: string | null;
   // Work Pi Durable won't run (docs/sessions.md); null: none.
   stuck: Stuck | null;
+  // Dollars spent at list prices, even on a plan: its models and tools, not
+  // the sessions it started.
+  cost: number;
 }
 
 // Crashed: cut off by crashes too often in a row, so paused until a retry.

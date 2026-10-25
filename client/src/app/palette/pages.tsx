@@ -1,16 +1,6 @@
 import { useLocation, useNavigate } from '@solidjs/router';
-import { Dynamic, type JSX } from '@solidjs/web';
-import {
-  For,
-  Loading,
-  Show,
-  createEffect,
-  createMemo,
-  createSignal,
-  onSettled,
-} from 'solid-js';
 
-import { closeDrawer, toggleSidePanel, toggleSidebar } from '../ui/layout';
+import { closeDrawer, toggleSidePanel, toggleSidebar } from '../../ui/layout';
 import {
   CHATS_ID,
   currentTarget,
@@ -18,7 +8,7 @@ import {
   useProjects,
   workspaceName,
   type Target,
-} from '../projects/projects';
+} from '../../projects/projects';
 import type { SessionSummary } from '@bica/shared/protocol';
 import {
   archiveSession,
@@ -27,23 +17,21 @@ import {
   renameSession,
   stopSession,
   useSessions,
-} from '../sessions/sessions';
-import { createTerminal, useTerminals } from '../terminals/terminals';
-import { setTheme, theme, type Theme } from '../ui/theme';
-import { age } from '../ui/time';
-import { useCurrentWorkspace } from '../projects/projects';
-import { workspaceHref } from '../files/files';
-import { paths } from '../router';
-import { openProjectPicker } from '../projects/ProjectPicker';
-import { archiveWithChildren } from '../sessions/ArchiveDialog';
-import StatusDot from '../sessions/StatusDot';
-import { Button } from '../ui/Button';
+} from '../../sessions/sessions';
+import { createTerminal, useTerminals } from '../../terminals/terminals';
+import { setTheme, theme, type Theme } from '../../ui/theme';
+import { age } from '../../ui/time';
+import { useCurrentWorkspace } from '../../projects/projects';
+import { workspaceHref } from '../../files/files';
+import { paths } from '../../router';
+import { openProjectPicker } from '../../projects/ProjectPicker';
+import { archiveWithChildren } from '../../sessions/ArchiveDialog';
+import StatusDot from '../../sessions/StatusDot';
 import {
   ArchiveIcon,
   ArrowDownIcon,
   BranchIcon,
   CheckIcon,
-  ChevronIcon,
   FolderIcon,
   ForkIcon,
   HubIcon,
@@ -60,138 +48,12 @@ import {
   TerminalIcon,
   ThemeIcon,
   UnreadIcon,
-} from '../ui/icons';
-import { toast } from '../ui/Toast';
-
-// `mod` is ⌘ on a Mac and Ctrl elsewhere; `ctrl` is Ctrl everywhere.
-interface Keys {
-  code: string;
-  mod?: boolean;
-  ctrl?: boolean;
-  alt?: boolean;
-  shift?: boolean;
-}
-
-interface Command {
-  id: string;
-  label: string;
-  // Muted text after the label, searched too.
-  hint?: string;
-  // Other words it should be found by: "chat" finds New session.
-  words?: string;
-  icon?: () => JSX.Element;
-  keys?: Keys;
-  // Right-aligned, when there are no keys: a session's age.
-  meta?: string;
-  group?: string;
-  run?: () => void;
-  page?: () => Page;
-}
-
-interface Page {
-  title?: string;
-  placeholder: string;
-  // Gets the typed text as is; `raw` pages build their rows from it.
-  items: (query: string) => Command[];
-  raw?: boolean;
-}
-
-const KEY_NAMES: Record<string, string> = {
-  ArrowDown: '↓',
-  Backquote: '`',
-  Slash: '/',
-};
-
-function keyLabel(k: Keys) {
-  const key = KEY_NAMES[k.code] ?? k.code.replace(/^Key/, '');
-  return `${k.ctrl ? '⌃' : ''}${k.alt ? '⌥' : ''}${k.shift ? '⇧' : ''}${k.mod ? '⌘' : ''}${key}`;
-}
-
-function matches(e: KeyboardEvent, k: Keys) {
-  return (
-    e.code === k.code &&
-    (k.mod
-      ? e.metaKey || e.ctrlKey
-      : k.ctrl
-        ? e.ctrlKey && !e.metaKey
-        : !e.metaKey && !e.ctrlKey) &&
-    !!k.alt === e.altKey &&
-    !!k.shift === e.shiftKey
-  );
-}
-
-function wordStart(t: string, i: number) {
-  return i === 0 || !/[\p{L}\p{N}]/u.test(t[i - 1]!);
-}
-
-// The word's letters in order from `from`, scored by how many sit together.
-function letters(t: string, word: string, from: number) {
-  let last = -2;
-  let runs = 0;
-  for (const ch of word) {
-    const i = t.indexOf(ch, from);
-    if (i < 0) return 0;
-    if (i === last + 1) runs++;
-    last = i;
-    from = i + 1;
-  }
-  return 1 + Math.min(runs, 4);
-}
-
-// 0: no match. The whole word beats scattered letters, and starting on a word
-// beats starting inside one, so the typo "nwe sess" still finds New session.
-function score(text: string | undefined, word: string) {
-  if (!text) return 0;
-  const t = text.toLowerCase();
-  const at = t.indexOf(word);
-  if (at >= 0) return wordStart(t, at) ? 20 : 10;
-  for (let i = t.indexOf(word[0]!); i >= 0; i = t.indexOf(word[0]!, i + 1))
-    if (wordStart(t, i)) {
-      const s = letters(t, word, i);
-      if (s) return s + 4;
-      break;
-    }
-  return letters(t, word, 0);
-}
-
-// Every typed word must match somewhere; the label counts double.
-function rank(c: Command, words: string[]) {
-  let total = 0;
-  for (const w of words) {
-    const best = Math.max(
-      score(c.label, w) * 2,
-      score(c.hint, w),
-      score(c.words, w),
-    );
-    if (!best) return 0;
-    total += best;
-  }
-  // On a tie, the shorter label is the closer match.
-  return total - c.label.length / 1000;
-}
+} from '../../ui/icons';
+import { toast } from '../../ui/Toast';
+import type { Command, Page } from './commands';
 
 // Answers first: these are why you came back.
 const NEEDS_YOU: SessionSummary['status'][] = ['waiting', 'done', 'error'];
-
-let dialog: HTMLDialogElement | undefined;
-let input: HTMLInputElement | undefined;
-const [stack, setStack] = createSignal<Page[]>([], { name: 'paletteStack' });
-const [query, setQuery] = createSignal('', { name: 'paletteQuery' });
-const [active, setActive] = createSignal(0, { name: 'paletteActive' });
-
-/** Opens the palette at its root page. */
-export function openPalette() {
-  setStack([]);
-  setQuery('');
-  setActive(0);
-  if (input) input.value = '';
-  if (!dialog?.open) dialog?.showModal();
-  input?.focus();
-}
-
-function closePalette() {
-  dialog?.close();
-}
 
 // After the page changes, the new page's composer is the place to type.
 function focusComposer() {
@@ -204,7 +66,11 @@ function focusComposer() {
   );
 }
 
-export default function CommandPalette() {
+/**
+ * What ⌘K offers: the root page, with the pages it opens, and every action
+ * with a shortcut, which work with the palette closed too.
+ */
+export function useCommands() {
   const navigate = useNavigate();
   const location = useLocation();
   const sessions = useSessions();
@@ -622,248 +488,5 @@ export default function CommandPalette() {
     },
   };
 
-  const page = () => stack().at(-1) ?? root;
-
-  const results = createMemo(
-    () => {
-      const p = page();
-      const items = p.items(query());
-      const q = query().trim().toLowerCase();
-      if (!q || p.raw) return items;
-      const words = q.split(/\s+/);
-      // Typing flattens the groups: the best match goes first, whatever it is.
-      return items
-        .map((c) => ({ c, score: rank(c, words) }))
-        .filter((r) => r.score > 0)
-        .sort((a, b) => b.score - a.score)
-        .map((r) => ({ ...r.c, group: undefined }));
-    },
-    { name: 'paletteResults', lazy: true },
-  );
-
-  const choose = (c: Command | undefined) => {
-    if (!c) return;
-    if (c.page) {
-      setStack((s) => [...s, c.page!()]);
-      setQuery('');
-      setActive(0);
-      if (input) input.value = '';
-      return;
-    }
-    if (!c.run) return;
-    closePalette();
-    c.run();
-  };
-
-  const back = () => {
-    setStack((s) => s.slice(0, -1));
-    setQuery('');
-    setActive(0);
-    if (input) input.value = '';
-  };
-
-  createEffect(
-    () => active(),
-    (i) => {
-      document
-        .getElementById(`palette-${i}`)
-        ?.scrollIntoView({ block: 'nearest' });
-    },
-  );
-
-  onSettled(() => {
-    // Capture: runs before the composer or a terminal handles the key.
-    const onKey = (e: KeyboardEvent) => {
-      if (e.repeat) return;
-      if (matches(e, { code: 'KeyK', mod: true })) {
-        e.preventDefault();
-        e.stopPropagation();
-        if (dialog?.open) closePalette();
-        else openPalette();
-        return;
-      }
-      if (matches(e, { code: 'Slash', mod: true })) {
-        e.preventDefault();
-        e.stopPropagation();
-        openPalette();
-        setStack([shortcutsPage()]);
-        return;
-      }
-      const c = actions().find((c) => c.keys && matches(e, c.keys) && c.run);
-      if (!c) return;
-      e.preventDefault();
-      e.stopPropagation();
-      if (dialog?.open) closePalette();
-      c.run!();
-    };
-    addEventListener('keydown', onKey, true);
-    return () => removeEventListener('keydown', onKey, true);
-  });
-
-  // The list can shrink under the highlight, so it stops at the last row.
-  const selected = () => Math.min(active(), results().length - 1);
-
-  const step = (d: number) => {
-    const n = results().length;
-    if (n) setActive((selected() + d + n) % n);
-  };
-
-  const onInputKey = (e: KeyboardEvent) => {
-    if (e.key === 'ArrowDown' || (e.ctrlKey && e.key === 'n')) {
-      e.preventDefault();
-      step(1);
-    } else if (e.key === 'ArrowUp' || (e.ctrlKey && e.key === 'p')) {
-      e.preventDefault();
-      step(-1);
-    } else if (e.key === 'Enter' && !e.isComposing) {
-      e.preventDefault();
-      choose(results()[selected()]);
-    } else if (e.key === 'Backspace' && !input?.value && stack().length) {
-      e.preventDefault();
-      back();
-    }
-  };
-
-  return (
-    <dialog
-      ref={(el) => (dialog = el)}
-      class={[
-        'm-auto mt-[12dvh] flex max-h-[min(34rem,76dvh)] w-[min(40rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-card border border-line bg-panel text-fg shadow-sheet backdrop:bg-black/40 not-open:hidden',
-        // Phone: the whole screen, so the list gets all the room the keyboard leaves.
-        'max-md:m-0 max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none max-md:border-0 max-md:pt-[env(safe-area-inset-top)]',
-      ]}
-      aria-label="Command palette"
-      onClick={(e) => e.target === e.currentTarget && closePalette()}
-      onCancel={(e) => {
-        // Esc steps back out of a second page before it closes.
-        if (!stack().length) return;
-        e.preventDefault();
-        back();
-      }}
-    >
-      <Loading fallback={<div class="h-12" />}>
-        <div class="flex h-12 shrink-0 items-center gap-2 border-b border-line pr-2 pl-3.5 touch:h-14">
-          <span class="text-muted">
-            <SearchIcon />
-          </span>
-          <Show when={page().title}>
-            <button
-              class="shrink-0 rounded-sm bg-surface px-1.5 text-meta text-muted transition-colors hover:text-fg"
-              title="Back"
-              onClick={() => {
-                back();
-                input?.focus();
-              }}
-            >
-              {page().title}
-            </button>
-          </Show>
-          <input
-            ref={(el) => (input = el)}
-            class="h-full min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted touch:text-read"
-            placeholder={page().placeholder}
-            role="combobox"
-            aria-expanded="true"
-            aria-controls="palette-list"
-            aria-activedescendant={
-              results().length ? `palette-${selected()}` : undefined
-            }
-            autocomplete="off"
-            spellcheck="false"
-            onInput={(e) => {
-              setQuery(e.currentTarget.value);
-              setActive(0);
-            }}
-            onKeyDown={onInputKey}
-          />
-          <Button size="sm" class="md:hidden" onClick={closePalette}>
-            Cancel
-          </Button>
-        </div>
-        <ul
-          id="palette-list"
-          role="listbox"
-          aria-label={page().title ?? 'Commands'}
-          class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-1.5"
-        >
-          <For
-            each={results()}
-            keyed={(c) => c.id}
-            fallback={
-              <li class="px-2 py-3 text-muted">
-                {page().raw ? page().placeholder : 'No matches'}
-              </li>
-            }
-          >
-            {(c, i) => (
-              <>
-                <Show
-                  when={
-                    c().group &&
-                    (i() === 0 || results()[i() - 1]?.group !== c().group)
-                  }
-                >
-                  <li
-                    role="presentation"
-                    class="px-2 pt-2 pb-1 text-meta text-muted"
-                  >
-                    {c().group}
-                  </li>
-                </Show>
-                <li
-                  id={`palette-${i()}`}
-                  role="option"
-                  aria-selected={String(i() === selected()) as 'true' | 'false'}
-                  class="flex h-8 items-center gap-2.5 rounded-md px-2 aria-selected:bg-active touch:h-11"
-                  onPointerMove={() => setActive(i())}
-                  onClick={() => choose(c())}
-                >
-                  <span class="grid w-4 shrink-0 place-items-center text-muted">
-                    <Show when={c().icon}>
-                      {(icon) => <Dynamic component={icon()} />}
-                    </Show>
-                  </span>
-                  <span class="flex min-w-0 flex-1 items-baseline gap-2">
-                    <span class="truncate" dir="auto">
-                      {c().label}
-                    </span>
-                    <Show when={c().hint}>
-                      <span class="min-w-0 flex-1 truncate text-meta text-muted">
-                        {c().hint}
-                      </span>
-                    </Show>
-                  </span>
-                  <Show
-                    when={c().keys}
-                    fallback={
-                      <Show
-                        when={c().page}
-                        fallback={
-                          <Show when={c().meta}>
-                            <span class="shrink-0 text-meta text-muted tabular-nums">
-                              {c().meta}
-                            </span>
-                          </Show>
-                        }
-                      >
-                        <span class="text-muted">
-                          <ChevronIcon />
-                        </span>
-                      </Show>
-                    }
-                  >
-                    {(keys) => (
-                      <kbd class="shrink-0 font-ui text-meta tracking-wider text-muted">
-                        {keyLabel(keys())}
-                      </kbd>
-                    )}
-                  </Show>
-                </li>
-              </>
-            )}
-          </For>
-        </ul>
-      </Loading>
-    </dialog>
-  );
+  return { root, actions, shortcutsPage };
 }

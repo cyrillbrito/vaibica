@@ -23,7 +23,7 @@ export default function Document(props: ParentProps) {
         <meta
           name="theme-color"
           media="(prefers-color-scheme: dark)"
-          content="#111113"
+          content="#1c1c20"
         />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />

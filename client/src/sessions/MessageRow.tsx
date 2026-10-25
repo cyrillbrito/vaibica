@@ -25,6 +25,7 @@ import { clockTime } from '../ui/time';
 import { formatTokens } from '@bica/shared/context-usage';
 import { contextMenu } from '../ui/ContextMenu';
 import { type Message } from '@bica/shared/transcript';
+import { promptArrived } from './queue-glide';
 
 export default function MessageRow(props: {
   message: Message;
@@ -130,6 +131,7 @@ export default function MessageRow(props: {
               </Show>
               <Show when={user().text}>
                 <div
+                  ref={(el) => promptArrived(el, user().text)}
                   {...contextMenu(() => [
                     {
                       label: 'Copy',

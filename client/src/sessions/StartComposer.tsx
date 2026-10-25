@@ -73,15 +73,16 @@ export default function StartComposer(props: {
     id.catch((error) => composer?.problem(errorText(error)));
     void startCall(id);
   };
-  props.ref?.({ call });
-
   return (
     <Composer
       onSend={(prompt, images, _steer, tonight) =>
         create(prompt, images, tonight)
       }
       draft={props.draft}
-      ref={(api) => (composer = api)}
+      ref={(api) => {
+        composer = api;
+        props.ref?.({ call });
+      }}
       placeholder={props.placeholder ?? 'Start a new session…'}
       actions={
         <>

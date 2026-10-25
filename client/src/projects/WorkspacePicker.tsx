@@ -16,7 +16,8 @@ import {
   PlusIcon,
   SparkleIcon,
 } from '../ui/icons';
-import { NoMatches, OptionGroup } from '../ui/Option';
+import { NoMatches, OptionGroup, optionClass } from '../ui/Option';
+import { createActiveOption } from '../ui/listKeys';
 import { Popover, PopoverSearch } from '../ui/Popover';
 import Kbd from '../ui/Kbd';
 
@@ -54,8 +55,10 @@ interface Group {
 const RECENT = 4;
 let nextId = 0;
 
-function words(q: string) {
-  return q.toLowerCase().split(/\s+/).filter(Boolean);
+/** The items that have every word of the query. */
+function matching(items: Item[], query: string) {
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  return items.filter((i) => words.every((w) => i.hay.includes(w)));
 }
 
 /**
@@ -74,11 +77,9 @@ export default function WorkspacePicker(props: {
   const id = `workspace-picker-${++nextId}`;
   let popover: HTMLDivElement | undefined;
   let input: HTMLInputElement | undefined;
-  let list: HTMLDivElement | undefined;
   const projects = useProjects();
   const sessions = useSessions();
   const [query, setQuery] = createSignal('', { name: 'workspaceQuery' });
-  const [active, setActive] = createSignal(0, { name: 'workspaceActive' });
 
   const lastByCwd = createMemo(
     () => {
@@ -136,48 +137,52 @@ export default function WorkspacePicker(props: {
 
   const groups = createMemo(
     (): Group[] => {
-      const q = words(query());
-      const keep = (items: Item[]) =>
-        items.filter((i) => q.every((w) => i.hay.includes(w)));
+      const q = query();
       // A matching worktree keeps its project's row, to say whose it is.
       const byProject = projects()
         .filter((p) => p.id !== CHATS_ID)
         .map((p): Group => {
           const [head, ...rest] = itemsOf(p);
-          const found = keep(rest);
+          const found = matching(rest, q);
           return {
             id: p.id,
             project: true,
-            items: found.length || keep([head]).length ? [head, ...found] : [],
+            items:
+              found.length || matching([head], q).length
+                ? [head, ...found]
+                : [],
           };
         });
       const chats = projects().find((p) => p.id === CHATS_ID);
       const other: Group = {
         id: 'other',
-        items: keep([
-          ...(chats
-            ? [
-                {
-                  key: 'chat',
-                  target: {
-                    projectId: chats.id,
-                    cwd: chats.path,
-                    worktree: true,
+        items: matching(
+          [
+            ...(chats
+              ? [
+                  {
+                    key: 'chat',
+                    target: {
+                      projectId: chats.id,
+                      cwd: chats.path,
+                      worktree: true,
+                    },
+                    label: 'New chat, no project',
+                    icon: SparkleIcon,
+                    hay: 'new chat no project',
                   },
-                  label: 'New chat, no project',
-                  icon: SparkleIcon,
-                  hay: 'new chat no project',
-                },
-              ]
-            : []),
-          {
-            key: 'add',
-            label: 'Add project…',
-            icon: FolderIcon,
-            hay: 'add project folder repo',
-            muted: true,
-          },
-        ]),
+                ]
+              : []),
+            {
+              key: 'add',
+              label: 'Add project…',
+              icon: FolderIcon,
+              hay: 'add project folder repo',
+              muted: true,
+            },
+          ],
+          q,
+        ),
       };
       const all = byProject.flatMap((g) => g.items);
       const p = (i: Item) =>
@@ -186,7 +191,7 @@ export default function WorkspacePicker(props: {
         id: 'recent',
         label: 'Recent',
         items:
-          q.length || all.length <= 8
+          q.trim() || all.length <= 8
             ? []
             : all
                 .filter((i) => i.last)
@@ -230,34 +235,27 @@ export default function WorkspacePicker(props: {
     else props.onAdd();
   };
 
-  const move = (to: number) => {
-    const n = flat().length;
-    if (!n) return;
-    const next = (to + n) % n;
-    setActive(next);
-    list
-      ?.querySelector(`[data-index="${next}"]`)
-      ?.scrollIntoView({ block: 'nearest' });
-  };
+  const nav = createActiveOption({
+    id,
+    count: () => flat().length,
+    choose: (i, e) => choose(flat()[i], e.metaKey || e.ctrlKey),
+  });
 
   const Row = (p: { item: Item }) => {
     const i = () => p.item;
     const index = () => indexOf().get(i().key) ?? -1;
-    const lit = () => active() === index();
+    const lit = () => nav.active() === index();
     const child = () => !!i().child;
     return (
       <div
-        data-index={index()}
-        id={`${id}-opt-${index()}`}
-        class={[
-          'flex min-h-8 w-full shrink-0 items-center gap-1.5 rounded-lg pr-2.5 pl-2.5 touch:min-h-11',
-          lit() && 'bg-hover',
-        ]}
+        id={nav.optionId(index())}
+        data-active={lit() ? '' : undefined}
+        class={optionClass}
         // A row, not a button: the + inside it is one. The search field
         // drives the keyboard, so rows never take focus.
         role="option"
         aria-selected={isOn(i()) ? 'true' : 'false'}
-        onPointerMove={() => !lit() && setActive(index())}
+        onPointerMove={() => nav.hover(index())}
         onClick={() => choose(i())}
       >
         <span class="flex min-w-0 flex-1 items-center gap-2.5">
@@ -320,7 +318,7 @@ export default function WorkspacePicker(props: {
             type="button"
             tabindex="-1"
             class={[
-              'flex h-6 shrink-0 items-center gap-1 rounded-md px-1.5 text-meta transition-colors hover:bg-active hover:text-fg touch:h-9 [&_svg]:size-3.5',
+              '-my-1 flex h-6 shrink-0 items-center gap-1 rounded-md px-1.5 text-meta transition-colors hover:bg-active hover:text-fg touch:h-9 [&_svg]:size-3.5',
               freshOn(i())
                 ? 'bg-accent/12 text-accent-ink'
                 : lit()
@@ -389,8 +387,7 @@ export default function WorkspacePicker(props: {
           if (!open) return;
           setQuery('');
           if (input) input.value = '';
-          setActive(Math.max(0, flat().findIndex(isOn)));
-          move(active());
+          nav.move(Math.max(0, flat().findIndex(isOn)));
           // On a phone the keyboard would cover the list.
           if (matchMedia('(pointer: fine)').matches) input?.focus();
         }}
@@ -398,25 +395,16 @@ export default function WorkspacePicker(props: {
         <PopoverSearch
           ref={(el) => (input = el)}
           controls={`${id}-list`}
-          activeId={flat().length ? `${id}-opt-${active()}` : undefined}
+          activeId={nav.activeId()}
           label="Search projects, branches, pull requests"
           placeholder="Search projects, branches, pull requests…"
           onInput={(v) => {
             setQuery(v);
-            move(0);
+            nav.move(0);
           }}
-          onKeyDown={(e) => {
-            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-              e.preventDefault();
-              move(active() + (e.key === 'ArrowDown' ? 1 : -1));
-            } else if (e.key === 'Enter' && !e.isComposing) {
-              e.preventDefault();
-              choose(flat()[active()], e.metaKey || e.ctrlKey);
-            }
-          }}
+          onKeyDown={(e) => nav.onKeyDown(e)}
         />
         <div
-          ref={(el) => (list = el)}
           id={`${id}-list`}
           role="listbox"
           aria-label="Workspaces"

@@ -14,6 +14,7 @@ The transcript shows your prompts with their images, the agent's replies, its th
 
 - Thinking and tool calls between two replies fold into one activity list, with a header such as "Worked for 18s · 6 tools, 1 thought". Each call opens to its command and output, its diff, or its arguments.
 - Running calls show a spinner, slow ones a timer, and failed ones say "Failed" in red.
+- Once a list of calls is over, a hairline under each call shows when it ran within the list, after affectUI's [Trace Waterfall](https://www.affectui.com/components/trace-waterfall): calls that ran side by side overlap, and the slow one is the long bar. Lists shorter than 2s, or with fewer than two timed calls, get none.
 - Before the first words stream, a "Working" pill sits at the bottom. A provider error waiting to retry shows there too, with a countdown.
 - Hover a reply to copy or fork it. Code blocks get their own copy button.
 - Notes from Bica and messages from other sessions show as a quiet row with the sender.
@@ -27,6 +28,7 @@ While the agent works, sending queues the prompt as a follow-up, which starts th
 
 - Push turns a follow-up into a steer, which joins the current run after the turn in progress. ⌘Enter sends a steer straight away.
 - Edit takes a prompt back into the composer, and Remove drops it.
+- When the agent takes a prompt from the queue, it glides from its line into the transcript, after affectUI's [Agent Steering](https://www.affectui.com/components/agent-steering), so you see which note went in (`sessions/queue-glide.ts`).
 - Stop ends the run, and follow-ups come back into the composer. Esc twice in the composer stops too.
 - A run that fails doesn't hold up the queue: the next follow-up runs anyway, so notes to an unwatched session still get read.
 

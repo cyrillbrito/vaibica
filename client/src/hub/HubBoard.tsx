@@ -1,5 +1,6 @@
 import { For, Show, createMemo } from 'solid-js';
 
+import { formatCost } from '@bica/shared/context-usage';
 import type { SessionStatus, SessionSummary } from '@bica/shared/protocol';
 import { useProjects, workspaceName } from '../projects/projects';
 import { useSessions } from '../sessions/sessions';
@@ -28,14 +29,61 @@ const WORD: Partial<Record<SessionStatus, string>> = {
 
 const NEEDS_YOU = new Set<SessionStatus>(['waiting', 'error', 'done']);
 
+type Branch = { session: SessionSummary; cost: number; children: Branch[] };
+
+function byRank(a: SessionSummary, b: SessionSummary) {
+  return RANK[a.status] - RANK[b.status] || b.updatedAt - a.updatedAt;
+}
+
+/**
+ * The listed sessions as branches: each holds the sessions it started, and a
+ * listed session with a listed ancestor hangs under it rather than on top.
+ * Archived sessions leave the rows, not the branch's cost.
+ */
+function growTree(
+  all: SessionSummary[],
+  listed: SessionSummary[],
+  hubId: string,
+) {
+  const kids = new Map<string, SessionSummary[]>();
+  for (const s of all)
+    if (s.startedBy && s.id !== hubId)
+      kids.set(s.startedBy, [...(kids.get(s.startedBy) ?? []), s]);
+  const seen = new Set<string>();
+  const grow = (s: SessionSummary): Branch => {
+    seen.add(s.id);
+    const children = (kids.get(s.id) ?? [])
+      .filter((k) => !seen.has(k.id))
+      .map(grow);
+    return {
+      session: s,
+      cost: s.cost + children.reduce((n, c) => n + c.cost, 0),
+      children: children
+        .filter((c) => !c.session.archivedAt)
+        .sort((a, b) => byRank(a.session, b.session)),
+    };
+  };
+  const ids = new Set(listed.map((s) => s.id));
+  const byId = new Map(all.map((s) => [s.id, s]));
+  const under = (s: SessionSummary) => {
+    for (let p = s.startedBy, hops = 0; p && hops < 20; hops++) {
+      if (ids.has(p)) return true;
+      p = byId.get(p)?.startedBy ?? null;
+    }
+    return false;
+  };
+  return listed.filter((s) => !under(s)).map(grow);
+}
+
 /**
  * Above the hub's chat: the sessions it tracks with their live status, what needs
  * you first (docs/hub.md). It tracks the sessions it started, and any
- * session that asks or failed, since the hub hears of those too.
+ * session that asks or failed, since the hub hears of those too. Sessions a
+ * worker started hang under it, after affectUI's Agent Tree, and each row's
+ * cost is its whole branch.
  */
 export default function HubBoard(props: { hubId: string }) {
   const sessions = useSessions();
-  const projects = useProjects();
   const tracked = createMemo(
     () =>
       sessions()
@@ -47,20 +95,18 @@ export default function HubBoard(props: { hubId: string }) {
               s.status === 'waiting' ||
               s.status === 'error'),
         )
-        .sort(
-          (a, b) =>
-            RANK[a.status] - RANK[b.status] || b.updatedAt - a.updatedAt,
-        ),
+        .sort(byRank),
     { name: 'hubTracked' },
   );
+  const tree = createMemo(() => growTree(sessions(), tracked(), props.hubId), {
+    name: 'hubTree',
+  });
+  const spent = () => tree().reduce((n, b) => n + b.cost, 0);
+  const rows = (list: Branch[]): number =>
+    list.reduce((n, b) => n + 1 + rows(b.children), 0);
   const needsYou = () => tracked().filter((s) => NEEDS_YOU.has(s.status));
   const running = () =>
     tracked().filter((s) => s.status === 'running' || s.status === 'retrying');
-  const where = (s: SessionSummary) => {
-    const p = projects().find((p) => p.id === s.projectId);
-    return p && s.cwd ? workspaceName(p, s.cwd) : undefined;
-  };
-
   return (
     <Show when={tracked().length}>
       <details
@@ -80,60 +126,92 @@ export default function HubBoard(props: { hubId: string }) {
             {[
               needsYou().length && `${needsYou().length} need you`,
               running().length && `${running().length} running`,
-              `${tracked().length} open`,
+              `${rows(tree())} open`,
+              spent() >= 0.01 && `${formatCost(spent())} spent`,
             ]
               .filter(Boolean)
               .join(' · ')}
           </span>
         </summary>
         <ul class="chat-column max-h-[38dvh] overflow-y-auto overscroll-contain pb-2">
-          <For each={tracked()} keyed={(s) => s.id}>
-            {(s) => (
-              <li>
-                <a
-                  class={[
-                    '-mx-1.5 flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors hover:bg-hover touch:py-2.5',
-                    s().status === 'idle' && 'text-muted',
-                  ]}
-                  href={paths.s(s().id)()}
-                  title={[s().title, where(s())].filter(Boolean).join('\n')}
-                >
-                  <StatusDot status={s().status} />
-                  <span
-                    class={[
-                      'min-w-0 flex-1 truncate',
-                      NEEDS_YOU.has(s().status) && 'font-semibold',
-                    ]}
-                  >
-                    {s().title || 'New session'}
-                  </span>
-                  <Show when={where(s())}>
-                    {(w) => (
-                      <span class="max-w-[35%] shrink truncate text-meta text-muted max-sm:hidden">
-                        {w()}
-                      </span>
-                    )}
-                  </Show>
-                  <span
-                    class={[
-                      'shrink-0 text-meta tabular-nums',
-                      s().status === 'waiting'
-                        ? 'text-accent'
-                        : s().status === 'error'
-                          ? 'text-danger'
-                          : 'text-muted',
-                    ]}
-                  >
-                    {[WORD[s().status], timeAgo(s().updatedAt)]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </span>
-                </a>
-              </li>
-            )}
+          <For each={tree()} keyed={(b) => b.session.id}>
+            {(b) => <Row branch={b()} />}
           </For>
         </ul>
       </details>
     </Show>
+  );
+}
+
+function Row(props: { branch: Branch }) {
+  const projects = useProjects();
+  const s = () => props.branch.session;
+  const where = () => {
+    const p = projects().find((p) => p.id === s().projectId);
+    return p && s().cwd ? workspaceName(p, s().cwd!) : undefined;
+  };
+  const started = () => props.branch.children.length;
+  return (
+    <li>
+      <a
+        class={[
+          '-mx-1.5 flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors hover:bg-hover touch:py-2.5',
+          s().status === 'idle' && 'text-muted',
+        ]}
+        href={paths.s(s().id)()}
+        title={[s().title, where()].filter(Boolean).join('\n')}
+      >
+        <StatusDot status={s().status} />
+        <span
+          class={[
+            'min-w-0 flex-1 truncate',
+            NEEDS_YOU.has(s().status) && 'font-semibold',
+          ]}
+        >
+          {s().title || 'New session'}
+        </span>
+        <Show when={where()}>
+          {(w) => (
+            <span class="max-w-[35%] shrink truncate text-meta text-muted max-sm:hidden">
+              {w()}
+            </span>
+          )}
+        </Show>
+        <span
+          class={[
+            'shrink-0 text-meta tabular-nums',
+            s().status === 'waiting'
+              ? 'text-accent'
+              : s().status === 'error'
+                ? 'text-danger'
+                : 'text-muted',
+          ]}
+        >
+          {[WORD[s().status], timeAgo(s().updatedAt)]
+            .filter(Boolean)
+            .join(' · ')}
+        </span>
+        <Show when={props.branch.cost >= 0.01}>
+          <span
+            class="w-12 shrink-0 text-right text-meta text-muted tabular-nums"
+            title={
+              started()
+                ? `This session and the ${started() === 1 ? 'one' : started()} it started`
+                : 'Spent at list prices'
+            }
+          >
+            {formatCost(props.branch.cost)}
+          </span>
+        </Show>
+      </a>
+      <Show when={started()}>
+        {/* A guide line, like the sidebar's, says whose they are. */}
+        <ul class="ml-[5px] border-l border-line pl-2.5">
+          <For each={props.branch.children} keyed={(c) => c.session.id}>
+            {(c) => <Row branch={c()} />}
+          </For>
+        </ul>
+      </Show>
+    </li>
   );
 }

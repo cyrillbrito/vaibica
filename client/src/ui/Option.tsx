@@ -4,11 +4,11 @@ import { createHighlight } from './Highlight';
 
 /**
  * A row in a menu, picker, or dialog list: 32px, 44px on touch. Inside an
- * `OptionList` the hover fill glides to it; keyboard focus fills the row
- * itself.
+ * `OptionList` the hover fill glides to it; keyboard focus, or `data-active`
+ * in a list a search field drives, fills the row itself.
  */
 export const optionClass =
-  'relative flex min-h-8 w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left transition-colors outline-none focus-visible:bg-active disabled:pointer-events-none disabled:opacity-40 touch:min-h-11';
+  'relative flex min-h-8 w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left transition-colors outline-none focus-visible:bg-active data-active:bg-active disabled:pointer-events-none disabled:opacity-40 touch:min-h-11';
 
 const INSET = {
   1: ['p-1', 'inset-x-1 rounded-lg bg-hover'],

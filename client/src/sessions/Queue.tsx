@@ -1,5 +1,5 @@
 import type { ConversationView, InboxItem } from '@earendil-works/pi-durable';
-import { For, Show, createMemo, createSignal } from 'solid-js';
+import { For, Show, createMemo, createSignal, onCleanup } from 'solid-js';
 
 import { pushQueued, withdrawQueued } from './sessions';
 import type { ComposerApi } from './Composer';
@@ -7,6 +7,7 @@ import { IconButton } from '../ui/Button';
 import { CloseIcon, PencilIcon, PushIcon, QueueIcon } from '../ui/icons';
 import { Spinner } from '../ui/Spinner';
 import { errorText } from '../ui/errors';
+import { queuedLeft } from './queue-glide';
 
 type Queued = Extract<InboxItem, { content: unknown }>;
 
@@ -62,6 +63,8 @@ export default function Queue(props: {
             const images = () => imageCount(item().content);
             const steer = () => item().mode === 'steer';
             const pending = () => busy().includes(Number(item().id));
+            let line: HTMLElement | undefined;
+            onCleanup(() => line && queuedLeft(line, text()));
             return (
               <li
                 class={[
@@ -90,6 +93,7 @@ export default function Queue(props: {
                   {steer() ? 'Next step' : 'Queued'}
                 </span>
                 <button
+                  ref={(el) => (line = el)}
                   type="button"
                   class="min-w-0 flex-1 truncate text-left"
                   title="Edit"

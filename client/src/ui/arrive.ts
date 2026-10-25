@@ -21,7 +21,7 @@ export function arrive(el: HTMLElement) {
  * A ref that plays `arrive` when `text` changes while `key` stays the same,
  * so mounting and switching sessions stay still.
  */
-export function arriveOnChange(
+export function createArrival(
   text: () => string | undefined,
   key: () => string = () => '',
 ) {

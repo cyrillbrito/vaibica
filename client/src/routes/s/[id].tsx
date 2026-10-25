@@ -12,7 +12,7 @@ import {
 } from 'solid-js';
 import type { JSX } from '@solidjs/web';
 import { createStickToBottom } from '../../ui/stick-to-bottom';
-import { arriveOnChange } from '../../ui/arrive';
+import { createArrival } from '../../ui/arrive';
 import CallBar from '../../voice/CallBar';
 import Composer, { type ComposerApi } from '../../sessions/Composer';
 import ContextChip from '../../context-usage/ContextChip';
@@ -124,7 +124,7 @@ export default function Session(props: RouteProps<'/s/:id'>) {
     { name: 'sessionSummary' },
   );
   const title = () => summary()?.title || '…';
-  const titleRef = arriveOnChange(
+  const titleRef = createArrival(
     () => summary()?.title,
     () => props.params.id!,
   );

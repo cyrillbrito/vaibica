@@ -4,7 +4,7 @@ import type { JSX } from '@solidjs/web';
 import { Errored, Loading, Show, createMemo, onSettled } from 'solid-js';
 
 import { HoldMusic } from './voice/CallBar';
-import CommandPalette from './app/CommandPalette';
+import CommandPalette from './app/palette/CommandPalette';
 import ContextMenu from './ui/ContextMenu';
 import DataToggle from './app/DataToggle';
 import Toaster from './ui/Toast';
@@ -13,7 +13,7 @@ import SidePanel from './app/SidePanel';
 import ProjectPicker from './projects/ProjectPicker';
 import ArchiveDialog from './sessions/ArchiveDialog';
 import Resizer from './ui/Resizer';
-import Sidebar from './app/Sidebar';
+import Sidebar from './app/sidebar/Sidebar';
 import TopBar from './app/TopBar';
 import {
   closeDrawer,

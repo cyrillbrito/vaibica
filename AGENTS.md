@@ -60,7 +60,6 @@ There is no time to prove every idea here, so borrow from people who already bui
 - Installing as an app on the phone.
 - A file watcher instead of polling.
 - A file mode in the command palette: `/` searches the workspace's files, and ⌘P opens straight into it.
-- `app/Sidebar.tsx` and `app/CommandPalette.tsx` split into smaller files, each when a feature next changes it ([architecture.md](docs/architecture.md#feature-folders)).
 
 ## Library docs
 

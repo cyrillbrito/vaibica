@@ -33,18 +33,21 @@ import { summaryClass } from '../ui/Summary';
 import Chevron from '../ui/Chevron';
 import { Spinner } from '../ui/Spinner';
 
+/** The stretch of time a finished group of steps ran, to draw its calls in. */
+export type Span = { from: number; to: number };
+
 /** One round of tool calls; calls in the same round ran in parallel. */
-export default function ToolCalls(props: { calls: ToolCall[] }) {
+export default function ToolCalls(props: { calls: ToolCall[]; span?: Span }) {
   return (
     <div class="flex flex-col">
       <For each={props.calls} keyed={(c) => c.id}>
-        {(call) => <ToolRow call={call()} />}
+        {(call) => <ToolRow call={call()} span={props.span} />}
       </For>
     </div>
   );
 }
 
-function ToolRow(props: { call: ToolCall }) {
+function ToolRow(props: { call: ToolCall; span?: Span }) {
   const summary = () => {
     const s = props.call.args.summary;
     return typeof s === 'string' && s.trim() ? s : undefined;
@@ -74,7 +77,8 @@ function ToolRow(props: { call: ToolCall }) {
       data-call={props.call.id}
       onToggle={(e) => e.currentTarget.open && setOpened(true)}
     >
-      <summary class={ROW}>
+      <summary class={[ROW, 'relative']}>
+        <TimeBar call={props.call} span={props.span} />
         <StatusIcon name={props.call.name} status={props.call.status} />
         <span class={[LABEL, props.call.status === 'running' && 'shimmer']}>
           {NAMES[props.call.name] ?? props.call.name}
@@ -182,6 +186,42 @@ function CallStatus(props: { call: ToolCall }) {
 }
 
 const SLOW_MS = 3000;
+
+/**
+ * Where this call sat in the group's time, as a hairline under its row, after
+ * affectUI's Trace Waterfall: calls that ran side by side overlap, and the
+ * slow one shows as the long bar.
+ */
+function TimeBar(props: { call: ToolCall; span?: Span }) {
+  const bar = () => {
+    const s = props.span;
+    const { startedAt, durationMs } = props.call;
+    if (!s || startedAt === undefined || durationMs === undefined) return;
+    const total = s.to - s.from;
+    return {
+      left: `${((startedAt - s.from) / total) * 100}%`,
+      width: `max(2px, ${(durationMs / total) * 100}%)`,
+    };
+  };
+  return (
+    <Show when={bar()}>
+      {(b) => (
+        <span
+          class="pointer-events-none absolute inset-x-1.5 bottom-0.5 h-0.5"
+          aria-hidden="true"
+        >
+          <span
+            class={[
+              'absolute inset-y-0 rounded-full',
+              props.call.status === 'error' ? 'bg-danger/50' : 'bg-muted/35',
+            ]}
+            style={b()}
+          />
+        </span>
+      )}
+    </Show>
+  );
+}
 
 /** A foldable step: a tool call or a thought. */
 export const ROW = summaryClass;

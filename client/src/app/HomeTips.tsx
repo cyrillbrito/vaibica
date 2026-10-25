@@ -1,7 +1,7 @@
 import { For, Show, createSignal } from 'solid-js';
 
 import { CHATS_ID, useProjects } from '../projects/projects';
-import { openPalette } from './CommandPalette';
+import { openPalette } from './palette/CommandPalette';
 import { openProjectPicker } from '../projects/ProjectPicker';
 import { Button, IconButton } from '../ui/Button';
 import { CloseIcon, DrawnCheckIcon } from '../ui/icons';

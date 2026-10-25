@@ -2,6 +2,7 @@ import type { JSX } from '@solidjs/web';
 import { For, Show, createEffect, createSignal, onSettled } from 'solid-js';
 import { IconButton } from './Button';
 import { createHighlight } from './Highlight';
+import { moveFocus } from './listKeys';
 import { MoreIcon } from './icons';
 import Kbd from './Kbd';
 
@@ -169,23 +170,6 @@ function enabled() {
   ];
 }
 
-function move(e: KeyboardEvent) {
-  const items = enabled();
-  const at = items.indexOf(document.activeElement as HTMLElement);
-  const next =
-    e.key === 'Home'
-      ? 0
-      : e.key === 'End'
-        ? items.length - 1
-        : e.key === 'ArrowDown'
-          ? at + 1
-          : at < 0
-            ? items.length - 1
-            : at - 1;
-  e.preventDefault();
-  items[(next + items.length) % items.length]?.focus();
-}
-
 /** Mount once, near the root. Every `contextMenu` target opens this one. */
 export default function ContextMenu() {
   // The hover fill glides between items; keyboard focus doesn't move it.
@@ -275,8 +259,7 @@ export default function ContextMenu() {
         if (e.key === 'Tab') {
           e.preventDefault();
           close();
-        } else if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key))
-          move(e);
+        } else moveFocus(e, enabled());
       }}
     >
       <highlight.Pill />

@@ -4,6 +4,7 @@ import { Button, buttonClass } from './Button';
 import { CheckMark } from './CheckMark';
 import Chevron from './Chevron';
 import { CloseIcon, FilterIcon } from './icons';
+import { moveFocus } from './listKeys';
 import { Popover } from './Popover';
 
 export type FilterOption = { id: string; label: string; count?: number };
@@ -110,19 +111,10 @@ export function FilterMenu(props: {
     ...list.querySelectorAll<HTMLElement>('[data-fm-row]:not([inert] *)'),
   ];
   const onKeyDown = (e: KeyboardEvent) => {
-    const all = rows();
-    const at = all.indexOf(document.activeElement as HTMLElement);
-    const go = (i: number) =>
-      all[Math.max(0, Math.min(all.length - 1, i))]?.focus();
     const group = (document.activeElement as HTMLElement | null)?.dataset
       .fmGroup;
-    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-      e.preventDefault();
-      go(at < 0 ? 0 : at + (e.key === 'ArrowDown' ? 1 : -1));
-    } else if (e.key === 'Home' || e.key === 'End') {
-      e.preventDefault();
-      go(e.key === 'Home' ? 0 : all.length - 1);
-    } else if (group && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
+    if (moveFocus(e, rows())) return;
+    if (group && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
       e.preventDefault();
       fold(group, e.key === 'ArrowRight');
       if (e.key === 'ArrowLeft')

@@ -11,6 +11,7 @@ import { openContextMenu } from '../ui/ContextMenu';
 import { CopyButton } from '../ui/CopyButton';
 import { Dialog, dialogBody } from '../ui/Dialog';
 import Empty from '../ui/Empty';
+import { FilterMenu, type FilterValue } from '../ui/FilterMenu';
 import { Field, checkKey } from '../ui/Field';
 import Input from '../ui/Input';
 import Kbd from '../ui/Kbd';
@@ -362,9 +363,33 @@ function Overlays() {
     ['Bica', 'Pi Durable', 'Pierre', 'Solid'].filter((i) =>
       i.toLowerCase().includes(query().toLowerCase()),
     );
+  const [filters, setFilters] = createSignal<FilterValue>({});
   return (
     <Section title="Overlays">
       <Row>
+        <FilterMenu
+          groups={[
+            {
+              id: 'status',
+              label: 'Status',
+              options: [
+                { id: 'working', label: 'Working', count: 3 },
+                { id: 'waiting', label: 'Waiting', count: 1 },
+                { id: 'failed', label: 'Failed', count: 0 },
+              ],
+            },
+            {
+              id: 'agent',
+              label: 'Agent',
+              options: [
+                { id: 'coding', label: 'Coding' },
+                { id: 'assistant', label: 'Assistant' },
+              ],
+            },
+          ]}
+          value={filters()}
+          onChange={setFilters}
+        />
         <Button variant="outline" onClick={() => dialog?.showModal()}>
           Dialog
         </Button>

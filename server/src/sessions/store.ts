@@ -6,6 +6,8 @@ import {
   LiveDoc,
   type LiveState,
   type SubmissionId,
+  UsageDoc,
+  type UsageState,
 } from '@earendil-works/pi-durable';
 
 import type { SessionSummary } from '@bica/shared/protocol';
@@ -115,11 +117,12 @@ export async function summarize(
   if (subagents.has(id)) return undefined;
   const harness = await getHarness();
   if (!(await harness.conversation(id, context))) return undefined;
-  const [meta, live, agent, newest] = await Promise.all([
+  const [meta, live, agent, newest, usage] = await Promise.all([
     sessionMeta(id),
     harness.snapshot(LiveDoc, id, context),
     harness.snapshot(AgentDoc, id, context),
     newestTurn(id),
+    harness.snapshot(UsageDoc, id, context),
   ]);
   const createdAt = meta?.createdAt ?? 0;
   let status = statusOf(live, newest);
@@ -155,7 +158,16 @@ export async function summarize(
     voice: meta?.voice ?? null,
     tonight: meta?.tonight || null,
     stuck,
+    cost: costOf(usage),
   };
+}
+
+/** Dollars spent at list prices, by models and tools both. */
+function costOf(usage?: UsageState) {
+  let total = 0;
+  for (const u of Object.values(usage?.models ?? {})) total += u.cost.total;
+  for (const u of Object.values(usage?.tools ?? {})) total += u.cost.total;
+  return total;
 }
 
 async function runningSince(id: ConversationId, live?: LiveState) {

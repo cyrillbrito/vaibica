@@ -4,7 +4,7 @@ export type Theme = 'system' | 'light' | 'dark';
 
 // Per device, not a server setting: phone and laptop may want different ones.
 const KEY = 'theme';
-const BG = { light: '#fbfbfa', dark: '#111113' };
+const BG = { light: '#fbfbfa', dark: '#1c1c20' };
 
 // Document.tsx imports the boot script, and the build renders it under Bun.
 function read(): Theme {

@@ -34,13 +34,14 @@ Everything in `client/src/ui/`, by job. Reach for these before styling a raw ele
 | Surfaces | `Dialog` and `dialogBody`, `Popover` with `PopoverSearch`, `Card` with `Setting` and `Toggle` (a settings section: a grey tray with the title, holding a white card of rows), `Strip` (one line on a tray: an icon, a label, an action), `Empty` (a quiet message, or with `icon`, `title`, and `action` a small empty state), `Failed` |
 | Status | `Spinner`, `ThinkingLoader`, `Tag` with `tagClass` (a calm tinted label: Waiting, Failed, Open #42), `Alert`, `toast` with `.success`, `.error` (takes whatever was thrown), `.info`, `.loading`, `.promise`, and `.dismiss` |
 | Numbers | `RollingNumber` (digits roll when it changes), `ProgressRing` (one segment per part, a rolling number in the middle), `Trend` (a change on a tinted arrow tile), `Breakdown` (a total split into ranked parts with a gliding bar) |
+| Keyboard | `createActiveOption` (a list a search field drives, as a combobox: ↑ and ↓ move a highlight that wraps, Enter picks, focus stays in the field), `moveFocus` (menus and tabs whose rows take focus: arrows step and wrap, Home and End jump) |
 | Motion helpers | `createHighlight` (the gliding hover fill), `createFlip` (rows glide to their new place), `createSortable` (drag to reorder on `@dnd-kit/dom`), `createDropZone` (files dragged over fan out as little documents), `arrive` (text the fast model wrote fades in with an accent tint) |
 
 ### Shells
 
 - A modal is a `Dialog`: a bottom sheet on the phone, a centred card from `md` up, with a titled header, a close button, and an optional footer for its actions. The command palette is the one exception, since it fills the phone screen.
 - A menu that opens from a button is a `Popover`: a card on a tray under (or above) its button, a sheet on the phone. Its rows go in an `OptionList`.
-- Menu and picker rows are 32px (`optionClass`), unlike the 28px rows of the sidebar and the transcript, since they are read one by one. Pickers driven from a search field (the workspace picker, ⌘K) fill the row the keyboard is on instead of gliding.
+- Menu and picker rows are 32px (`optionClass`), unlike the 28px rows of the sidebar and the transcript, since they are read one by one. Pickers driven from a search field (the workspace picker, ⌘K) fill the row the keyboard is on (`data-active`) instead of gliding.
 - A note above the composer (night run, parent in charge, stuck) is a `Strip`.
 - Errors that block a form show as an `Alert` in place; failures with nowhere to show go to `toast.error`. `errorText` turns whatever was thrown into its message.
 
@@ -61,6 +62,7 @@ Tokens are defined once with `light-dark()`. Light and dark follow the system un
 ### Color
 
 - Colors: `bg`, `panel`, `surface`, `hover`, `active`, `line`, `line-strong`, `fg`, `muted`, `accent` (orange), `brand` (blue, the logo and confetti), `running` (green), `warn` (yellow), `danger`, `merged` (purple, merged PRs), `thumb` (the raised thumb of a segmented control: white in light, a light veil in dark). Small colored text on a tint of its own color (a tag, the sidebar's running clock) uses the `-ink` shade: `accent-ink`, `running-ink`, `warn-ink`, `danger-ink`, `merged-ink`, darker in light mode so 12px text keeps AA contrast. Use them as `bg-panel`, `text-muted`, `border-line`.
+- Dark mode is a dimmed dark, a neutral gray near `#1c1c20` rather than black, after [GitHub's Dark Dimmed](https://github.blog/changelog/2021-04-21-dark-dimmed-theme-is-now-available-on-github/): it is easier on the eyes for long reading, and shadows and raised surfaces still show. Pierre's diffs take the same background (`--diffs-dark-bg` in `App.css`), so code doesn't sit in a black hole.
 - Selection is tinted with the accent. Replies wrap with `text-wrap: pretty` (no lone last word), and headings with `balance`.
 
 ### Radius
@@ -102,7 +104,7 @@ Sizes are defined by role in `@theme`, and Tailwind's own sizes (`text-sm`, `tex
 
 Hover and press take about 150ms, and panels and sheets at most 200ms. `ease-out` is a strong curve (`cubic-bezier(0.23, 1, 0.32, 1)`), drawers and sheets use `ease-drawer`, and `ease-spring` overshoots a little, for things springing back, like a toast swiped too short. Entrances only: closing is instant. Fades stay under reduced motion, and movement is `motion-safe`. Don't animate what you do 100+ times a day or from the keyboard: switching sessions, shortcuts, list navigation.
 
-Text the fast model writes in place, like a session title or a commit message, fades in with an accent tint that settles over about a second (`arrive` in `client/src/ui/arrive.ts`). Otherwise the swap is instant and easy to miss. It plays only when the text changes, never on mount or when you switch sessions. The idea comes from [How I make apps feel premium](https://youtu.be/MXLF8b15GhQ), which starts with feedback for an AI summary.
+Text the fast model writes in place, like a session title or a commit message, fades in with an accent tint that settles over about a second (`arrive` in `client/src/ui/arrive.ts`, or `createArrival` for a ref that plays it on each change). Otherwise the swap is instant and easy to miss. It plays only when the text changes, never on mount or when you switch sessions. The idea comes from [How I make apps feel premium](https://youtu.be/MXLF8b15GhQ), which starts with feedback for an AI summary.
 
 The utilities in `App.css`:
 
@@ -123,6 +125,7 @@ The utilities in `App.css`:
 - `rise-in`: rows of a summary arriving one after another on first view. Set `--i` to the row's place.
 - `animate-chip-in`: a filter chip or a comment arriving, fading and growing in a little.
 - `animate-breathe`: a halo swelling around a dot that waits on you (a session asking a question). It is `motion-safe` only, since the ring shape already says it.
+- The queue glide: a prompt the agent takes slides from its queue line into the transcript (`sessions/queue-glide.ts`).
 - `animate-ray`: the rays of the `Spinner`, lit one after another, so it turns without rotating.
 - `animate-nudge`: a small shake every few seconds, for the context chip of a session that grew too big.
 - `context-target`: a row held on touch sinks and darkens until its context menu opens.

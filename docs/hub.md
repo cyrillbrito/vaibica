@@ -8,7 +8,7 @@ Hub sits at the top of the sidebar and in the command palette, and the first ope
 
 ## Its page
 
-On top is its board: the sessions it started, and any session that asks a question or failed. What needs you comes first. Each row opens that session, and the board folds away.
+On top is its board: the sessions it started, and any session that asks a question or failed. What needs you comes first. Sessions a worker started hang under it with a guide line, after affectUI's [Agent Tree](https://www.affectui.com/components/agent-tree), and each row's cost is its whole branch at list prices, archived sessions included. The header adds up what the board spent. Each row opens that session, and the board folds away.
 
 Below it is the chat, with a composer and a [voice call](./voice.md) button. There are no Git, files, or terminal panels, and no model picker: Settings → Hub sets its model.
 

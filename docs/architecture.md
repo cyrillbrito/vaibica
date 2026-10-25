@@ -46,7 +46,7 @@ Inside the client and the server, code is grouped by feature, and a feature has 
 - `files/` and `git/`: file and diff views, kept files, and review comments; status, staging, and commits ([files.md](./files.md), [git.md](./git.md)).
 - `terminals/`, `voice/`, `hub/`, `night-runs/`, `context-usage/`: one feature each, with its doc. Hub and Night define their agents in their own folders.
 
-A file goes to the feature that owns it, not the one that uses it first. Features import each other freely, with no layering between them. The pieces every feature touches stay one file each: `shared/src/protocol.ts`, the socket's table of calls in `server/src/socket.ts`, the sidebar, and ⌘K. A piece of one moves into its feature only when it owns state there, as terminal and kept-file rows did.
+A file goes to the feature that owns it, not the one that uses it first. Features import each other freely, with no layering between them. The pieces every feature touches stay in one place each: `shared/src/protocol.ts`, the socket's table of calls in `server/src/socket.ts`, the sidebar in `client/src/app/sidebar/`, and ⌘K in `client/src/app/palette/`. A piece of one moves into its feature only when it owns state there, as terminal and kept-file rows did.
 
 A client feature folder mixes components (`PascalCase.tsx`) with stores and helpers (`kebab-case.ts`). The file named after the feature, such as `sessions/sessions.ts`, holds its state and its requests to the server. The `shared` package stays flat: `protocol.ts` holds every call and topic in one file.
 

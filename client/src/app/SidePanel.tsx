@@ -19,6 +19,7 @@ import GitPanel from '../git/GitPanel';
 import { keepOpenItem } from '../files/OpenFile';
 import { IconButton } from '../ui/Button';
 import Empty from '../ui/Empty';
+import { moveFocus } from '../ui/listKeys';
 import Failed from '../ui/Failed';
 import {
   CloseIcon,
@@ -50,13 +51,17 @@ export default function SidePanel() {
       aria-controls="side-panel"
       tabindex={tab() === props.id ? 0 : -1}
       onClick={() => setTab(props.id)}
-      onKeyDown={(e) => {
-        if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-        e.preventDefault();
-        const next = tab() === 'files' ? 'git' : 'files';
-        setTab(next);
-        document.getElementById(`side-tab-${next}`)?.focus();
-      }}
+      onKeyDown={(e) =>
+        moveFocus(
+          e,
+          [
+            ...e.currentTarget.parentElement!.querySelectorAll<HTMLElement>(
+              '[role=tab]',
+            ),
+          ],
+          true,
+        )?.click()
+      }
     >
       {props.children}
     </button>

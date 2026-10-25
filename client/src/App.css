@@ -75,15 +75,15 @@
 }
 
 @theme {
-  --color-bg: light-dark(#fbfbfa, #111113);
-  --color-panel: light-dark(#f4f4f2, #18181b);
-  --color-surface: light-dark(#ffffff, #1f1f23);
+  --color-bg: light-dark(#fbfbfa, #1c1c20);
+  --color-panel: light-dark(#f4f4f2, #232327);
+  --color-surface: light-dark(#ffffff, #2a2a2f);
   --color-hover: light-dark(#0000000a, #ffffff0d);
   --color-active: light-dark(#00000012, #ffffff17);
   --color-line: light-dark(#0000001a, #ffffff14);
   --color-line-strong: light-dark(#00000033, #ffffff33);
-  --color-fg: light-dark(#1c1c1e, #ececef);
-  --color-muted: light-dark(#6e6e73, #8b8b93);
+  --color-fg: light-dark(#1c1c1e, #e4e4e8);
+  --color-muted: light-dark(#6e6e73, #96969f);
   --color-accent: light-dark(#c2410c, #fb923c);
   --color-brand: light-dark(#2f5bd3, #7ea1f5);
   --color-running: light-dark(#16a34a, #4ade80);
@@ -290,6 +290,10 @@
   file-tree-container,
   diffs-container {
     color-scheme: inherit;
+  }
+  /* The theme's near black would sit like a hole in the dark page. */
+  diffs-container {
+    --diffs-dark-bg: #1c1c20;
   }
 
   body {

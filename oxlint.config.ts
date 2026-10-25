@@ -9,6 +9,8 @@ export default defineConfig({
   settings: solidV2.settings,
   rules: {
     ...solidV2.rules,
+    // Pierre's `subscribe` calls back on every change, like an event handler.
+    'solid/reactivity': ['warn', { customReactiveFunctions: ['subscribe'] }],
     'bica/type-tokens': 'error',
     'bica/radius-tokens': 'error',
     'bica/top-level-functions': 'error',
