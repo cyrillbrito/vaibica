@@ -59,6 +59,7 @@ import {
   useFirst,
   watchAccounts,
 } from './models/accounts';
+import { voiceLog } from './voice/log';
 import { startCall, stopCall, transcribe } from './voice/voice';
 import { watchPlanUsage } from './models/usage';
 import {
@@ -201,7 +202,11 @@ const calls: Handlers = {
     await markSeen(id, seen !== false);
     return null;
   },
-  'voice.start': async ({ id, sdp }) => startCall(id, sdp),
+  'voice.start': async ({ id, sdp, trace }) => startCall(id, sdp, trace),
+  'voice.log': async ({ trace, event, data }) => {
+    voiceLog(trace, 'browser', event, data);
+    return null;
+  },
   'voice.transcribe': async ({ audio, mimeType }) =>
     transcribe(audio, mimeType),
   'voice.stop': async ({ callId }) => {

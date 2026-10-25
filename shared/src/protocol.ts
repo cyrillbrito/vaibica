@@ -469,11 +469,17 @@ export interface Calls {
     result: StepDetail | null;
   };
   // A voice call on a session: the browser's WebRTC offer in, the answer out.
+  // `trace` keys the call's lines in the voice log (server/src/voice/log.ts).
   'voice.start': {
-    args: { id: string; sdp: string };
+    args: { id: string; sdp: string; trace: string };
     result: { sdp: string; callId: string };
   };
   'voice.stop': { args: { callId: string }; result: null };
+  // A step of a call in the browser, for the voice log.
+  'voice.log': {
+    args: { trace: string; event: string; data?: Record<string, unknown> };
+    result: null;
+  };
   // Dictation: a recording in, its text out. `audio` is base64.
   'voice.transcribe': {
     args: { audio: string; mimeType: string };

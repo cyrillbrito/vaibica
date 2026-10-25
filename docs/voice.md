@@ -35,6 +35,12 @@ On a phone, the mic button in the composer records until you tap its check, then
 
 Calls and dictation need the OpenAI Codex (legacy) provider in Settings → Providers ([models.md](./models.md#providers)). The newer Sign in with ChatGPT under OpenAI only covers chat models, so it doesn't work for them. Both run on the plan, the way the `pi-live-codex` extension and Codex Desktop do. That route is unofficial and may break.
 
+## When a call goes wrong
+
+Every call logs each step to `.data/voice-log.jsonl` (the data folder's `voice-log.jsonl` for the `bica` binary). The browser adds the mic's state, the connection, and errors. The server adds the signaling, the sideband opening and closing, and the first event of each kind. A call's lines share one `trace` id. The file rolls over to `voice-log.jsonl.1` at 2 MB.
+
+If the mic sends pure silence, without even room noise, the call panel says "No sound from your mic". In that case the browser or the system isn't passing the mic through, and the server and OpenAI aren't to blame.
+
 ## Limits
 
 - One call at a time per browser tab.

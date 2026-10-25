@@ -137,6 +137,7 @@ export default function CallBar(props: {
           if (now.phase === 'error') return now.error ?? 'Call failed';
           if (now.phase === 'connecting') return 'Connecting…';
           if (now.muted) return 'Muted';
+          if (now.micSilent) return 'No sound from your mic';
           return props.busy ? 'Working on it…' : 'Listening';
         };
         const working = () =>
@@ -159,7 +160,7 @@ export default function CallBar(props: {
                   <span
                     class={[
                       'text-read',
-                      c().phase === 'error'
+                      c().phase === 'error' || c().micSilent
                         ? 'text-danger'
                         : props.busy && c().phase === 'live' && !c().muted
                           ? 'shimmer text-muted'

@@ -73,7 +73,23 @@ export type CallState = {
   // What is being said right now; once said, it is in the transcript.
   caption?: string;
   error?: string;
+  // The mic gives pure silence, not even room noise: the browser or the
+  // system isn't passing it through.
+  micSilent?: boolean;
 };
+
+// A real mic always picks up some noise; a dead track reads exactly zero.
+const DEAD_RMS = 1e-5;
+const DEAD_MS = 4000;
+
+const trackState = (track: MediaStreamTrack | undefined) =>
+  track && {
+    label: track.label,
+    readyState: track.readyState,
+    muted: track.muted,
+    enabled: track.enabled,
+    settings: track.getSettings(),
+  };
 
 const [call, setCall] = createSignal<CallState | undefined>(undefined, {
   name: 'voiceCall',
@@ -117,6 +133,15 @@ export function holdMusic(on: boolean) {
  */
 export async function startCall(session: string | Promise<string>) {
   current?.end();
+  const trace = crypto.randomUUID().slice(0, 8);
+  // Into the server's voice log, so a call that went wrong can be read later.
+  const log = (event: string, data?: Record<string, unknown>) =>
+    void request('voice.log', { trace, event, data }).catch(() => {});
+  log('start', {
+    userAgent: navigator.userAgent,
+    standalone: matchMedia('(display-mode: standalone)').matches,
+    visibility: document.visibilityState,
+  });
   setCall({
     sessionId: typeof session === 'string' ? session : '',
     phase: 'connecting',
@@ -135,6 +160,7 @@ export async function startCall(session: string | Promise<string>) {
     music.play().catch(() => {});
   }
   const meters = new AudioContext();
+  meters.onstatechange = () => log('meter', { state: meters.state });
   const analysers: Partial<Record<Who, AnalyserNode>> = {};
   const meter = (who: Who, stream: MediaStream) => {
     const analyser = meters.createAnalyser();
@@ -143,24 +169,28 @@ export async function startCall(session: string | Promise<string>) {
     analysers[who] = analyser;
   };
   const samples = new Float32Array(512);
+  const rms = (who: Who) => {
+    const analyser = analysers[who];
+    if (!analyser) return 0;
+    analyser.getFloatTimeDomainData(samples);
+    let sum = 0;
+    for (const s of samples) sum += s * s;
+    return Math.sqrt(sum / samples.length);
+  };
   let callId: string | undefined;
+  let watch: ReturnType<typeof setInterval> | undefined;
   const self: NonNullable<typeof current> = {
     end: () => end(),
     music,
-    level: (who) => {
-      const analyser = analysers[who];
-      if (!analyser) return 0;
-      analyser.getFloatTimeDomainData(samples);
-      let sum = 0;
-      for (const s of samples) sum += s * s;
-      // Speech sits around 0.02–0.2 RMS; stretch that over the meter.
-      return Math.min(1, Math.sqrt(sum / samples.length) * 6);
-    },
+    // Speech sits around 0.02–0.2 RMS; stretch that over the meter.
+    level: (who) => Math.min(1, rms(who) * 6),
   };
   current = self;
   const end = (error?: string) => {
     if (current !== self) return;
     current = undefined;
+    log('end', { error, track: trackState(self.mic?.getAudioTracks()[0]) });
+    clearInterval(watch);
     pc.close();
     self.mic?.getTracks().forEach((t) => t.stop());
     audio.srcObject = null;
@@ -186,21 +216,49 @@ export async function startCall(session: string | Promise<string>) {
       },
     });
     if (current !== self) return self.mic.getTracks().forEach((t) => t.stop());
+    const track = self.mic.getAudioTracks()[0]!;
+    log('mic', { track: trackState(track), meter: meters.state });
+    for (const type of ['mute', 'unmute', 'ended'])
+      track.addEventListener(type, () =>
+        log(`mic ${type}`, { track: trackState(track) }),
+      );
+    // Created in the tap, but the mic prompt may have taken it out of it.
+    void meters.resume();
     meter('you', self.mic);
-    pc.addTrack(self.mic.getAudioTracks()[0]!, self.mic);
+    pc.addTrack(track, self.mic);
+    // Pure silence for a while means the mic isn't reaching the call. Only
+    // trusted while the meter runs, since a suspended one reads zero too.
+    let silentSince = Date.now();
+    watch = setInterval(() => {
+      if (meters.state !== 'running' || call()?.muted) {
+        silentSince = Date.now();
+        return;
+      }
+      const silent = rms('you') < DEAD_RMS;
+      if (!silent) silentSince = Date.now();
+      const dead = silent && Date.now() - silentSince > DEAD_MS;
+      if (dead === !!call()?.micSilent) return;
+      log(dead ? 'mic silent' : 'mic heard', { track: trackState(track) });
+      update({ micSilent: dead });
+    }, 500);
     pc.ontrack = (e) => {
       const stream = e.streams[0];
       if (!stream) return;
       audio.srcObject = stream;
       meter('voice', stream);
     };
+    pc.oniceconnectionstatechange = () =>
+      log('ice', { state: pc.iceConnectionState });
     pc.onconnectionstatechange = () => {
+      log('connection', { state: pc.connectionState });
       if (pc.connectionState === 'connected') update({ phase: 'live' });
       if (pc.connectionState === 'failed') end('Connection lost');
     };
 
     // The same events the server gets; here for the captions.
     const events = pc.createDataChannel('oai-events');
+    events.onopen = () => log('events open');
+    events.onclose = () => log('events closed');
     // Transcripts arrive in pieces, or whole so far; either way, grow. Pieces
     // can trail the end of a turn, so a caption also clears after a pause.
     let quiet: ReturnType<typeof setTimeout> | undefined;
@@ -224,7 +282,10 @@ export async function startCall(session: string | Promise<string>) {
       else if (event.type === 'output_transcript.added')
         say('voice', event.item.text);
       else if (event.type === 'turn.done') hush();
-      else if (event.type === 'error') console.error('[voice]', event);
+      else if (event.type === 'error') {
+        console.error('[voice]', event);
+        log('error', { event });
+      }
     };
 
     const offer = await pc.createOffer();
@@ -235,11 +296,16 @@ export async function startCall(session: string | Promise<string>) {
     const answer = await request('voice.start', {
       id: sessionId,
       sdp: offer.sdp!,
+      trace,
     });
     callId = answer.callId;
     if (current !== self) return void request('voice.stop', { callId });
     await pc.setRemoteDescription({ type: 'answer', sdp: answer.sdp });
   } catch (error) {
+    log('failed', {
+      name: error instanceof Error ? error.name : undefined,
+      message: String(error),
+    });
     end(error instanceof Error ? error.message : String(error));
   }
 }

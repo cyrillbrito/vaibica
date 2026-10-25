@@ -7,6 +7,7 @@ import WebSocket from 'ws';
 
 import { withCallWords, type VoiceLine } from '@bica/shared/transcript';
 import { models } from '../models/registry';
+import { voiceLog } from './log';
 import { voiceSession } from './session';
 
 /*
@@ -138,7 +139,7 @@ export async function transcribe(audio: string, mimeType: string) {
   return { text: text?.trim() ?? '' };
 }
 
-type Call = { socket: WebSocket; stop: () => void };
+type Call = { socket: WebSocket; stop: (by: string) => void };
 const calls = new Map<string, Call>();
 
 /**
@@ -146,7 +147,10 @@ const calls = new Map<string, Call>();
  * returns OpenAI's answer. Audio then flows browser ↔ OpenAI; the events
  * come here.
  */
-export async function startCall(sessionId: string, sdp: string) {
+export async function startCall(sessionId: string, sdp: string, trace: string) {
+  const log = (event: string, data?: Record<string, unknown>) =>
+    voiceLog(trace, 'server', event, data);
+  log('start', { session: sessionId });
   const session = await voiceSession(sessionId);
 
   const { token, signaling, sideband } = await route();
@@ -173,6 +177,7 @@ export async function startCall(sessionId: string, sdp: string) {
   ]
     .filter(Boolean)
     .join('\n\n');
+  const asked = Date.now();
   const response = await fetch(signaling, {
     method: 'POST',
     headers: { ...headers(token, id), 'Content-Type': 'application/json' },
@@ -187,21 +192,33 @@ export async function startCall(sessionId: string, sdp: string) {
     }),
   });
   const answer = await response.text();
-  if (!response.ok)
+  if (!response.ok) {
+    log('refused', { status: response.status, body: answer.slice(0, 1000) });
     throw new Error(
       `Voice call refused (${response.status}): ${answer.slice(0, 300)}`,
     );
+  }
   const callId = response.headers
     .get('location')
     ?.split('?')[0]
     ?.split('/')
     .find((part) => /^rtc_[\w-]+$/.test(part));
+  log('signaled', {
+    callId,
+    ms: Date.now() - asked,
+    instructions: instructions.length,
+  });
   if (!callId) throw new Error('Voice call has no id');
 
   // The "sideband": this server's line into the call, for events and results.
   const socket = new WebSocket(sideband(callId), {
     headers: headers(token, id),
   });
+  const opening = Date.now();
+  socket.on('open', () => log('sideband open', { ms: Date.now() - opening }));
+  // The first of each kind of event, so a call that hears nothing shows
+  // which events never came.
+  const seen = new Set<string>();
   const send = (message: object) => {
     if (socket.readyState === WebSocket.OPEN)
       socket.send(JSON.stringify(message));
@@ -365,6 +382,10 @@ export async function startCall(sessionId: string, sdp: string) {
       return;
     }
     const item = event.item;
+    if (event.type && !seen.has(event.type)) {
+      seen.add(event.type);
+      log('event', { type: event.type });
+    }
     if (event.type === 'input_transcript.added' && item?.text)
       hear('you', item.text);
     if (event.type === 'output_transcript.added' && item?.text)
@@ -379,20 +400,23 @@ export async function startCall(sessionId: string, sdp: string) {
         .map((c) => c.text ?? '')
         .join('\n')
         .trim();
+      log('handoff', { request: request.slice(0, 200) });
       if (request)
-        delegate(item.id, request).catch((error) =>
-          finish(
+        delegate(item.id, request).catch((error) => {
+          log('handoff failed', { error: String(error) });
+          return finish(
             item.id,
             `That failed: ${error instanceof Error ? error.message : String(error)}`,
-          ),
-        );
-    } else if (event.type === 'error')
-      console.error('[voice]', event.message ?? event.error);
+          );
+        });
+    } else if (event.type === 'error') log('error', { event });
   });
 
   const call: Call = {
     socket,
-    stop: () => {
+    stop: (by) => {
+      if (!calls.has(callId)) return;
+      log('stop', { by, events: [...seen] });
       // Hung up mid-sentence: keep what was said so far.
       save('you');
       save('voice');
@@ -402,17 +426,20 @@ export async function startCall(sessionId: string, sdp: string) {
     },
   };
   calls.set(callId, call);
-  socket.on('close', call.stop);
+  socket.on('close', (code, reason) => {
+    log('sideband closed', { code, reason: reason.toString() });
+    call.stop('sideband');
+  });
   socket.on('error', (error) => {
-    console.error('[voice] sideband', error.message);
-    call.stop();
+    log('sideband error', { error: error.message });
+    call.stop('sideband');
   });
 
   return { sdp: answer, callId };
 }
 
 export function stopCall(callId: string) {
-  calls.get(callId)?.stop();
+  calls.get(callId)?.stop('browser');
 }
 
 const ago = (at: number) => {
