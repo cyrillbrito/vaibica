@@ -181,7 +181,6 @@ const CONTEXT = {
   parts: [],
   biggest: [],
   misses: 0,
-  spend: [],
   compacting: false,
   running: false,
   prunable: 0,
@@ -611,7 +610,11 @@ function withContext(
       const v = talk.value;
       return {
         ...v,
-        docs: { ...v.docs, 'bica.context': context.value() as never },
+        docs: {
+          ...v.docs,
+          'bica.context': context.value() as never,
+          ...(context.spend && { 'pi.usage': context.spend }),
+        },
       };
     },
     submit: talk.submit,

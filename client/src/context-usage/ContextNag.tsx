@@ -9,8 +9,11 @@ import {
 
 import {
   BLOATED,
+  EXPIRING,
   bloat,
+  cacheLeft,
   formatTokens,
+  nearAutoCompact,
   type ContextUsage,
 } from '@bica/shared/context-usage';
 import { PRUNE_HINT } from '@bica/shared/prune';
@@ -29,10 +32,6 @@ type Prune = Extract<Message, { kind: 'prune' }>;
 const COLD_WORTH_IT = 30_000;
 // Below this, pruning saves too little to offer on its own.
 const CLEAN_WORTH_IT = 5_000;
-// Past this share of the auto-compaction point, say it is coming.
-const NEAR_AUTO = 0.85;
-// The cache's last minutes: the cheapest moment to compact.
-const EXPIRING = 10 * 60_000;
 
 /**
  * Which hint shows, and the key that dismissing it remembers: a dismissed
@@ -101,8 +100,7 @@ export default function ContextNag(props: {
     () => {
       const u = props.usage;
       if (u.running || u.compacting) return;
-      const c = u.cache;
-      const left = c ? c.at + c.ttl - tick() : undefined;
+      const left = cacheLeft(u, tick());
       const big = u.used >= BLOATED;
       if (left !== undefined && left <= 0) {
         if (u.used < COLD_WORTH_IT) return;
@@ -113,7 +111,7 @@ export default function ContextNag(props: {
         if (!clean && !compact) return;
         return {
           kind: 'cold',
-          key: `cold:${c!.at}`,
+          key: `cold:${u.cache!.at}`,
           clean,
           compact,
         };
@@ -125,8 +123,7 @@ export default function ContextNag(props: {
           left: left !== undefined && left < EXPIRING ? left : undefined,
         };
       }
-      if (u.compactAt && u.used >= u.compactAt * NEAR_AUTO)
-        return { kind: 'auto', key: 'auto' };
+      if (nearAutoCompact(u)) return { kind: 'auto', key: 'auto' };
     },
     { name: 'nagHint' },
   );

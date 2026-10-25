@@ -1,14 +1,12 @@
 import {
   AgentDoc,
   type ConversationId,
-  type EntryRecord,
   InboxDoc,
   type InboxItem,
   LiveDoc,
 } from '@earendil-works/pi-durable';
 
-import type { Message } from '@earendil-works/pi-ai';
-import { PRUNE_ENTRY, chars, pruneEdits } from '@bica/shared/prune';
+import { PRUNE_ENTRY, pruneEdits, prunedTokens } from '@bica/shared/prune';
 import type { ModelChoice, PromptImage } from '@bica/shared/protocol';
 import { context, getHarness } from '../harness';
 import { getAgent } from '../agents/registry';
@@ -236,23 +234,9 @@ export async function pruneContext(id: string) {
   )
     throw new Error('Wait for the compaction to finish, then prune');
   const view = await conversation.context(context);
-  const current = new Map(
-    view.entries.map((e, i) => [e.id, view.contributions[i]] as const),
-  );
-  const of = (e: EntryRecord) => current.get(e.id);
-  const edits = pruneEdits(view.entries, of);
+  const edits = pruneEdits(view);
   if (!edits.length) return 0;
-  const size = (messages: readonly Message[] = []) =>
-    messages.reduce((n, m) => n + chars(m), 0);
-  const freed = Math.round(
-    edits.reduce(
-      (n, e) =>
-        n +
-        size(current.get(e.target)) -
-        size(e.action === 'replace' ? e.messages : []),
-      0,
-    ) / 4,
-  );
+  const freed = Math.round(prunedTokens(view, edits));
   const submission = await conversation.submit(
     { type: 'write', entry: { kind: PRUNE_ENTRY, edits, data: { freed } } },
     context,

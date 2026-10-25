@@ -8,11 +8,13 @@ import {
 } from 'solid-js';
 
 import { PRUNE_HINT } from '@bica/shared/prune';
+import type { ContextBreakdown, Part } from '@bica/shared/context-breakdown';
 import {
   MIN_PRUNE,
   formatTokens,
+  level,
+  nearAutoCompact,
   type ContextUsage,
-  type Part,
 } from '@bica/shared/context-usage';
 import { pruneSession, compactSession } from '../sessions/sessions';
 import { buttonClass } from '../ui/Button';
@@ -69,8 +71,7 @@ type Hot = { kind: Kind } | { part: string; kind: Kind } | { clean: true };
  */
 export default function ContextField(props: {
   id: string;
-  usage: ContextUsage;
-  running: boolean;
+  usage: ContextUsage & ContextBreakdown;
 }) {
   const u = () => props.usage;
   const total = () => Math.max(u().window ?? 0, u().used, 1);
@@ -188,9 +189,7 @@ export default function ContextField(props: {
     const h = hot();
     return h && 'part' in h ? h.part : undefined;
   };
-  const share = () => (u().window ? u().used / u().window! : 0);
-  const tone = () =>
-    share() >= 0.9 ? 'danger' : share() >= 0.7 ? 'warn' : undefined;
+  const tone = () => level(u());
 
   const caption = () => {
     const d = done();
@@ -206,7 +205,7 @@ export default function ContextField(props: {
     const left = at - u().used;
     if (left <= 0)
       return { text: 'Past the auto-compact point', tone: 'danger' as const };
-    if (left < at * 0.2)
+    if (nearAutoCompact(u()))
       return {
         text: `${formatTokens(left)} left before it auto-compacts`,
         tone: 'warn' as const,
@@ -226,7 +225,7 @@ export default function ContextField(props: {
       .finally(() => setPruning(false));
   };
   const cleanBlocked = () =>
-    props.running
+    u().running
       ? 'Wait for the agent to finish'
       : u().prunable < MIN_PRUNE
         ? 'Nothing old to prune'

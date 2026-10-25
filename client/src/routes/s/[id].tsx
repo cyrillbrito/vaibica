@@ -51,7 +51,8 @@ import {
 import { pageFocused } from '../../ui/badge';
 import { createStopwatch, formatLive } from '../../ui/time';
 import { readError } from '../../sessions/error-message';
-import { type ContextUsage } from '@bica/shared/context-usage';
+import type { ContextBreakdown } from '@bica/shared/context-breakdown';
+import type { ContextUsage } from '@bica/shared/context-usage';
 import { SessionId } from '../../sessions/step-detail';
 import { hideThinking } from '../../sessions/thinking';
 import { call, startCall } from '../../voice/voice';
@@ -260,7 +261,10 @@ export default function Session(props: RouteProps<'/s/:id'>) {
   // Worked out by the server, which holds the full conversation; shared by
   // the chip and the nag above the composer.
   const usage = createMemo(
-    () => view()?.docs['bica.context'] as ContextUsage | undefined,
+    () =>
+      view()?.docs['bica.context'] as
+        | (ContextUsage & ContextBreakdown)
+        | undefined,
     { name: 'contextUsage' },
   );
   const lastCompaction = createMemo(

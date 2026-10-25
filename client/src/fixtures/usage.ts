@@ -4,7 +4,14 @@
 // seen shimmering and clearing.
 import { createSignal } from 'solid-js';
 
-import type { ContextUsage, Group, Part } from '@bica/shared/context-usage';
+import type { UsageState } from '@earendil-works/pi-durable';
+
+import type {
+  ContextBreakdown,
+  Group,
+  Part,
+} from '@bica/shared/context-breakdown';
+import type { ContextUsage } from '@bica/shared/context-usage';
 import type {
   Accounts,
   ModelCatalog,
@@ -84,7 +91,7 @@ function parts(shape: Shape, worst: boolean): Part[] {
   }));
 }
 
-function usage(shape: Shape, worst: boolean): ContextUsage {
+function usage(shape: Shape, worst: boolean): ContextUsage & ContextBreakdown {
   const all = parts(shape, worst);
   const used = all.reduce((n, p) => n + p.tokens, 0);
   // The finished one sits on a 1M window, so it can grow past 200k.
@@ -120,37 +127,6 @@ function usage(shape: Shape, worst: boolean): ContextUsage {
       },
     ],
     misses: worst ? 7 : 1,
-    spend:
-      shape === 'asking'
-        ? []
-        : [
-            {
-              model: 'anthropic/claude-opus-4-5',
-              input: 18_000,
-              cacheRead: 2_400_000,
-              cacheWrite: 210_000,
-              output: 41_000,
-              cost: 3.86,
-            },
-            {
-              model: 'anthropic/claude-haiku-4-5',
-              input: 52_000,
-              cacheRead: 120_000,
-              cacheWrite: 8_000,
-              output: 3_900,
-              cost: 0.09,
-            },
-            {
-              model: worst
-                ? 'openrouter/qwen/qwen3-coder-480b-a35b-instruct-turbo-preview'
-                : 'openai-codex/gpt-5.1-codex',
-              input: 640_000,
-              cacheRead: 3_100_000,
-              cacheWrite: 0,
-              output: 22_000,
-              cost: 1.42,
-            },
-          ],
     // Warm for 4 more minutes when idle, so the countdown shows.
     cache:
       shape === 'running'
@@ -163,6 +139,58 @@ function usage(shape: Shape, worst: boolean): ContextUsage {
     running: shape === 'running',
     prunable: Math.round(results.reduce((n, p) => n + p.tokens, 0) * 0.74),
   };
+}
+
+// Spend per model, as Pi Durable's usage tracking holds it.
+function spend(shape: Shape, worst: boolean): UsageState | undefined {
+  if (shape === 'asking') return undefined;
+  const models = [
+    {
+      model: 'anthropic/claude-opus-4-5',
+      input: 18_000,
+      cacheRead: 2_400_000,
+      cacheWrite: 210_000,
+      output: 41_000,
+      cost: 3.86,
+    },
+    {
+      model: 'anthropic/claude-haiku-4-5',
+      input: 52_000,
+      cacheRead: 120_000,
+      cacheWrite: 8_000,
+      output: 3_900,
+      cost: 0.09,
+    },
+    {
+      model: worst
+        ? 'openrouter/qwen/qwen3-coder-480b-a35b-instruct-turbo-preview'
+        : 'openai-codex/gpt-5.1-codex',
+      input: 640_000,
+      cacheRead: 3_100_000,
+      cacheWrite: 0,
+      output: 22_000,
+      cost: 1.42,
+    },
+  ];
+  return {
+    models: Object.fromEntries(
+      models.map(({ model, cost, ...u }) => [
+        model,
+        {
+          ...u,
+          totalTokens: u.input + u.cacheRead + u.cacheWrite + u.output,
+          cost: {
+            input: 0,
+            output: 0,
+            cacheRead: 0,
+            cacheWrite: 0,
+            total: cost,
+          },
+        },
+      ]),
+    ),
+    tools: {},
+  } as UsageState;
 }
 
 /**
@@ -190,6 +218,7 @@ export function fixtureContext(shape: Shape, worst: boolean) {
   };
   return {
     value,
+    spend: spend(shape, worst),
     // Like the server: the call answers once it has started.
     compact: async () => {
       setValue((v) => ({ ...v, compacting: true }));

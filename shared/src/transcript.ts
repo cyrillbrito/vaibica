@@ -4,6 +4,10 @@ import type {
   ToolCall as PiToolCall,
   ToolResultMessage,
 } from '@earendil-works/pi-ai';
+import {
+  calculateContextTokens,
+  estimateTextTokens,
+} from '@earendil-works/pi-ai/utils/estimate';
 import type {
   ConversationView,
   EntryRecord,
@@ -11,7 +15,6 @@ import type {
 } from '@earendil-works/pi-durable';
 
 import { PRUNE_ENTRY } from './prune';
-import { requestTokens } from './context-usage';
 import type { PromptImage, SessionStatus } from './protocol';
 
 // `key` stays the same while a row updates, so its DOM (and open state) survives.
@@ -356,16 +359,15 @@ export function toMessages(
         at: entry.id,
         summary,
         before: measured,
-        // pi-ai's estimate: four characters a token.
-        after: Math.round(text.length / 4),
+        after: estimateTextTokens(text),
         auto:
           (entry.data as { reason?: string } | undefined)?.reason !== 'manual',
       });
       return;
     }
     entry.model?.forEach((m, i) => {
-      if (m.role === 'assistant' && requestTokens(m.usage) > 0)
-        measured = requestTokens(m.usage);
+      if (m.role === 'assistant' && calculateContextTokens(m.usage) > 0)
+        measured = calculateContextTokens(m.usage);
       add(m, `${entry.id}:${i}`);
     });
   });

@@ -7,24 +7,22 @@ import type {
   ToolCall,
   ToolResultMessage,
 } from '@earendil-works/pi-ai';
-import type { ContextEdit, EntryRecord } from '@earendil-works/pi-durable';
+import { estimateMessageTokens } from '@earendil-works/pi-ai/utils/estimate';
+import type { ContextEdit, ContextView } from '@earendil-works/pi-durable';
 
 export const PRUNE_HINT =
   'Clears old tool output and images from what the model reads, so the next prompt sends less. Your prompts, the replies and the reasoning stay, and the transcript keeps everything.';
 
 /**
- * The entry that carries the edits; it adds nothing to the context itself.
- * Sessions store it, so its kind keeps the name from when pruning was called
- * clean up.
+ * The entry that carries the edits, and in `data.freed` the tokens they
+ * freed; it adds nothing to the context itself. Sessions store it, so its
+ * kind keeps the name from when pruning was called clean up.
  */
 export const PRUNE_ENTRY = 'bica.cleanup';
 
-// pi-ai's estimate, as in context-usage.ts.
-export const IMAGE_CHARS = 4800;
-
 // Outputs and arguments this short stay as they are: they cost little and
 // often carry the point ("Edited 2 files", a path, a short command).
-export const KEEP_OUTPUT = 300;
+const KEEP_OUTPUT = 300;
 const KEEP_ARG = 120;
 // A cleared output keeps its start and end: on replays of real sessions no
 // selector kept the lines the agent needed later better than these
@@ -34,46 +32,27 @@ const HEAD = 160;
 const TAIL = 80;
 const NOTE = '[Old output cleared to save context';
 
+// The newest messages stay whole: the answer and its last steps are what a
+// follow-up refers to. Older steps clear even inside a long turn.
+const KEEP_RECENT = 6;
+
+/** The model context as Pi Durable's ContextView holds it. */
+type Context = Pick<ContextView, 'entries' | 'contributions'>;
+
 /** Whether a result is already a pruning note, so it isn't cleared again. */
-export function isCleared(message: ToolResultMessage) {
+function isCleared(message: ToolResultMessage) {
   return (
     message.content[0]?.type === 'text' &&
     message.content[0].text.startsWith(NOTE)
   );
 }
 
-/** Characters a message adds to the context, as context-usage.ts counts them. */
-export function chars(message: Message): number {
-  if (message.role === 'toolResult')
-    return message.content.reduce(
-      (n, b) => n + (b.type === 'text' ? b.text.length : IMAGE_CHARS),
-      0,
-    );
-  if (message.role !== 'assistant') return 0;
-  return message.content.reduce(
-    (n, b) =>
-      n +
-      (b.type === 'toolCall'
-        ? b.name.length + JSON.stringify(b.arguments).length
-        : 0),
-    0,
-  );
-}
-
-// The newest messages stay whole: the answer and
-// its last steps are what a follow-up refers to. Older steps clear even
-// inside a long turn.
-export const KEEP_RECENT = 6;
-
 /**
  * The ids of the tool calls pruning may touch: all but the newest
  * KEEP_RECENT messages. A call counts as recent when its call or its output is.
  */
-export function oldCalls(
-  entries: readonly EntryRecord[],
-  current: (entry: EntryRecord) => readonly Message[] | undefined,
-): Set<string> {
-  const messages = entries.flatMap((e) => current(e) ?? []);
+function oldCalls(ctx: Context): Set<string> {
+  const messages = ctx.contributions.flat();
   const recent = new Set<string>();
   for (const m of messages.slice(-KEEP_RECENT)) {
     if (m.role === 'toolResult') recent.add(m.toolCallId);
@@ -90,40 +69,49 @@ export function oldCalls(
 /**
  * Edits that prune all but the newest messages (KEEP_RECENT): tool output
  * and images give way to a note, and long tool arguments shrink to their
- * summary and first line. Prompts, thinking and replies stay. `current` is
- * what each entry adds to the context now, after earlier edits.
+ * summary and first line. Prompts, thinking and replies stay.
  */
-export function pruneEdits(
-  entries: readonly EntryRecord[],
-  current: (entry: EntryRecord) => readonly Message[] | undefined,
-): ContextEdit[] {
-  const old = oldCalls(entries, current);
+export function pruneEdits(ctx: Context): ContextEdit[] {
+  const old = oldCalls(ctx);
   const edits: ContextEdit[] = [];
-  for (const entry of entries) {
-    const messages = current(entry);
-    if (!messages) continue;
+  ctx.entries.forEach((entry, i) => {
+    const messages = ctx.contributions[i]!;
     const cleaned = messages.map((m) => {
       if (m.role === 'toolResult')
         return old.has(m.toolCallId) ? pruneResult(m) : m;
       if (m.role === 'assistant') return pruneCalls(m, old);
       return m;
     });
-    if (cleaned.some((m, i) => m !== messages[i]))
+    if (cleaned.some((m, j) => m !== messages[j]))
       edits.push({ target: entry.id, action: 'replace', messages: cleaned });
-  }
+  });
   return edits;
 }
 
+/** The tokens `edits` take off the context, as pi-ai estimates them. */
+export function prunedTokens(ctx: Context, edits: readonly ContextEdit[]) {
+  const at = new Map(ctx.entries.map((e, i) => [e.id, i]));
+  const size = (messages: readonly Message[] = []) =>
+    messages.reduce((n, m) => n + estimateMessageTokens(m), 0);
+  return edits.reduce(
+    (n, e) =>
+      n +
+      size(ctx.contributions[at.get(e.target) ?? -1]) -
+      size(e.action === 'replace' ? e.messages : []),
+    0,
+  );
+}
+
 function pruneResult(message: ToolResultMessage): ToolResultMessage {
-  const size = chars(message);
   const image = message.content.some((b) => b.type === 'image');
-  if ((size <= KEEP_OUTPUT && !image) || isCleared(message)) return message;
-  const { details: _details, nestedCalls: _nested, ...rest } = message;
   const text = message.content
     .flatMap((b) => (b.type === 'text' ? b.text : []))
     .join('\n')
     .trim();
-  const note = `${NOTE}, ~${Math.round(size / 4)} tokens. Run the tool again if you need it.]`;
+  if ((text.length <= KEEP_OUTPUT && !image) || isCleared(message))
+    return message;
+  const { details: _details, nestedCalls: _nested, ...rest } = message;
+  const note = `${NOTE}, ~${estimateMessageTokens(message)} tokens. Run the tool again if you need it.]`;
   return {
     ...rest,
     content: [

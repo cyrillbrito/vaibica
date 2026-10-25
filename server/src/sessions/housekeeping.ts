@@ -1,6 +1,11 @@
 import type { ConversationId } from '@earendil-works/pi-durable';
 
-import { MIN_PRUNE, contextUsage } from '@bica/shared/context-usage';
+import {
+  BLOATED,
+  LONG_LIVED_COMPACT_AT,
+  MIN_PRUNE,
+  contextUsage,
+} from '@bica/shared/context-usage';
 import { isLongLived } from '@bica/shared/agents';
 import { context, getHarness } from '../harness';
 import { getCatalog } from '../models/models';
@@ -16,12 +21,6 @@ import { listSessions } from './store';
 
 const MINUTE = 60_000;
 const WARM_MARGIN = 5 * MINUTE;
-// Above this even after pruning, the session compacts before the cache
-// expires. Below it, the compaction may cost more than it saves.
-const COMPACT_AT = 120_000;
-// Above this, it compacts at the first idle minute: reads cost enough, and
-// quality drops, so waiting for a long pause isn't worth it.
-const COMPACT_NOW_AT = 200_000;
 
 const SAVE_NOTE = '[Note from Bica, not from the user] Memory save:';
 const SAVE_PROMPT = `${SAVE_NOTE} this session is about to be compacted, and older turns will shrink to a summary. Save what should outlast it to the memory files, as your memory rules and the project's instructions say. Look for what was said but never written down. Then reply with one line. Start nothing else.`;
@@ -65,8 +64,10 @@ async function housekeep(id: string, unread: boolean) {
   // Decided on the size after pruning: cleared often enough, it frees
   // nothing, and only compaction helps.
   const size = usage.used - usage.prunable;
-  if (size > COMPACT_AT) {
-    if (size <= COMPACT_NOW_AT && idle < usage.cache.ttl - WARM_MARGIN) return;
+  if (size > LONG_LIVED_COMPACT_AT) {
+    // Past BLOATED, at the first idle minute: reads cost enough, and quality
+    // drops, so waiting for a long pause isn't worth it.
+    if (size <= BLOATED && idle < usage.cache.ttl - WARM_MARGIN) return;
     const at = view.entries.findLastIndex((e) => e.kind === 'pi.user');
     const save = view.entries[at];
     if (save && JSON.stringify(save.model ?? '').includes(SAVE_NOTE)) {

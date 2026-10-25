@@ -9,7 +9,8 @@ import type {
   LiveState,
 } from '@earendil-works/pi-durable';
 
-import { contextUsage } from './context-usage';
+import { contextBreakdown } from './context-breakdown';
+import { contextOf, contextUsage } from './context-usage';
 import type { ModelCatalog, StepDetail } from './protocol';
 
 type Json = Record<string, unknown>;
@@ -36,20 +37,20 @@ export function projector(catalog: () => ModelCatalog | undefined) {
     const key = [
       view.entries,
       view.docs['pi.agent'],
-      view.docs['pi.usage'],
       live?.run,
       live?.compactions,
       catalog(),
     ];
     if (key.some((k, i) => k !== usageKey[i])) {
       usageKey = key;
-      const next = contextUsage(view, catalog());
+      const status = contextUsage(view, catalog());
+      const breakdown = contextBreakdown(contextOf(view), status.used);
       // Rounded to what formatTokens shows, so a new answer, which rescales
       // every part, changes fewer of them.
-      for (const p of [...next.parts, ...next.biggest])
+      for (const p of [...breakdown.parts, ...breakdown.biggest])
         p.tokens = shown(p.tokens);
       // Through JSON to drop the fields it leaves undefined.
-      usage = JSON.parse(JSON.stringify(next));
+      usage = JSON.parse(JSON.stringify({ ...status, ...breakdown }));
     }
     const { instructions: _instructions, ...agent } = (view.docs['pi.agent'] ??
       {}) as Json;

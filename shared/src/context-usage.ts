@@ -1,70 +1,32 @@
-// What fills a session's context window, what it cost, and whether the prompt
-// cache is warm; all derived from the conversation view (docs/context-usage.md).
-//
-// Like Pi's context extensions: count each part at four characters a token,
-// then scale all parts to the size the provider measured.
+// How full a session's context window is, whether the prompt cache is warm,
+// and the rules for when to speak up (docs/context-usage.md). The chip, the
+// nag above the composer, and housekeeping read this; the details add
+// context-breakdown.ts.
+import type { Message, Usage } from '@earendil-works/pi-ai';
+import {
+  calculateContextTokens,
+  estimateMessageTokens,
+} from '@earendil-works/pi-ai/utils/estimate';
 import type {
-  AssistantMessage,
-  Message,
-  ToolCall,
-  Usage,
-} from '@earendil-works/pi-ai';
-import type {
+  ContextView,
   ConversationView,
-  EntryRecord,
   LiveState,
-  UsageState,
 } from '@earendil-works/pi-durable';
 
-import { IMAGE_CHARS, chars, pruneEdits } from './prune';
+import { PRUNE_ENTRY, pruneEdits, prunedTokens } from './prune';
 import type { ModelCatalog } from './protocol';
-
-export type Group = 'system' | 'tools' | 'conversation';
-
-export interface Part {
-  key: string;
-  label: string;
-  group: Group;
-  tokens: number;
-  /** A second line, e.g. which skills are loaded. */
-  detail?: string;
-}
-
-/** One large piece of the conversation; `target` finds its transcript row. */
-export interface Item {
-  label: string;
-  detail: string;
-  tokens: number;
-  target: { call: string } | { key: string };
-}
-
-export interface Spend {
-  model: string;
-  input: number;
-  cacheRead: number;
-  cacheWrite: number;
-  output: number;
-  cost: number;
-}
 
 export interface ContextUsage {
   /** Tokens in the window: the last request, plus estimates of what came after. */
   used: number;
-  /** False: no answer since the start or the last compaction; all estimated. */
+  /** False: no answer since the start or the last compaction or prune. */
   measured: boolean;
   /** Absent: the model isn't in the catalog. */
   window?: number;
+  /** Where Pi Durable compacts before the next request. */
   compactAt?: number;
+  /** Where it starts compacting in the background. */
   backgroundAt?: number;
-  /** Largest first within each group; they add up to `used`. */
-  parts: Part[];
-  biggest: Item[];
-  /**
-   * Answers after the first that rewrote most of their context: the cache had
-   * expired or the prefix changed.
-   */
-  misses: number;
-  spend: Spend[];
   /** When the last request went out and how long its cache lives (ms). */
   cache?: { at: number; ttl: number };
   compacting: boolean;
@@ -73,222 +35,88 @@ export interface ContextUsage {
   prunable: number;
 }
 
-// pi-ai's estimate: four characters a token, an image as IMAGE_CHARS.
-const CHARS_PER_TOKEN = 4;
-function tokensOf(chars: number) {
-  return chars / CHARS_PER_TOKEN;
+/** The part of Pi Durable's ContextView the context is measured from. */
+export type ModelContext = Pick<ContextView, 'entries' | 'contributions'>;
+
+// Pi Durable leaves these answers out of the model context.
+const EXCLUDED = new Set(['aborted', 'error', 'deferred']);
+
+/**
+ * What each active entry adds to the model context now, after pruning's
+ * edits: Pi Durable's ContextView, worked out from a watched view, since
+ * Durable only gives it through an async read.
+ */
+export function contextOf(view: ConversationView): ModelContext {
+  const edits = new Map<number, readonly Message[]>();
+  for (const entry of view.entries)
+    for (const edit of entry.edits ?? [])
+      edits.set(edit.target, edit.action === 'replace' ? edit.messages : []);
+  return {
+    entries: view.entries,
+    contributions: view.entries.map((entry) =>
+      (edits.get(entry.id) ?? entry.model ?? []).filter(
+        (m) => m.role !== 'assistant' || !EXCLUDED.has(m.stopReason),
+      ),
+    ),
+  };
 }
 
-/** The size of a request, as pi-ai counts it. */
-export function requestTokens(u: Usage) {
-  return u.totalTokens || u.input + u.cacheRead + u.cacheWrite + u.output;
-}
-
-function answered(m: AssistantMessage) {
-  return (
-    m.stopReason !== 'error' &&
-    m.stopReason !== 'aborted' &&
-    requestTokens(m.usage) > 0
-  );
-}
-
+/**
+ * Measured as Pi Durable measures it before auto-compacting (its
+ * estimateContext): the newest answer's request, plus pi-ai's estimates of
+ * the messages after it. Pruning since that answer shrank what it measured.
+ */
 export function contextUsage(
   view: ConversationView,
   catalog: ModelCatalog | undefined,
 ): ContextUsage {
-  const parts = new Map<string, Part>();
-  const add = (key: string, label: string, group: Group, chars: number) => {
-    if (chars <= 0) return;
-    const part = parts.get(key);
-    if (part) part.tokens += tokensOf(chars);
-    else parts.set(key, { key, label, group, tokens: tokensOf(chars) });
-  };
-  const items: Item[] = [];
-  const calls = new Map<string, ToolCall>();
-
-  // Entries from the head marker on are the model context. Answers before the
-  // marker (kept entries) measured a context that no longer exists.
-  const marker = view.entries[0]?.head !== undefined ? view.entries[0].id : -1;
-  // Per message, its estimate; the newest measured answer replaces the
-  // estimates of everything up to and including it.
-  const estimates: number[] = [];
-  let measured: { at: number; tokens: number } | undefined;
-  let answers = 0;
-  let misses = 0;
-  let lastRequest: AssistantMessage | undefined;
-  let lastWrite: Usage | undefined;
-
-  // Context edits (pruning) replace what earlier entries contribute. Each
-  // edit's saving is kept by where it landed: one after the newest answer
-  // shrinks a context that answer already measured.
-  const byId = new Map(view.entries.map((e) => [e.id, e]));
-  const edited = new Map<number, readonly Message[]>();
-  const savings: { at: number; chars: number }[] = [];
-  const size = (messages: readonly Message[] | undefined) =>
-    (messages ?? []).reduce((n, m) => n + chars(m), 0);
-  for (const entry of view.entries)
-    for (const edit of entry.edits ?? []) {
-      const before = edited.get(edit.target) ?? byId.get(edit.target)?.model;
-      const after = edit.action === 'replace' ? edit.messages : [];
-      savings.push({ at: entry.id, chars: size(before) - size(after) });
-      edited.set(edit.target, after);
-    }
-  const modelOf = (entry: EntryRecord) => edited.get(entry.id) ?? entry.model;
-  let measuredEntry = -1;
-
-  for (const entry of view.entries) {
-    modelOf(entry)?.forEach((message, mi) => {
-      const before = sum(parts);
-      const key = `${entry.id}:${mi}`;
-      count(message, entry.kind, key);
-      estimates.push(sum(parts) - before);
-      if (message.role !== 'assistant') return;
-      // A request that failed before the provider counted tokens never
-      // touched the cache, so it doesn't restart the countdown.
-      if (requestTokens(message.usage) > 0) lastRequest = message;
-      if (message.usage.cacheWrite > 0) lastWrite = message.usage;
-      if (!answered(message) || entry.id <= marker) return;
-      const { input, cacheRead, cacheWrite } = message.usage;
-      if (answers++ > 0 && cacheWrite + input > cacheRead) misses++;
-      measured = {
-        at: estimates.length,
-        tokens: requestTokens(message.usage),
-      };
-      measuredEntry = entry.id;
-    });
-  }
-
-  function count(message: Message, kind: string, key: string) {
-    if (message.role === 'system') {
-      add('system', 'Base prompt', 'system', textLength(message.content));
-      for (const [name, text] of Object.entries(message.sections ?? {})) {
-        if (text) section(name, text);
-      }
-      for (const tool of message.toolsAdded ?? [])
-        add(
-          `tool:${tool.name}`,
-          tool.name,
-          'tools',
-          JSON.stringify(tool).length,
-        );
-      return;
-    }
-    if (message.role === 'user') {
-      const summary = kind === 'pi.compaction';
-      const content = message.content;
-      const text =
-        typeof content === 'string' ? content.length : textLength(content);
-      const images =
-        typeof content === 'string'
-          ? 0
-          : content.filter((b) => b.type === 'image').length;
-      add(
-        summary ? 'summary' : 'prompts',
-        summary ? 'Compaction summary' : 'Prompts',
-        'conversation',
-        text,
-      );
-      add('images', 'Images', 'conversation', images * IMAGE_CHARS);
-      if (!summary)
-        items.push({
-          label: images ? 'Prompt with images' : 'Prompt',
-          detail: firstLine(typeof content === 'string' ? content : ''),
-          tokens: tokensOf(text + images * IMAGE_CHARS),
-          target: { key },
-        });
-      return;
-    }
-    if (message.role === 'assistant') {
-      message.content.forEach((block, bi) => {
-        if (block.type === 'text') {
-          add('replies', 'Replies', 'conversation', block.text.length);
-          items.push({
-            label: 'Reply',
-            detail: firstLine(block.text),
-            tokens: tokensOf(block.text.length),
-            target: { key: `${key}:${bi}` },
-          });
-        } else if (block.type === 'thinking')
-          add('thinking', 'Thinking', 'conversation', block.thinking.length);
-        else if (block.type === 'toolCall') {
-          calls.set(block.id, block);
-          add(
-            'calls',
-            'Tool calls',
-            'conversation',
-            block.name.length + JSON.stringify(block.arguments).length,
-          );
-        }
-      });
-      return;
-    }
-    if (message.role === 'toolResult') {
-      const chars = message.content.reduce(
-        (n, b) => n + (b.type === 'text' ? b.text.length : IMAGE_CHARS),
-        0,
-      );
-      add(
-        `result:${message.toolName}`,
-        `${message.toolName} results`,
-        'conversation',
-        chars,
-      );
-      const args = calls.get(message.toolCallId)?.arguments ?? {};
-      items.push({
-        label: message.toolName,
-        detail: describe(args),
-        tokens: tokensOf(chars),
-        target: { call: message.toolCallId },
-      });
-    }
-  }
-
-  // AGENTS.md, memory, and skills get their own lines, the skills by name
-  // so it's easy to see which loaded; the rest of the prompt is one line.
-  // Section keys are those in server/src/agents/common.ts.
-  function section(name: string, text: string) {
-    const file = /path="[^"]*?([^/"]+)"/.exec(text)?.[1];
-    if (name === 'project_context')
-      add('project', file ?? 'Project file', 'system', text.length);
-    else if (name === 'memory')
-      add('memory', file ?? 'Memory', 'system', text.length);
-    else if (name === 'skills') {
-      const names = [...text.matchAll(/<name>([^<]*)<\/name>/g)].map(
-        (m) => m[1],
-      );
-      add('skills', `Skills (${names.length})`, 'system', text.length);
-      parts.get('skills')!.detail = names.join(', ');
-    } else add('instructions', 'Instructions', 'system', text.length);
-  }
-
-  // Scale every part so they add up to the measured size, plus the estimates
-  // of what came after it. The scale also covers what we can't see: the
-  // provider's own preamble, message framing, and the real tokenizer.
-  const estimated = sum(parts);
-  let used = estimated;
-  const stale = tokensOf(
-    savings.reduce((n, s) => (s.at > measuredEntry ? n + s.chars : n), 0),
+  const ctx = contextOf(view);
+  // Answers before the head marker (kept entries) measured a context that no
+  // longer exists.
+  const marker = ctx.entries[0]?.head !== undefined ? ctx.entries[0].id : -1;
+  const estimates = ctx.contributions.map((messages) =>
+    messages.reduce((n, m) => n + estimateMessageTokens(m), 0),
   );
-  if (measured) {
-    const upTo = estimates.slice(0, measured.at).reduce((a, b) => a + b, 0);
-    const after = estimated - upTo;
-    // The answer measured the context before the newer edits; shrink it by
-    // their share of what it counted.
-    used = measured.tokens * (upTo / (upTo + stale || 1)) + after;
+  const estimated = estimates.reduce((a, b) => a + b, 0);
+
+  let used = 0;
+  let measuredAt = -1;
+  for (let i = ctx.entries.length - 1; i >= 0 && measuredAt < 0; i--) {
+    const messages = ctx.contributions[i]!;
+    const at =
+      ctx.entries[i]!.id > marker
+        ? messages.findLastIndex(
+            (m) =>
+              m.role === 'assistant' && calculateContextTokens(m.usage) > 0,
+          )
+        : -1;
+    if (at < 0) {
+      used += estimates[i]!;
+      continue;
+    }
+    const answer = messages[at] as Extract<Message, { role: 'assistant' }>;
+    used += calculateContextTokens(answer.usage);
+    for (const m of messages.slice(at + 1)) used += estimateMessageTokens(m);
+    measuredAt = i;
   }
-  const scale = estimated > 0 ? used / estimated : 1;
-  for (const part of parts.values()) part.tokens *= scale;
-  for (const item of items) item.tokens *= scale;
-  const prunable =
-    tokensOf(
-      pruneEdits(view.entries, modelOf).reduce(
-        (n, e) =>
-          n +
-          size(modelOf(byId.get(e.target)!)) -
-          size(e.action === 'replace' ? e.messages : []),
-        0,
-      ),
-    ) * scale;
+  let stale = 0;
+  if (measuredAt >= 0)
+    for (const entry of ctx.entries.slice(measuredAt + 1)) {
+      if (entry.kind !== PRUNE_ENTRY) continue;
+      const freed = (entry.data as { freed?: number } | undefined)?.freed;
+      // Older prunes didn't store it: estimate all, as before an answer.
+      if (freed === undefined) {
+        used = estimated;
+        measuredAt = -1;
+        break;
+      }
+      stale += freed;
+    }
+  used = Math.max(0, used - stale);
+  // The estimates miss the provider's own framing and real tokenizer; scaled
+  // to the measured size, pruning's saving matches the chip's number.
+  const scale = estimated > 0 && measuredAt >= 0 ? used / estimated : 1;
+  const prunable = prunedTokens(ctx, pruneEdits(ctx)) * scale;
 
   const model = view.docs['pi.agent'] as
     | { model?: { provider: string; modelId: string } }
@@ -301,6 +129,16 @@ export function contextUsage(
   const compactAt =
     window && catalog ? window - catalog.compaction.reserveTokens : undefined;
 
+  // The cache restarts with every request the provider counted, failed ones
+  // too, so this reads the raw entries rather than the model context.
+  let lastRequest: number | undefined;
+  let lastWrite: Usage | undefined;
+  for (const entry of view.entries)
+    for (const m of entry.model ?? []) {
+      if (m.role !== 'assistant') continue;
+      if (calculateContextTokens(m.usage) > 0) lastRequest = m.timestamp;
+      if (m.usage.cacheWrite > 0) lastWrite = m.usage;
+    }
   // The long tier only when the provider reported writing to it.
   const ttl = lastWrite?.cacheWrite1h
     ? info?.cacheTtl.long
@@ -309,24 +147,16 @@ export function contextUsage(
 
   return {
     used,
-    measured: !!measured && stale === 0,
+    measured: measuredAt >= 0 && stale === 0,
     window,
     compactAt,
     backgroundAt:
       compactAt && catalog
         ? compactAt - catalog.compaction.backgroundTokens
         : undefined,
-    parts: [...parts.values()].sort(
-      (a, b) =>
-        GROUPS.indexOf(a.group) - GROUPS.indexOf(b.group) ||
-        b.tokens - a.tokens,
-    ),
-    biggest: items.sort((a, b) => b.tokens - a.tokens).slice(0, 6),
-    misses,
-    spend: spendOf(view.docs['pi.usage'] as UsageState | undefined),
     cache:
-      lastRequest && lastWrite && ttl
-        ? { at: lastRequest.timestamp, ttl: ttl * 1000 }
+      lastRequest !== undefined && lastWrite && ttl
+        ? { at: lastRequest, ttl: ttl * 1000 }
         : undefined,
     compacting: !!live?.compactions?.length,
     running: !!live?.run,
@@ -334,7 +164,9 @@ export function contextUsage(
   };
 }
 
-export const GROUPS: Group[] = ['system', 'tools', 'conversation'];
+// The rules the chip, the nag, the details, and housekeeping share.
+
+const MINUTE = 60_000;
 
 // Below this pruning isn't worth offering.
 export const MIN_PRUNE = 1000;
@@ -342,49 +174,39 @@ export const MIN_PRUNE = 1000;
 // Past 200k a session gets slow, pricey and forgetful, whatever the window.
 export const BLOATED = 200_000;
 
+// A long-lived session above this, even after pruning, compacts before its
+// cache expires (server/src/sessions/housekeeping.ts). Below it, the
+// compaction may cost more than it saves.
+export const LONG_LIVED_COMPACT_AT = 120_000;
+
+// The cache's last minutes: an hour is long, so only these get a countdown,
+// and they are the cheapest moment to compact.
+export const EXPIRING = 10 * MINUTE;
+
 /** 0 below 200k, then one step per 100k, up to 4 at 500k. */
 export function bloat(used: number) {
   return used < BLOATED ? 0 : Math.min(4, Math.floor(used / 100_000) - 1);
 }
 
-function spendOf(usage: UsageState | undefined): Spend[] {
-  return Object.entries(usage?.models ?? {})
-    .map(([model, u]) => ({
-      model,
-      input: u.input,
-      cacheRead: u.cacheRead,
-      cacheWrite: u.cacheWrite,
-      output: u.output,
-      cost: u.cost.total,
-    }))
-    .sort((a, b) => b.cost - a.cost);
+/** The chip's color: how full the window is, or how big the session grew. */
+export function level(u: ContextUsage): 'warn' | 'danger' | undefined {
+  const share = u.window ? u.used / u.window : 0;
+  const steps = bloat(u.used);
+  return share >= 0.9 || steps >= 3
+    ? 'danger'
+    : share >= 0.7 || steps >= 1
+      ? 'warn'
+      : undefined;
 }
 
-function sum(parts: Map<string, Part>) {
-  let n = 0;
-  for (const p of parts.values()) n += p.tokens;
-  return n;
+/** How long the prompt cache stays warm (ms, 0 or less: cold), if known. */
+export function cacheLeft(u: ContextUsage, now: number) {
+  return u.cache ? u.cache.at + u.cache.ttl - now : undefined;
 }
 
-function textLength(
-  content: string | readonly { type: string; text?: string }[],
-) {
-  return typeof content === 'string'
-    ? content.length
-    : content.reduce((n, b) => n + (b.text?.length ?? 0), 0);
-}
-
-function firstLine(text: string) {
-  return text.trim().split('\n')[0]!.slice(0, 120);
-}
-
-// The coding tools' summary, or the argument that names the target.
-function describe(args: Record<string, unknown>) {
-  for (const key of ['summary', 'path', 'command', 'url', 'query']) {
-    const value = args[key];
-    if (typeof value === 'string' && value.trim()) return firstLine(value);
-  }
-  return '';
+/** Close enough to Pi Durable's auto-compaction to say it is coming. */
+export function nearAutoCompact(u: ContextUsage) {
+  return !!u.compactAt && u.used >= u.compactAt * 0.85;
 }
 
 /** 950, 12.3k, 126k, 1.2M */
@@ -397,4 +219,12 @@ export function formatTokens(n: number) {
 
 export function formatCost(dollars: number) {
   return dollars < 0.01 && dollars > 0 ? '<$0.01' : `$${dollars.toFixed(2)}`;
+}
+
+/** 4:05 below an hour, then 1h 12m. */
+export function formatClock(ms: number) {
+  const s = Math.ceil(ms / 1000);
+  return s >= 3600
+    ? `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`
+    : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
