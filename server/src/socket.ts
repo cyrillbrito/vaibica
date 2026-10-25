@@ -71,6 +71,8 @@ import {
   watchProjects,
 } from './projects/projects';
 import { suggestCommitMessage } from './git/commit-message';
+import { sessionActivity } from './recap/activity';
+import { sessionRecap } from './recap/recap';
 import { openInEditor, openPath } from './git/editor';
 import {
   createTerminal,
@@ -277,6 +279,8 @@ const calls: Handlers = {
       fresh: args.fresh === true,
       repo: args.repo,
     }),
+  'recap.activity': async ({ id }) => sessionActivity(id),
+  'recap.get': async ({ id, fresh }) => sessionRecap(id, fresh === true),
   'git.diff': async (args) =>
     diff(ref(args), args.path, args.staged, args.oldPath, args.repo),
   'file.read': async (args) => readText(ref(args), args.path),
@@ -320,6 +324,8 @@ const READS = new Set<Call>([
   'file.read',
   'git.diff',
   'git.suggest',
+  'recap.activity',
+  'recap.get',
   'terminal.input',
   'terminal.resize',
 ]);

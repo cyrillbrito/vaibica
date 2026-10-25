@@ -16,6 +16,7 @@ import { useCurrentWorkspace } from '../projects/projects';
 import { TREE_STATUS, asList, toggleAsList } from '../files/ChangeList';
 import FileTree from '../files/FileTree';
 import GitPanel from '../git/GitPanel';
+import RecapTab from '../recap/RecapTab';
 import { keepOpenItem } from '../files/OpenFile';
 import { IconButton } from '../ui/Button';
 import Empty from '../ui/Empty';
@@ -28,10 +29,11 @@ import {
   DiffIcon,
   FilesIcon,
   ListIcon,
+  StepsIcon,
   TreeIcon,
 } from '../ui/icons';
 
-type Tab = 'files' | 'git';
+type Tab = 'files' | 'git' | 'recap';
 
 // Survives switching workspaces: you usually want the same kind of view.
 const [tab, setTab] = createSignal<Tab>('git');
@@ -39,6 +41,15 @@ const [tab, setTab] = createSignal<Tab>('git');
 export default function SidePanel() {
   const location = useLocation();
   const current = useCurrentWorkspace();
+  const sessionId = createMemo(
+    () => {
+      const [, kind, id] = location.pathname.split('/');
+      return kind === 's' && id ? decodeURIComponent(id) : undefined;
+    },
+    { name: 'panelSession' },
+  );
+  // The Recap tab is there only on a session's page; elsewhere Git stands in.
+  const shown = (): Tab => (tab() === 'recap' && !sessionId() ? 'git' : tab());
 
   // Arrow keys move between the tabs, and only the picked one is in the Tab
   // order, as the ARIA tabs pattern has it.
@@ -47,9 +58,9 @@ export default function SidePanel() {
       id={`side-tab-${props.id}`}
       class="flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-muted transition-colors hover:text-fg aria-selected:bg-active aria-selected:text-fg touch:h-11"
       role="tab"
-      aria-selected={tab() === props.id ? 'true' : 'false'}
+      aria-selected={shown() === props.id ? 'true' : 'false'}
       aria-controls="side-panel"
-      tabindex={tab() === props.id ? 0 : -1}
+      tabindex={shown() === props.id ? 0 : -1}
       onClick={() => setTab(props.id)}
       onKeyDown={(e) =>
         moveFocus(
@@ -84,8 +95,13 @@ export default function SidePanel() {
           <TabButton id="git">
             <DiffIcon /> Git
           </TabButton>
+          <Show when={sessionId()}>
+            <TabButton id="recap">
+              <StepsIcon /> Recap
+            </TabButton>
+          </Show>
         </div>
-        <Show when={tab() === 'git'}>
+        <Show when={shown() === 'git'}>
           <IconButton
             class="ml-auto"
             title={
@@ -97,7 +113,7 @@ export default function SidePanel() {
           </IconButton>
         </Show>
         <IconButton
-          class={[tab() !== 'git' && 'ml-auto', 'xl:hidden']}
+          class={[shown() !== 'git' && 'ml-auto', 'xl:hidden']}
           title="Close"
           onClick={closeDrawer}
         >
@@ -112,7 +128,13 @@ export default function SidePanel() {
             when={current()}
             fallback={<Empty>Open a project or session to see its files</Empty>}
           >
-            {(c) => <WorkspacePanel workspace={c().ref} />}
+            {(c) => (
+              <WorkspacePanel
+                workspace={c().ref}
+                tab={shown()}
+                session={sessionId()}
+              />
+            )}
           </Show>
         </Loading>
       </Errored>
@@ -120,7 +142,11 @@ export default function SidePanel() {
   );
 }
 
-function WorkspacePanel(props: { workspace: WorkspaceRef }) {
+function WorkspacePanel(props: {
+  workspace: WorkspaceRef;
+  tab: Tab;
+  session: string | undefined;
+}) {
   const location = useLocation();
   const navigate = useNavigate();
   const status = useGitStatus(() => props.workspace);
@@ -137,9 +163,12 @@ function WorkspacePanel(props: { workspace: WorkspaceRef }) {
       id="side-panel"
       class="flex min-h-0 min-w-0 flex-1 flex-col"
       role="tabpanel"
-      aria-labelledby={`side-tab-${tab()}`}
+      aria-labelledby={`side-tab-${props.tab}`}
     >
-      <Show when={tab() === 'files'}>
+      <Show when={props.tab === 'recap' && props.session}>
+        {(id) => <RecapTab id={id()} workspace={props.workspace} />}
+      </Show>
+      <Show when={props.tab === 'files'}>
         <FileTree
           paths={files()}
           status={treeStatus(status())}
@@ -174,7 +203,7 @@ function WorkspacePanel(props: { workspace: WorkspaceRef }) {
           ]}
         />
       </Show>
-      <Show when={tab() === 'git'}>
+      <Show when={props.tab === 'git'}>
         <Show when={status()} fallback={<Empty>Not a git repository</Empty>}>
           {(s) => (
             <GitPanel workspace={props.workspace} status={s()} open={open()} />
