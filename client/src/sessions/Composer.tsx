@@ -12,6 +12,7 @@ import { Meter } from '../voice/CallBar';
 import { createDictation } from '../voice/dictation';
 import { imageUrl, toPromptImage } from './images';
 import type { PromptImage } from '@bica/shared/protocol';
+import { imageMarker, imageMarkers } from '@bica/shared/images';
 import Alert from '../ui/Alert';
 import { openContextMenu } from '../ui/ContextMenu';
 import { createDropZone } from '../ui/DropZone';
@@ -26,9 +27,12 @@ import {
   QueueIcon,
   StopIcon,
 } from '../ui/icons';
+import { Spinner } from '../ui/Spinner';
 import { errorText } from '../ui/errors';
 
-type Attached = PromptImage & { id: number };
+// `ref` is the n of its `[Image #n]` marker. While it's still being read,
+// `data` is empty and `preview` shows the file as picked.
+type Attached = PromptImage & { id: number; ref: number; preview?: string };
 let nextId = 0;
 
 // Prompts sent from this browser, oldest first, shared by every composer.
@@ -122,6 +126,9 @@ export default function Composer(props: {
   const [images, setImages] = createSignal<Attached[]>([]);
   const [problem, setProblem] = createSignal('');
   const [stopping, setStopping] = createSignal(false);
+  // Prompts with images still on their way to the server, slow on a phone.
+  const [uploading, setUploading] = createSignal(0, { name: 'uploading' });
+  const reading = new Set<Promise<unknown>>();
   // Whether there's anything to send: the send button wakes up when there is.
   const [typed, setTyped] = createSignal(false, { name: 'composerTyped' });
   const empty = () => !typed() && !images().length;
@@ -216,14 +223,26 @@ export default function Composer(props: {
 
   const api: ComposerApi = {
     restore(prompt, restored) {
+      // Numbered past what the box holds already, markers and all.
+      const base = nextRef() - 1;
+      const refs = new Set(restored.flatMap((i) => i.ref ?? []));
+      if (base)
+        prompt = prompt.replace(imageMarkers, (m, n) =>
+          refs.has(Number(n)) ? imageMarker(Number(n) + base) : m,
+        );
       if (prompt)
         textarea.value = textarea.value.trim()
           ? `${textarea.value.trimEnd()}\n\n${prompt}`
           : prompt;
+      let next = base + Math.max(0, ...refs);
       if (restored.length)
         setImages((list) => [
           ...list,
-          ...restored.map((i) => ({ ...i, id: ++nextId })),
+          ...restored.map((i) => ({
+            ...i,
+            id: ++nextId,
+            ref: i.ref === undefined ? ++next : i.ref + base,
+          })),
         ]);
       textarea.focus();
       textarea.setSelectionRange(textarea.value.length, textarea.value.length);
@@ -269,24 +288,96 @@ export default function Composer(props: {
   const drop = createDropZone({
     accept: 'image/',
     noun: 'image',
-    onFiles: (files) => void attach(files),
+    onFiles: (files) => attach(files),
   });
 
-  const attach = async (files: File[]) => {
+  // One past the highest number in use, so a marker never means two images.
+  const nextRef = () =>
+    1 +
+    Math.max(
+      0,
+      ...untrack(images).map((i) => i.ref),
+      ...[...textarea.value.matchAll(imageMarkers)].map((m) => Number(m[1])),
+    );
+
+  // At the caret, spaced from the words around it.
+  const insert = (text: string) => {
+    const { selectionStart: from, selectionEnd: to, value } = textarea;
+    const before = from && !/\s$/.test(value.slice(0, from)) ? ' ' : '';
+    const after = /^\s/.test(value.slice(to)) ? '' : ' ';
+    const full = before + text + after;
+    // execCommand keeps it in the undo history; setRangeText doesn't.
+    if (
+      document.activeElement !== textarea ||
+      !document.execCommand('insertText', false, full)
+    )
+      textarea.setRangeText(full, from, to, 'end');
+    save();
+  };
+
+  // A picked image's marker goes with it, and the space before it.
+  const unmark = (ref: number) => {
+    const value = textarea.value.replace(
+      new RegExp(` ?\\[Image #${ref}\\]`),
+      '',
+    );
+    if (value !== textarea.value) {
+      textarea.value = value;
+      save();
+    }
+  };
+
+  // Changes it in whichever draft holds it now, since reading can outlast
+  // a switch to another session.
+  const update = (id: number, change: (i: Attached) => Attached | null) => {
+    const apply = (list: Attached[]) =>
+      list.flatMap((i) => (i.id === id ? (change(i) ?? []) : [i]));
+    setImages(apply);
+    for (const [key, list] of draftImages) draftImages.set(key, apply(list));
+  };
+
+  // Each image shows at once, from the file, while it's read and shrunk:
+  // a photo on a phone takes a few seconds.
+  const attach = (files: File[]) => {
     setProblem('');
     if (held !== null) return setProblem('This prompt takes text only.');
-    for (const file of files) {
-      try {
-        const image = { ...(await toPromptImage(file)), id: ++nextId };
-        setImages((list) => [...list, image]);
-      } catch (error) {
-        setProblem(errorText(error));
-      }
+    let ref = nextRef();
+    const slots = files.map((file) => ({
+      file,
+      image: {
+        id: ++nextId,
+        ref: ref++,
+        mimeType: file.type,
+        data: '',
+        preview: URL.createObjectURL(file),
+      } satisfies Attached,
+    }));
+    insert(slots.map((s) => imageMarker(s.image.ref)).join(' '));
+    setImages((list) => [...list, ...slots.map((s) => s.image)]);
+    for (const { file, image } of slots) {
+      const done = toPromptImage(file)
+        .then((read) => update(image.id, (i) => ({ ...i, ...read })))
+        .catch((error) => {
+          update(image.id, () => null);
+          unmark(image.ref);
+          setProblem(errorText(error));
+        })
+        .finally(() => {
+          URL.revokeObjectURL(image.preview);
+          reading.delete(done);
+        });
+      reading.add(done);
     }
   };
 
   const send = async (steer: boolean, alternate = false) => {
     const key = props.draft;
+    if (reading.size) {
+      setUploading((n) => n + 1);
+      await Promise.all(reading);
+      setUploading((n) => n - 1);
+      if (props.draft !== key) return;
+    }
     const typed = textarea.value.trim();
     const sentPastes = [...pastes];
     const prompt = unfold(typed);
@@ -301,10 +392,11 @@ export default function Composer(props: {
     browsing = null;
     setImages([]);
     setProblem('');
+    if (sent.length) setUploading((n) => n + 1);
     try {
       await props.onSend(
         prompt,
-        sent.map(({ mimeType, data }) => ({ mimeType, data })),
+        sent.map(({ mimeType, data, ref }) => ({ mimeType, data, ref })),
         steer,
         alternate,
       );
@@ -322,6 +414,8 @@ export default function Composer(props: {
       if (!textarea.value) textarea.value = typed;
       save();
       setImages((list) => [...sent, ...list]);
+    } finally {
+      if (sent.length) setUploading((n) => n - 1);
     }
   };
 
@@ -349,19 +443,31 @@ export default function Composer(props: {
               {(image) => (
                 <div class="group/img appear relative">
                   <img
-                    src={imageUrl(image())}
+                    src={image().data ? imageUrl(image()) : image().preview}
                     alt=""
-                    class="size-14 rounded-lg border border-line object-cover"
+                    class={[
+                      'size-14 rounded-lg border border-line bg-panel object-cover transition-opacity duration-200',
+                      !image().data && 'opacity-50',
+                    ]}
                   />
+                  <Show when={!image().data}>
+                    <span class="absolute inset-0 grid place-items-center text-fg">
+                      <Spinner />
+                    </span>
+                  </Show>
+                  <span class="absolute bottom-0.5 left-0.5 rounded-sm bg-bg/80 px-1 text-meta text-fg tabular-nums">
+                    #{image().ref}
+                  </span>
                   <button
                     type="button"
                     class="absolute -top-1.5 -right-1.5 grid size-5 place-items-center rounded-full border border-line bg-surface text-muted shadow-thumb transition-[color,scale,opacity] duration-150 ease-out hover:text-fg motion-safe:active:scale-90 touch:size-7 [&_svg]:size-3"
                     title="Remove image"
-                    onClick={() =>
+                    onClick={() => {
                       setImages((list) =>
                         list.filter((i) => i.id !== image().id),
-                      )
-                    }
+                      );
+                      unmark(image().ref);
+                    }}
                   >
                     <CloseIcon />
                   </button>
@@ -401,7 +507,7 @@ export default function Composer(props: {
             );
             if (files.length) {
               e.preventDefault();
-              void attach(files);
+              attach(files);
               return;
             }
             const text = e.clipboardData?.getData('text/plain') ?? '';
@@ -435,6 +541,23 @@ export default function Composer(props: {
             const caret = box.selectionStart;
             const noSelection = caret === box.selectionEnd;
             const plain = !e.shiftKey && !e.altKey && !e.metaKey && !e.ctrlKey;
+            // A marker goes in one Backspace, and its image with it, as in Codex.
+            if (e.key === 'Backspace' && plain && noSelection) {
+              const marker = /\[Image #(\d+)\]$/.exec(
+                box.value.slice(0, caret),
+              );
+              const image =
+                marker && images().find((i) => i.ref === Number(marker[1]));
+              if (image) {
+                e.preventDefault();
+                box.setSelectionRange(caret - marker[0].length, caret);
+                if (!document.execCommand('delete'))
+                  box.setRangeText('', box.selectionStart, caret, 'end');
+                setImages((list) => list.filter((i) => i.id !== image.id));
+                save();
+                return;
+              }
+            }
             // History only from the very start or end, so ↑/↓ elsewhere moves lines.
             const arrow = e.key === 'ArrowUp' || e.key === 'ArrowDown';
             const canSwitch = !e.repeat || hold === 'history';
@@ -522,7 +645,7 @@ export default function Composer(props: {
                 const files = [...(e.currentTarget.files ?? [])];
                 // Cleared so picking the same file again still fires.
                 e.currentTarget.value = '';
-                void attach(files);
+                attach(files);
               }}
             />
             {props.controls}
@@ -601,6 +724,7 @@ export default function Composer(props: {
                 round
                 type="submit"
                 title={props.busy ? `${label()}, after this run` : label()}
+                loading={uploading() > 0}
                 aria-disabled={empty() ? 'true' : undefined}
               >
                 <span class="@max-sm/composer:sr-only">{label()}</span>
@@ -649,6 +773,7 @@ export default function Composer(props: {
             round
             type="submit"
             title={props.busy ? 'Queue (⌘Enter joins the run now)' : 'Send'}
+            loading={uploading() > 0}
             aria-disabled={empty() ? 'true' : undefined}
           >
             <Show

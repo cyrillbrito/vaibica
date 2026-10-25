@@ -30,8 +30,13 @@ export async function toPromptImage(file: File): Promise<PromptImage> {
   ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
   bitmap.close();
   // PNG keeps screenshots sharp; photos that stay too big become JPEG.
-  let blob = await canvas.convertToBlob({ type: 'image/png' });
-  if (blob.size > MAX_BYTES) {
+  // A JPEG is a photo already, so it skips the PNG try: on a phone, encoding
+  // a big PNG for nothing takes seconds.
+  const photo = file.type === 'image/jpeg' || file.type.startsWith('image/hei');
+  let blob = photo
+    ? undefined
+    : await canvas.convertToBlob({ type: 'image/png' });
+  if (!blob || blob.size > MAX_BYTES) {
     // JPEG has no transparency: put white behind it, not black.
     ctx.globalCompositeOperation = 'destination-over';
     ctx.fillStyle = '#fff';

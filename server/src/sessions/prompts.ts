@@ -6,6 +6,7 @@ import {
   LiveDoc,
 } from '@earendil-works/pi-durable';
 
+import { promptBlocks, promptOf } from '@bica/shared/images';
 import { PRUNE_ENTRY, pruneEdits, prunedTokens } from '@bica/shared/prune';
 import type { ModelChoice, PromptImage } from '@bica/shared/protocol';
 import { context, getHarness } from '../harness';
@@ -185,31 +186,14 @@ export async function stop(id: string) {
 
 function toPrompt(content: QueuedInput['content']) {
   if (typeof content === 'string') return { prompt: content, images: [] };
-  const blocks = content as readonly {
-    type: string;
-    text?: string;
-    mimeType?: string;
-    data?: string;
-  }[];
-  return {
-    prompt: blocks
-      .flatMap((b) => (b.type === 'text' && b.text ? [b.text] : []))
-      .join('\n'),
-    images: blocks.flatMap((b) =>
-      b.type === 'image' && b.mimeType && b.data
-        ? [{ mimeType: b.mimeType, data: b.data }]
-        : [],
-    ),
-  };
+  const { text, images } = promptOf(content as Parameters<typeof promptOf>[0]);
+  return { prompt: text, images };
 }
 
 /** Plain text, or text and images as content blocks. */
 export function input(prompt: string, images: PromptImage[]) {
   if (!images.length) return prompt;
-  return [
-    ...(prompt ? [{ type: 'text' as const, text: prompt }] : []),
-    ...images.map((i) => ({ type: 'image' as const, ...i })),
-  ];
+  return promptBlocks(prompt, images);
 }
 
 /** Switches the model or effort; the next request uses it. */

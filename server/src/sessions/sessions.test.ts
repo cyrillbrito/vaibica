@@ -141,3 +141,36 @@ test('a phone that reconnects and resends its request gets one session with ever
   const list = await again.watch('sessions', {}).until(() => true);
   expect(list.filter((s) => shows(s, 'from the phone'))).toHaveLength(1);
 });
+
+test('the model reads each image where the prompt names it', async () => {
+  const tab = await bica.connect();
+  let seen: unknown;
+  bica.reply((context) => {
+    seen = context.messages.findLast((m) => m.role === 'user')?.content;
+    return fauxAssistantMessage('seen them');
+  });
+  const { projectId } = await bica.project(tab);
+  const image = (data: string, ref?: number) => ({
+    mimeType: 'image/png',
+    data,
+    ...(ref && { ref }),
+  });
+  const id = await tab.request('session.create', {
+    projectId,
+    prompt: 'Compare [Image #1] with [Image #2] please',
+    images: [image('second', 2), image('first', 1), image('unnamed')],
+    requestId: crypto.randomUUID(),
+  });
+  await tab.watch('conversation', { id }).until((c) => shows(c, 'seen them'));
+  const order = (seen as { type: string; text?: string; data?: string }[]).map(
+    (b) => b.text ?? b.data,
+  );
+  expect(order).toEqual([
+    'Compare [Image #1]',
+    'first',
+    ' with [Image #2]',
+    'second',
+    ' please',
+    'unnamed',
+  ]);
+});

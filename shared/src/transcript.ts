@@ -14,6 +14,7 @@ import type {
   LiveState,
 } from '@earendil-works/pi-durable';
 
+import { promptOf } from './images';
 import { PRUNE_ENTRY } from './prune';
 import type { PromptImage, SessionStatus } from './protocol';
 
@@ -205,15 +206,10 @@ export function toMessages(
   const add = (message: PiMessage, key: string) => {
     if (message.role === 'user') {
       const content = message.content;
-      const text = typeof content === 'string' ? content : textOf(content);
-      const images =
+      const { text, images } =
         typeof content === 'string'
-          ? []
-          : content.flatMap((b) =>
-              b.type === 'image'
-                ? [{ mimeType: b.mimeType, data: b.data }]
-                : [],
-            );
+          ? { text: content, images: [] }
+          : promptOf(content);
       const sender = senderOf(withoutCallWords(text));
       // Whatever you send next answers the questions, card or composer. It
       // moves past the answer's end, so the prompt row's place stays the same.

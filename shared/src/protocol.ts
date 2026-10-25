@@ -351,6 +351,8 @@ export interface TerminalOutput {
 export interface PromptImage {
   mimeType: string;
   data: string;
+  // The n of its `[Image #n]` marker in the prompt's text, if it has one.
+  ref?: number;
 }
 
 /** A prompt taken back out of the queue. */

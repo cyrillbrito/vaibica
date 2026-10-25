@@ -115,7 +115,7 @@ export default function MessageRow(props: {
                     {(image) => (
                       <button
                         type="button"
-                        class="block cursor-zoom-in overflow-hidden rounded-card border border-line"
+                        class="relative block cursor-zoom-in overflow-hidden rounded-card border border-line"
                         title="Open full size"
                         onClick={() => openImage(image)}
                       >
@@ -124,6 +124,11 @@ export default function MessageRow(props: {
                           alt=""
                           class="max-h-40 max-w-full object-contain"
                         />
+                        <Show when={image.ref}>
+                          <span class="absolute bottom-1 left-1 rounded-sm bg-bg/80 px-1 text-meta text-fg tabular-nums">
+                            #{image.ref}
+                          </span>
+                        </Show>
                       </button>
                     )}
                   </For>
