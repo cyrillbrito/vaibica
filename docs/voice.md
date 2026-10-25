@@ -20,6 +20,7 @@ GPT-Live is only the voice. It listens, talks, can be interrupted, and decides w
 - A result that is ready while you talk waits until you finish.
 - The voice knows the recent conversation, so "continue" makes sense, and the project's file names, so it passes names like "CommitBox" on spelled right.
 - "How's it going" gets the agent's latest turn and how long ago it was, and "stop" stops the run.
+- The photo button in the call panel adds photos, and on a phone it can open the camera. The voice can't see them, so they wait on the server and go with the next handoff: take a picture, then ask "what's wrong with this?". Photos still waiting when the call ends are dropped.
 
 Voice settings, in the context chip's menu, set a session's speed and instructions such as "talk with me in simple French".
 
@@ -39,7 +40,7 @@ Calls and dictation need the OpenAI Codex (legacy) provider in Settings → Prov
 
 Every call logs each step to `.data/voice-log.jsonl` (the data folder's `voice-log.jsonl` for the `bica` binary). The browser adds the mic's state, the connection, and errors. The server adds the signaling, the sideband opening and closing, and the first event of each kind. A call's lines share one `trace` id. The file rolls over to `voice-log.jsonl.1` at 2 MB.
 
-If the mic sends pure silence, without even room noise, the call panel says "No sound from your mic". In that case the browser or the system isn't passing the mic through, and the server and OpenAI aren't to blame.
+If the mic sends pure silence from the start, without even room noise, the call panel says "No sound from your mic". Once it has heard you, only the system muting or ending the mic brings that back, since iOS sends pure silence between words. In that case the browser or the system isn't passing the mic through, and the server and OpenAI aren't to blame.
 
 ## Limits
 

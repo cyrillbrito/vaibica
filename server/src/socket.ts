@@ -61,7 +61,7 @@ import {
   watchAccounts,
 } from './models/accounts';
 import { voiceLog } from './voice/log';
-import { startCall, stopCall, transcribe } from './voice/voice';
+import { addPhotos, startCall, stopCall, transcribe } from './voice/voice';
 import { watchPlanUsage } from './models/usage';
 import {
   addProject,
@@ -213,6 +213,10 @@ const calls: Handlers = {
     transcribe(audio, mimeType),
   'voice.stop': async ({ callId }) => {
     stopCall(callId);
+    return null;
+  },
+  'voice.photos': async ({ callId, images }) => {
+    addPhotos(callId, images);
     return null;
   },
   'account.signIn': async ({ id, type }) => {

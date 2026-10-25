@@ -3,9 +3,16 @@ import { For, Show, createEffect, createMemo, onSettled } from 'solid-js';
 
 import { useSessions } from '../sessions/sessions';
 import { soundOn } from '../ui/sound';
-import { call, endCall, holdMusic, level, toggleMute } from './voice';
+import {
+  addPhotos,
+  call,
+  endCall,
+  holdMusic,
+  level,
+  toggleMute,
+} from './voice';
 import { IconButton } from '../ui/Button';
-import { HangUpIcon, MicIcon, MicOffIcon } from '../ui/icons';
+import { HangUpIcon, ImageIcon, MicIcon, MicOffIcon } from '../ui/icons';
 
 // Each bar's share of the level, so the meter has a shape at rest and moving.
 const BARS = [0.5, 0.85, 1, 0.75, 0.45];
@@ -136,12 +143,14 @@ export default function CallBar(props: {
           const now = c();
           if (now.phase === 'error') return now.error ?? 'Call failed';
           if (now.phase === 'connecting') return 'Connecting…';
+          if (now.photoNote) return now.photoNote.text;
           if (now.muted) return 'Muted';
           if (now.micSilent) return 'No sound from your mic';
           return props.busy ? 'Working on it…' : 'Listening';
         };
         const working = () =>
           props.busy && c().phase === 'live' && !c().talking;
+        let picker!: HTMLInputElement;
         return (
           <div
             class="appear flex flex-col gap-1 rounded-sheet border border-line bg-surface pt-3.5 pr-2.5 pb-2.5 pl-4 shadow-raised"
@@ -160,7 +169,9 @@ export default function CallBar(props: {
                   <span
                     class={[
                       'text-read',
-                      c().phase === 'error' || c().micSilent
+                      c().phase === 'error' ||
+                      c().micSilent ||
+                      c().photoNote?.failed
                         ? 'text-danger'
                         : props.busy && c().phase === 'live' && !c().muted
                           ? 'shimmer text-muted'
@@ -177,6 +188,30 @@ export default function CallBar(props: {
               </Show>
             </div>
             <div class="-ml-1.5 flex items-center gap-0.5">
+              {/* Where the composer has it. Shown while connecting too, so the
+                  model picker doesn't move once the call is live. On a phone,
+                  the picker offers the camera. */}
+              <IconButton
+                size="md"
+                title="Add a photo"
+                disabled={c().phase !== 'live'}
+                onClick={() => picker.click()}
+              >
+                <ImageIcon />
+              </IconButton>
+              <input
+                ref={(el) => (picker = el)}
+                type="file"
+                accept="image/*"
+                multiple
+                hidden
+                onChange={(e) => {
+                  const files = [...(e.currentTarget.files ?? [])];
+                  // Cleared so picking the same file again still fires.
+                  e.currentTarget.value = '';
+                  void addPhotos(files);
+                }}
+              />
               {props.controls}
               <div class="ml-auto" />
               <Show when={c().phase === 'live'}>

@@ -464,6 +464,11 @@ export interface Calls {
     result: { sdp: string; callId: string };
   };
   'voice.stop': { args: { callId: string }; result: null };
+  // Photos added during a call; they go with its next handoff.
+  'voice.photos': {
+    args: { callId: string; images: PromptImage[] };
+    result: null;
+  };
   // A step of a call in the browser, for the voice log.
   'voice.log': {
     args: { trace: string; event: string; data?: Record<string, unknown> };

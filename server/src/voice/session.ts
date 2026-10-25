@@ -5,6 +5,7 @@ import {
   type EntryRecord,
 } from '@earendil-works/pi-durable';
 
+import type { PromptImage } from '@bica/shared/protocol';
 import {
   VOICE_ENTRY,
   withoutCallWords,
@@ -12,7 +13,12 @@ import {
 } from '@bica/shared/transcript';
 import { context, getHarness } from '../harness';
 import { VOICE_TITLE, retitle } from '../sessions/names';
-import { keepCopies, keepModel, recordSender } from '../sessions/prompts';
+import {
+  input,
+  keepCopies,
+  keepModel,
+  recordSender,
+} from '../sessions/prompts';
 import { textOf } from '../sessions/read';
 import {
   getConversation,
@@ -90,6 +96,7 @@ export async function voiceSession(sessionId: string) {
     async ask(
       request: string,
       title = request,
+      images: PromptImage[] = [],
     ): Promise<{ answer?: EntryId; text: string }> {
       if (!named) {
         named = true;
@@ -99,7 +106,7 @@ export async function voiceSession(sessionId: string) {
       await keepModel(id);
       await recordSender(id, 'user');
       const submission = await conversation.submit(
-        { type: 'input', content: request, whenBusy: 'steer' },
+        { type: 'input', content: input(request, images), whenBusy: 'steer' },
         context,
       );
       const settled = await submission.wait(context);

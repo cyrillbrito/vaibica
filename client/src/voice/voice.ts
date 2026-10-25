@@ -1,6 +1,7 @@
 import { createSignal, untrack } from 'solid-js';
 
 import { request } from '../socket/socket';
+import { toPromptImage } from '../sessions/images';
 import { soundOn } from '../ui/sound';
 
 // Hold music: SomaFM's Groove Salad, https://somafm.com. An <audio> element
@@ -77,6 +78,8 @@ export type CallState = {
   // The mic gives pure silence, not even room noise: the browser or the
   // system isn't passing it through.
   micSilent?: boolean;
+  // A short note on photos being added, shown for a moment.
+  photoNote?: { text: string; failed?: boolean };
 };
 
 // A real mic always picks up some noise; a dead track reads exactly zero.
@@ -105,6 +108,8 @@ let current:
       end: () => void;
       mic?: MediaStream;
       music?: HTMLAudioElement;
+      callId?: string;
+      log: (event: string, data?: Record<string, unknown>) => void;
       level: (who: Who) => number;
     }
   | undefined;
@@ -188,6 +193,7 @@ export async function startCall(session: string | Promise<string>) {
   let watch: ReturnType<typeof setInterval> | undefined;
   const self: NonNullable<typeof current> = {
     end: () => end(),
+    log,
     music,
     // Speech sits around 0.02–0.2 RMS; stretch that over the meter.
     level: (who) => Math.min(1, rms(who) * 6),
@@ -234,16 +240,25 @@ export async function startCall(session: string | Promise<string>) {
     meter('you', self.mic);
     pc.addTrack(track, self.mic);
     // Pure silence for a while means the mic isn't reaching the call. Only
-    // trusted while the meter runs, since a suspended one reads zero too.
+    // trusted while the meter runs, since a suspended one reads zero too,
+    // and only until the mic is first heard: iOS gates the pauses between
+    // words to exact zeros, so later silence is a false alarm. After that,
+    // only the system muting or ending the track counts.
     let silentSince = Date.now();
+    let heard = false;
     watch = setInterval(() => {
       if (meters.state !== 'running' || call()?.muted) {
         silentSince = Date.now();
         return;
       }
       const silent = rms('you') < DEAD_RMS;
-      if (!silent) silentSince = Date.now();
-      const dead = silent && Date.now() - silentSince > DEAD_MS;
+      if (!silent) {
+        silentSince = Date.now();
+        heard = true;
+      }
+      const dead = heard
+        ? track.muted || track.readyState === 'ended'
+        : silent && Date.now() - silentSince > DEAD_MS;
       if (dead === !!call()?.micSilent) return;
       log(dead ? 'mic silent' : 'mic heard', { track: trackState(track) });
       update({ micSilent: dead });
@@ -305,7 +320,7 @@ export async function startCall(session: string | Promise<string>) {
       sdp: offer.sdp!,
       trace,
     });
-    callId = answer.callId;
+    callId = self.callId = answer.callId;
     if (current !== self) return void request('voice.stop', { callId });
     await pc.setRemoteDescription({ type: 'answer', sdp: answer.sdp });
   } catch (error) {
@@ -316,6 +331,38 @@ export async function startCall(session: string | Promise<string>) {
     end(error instanceof Error ? error.message : String(error));
   }
 }
+
+/**
+ * Adds photos to the call, such as one just taken. The voice can't see them,
+ * so the server holds them for the next handoff.
+ */
+export async function addPhotos(files: File[]) {
+  const callId = current?.callId;
+  if (!callId || !files.length) return;
+  clearTimeout(noteTimer);
+  update({ photoNote: { text: 'Adding the photo…' } });
+  let note: CallState['photoNote'];
+  try {
+    const images = await Promise.all(files.map(toPromptImage));
+    await request('voice.photos', { callId, images });
+    note = {
+      text: `${files.length === 1 ? 'Photo' : 'Photos'} added to your next request`,
+    };
+  } catch (error) {
+    current?.log('photos failed', {
+      count: files.length,
+      error: String(error),
+    });
+    note = {
+      text: error instanceof Error ? error.message : String(error),
+      failed: true,
+    };
+  }
+  if (current?.callId !== callId) return;
+  update({ photoNote: note });
+  noteTimer = setTimeout(() => update({ photoNote: undefined }), 4000);
+}
+let noteTimer: ReturnType<typeof setTimeout> | undefined;
 
 /** Hangs up, or dismisses a failed call. */
 export function endCall() {

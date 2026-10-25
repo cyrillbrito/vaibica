@@ -5,6 +5,7 @@ import { promisify } from 'node:util';
 import type { EntryId } from '@earendil-works/pi-durable';
 import WebSocket from 'ws';
 
+import type { PromptImage } from '@bica/shared/protocol';
 import { withCallWords, type VoiceLine } from '@bica/shared/transcript';
 import { models } from '../models/registry';
 import { voiceLog } from './log';
@@ -139,7 +140,11 @@ export async function transcribe(audio: string, mimeType: string) {
   return { text: text?.trim() ?? '' };
 }
 
-type Call = { socket: WebSocket; stop: (by: string) => void };
+type Call = {
+  socket: WebSocket;
+  stop: (by: string) => void;
+  photos: (images: PromptImage[]) => void;
+};
 const calls = new Map<string, Call>();
 
 /**
@@ -284,6 +289,9 @@ export async function startCall(sessionId: string, sdp: string, trace: string) {
 
   // What was said since the last handoff, for the agent.
   const said: string[] = [];
+  // Photos the user added since the last handoff: the voice can't see them,
+  // so they ride along with the next one.
+  const photos: PromptImage[] = [];
   // The start of the user's unfinished line that a handoff already carried.
   let carried = '';
   const callWords = () => {
@@ -313,6 +321,7 @@ export async function startCall(sessionId: string, sdp: string, trace: string) {
       return finish(delegation, 'I stopped the current work.');
     }
     const prompt = withCallWords(request, callWords());
+    const images = photos.splice(0);
     waiting.push(delegation);
     // Long runs: keep telling the voice the work is alive, so it waits.
     const started = Date.now();
@@ -326,8 +335,14 @@ export async function startCall(sessionId: string, sdp: string, trace: string) {
       20_000,
     );
     try {
-      const { answer, text } = await session.ask(prompt, request);
+      const { answer, text } = await session.ask(prompt, request, images);
       clearInterval(alive);
+      log('answered', {
+        ms: Date.now() - started,
+        chars: text.length,
+        photos: images.length || undefined,
+        covered: answer && answered.has(answer) ? true : undefined,
+      });
       if (answer && answered.has(answer))
         return await finish(delegation, COVERED);
       if (answer) answered.add(answer);
@@ -414,6 +429,15 @@ export async function startCall(sessionId: string, sdp: string, trace: string) {
 
   const call: Call = {
     socket,
+    photos: (images) => {
+      photos.push(...images);
+      log('photos', { count: images.length, waiting: photos.length });
+      const added = images.length === 1 ? 'a photo' : `${images.length} photos`;
+      append(
+        `The user added ${added} to the call. You can't see photos, but the agent can: they go with your next delegation. Say in a few words that you got it, unless the user is talking. When the user asks about a photo, delegate in their words, and never guess what it shows.`,
+        null,
+      );
+    },
     stop: (by) => {
       if (!calls.has(callId)) return;
       log('stop', { by, events: [...seen] });
@@ -440,6 +464,12 @@ export async function startCall(sessionId: string, sdp: string, trace: string) {
 
 export function stopCall(callId: string) {
   calls.get(callId)?.stop('browser');
+}
+
+export function addPhotos(callId: string, images: PromptImage[]) {
+  const call = calls.get(callId);
+  if (!call) throw new Error('The call has ended');
+  call.photos(images);
 }
 
 function ago(at: number) {
