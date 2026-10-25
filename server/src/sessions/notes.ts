@@ -1,4 +1,4 @@
-import type { ConversationId } from '@earendil-works/pi-durable';
+import { LiveDoc, type ConversationId } from '@earendil-works/pi-durable';
 
 import { context, getHarness } from '../harness';
 import type { PromptImage } from '@bica/shared/protocol';
@@ -8,14 +8,41 @@ import {
   editSession,
   getConversation,
   listSessions,
-  load,
   sessionMeta,
 } from './store';
 
 // When a run ends, its parent (`startedBy`) gets a note, and so do the
 // sessions in its `watchers`, for that run only. The last run state seen of
 // every session tells when a run ends.
-export const runState = new Map<ConversationId, boolean>();
+const runState = new Map<ConversationId, boolean>();
+let watching: Promise<void> | undefined;
+
+/**
+ * Follows every session's runs for good, from startup, so a run's end is
+ * heard with no tab open, after a restart too.
+ */
+export function watchRuns() {
+  return (watching ??= (async () => {
+    const harness = await getHarness();
+    harness.subscribeCommits(({ changes }) => {
+      for (const change of changes)
+        if (change.type === 'document' && change.record.kind === 'pi.live')
+          runChanged(change.conversationId, !!change.value?.run);
+    });
+    // Runs a restart left unfinished resume; their end must still be heard.
+    await Promise.all(
+      (await listSessions()).map(async ({ id }) => {
+        const conversation = Number(id) as ConversationId;
+        const live = await harness.snapshot(LiveDoc, conversation, context);
+        if (live?.run && !runState.has(conversation))
+          runState.set(conversation, true);
+      }),
+    );
+  })().catch((error) => {
+    watching = undefined;
+    throw error;
+  }));
+}
 
 function addTo(
   id: ConversationId,
@@ -29,19 +56,20 @@ function addTo(
 }
 
 /** Session `from` messaged `to` during its current run. */
-export const noteMessage = (from: ConversationId, to: string) =>
-  addTo(from, 'messaged', to);
+export function noteMessage(from: ConversationId, to: string) {
+  return addTo(from, 'messaged', to);
+}
 
 /**
  * `watcher` hears when the current or next run of this session ends. The
  * session's parent hears of every run anyway, from `startedBy`.
  */
 export async function notifyWhenIdle(id: string, watcher: ConversationId) {
-  await load();
+  await watchRuns();
   await addTo(Number(id) as ConversationId, 'watchers', String(watcher));
 }
 
-export function runChanged(id: ConversationId | undefined, running: boolean) {
+function runChanged(id: ConversationId | undefined, running: boolean) {
   if (id === undefined) return;
   const was = runState.get(id);
   runState.set(id, running);

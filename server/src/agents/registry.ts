@@ -1,150 +1,46 @@
-import type { Context } from '@earendil-works/chord';
-import {
-  defineExtension,
-  section,
-  type Extension,
-  type PromptInput,
-} from '@earendil-works/pi-durable';
+import type { Extension } from '@earendil-works/pi-durable';
 import type { AgentId } from '@bica/shared/agents';
-import { AskTool } from '../tools/ask';
-import { Codemode } from '../tools/codemode';
-import { CodingTools, HubFileTools } from '../tools/coding';
-import { ToolSummary } from '../tools/summary';
-import { createWebTools } from '../tools/web';
-import { exaKey } from '../models/credentials';
-import { SessionDoc, agentIdOf } from '../sessions/session-doc';
-import { HubSessionTools, SessionTools } from '../sessions/tools';
-import { HubTerminalTools, TerminalTools } from '../terminals/tools';
+import { registry } from '../harness';
 import { assistant } from './assistant';
 import { coding } from './coding';
-import {
-  HEAD_SECTIONS,
-  TAIL_SECTIONS,
-  type Agent,
-  type SectionInput,
-  type SectionKey,
-  type ExtensionName,
-} from './common';
+import type { Agent } from './common';
 import { hub } from '../hub/agent';
 import { night } from '../night-runs/agent';
-import { skillsSection } from './skills';
 
 const AGENTS: Record<AgentId, Agent> = { coding, assistant, night, hub };
 
-// The extensions behind the names agents pick. Sessions store the names, so
-// they stay as they are. sessions/tools.ts comes back here through
-// create.ts: nothing it exports may be read while it loads.
-const BY_NAME: Record<ExtensionName, Extension> = {
-  'coding-tools': CodingTools,
-  'terminal-tools': TerminalTools,
-  // Web tools read the Exa key per call, so adding one needs no restart.
-  web: createWebTools(exaKey),
-  'session-tools': SessionTools,
-  ask: AskTool,
-  codemode: Codemode,
-  'hub-file-tools': HubFileTools,
-  'hub-session-tools': HubSessionTools,
-  'hub-terminal-tools': HubTerminalTools,
-};
-for (const [name, extension] of Object.entries(BY_NAME))
-  if (extension.name !== name)
-    throw new Error(`Extension ${name} is named ${extension.name}`);
-
-export const getAgent = (id: AgentId) => AGENTS[id];
-
-/** The text of section `key` for a session of `agent`, or nothing. */
-export async function renderSection(
-  agent: Agent,
-  key: SectionKey,
-  input: SectionInput,
-) {
-  if (key === 'skills')
-    return agent.skills ? skillsSection(input.cwd) : undefined;
-  const render = agent.sections[key];
-  return typeof render === 'function' ? render(input) : render;
+export function getAgent(id: AgentId) {
+  return AGENTS[id];
 }
 
-/** Renders the section `key` of the session's agent, or nothing. */
-const on = (key: SectionKey, options?: { tag: boolean }) =>
-  section(
-    key,
-    async (input: PromptInput, context: Context) => {
-      const meta = await input.read.snapshot(
-        SessionDoc,
-        input.conversationId,
-        context,
-      );
-      const text = await renderSection(getAgent(agentIdOf(meta)), key, {
-        tools: input.agent.tools.map((t) => t.name),
-        cwd: input.agent.cwd ?? '',
-        memory: meta?.memory || undefined,
-        projects: meta?.projects || undefined,
-      });
-      return text ?? undefined;
-    },
-    options,
-  );
+export function allAgents() {
+  return Object.values(AGENTS);
+}
 
 /**
- * The instructions, as sections Pi Durable renders before every request, in
- * the order of the selected extensions: this one before the tools, so the
- * codemode section follows the tool list and rules.
+ * An agent's extensions by name, in a fixed order: the prompt, the agent's
+ * tools, then the folder's files and the reply rules, which come last.
+ * agents/extensions.ts holds the extensions behind the names.
  */
-const BicaPrompt = defineExtension({
-  name: 'bica-prompt',
-  sections: HEAD_SECTIONS.map((key) =>
-    on(key, key === 'preamble' ? { tag: false } : undefined),
-  ),
-});
+export function extensionNames(a: Agent) {
+  return ['bica-prompt', ...a.extensions, 'bica-replies', 'bica-tool-summary'];
+}
+
+function sameNames(a: string[], b: string[]) {
+  return a.length === b.length && a.every((name, i) => name === b[i]);
+}
 
 /**
- * The rest, after the tools: the folder's files, the agent's role, and the
- * reply rules. Durable sends only the sections that changed, so AGENTS.md and
- * skill edits apply from the next request without breaking the prompt cache.
- * Memory and the hub's project list are copies kept in SessionDoc
- * (server/src/sessions/prompts.ts). The name predates the folder sections and
- * stays, since sessions store their extension list.
+ * The extension list a session of `agent` stores. Null for agents that
+ * resolve to the default, so switching between them keeps following it.
  */
-const BicaContext = defineExtension({
-  name: 'bica-replies',
-  sections: TAIL_SECTIONS.map((key) => on(key)),
-});
-
-const picked = (a: Agent) => a.extensions.map((name) => BY_NAME[name]);
-
-/**
- * An agent's extensions, in a fixed order: the prompt, the agent's tools,
- * then the folder's files and the reply rules, which come last.
- */
-const resolve = (a: Agent) => [
-  BicaPrompt,
-  ...picked(a),
-  BicaContext,
-  ToolSummary,
-];
-
-/** What every session runs with unless its agent picks its own. */
-export const DEFAULT_EXTENSIONS = resolve(coding);
-
-/** Every extension an agent selects, for the harness to install. */
-export const ALL_EXTENSIONS = new Set([
-  BicaPrompt,
-  ...Object.values(AGENTS).flatMap(picked),
-  BicaContext,
-  ToolSummary,
-]);
-
-const sameNames = (a: Extension[], b: Extension[]) =>
-  a.length === b.length && a.every((e, i) => e.name === b[i]!.name);
-
-// null: DEFAULT_EXTENSIONS, for agents that resolve to the same list, so
-// switching between them keeps following the host default.
-const SELECTIONS = Object.fromEntries(
-  Object.values(AGENTS).map((a) => [
-    a.id,
-    sameNames(resolve(a), DEFAULT_EXTENSIONS) ? null : resolve(a),
-  ]),
-) as Record<AgentId, Extension[] | null>;
-
-/** The extension list a session of `agent` stores, null for the default. */
-export const selection = (agent: Agent) => SELECTIONS[agent.id];
+export function selection(agent: Agent): Extension[] | null {
+  const names = extensionNames(agent);
+  if (sameNames(names, extensionNames(coding))) return null;
+  const installed = registry.snapshot();
+  return names.map((name) => {
+    const extension = installed.extension(name);
+    if (!extension) throw new Error(`Extension ${name} is not installed`);
+    return extension;
+  });
+}

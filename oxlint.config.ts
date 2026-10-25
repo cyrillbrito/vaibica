@@ -15,9 +15,8 @@ export default defineConfig({
   overrides: [
     {
       // Features import each other freely, so a cycle is the one mistake left
-      // in the client's layout (docs/architecture.md). The server keeps one on
-      // purpose: session tools start sessions, which need the session tools.
-      files: ['client/**', 'shared/**'],
+      // in the layout (docs/architecture.md).
+      files: ['client/**', 'server/**', 'shared/**'],
       rules: { 'import/no-cycle': ['error', { ignoreTypes: true }] },
     },
   ],

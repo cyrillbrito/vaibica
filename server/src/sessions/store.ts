@@ -12,7 +12,6 @@ import type { SessionSummary } from '@bica/shared/protocol';
 import { isTurn, statusOf } from '@bica/shared/transcript';
 import { context, getHarness } from '../harness';
 import { live } from '../live';
-import { runChanged, runState } from './notes';
 import { SessionDoc, type SessionMeta, agentIdOf } from './session-doc';
 import { stuckOf, watchStuck } from './stuck';
 
@@ -44,9 +43,6 @@ export function load() {
       for (const change of changes) {
         const id = touched(change);
         if (id !== undefined) dirty.add(id);
-        if (change.type === 'document' && change.record.kind === 'pi.live') {
-          runChanged(change.conversationId, !!change.value?.run);
-        }
         // Automatic ones too. The prompt cache starts over anyway, so the next
         // prompt takes a fresh memory index and project list (prompts.ts).
         if (
@@ -68,15 +64,7 @@ export function load() {
       for (const id of ids) dirty.add(id);
       void sessions.refresh();
     });
-    const ids = await allConversations();
-    for (const id of ids) dirty.add(id);
-    // Runs a restart left unfinished resume; their end must still be heard.
-    await Promise.all(
-      ids.map(async (id) => {
-        const live = await harness.snapshot(LiveDoc, id, context);
-        if (live?.run && !runState.has(id)) runState.set(id, true);
-      }),
-    );
+    for (const id of await allConversations()) dirty.add(id);
   })().catch((error) => {
     loaded = undefined;
     throw error;

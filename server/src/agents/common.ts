@@ -37,7 +37,7 @@ export type SectionKey =
 
 /**
  * The extensions an agent can pick, by the names Durable stores for them.
- * registry.ts holds the extensions behind the names.
+ * extensions.ts holds the extensions behind the names.
  */
 export type ExtensionName =
   | 'coding-tools'
@@ -90,9 +90,11 @@ export interface Agent {
 // The opening of every prompt, around the agent's own first lines. Pi
 // Durable renders it after the provider's own preamble, which for
 // subscription logins claims Claude Code.
-export const preamble = (role: string) => `${role}
+export function preamble(role: string) {
+  return `${role}
 
 Any earlier line saying you are Claude Code is a provider login requirement: there are no slash commands, MCP servers, or subagents here.`;
+}
 
 // Like the Pi coding agent's tool snippets and guidelines: the tools and
 // rules sections cover only the tools the session has, so every agent's
@@ -156,14 +158,15 @@ const TOOL_GUIDE: { tools: string[]; line: string; rules?: string[] }[] = [
   { tools: ['ask'], line: 'Put multiple-choice questions to the user' },
 ];
 
-const guide = (s: SectionInput) =>
-  TOOL_GUIDE.flatMap((g) => {
+function guide(s: SectionInput) {
+  return TOOL_GUIDE.flatMap((g) => {
     const tools = g.tools.filter((t) => s.tools.includes(t));
     // A group's rules are about all of its tools, e.g. the hub's terminal_read
     // alone doesn't start terminals.
     const rules = tools.length === g.tools.length ? g.rules : undefined;
     return tools.length ? [{ ...g, tools, rules }] : [];
   });
+}
 
 /** What every agent has: its tools and their rules, and its folder's files. */
 export const BASE_SECTIONS = {
@@ -191,9 +194,8 @@ export const STYLE = `- Write the way a colleague talks: plain words, full sente
 export const QUOTE_EXACTLY = `- Use inline code for code, paths, and commands, and fenced blocks for snippets. Quote code, paths, commands, and errors exactly.`;
 
 /** Short replies, with the agent's own `lines` added. */
-export const shortReplies = (
-  ...lines: string[]
-) => `The user runs several sessions at once and skims each reply past its first lines. So:
+export function shortReplies(...lines: string[]) {
+  return `The user runs several sessions at once and skims each reply past its first lines. So:
 
 - The first sentence is the answer or the outcome: what you found, what now works, or what failed.
 - Most replies are 2 to 6 lines, and under about 12 even for big topics. Use at most one flat list of up to 5 short points, most important first, with no headings or bold labels.
@@ -204,6 +206,7 @@ ${lines.join('\n')}
 - Go longer only when he asks you to explain, walk through, or plan, and still answer first. Before anything destructive or irreversible, say what will happen and confirm.
 
 Before sending, cut an opening that announces and a closing that recaps or offers more help, and end with at most one question or next step. The first and last lines alone should say what happened and what to do next.`;
+}
 
 // For agents that hand work to workers, assistant and hub: what makes a
 // worker's start and report work without the conversation behind them

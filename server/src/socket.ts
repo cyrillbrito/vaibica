@@ -36,9 +36,10 @@ import {
 } from './sessions/prompts';
 import { createSession, fork } from './sessions/create';
 import { retryStuck } from './sessions/stuck';
-import { fromUser, handBack } from './sessions/notes';
+import { fromUser, handBack, watchRuns } from './sessions/notes';
 import { conversationDetail, watchConversation } from './sessions/conversation';
-import { load, watchSessions } from './sessions/store';
+import { watchSessions } from './sessions/store';
+import { installAgents } from './agents/extensions';
 import { openHub, updateHub } from './hub/hub';
 import {
   cancelTonight,
@@ -94,11 +95,12 @@ import {
   watchStatus,
 } from './git/workspace';
 
+installAgents();
 startHousekeeping();
 startNight();
 // Opens the harness, which resumes runs a restart left unfinished, and
 // follows them at once: a parent hears when one ends, open tab or not.
-void load().catch((error) => console.error('[sessions]', error));
+void watchRuns().catch((error) => console.error('[sessions]', error));
 
 type Sink = {
   snapshot: (value: unknown, kept?: number) => void;
@@ -353,10 +355,12 @@ const topics: {
 };
 
 // Just the workspace: a call's other args stay out of caches keyed on it.
-const ref = ({ projectId, cwd }: WorkspaceRef): WorkspaceRef => ({
-  projectId,
-  cwd,
-});
+function ref({ projectId, cwd }: WorkspaceRef): WorkspaceRef {
+  return {
+    projectId,
+    cwd,
+  };
+}
 
 const wss = new WebSocketServer({ noServer: true });
 
