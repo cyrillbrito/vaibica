@@ -14,7 +14,7 @@ Scripts can also call classifier models, which answer typed yes/no, choice, or s
 
 ## Asking you
 
-`ask` puts one to four multiple-choice questions to you and ends the run. Nothing waits, so a question can be answered hours later from another device. Typing in the composer answers too, and number keys pick options. Once answered, the card folds into one row.
+`ask` puts one to four multiple-choice questions to you and ends the run. Nothing waits, so a question can be answered hours later from another device. Typing in the composer answers too, and number keys pick options. A note or another session's message that comes first doesn't answer: it runs the agent with word that your answer is still to come. Once answered, the card folds into one row.
 
 ## Other sessions
 

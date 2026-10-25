@@ -34,7 +34,7 @@ While the agent works, sending queues the prompt as a follow-up, which starts th
 
 A worker, a session another session started, is in its parent's charge at first: the parent gets a note after every run. A strip above the composer says "Parent in charge".
 
-- Sending takes over, so the send button reads "Take over". From then on the parent hears nothing more, and can't message or stop it unless you tell it to.
+- Sending takes over, so the send button reads "Take over". From then on the worker answers you, and your words come before the parent's plan. The parent hears nothing more, and can't message or stop it unless you tell it to.
 - The arrow beside the send button holds a plain Send, which leaves the parent in charge and gives it a copy of your words.
 - Answering a question the session asks doesn't take it over.
 - Hand back, in the strip, returns the session to the parent with its last reply.

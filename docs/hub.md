@@ -33,7 +33,7 @@ On a [voice call](./voice.md), what the hub says after a note is spoken too, so 
 
 ## How it behaves
 
-It is proactive with information, never with changes. It reads, checks, and proposes the next step with its pick, then waits for your go before it starts, messages, stops, or archives anything. It does at once what you just told it.
+It is proactive with information, never with changes. It reads, checks, and proposes the next step with its pick, then waits for your go before it starts, messages, stops, or archives anything. It does at once what you just told it, and a worker's task asks for that: the worker reports in its reply, and writes a file, commits, or merges when you want one.
 
 A session you drive is yours, whoever started it ([sessions.md](./sessions.md#whos-in-charge)). The hub only reports on it.
 

@@ -13,6 +13,7 @@ import { getAgent } from '../agents/registry';
 import { loadMemory, projectList } from '../agents/common';
 import { defaultChoice } from '../models/models';
 import { checkChoice, models } from '../models/registry';
+import { readSession } from './read';
 import { agentIdOf, editSession, getConversation, sessionMeta } from './store';
 
 /** Who sends a prompt: the user, Bica's own notes, or another session's id. */
@@ -37,6 +38,10 @@ export async function submit(
     throw new Error(
       'This session is held for tonight: edit its prompt, or run it now',
     );
+  // Anything sent here starts a run, and agents took a note or another
+  // session's message for the end of their questions.
+  if (from !== 'user' && (await readSession(id)).status === 'waiting')
+    prompt += `\n\n(This isn't the user's answer: your questions to him are still open.)`;
   await keepCopies(conversation.id);
   await keepModel(conversation.id);
   const parent = await recordSender(conversation.id, from, keep);

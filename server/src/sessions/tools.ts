@@ -119,7 +119,7 @@ function sessionTools(hub: boolean): ToolRegistration[] {
       if (!prompt.trim()) throw new Error('The prompt is empty');
       const id = await spawnSession(
         api.conversationId,
-        `${prompt}\n\n(Session ${api.conversationId} started this session and drives it: to report back or ask it something, use session_send. If the user writes to you himself, he has taken you over: from then on, answer him in your replies, not session ${api.conversationId}.)`,
+        `${prompt}\n\n(Session ${api.conversationId} started this session and drives it: report back and ask it things with session_send. Once the user writes to you himself, you're his: answer him in your replies, and his words come before session ${api.conversationId}'s plan.)`,
         `start_session:${api.callId}`,
         folder,
         worktree,
@@ -284,7 +284,7 @@ function sessionTools(hub: boolean): ToolRegistration[] {
       ]);
       if (target.archivedAt)
         throw new Error(
-          `Session ${id} is archived. Ask the user before bringing it back.`,
+          `Session ${id} is archived, so nothing reads it. Say it in your reply instead, or ask the user to bring the session back.`,
         );
       checkInCharge(target, me.id, user_asked);
       await noteMessage(api.conversationId, id);

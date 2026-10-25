@@ -24,6 +24,12 @@ export const PRUNE_ENTRY = 'bica.cleanup';
 // often carry the point ("Edited 2 files", a path, a short command).
 const KEEP_OUTPUT = 300;
 const KEEP_ARG = 120;
+// Tasks for other sessions stay whole: the agent rereads them to know what
+// it delegated, and wrote new ones as cut off as the old ones it saw.
+const KEEP_WHOLE: Record<string, string> = {
+  session_start: 'prompt',
+  session_send: 'message',
+};
 // A cleared output keeps its start and end: on replays of real sessions no
 // selector kept the lines the agent needed later better than these
 // (docs/context-usage.md). Below PREVIEW_FROM the note alone is enough.
@@ -138,7 +144,7 @@ function pruneCalls(
   let changed = false;
   const content = message.content.map((block) => {
     if (block.type !== 'toolCall' || !old.has(block.id)) return block;
-    const args = slim(block.arguments);
+    const args = slim(block.arguments, KEEP_WHOLE[block.name]);
     if (!args) return block;
     changed = true;
     return { ...block, arguments: args };
@@ -147,12 +153,12 @@ function pruneCalls(
 }
 
 /** Undefined when nothing is long enough to shrink. */
-function slim(args: ToolCall['arguments']) {
+function slim(args: ToolCall['arguments'], keep?: string) {
   let changed = false;
   const out: ToolCall['arguments'] = {};
   for (const [key, value] of Object.entries(args)) {
     const text = typeof value === 'string' ? value : JSON.stringify(value);
-    if (key === 'summary' || text.length <= KEEP_ARG) {
+    if (key === 'summary' || key === keep || text.length <= KEEP_ARG) {
       out[key] = value;
       continue;
     }
@@ -166,9 +172,11 @@ function slim(args: ToolCall['arguments']) {
         ? `[Script cleared. Its calls: ${calls.join('; ')}]`
         : '[Script cleared]';
     } else if (typeof value === 'string') {
-      const first = value.trim().split('\n')[0]!.slice(0, 80);
-      out[key] = `${first}… [cleared]`;
-    } else out[key] = '[cleared]';
+      // A note, not a cut string: a cut string reads like something to copy.
+      const first = whole(value.trim().split('\n')[0]!.slice(0, 80));
+      out[key] =
+        `[Cleared to save context, ${value.length} characters. It began: ${first}]`;
+    } else out[key] = '[Cleared to save context]';
   }
   return changed ? out : undefined;
 }

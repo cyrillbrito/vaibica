@@ -12,7 +12,7 @@ export const ASK = 'ask';
 const ask = defineTool({
   name: ASK,
   description:
-    'Ask the user one to four multiple-choice questions and end your turn; the answer arrives as their next message. Use it for decisions that are genuinely theirs (what to build, which approach, scope), not for facts you can look up. Put your recommended option first and end its label with " (Recommended)". A skipped question comes back as "(skipped)": decide it yourself or ask again later.',
+    'Ask the user one to four multiple-choice questions and end your turn; the answer comes in a message from them. Use it for decisions that are genuinely theirs (what to build, which approach, scope), not for facts you can look up. Put your recommended option first and end its label with " (Recommended)". A skipped question comes back as "(skipped)": decide it yourself or ask again later.',
   parameters: Type.Object({
     questions: Type.Array(
       Type.Object({
@@ -45,7 +45,7 @@ const ask = defineTool({
       output: [
         {
           type: 'text',
-          text: "Shown to the user. Their answer arrives as the user's next message.",
+          text: 'Shown to the user. Their answer comes in a message from them.',
         },
       ],
       control: { terminate: true },

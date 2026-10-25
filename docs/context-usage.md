@@ -31,7 +31,7 @@ Rereading a cached prompt costs about a tenth of sending it fresh. Anthropic kee
 
 Compaction summarizes the older part of the context. Pi Durable does it on its own when the window is nearly full, and Compact does it on demand, where you can say what to keep. The transcript marks it, and the marker opens to the summary.
 
-Pruning clears old tool output from what the model reads, with no model call, as opencode's prune does. Long tool results and images become a short note that keeps their first and last lines, while prompts, replies, thinking, and the latest turns stay whole. Old sessions lose about three quarters of their size this way. The transcript still shows everything. Pruning can run while the agent works, and is best on a cold cache, where compacting would first reread the whole session at full price.
+Pruning clears old tool output from what the model reads, with no model call, as opencode's prune does. Long tool results and images become a short note with their first and last lines, and long tool arguments a note with their first line. Prompts, replies, thinking, the latest turns, and tasks sent to other sessions stay whole: an agent rereads what it delegated, and writes new tasks like the ones it sees. Old sessions lose about three quarters of their size this way. The transcript still shows everything. Pruning can run while the agent works, and is best on a cold cache, where compacting would first reread the whole session at full price.
 
 Both lines in the transcript have a fork button, which starts a new session from the context as it is after them.
 
