@@ -1,0 +1,99 @@
+---
+import { Image } from 'astro:assets';
+import shot from '../assets/bica-demo.png';
+
+const features = [
+  ['Many sessions at once', 'Watch them stream, steer or queue prompts while the agent works, and join late without losing a word.'],
+  ['A worktree per feature', 'Parallel agents never collide. Each feature gets its own branch and folder.'],
+  ['Review in full screen', 'Read the agent\'s work in full-size diffs, and send review comments straight back.'],
+  ['From your phone', 'The server runs on your dev machine. The UI runs in any browser, anywhere.'],
+];
+---
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/favicon.svg" />
+    <title>Bica: a fast web UI for coding agents</title>
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/"><img src="/favicon.svg" alt="" width="24" height="24" /> Bica</a>
+      <nav>
+        <a href="/docs/">Docs</a>
+        <a href="https://github.com/cyrillbrito/vaibica">GitHub</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <p class="eyebrow">Vai, Bica!</p>
+        <h1>A strong, short shot<br />of agent work.</h1>
+        <p class="lede">
+          Bica is a fast web UI for coding agents. It runs on your machine, works
+          from any browser, and keeps a dozen sessions going while you review.
+        </p>
+        <div class="cta">
+          <a class="btn primary" href="/docs/">Read the docs</a>
+          <a class="btn" href="/docs/how-a-prompt-travels/">See how it works</a>
+        </div>
+      </section>
+
+      <figure class="shot">
+        <Image src={shot} alt="Bica with a session, its transcript, and the Git tab" widths={[720, 1440]} sizes="(max-width: 1100px) 100vw, 1100px" />
+      </figure>
+
+      <section class="features">
+        {features.map(([title, body]) => (
+          <article>
+            <h2>{title}</h2>
+            <p>{body}</p>
+          </article>
+        ))}
+      </section>
+    </main>
+
+    <footer>Named after the Lisbon espresso.</footer>
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    --bg: #14110f;
+    --fg: #f3ece4;
+    --muted: #a99d91;
+    --crema: #d99a5b;
+    --line: #2c2622;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: radial-gradient(ellipse 80% 50% at 50% -10%, #3a2618 0%, var(--bg) 70%);
+    color: var(--fg);
+    font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, sans-serif;
+  }
+  a { color: inherit; text-decoration: none; }
+</style>
+
+<style>
+  header, main, footer { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+  header { display: flex; justify-content: space-between; align-items: center; height: 72px; }
+  .brand { display: flex; gap: 10px; align-items: center; font-weight: 600; }
+  nav { display: flex; gap: 24px; color: var(--muted); }
+  nav a:hover { color: var(--fg); }
+  .hero { padding: 72px 0 48px; max-width: 720px; }
+  .eyebrow { color: var(--crema); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; font-size: 13px; margin: 0; }
+  h1 { font: 600 clamp(40px, 7vw, 68px)/1.04 Georgia, 'Times New Roman', serif; letter-spacing: -0.02em; margin: 16px 0 20px; }
+  .lede { color: var(--muted); font-size: 19px; margin: 0; }
+  .cta { display: flex; gap: 12px; margin-top: 32px; flex-wrap: wrap; }
+  .btn { padding: 10px 18px; border-radius: 999px; border: 1px solid var(--line); }
+  .btn:hover { border-color: var(--muted); }
+  .btn.primary { background: var(--crema); color: #1b120b; border-color: var(--crema); font-weight: 600; }
+  .shot { margin: 0; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 40px 120px -20px #000c; }
+  .shot img { display: block; width: 100%; height: auto; }
+  .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 32px; padding: 72px 0; }
+  .features h2 { font-size: 17px; margin: 0 0 6px; }
+  .features p { color: var(--muted); margin: 0; }
+  footer { color: var(--muted); padding-bottom: 48px; font-size: 14px; }
+</style>

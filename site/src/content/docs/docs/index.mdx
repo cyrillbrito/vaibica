@@ -1,0 +1,34 @@
+---
+title: Bica docs
+description: How Bica works, from the composer to the agent and back.
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+Bica is a fast web UI for coding agents. The server runs on your dev machine, and the UI works from any browser.
+
+<CardGrid>
+  <Card title="Many sessions" icon="list-format">
+    Stream, steer, and queue prompts across a dozen agents at once.
+  </Card>
+  <Card title="Worktrees" icon="seti:git">
+    Each feature gets its own branch and folder.
+  </Card>
+  <Card title="Review" icon="document">
+    Full-screen diffs, with comments that go back to the agent.
+  </Card>
+  <Card title="Remote first" icon="phone">
+    Use it from your phone over Tailscale.
+  </Card>
+</CardGrid>
+
+<LinkCard
+  title="Architecture"
+  href="/docs/architecture/"
+  description="The parts, and where data lives."
+/>
+<LinkCard
+  title="How a prompt travels"
+  href="/docs/how-a-prompt-travels/"
+  description="Step through one prompt, end to end."
+/>

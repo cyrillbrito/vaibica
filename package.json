@@ -5,7 +5,8 @@
   "workspaces": [
     "client",
     "server",
-    "shared"
+    "shared",
+    "site"
   ],
   "type": "module",
   "scripts": {
