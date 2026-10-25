@@ -60,8 +60,7 @@ There is no time to prove every idea here, so borrow from people who already bui
 - Installing as an app on the phone.
 - A file watcher instead of polling.
 - A file mode in the command palette: `/` searches the workspace's files, and ⌘P opens straight into it.
-- An untangled `server/src/sessions/`: no import cycles between its files, and the session tools reaching sessions without a loop through the agent registry ([architecture.md](docs/architecture.md#feature-folders)).
-- `app/Sidebar.tsx` and `app/CommandPalette.tsx` split into smaller files, each when a feature next changes it ([feature-folders.md](docs/records/feature-folders.md)).
+- `app/Sidebar.tsx` and `app/CommandPalette.tsx` split into smaller files, each when a feature next changes it ([architecture.md](docs/architecture.md#feature-folders)).
 
 ## Library docs
 
@@ -79,7 +78,7 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 `docs/` is a short user manual of what exists, one doc per feature, written as [docs/writing.md](docs/writing.md) describes. Read the doc for the area before changing it, and follow its links to related docs. This list is the index: add new docs here.
 
 - [GLOSSARY.md](docs/GLOSSARY.md): one name per concept, and the words to avoid. Read before naming anything, in code, docs, or the UI.
-- [architecture.md](docs/architecture.md): concepts, server modules, how a prompt travels, where data lives. Start here for anything that crosses areas.
+- [architecture.md](docs/architecture.md): concepts, server modules, the folder layout, how a prompt travels, where data lives. Start here for anything that crosses areas, and read its Feature folders before moving code or adding a folder.
 - [sessions.md](docs/sessions.md): the transcript, queue, composer, forks, status, archive. Read for transcript or composer work.
 - [tools.md](docs/tools.md): the agent's tools, code mode, `ask`, and the session tools. Read before adding or changing a tool.
 - [system-prompt.md](docs/system-prompt.md): the system prompt's sections, project instructions, skills, and reply rules. Read before changing what the agent is told.
@@ -111,11 +110,9 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 - [voice-and-hub.md](docs/explorations/voice-and-hub.md): what's left from OpenAI's GPT-Live and Codex voice for calls and the hub.
 - [work-lifecycle.md](docs/explorations/work-lifecycle.md): from a first question to a merged pull request.
 
-`docs/records/` holds decisions worth remembering: what was tried, what was found, and what was decided. Read the matching one before reopening its question.
+`docs/records/` holds big decisions the user asked to record: what was tried, what was found, and what was decided. Read the matching one before reopening its question. Write one only when the user asks for it; how the code is laid out today goes in `architecture.md`.
 
 - [extensibility.md](docs/records/extensibility.md): why features aren't extensions.
-- [packages-per-side.md](docs/records/packages-per-side.md): why the repo is client, server, and shared packages instead of feature folders with markers.
-- [feature-folders.md](docs/records/feature-folders.md): when a feature gets a folder, and why the protocol, socket table, sidebar, and ⌘K stay whole. Read before moving code or adding a feature folder.
 
 `docs/inspiration/` holds screenshots of other agent UIs, as ideas, not specs.
 

@@ -24,7 +24,7 @@ How to write docs, comments, and commit messages in this repo. The code is reada
 
 `docs/explorations/` is the opposite: research, brainstorms, comparisons, and prototypes for what is not built yet. It can be longer and open-ended, and gets a line in the index in `AGENTS.md`. Write one only when asked: a question gets its answer in the reply. When an idea gets built, its doc in `docs/` describes what was built and links the sources that inspired it, and the exploration is deleted.
 
-`docs/records/` keeps decisions worth remembering, usually an idea that was tried and dropped: the goal, what was tried, what was found, and the decision, with its date and sources. A record is history, so it may say what changed. Write one when a direction is dropped or reversed, so nobody reopens it without the evidence.
+`docs/records/` keeps decisions worth remembering, usually an idea that was tried and dropped: the goal, what was tried, what was found, and the decision, with its date and sources. A record is history, so it may say what changed. Write one only when the user asks for it.
 
 ## Comments
 

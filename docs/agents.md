@@ -14,7 +14,7 @@ An agent holds nothing else. What Bica does around a session is a feature of its
 - The hub's page has no side panels, Settings → Hub picks its folder and model, and the hub hears when any session asks or fails. Sessions it starts get the default model, not its own.
 - The Assistant toggle on the home composer starts a session as Assistant, and the context chip's menu switches it back to Coding. Switching rebuilds the prompt cache once.
 
-Each agent is one file, a plain object that names its extensions: Coding and Assistant in `server/src/agents/`, Hub and Night in their features' folders, all listed in `server/src/agents/registry.ts`. Its system prompt fills the shared prompt sections ([system-prompt.md](./system-prompt.md)). The browser's half, each agent's label and description, is `shared/src/agents.ts`.
+Each agent is one file, a plain object that names its extensions: Coding and Assistant in `server/src/agents/`, Hub and Night in their features' folders, all listed in `server/src/agents/registry.ts`. `server/src/agents/extensions.ts` installs the extensions behind the names at startup, and a session picks its agent's from Pi Durable's registry by name. Its system prompt fills the shared prompt sections ([system-prompt.md](./system-prompt.md)). The browser's half, each agent's label and description, is `shared/src/agents.ts`.
 
 ## Sources
 
