@@ -1,6 +1,6 @@
 import { Loading, Match, Switch, createMemo, lazy } from 'solid-js';
 
-import Markdown from './Markdown';
+import Markdown from '../markdown/Markdown';
 import { errorText } from '../ui/errors';
 
 export type PreviewKind = 'markdown' | 'html' | 'mermaid';

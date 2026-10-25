@@ -10,6 +10,7 @@ import { parseMarkdown } from '@tanstack/markdown/parser';
 import {
   For,
   Show,
+  createEffect,
   createMemo,
   createSignal,
   onSettled,
@@ -18,7 +19,10 @@ import {
 
 import { CopyButton } from '../ui/CopyButton';
 
-import { openPath } from './files';
+import { openPath } from '../files/files';
+
+import { createChunkFade } from './fade-chunks';
+import { createSmoothText } from './smooth-text';
 
 // Pierre's shared Shiki instance, the same one the diff and file views use.
 const THEMES = { light: 'pierre-light', dark: 'pierre-dark' } as const;
@@ -212,17 +216,23 @@ export default function Markdown(props: {
   text: string;
   // Where relative paths start.
   cwd?: string;
+  // A reply that may still grow: added text types in and fades. Read once.
+  streaming?: boolean;
 }) {
+  const streaming = untrack(() => props.streaming);
+  const smooth = streaming ? createSmoothText(() => props.text) : undefined;
   const blocks = createMemo(
     () =>
-      parseMarkdown(props.text, options).children.map((node, i) => {
-        linkCodePaths(node);
-        const html = renderHtml(
-          { type: 'root', children: [node] },
-          { highlighter: highlight },
-        );
-        return { key: `${i}:${html}`, html };
-      }),
+      parseMarkdown(smooth ? smooth() : props.text, options).children.map(
+        (node, i) => {
+          linkCodePaths(node);
+          const html = renderHtml(
+            { type: 'root', children: [node] },
+            { highlighter: highlight },
+          );
+          return { key: `${i}:${html}`, html };
+        },
+      ),
     { name: 'markdownBlocks' },
   );
   // Blocks that turn up after the first paint (a reply streaming in) fade
@@ -232,12 +242,21 @@ export default function Markdown(props: {
   onSettled(() => {
     ready = true;
   });
+  let root: HTMLDivElement | undefined;
+  if (streaming) {
+    const fade = createChunkFade();
+    createEffect(blocks, (list) => {
+      const els = root!.querySelectorAll(':scope > [data-block]');
+      fade(els[els.length - 1], list.length - 1);
+    });
+  }
   // The code block under the pointer gets a copy button in its corner.
   const [code, setCode] = createSignal<HTMLPreElement | undefined>(undefined, {
     name: 'hoveredCode',
   });
   return (
     <div
+      ref={(el) => (root = el)}
       class="markdown relative"
       onPointerOver={(event) => {
         const pre = (event.target as Element).closest('pre');
@@ -263,6 +282,7 @@ export default function Markdown(props: {
           newest = Math.max(newest, n);
           return (
             <div
+              data-block
               class={fresh ? 'stream-in' : 'contents'}
               // Safe: renderHtml escapes raw HTML, and Shiki escapes code.
               // eslint-disable-next-line solid/no-innerhtml

@@ -44,6 +44,7 @@ Inside the client and the server, code is grouped by feature, and a feature has 
 - `models/`: models, keys, sign-ins, and plan accounts ([models.md](./models.md)).
 - `projects/`: projects, worktrees, chats, pull requests, and the workspace the current page is about ([projects.md](./projects.md)).
 - `files/` and `git/`: file and diff views, kept files, and review comments; status, staging, and commits ([files.md](./files.md), [git.md](./git.md)).
+- `markdown/` (client): rendered Markdown for replies, notes, and file previews, with code highlighting, links to paths, and a streaming reply typing and fading in ([sessions.md](./sessions.md#the-transcript)).
 - `terminals/`, `voice/`, `hub/`, `night-runs/`, `context-usage/`: one feature each, with its doc. Hub and Night define their agents in their own folders.
 
 A file goes to the feature that owns it, not the one that uses it first. Features import each other freely, with no layering between them. The pieces every feature touches stay in one place each: `shared/src/protocol.ts`, the socket's table of calls in `server/src/socket.ts`, the sidebar in `client/src/app/sidebar/`, and ⌘K in `client/src/app/palette/`. A piece of one moves into its feature only when it owns state there, as terminal and kept-file rows did.

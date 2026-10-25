@@ -2,7 +2,7 @@ import { For, Match, Show, Switch } from 'solid-js';
 import Activity from './Activity';
 import AskCard from './AskCard';
 import ErrorReply from './ErrorReply';
-import Markdown from '../files/Markdown';
+import Markdown from '../markdown/Markdown';
 import { IconButton } from '../ui/Button';
 import { CopyButton } from '../ui/CopyButton';
 import {
@@ -164,7 +164,7 @@ export default function MessageRow(props: {
           )}
         </Match>
         <Match when={props.message.kind === 'text'}>
-          <Markdown text={text()} cwd={props.cwd} />
+          <Markdown text={text()} cwd={props.cwd} streaming />
         </Match>
         <Match
           when={props.message.kind === 'activity' ? props.message : undefined}

@@ -2,6 +2,11 @@ import { onSettled } from 'solid-js';
 
 // Within this of the end counts as "at the bottom" (fractional zoom offsets).
 const SLACK = 4;
+// The glide's spring, per 60 fps frame: use-stick-to-bottom's defaults.
+const DAMPING = 0.7;
+const STIFFNESS = 0.05;
+const MASS = 1.25;
+const FRAME_MS = 1000 / 60;
 
 /**
  * Keeps a scroll container pinned to its end while the user is there, and
@@ -21,10 +26,47 @@ export function createStickToBottom() {
   const distance = (el: HTMLElement) =>
     el.scrollHeight - el.scrollTop - el.clientHeight;
 
+  let frame: number | undefined;
+  let lastFrame = 0;
+  let velocity = 0;
+  // Movement too small for the browser to apply yet, as it rounds scrollTop.
+  let carry = 0;
+
   const pin = () => {
     if (!scroller) return;
+    if (frame !== undefined) cancelAnimationFrame(frame);
+    frame = undefined;
+    velocity = carry = 0;
     scroller.scrollTop = scroller.scrollHeight;
     lastTop = scroller.scrollTop;
+  };
+
+  // A streamed line jumping the view up by its height reads as a jolt; the
+  // view springs to the end instead. Its speed carries from line to line, so
+  // a steady stream scrolls as one motion. Kept under reduced motion: it
+  // moves the page less than the jumps it replaces.
+  const step = (now: number) => {
+    frame = undefined;
+    const el = scroller;
+    const left = el && following ? distance(el) : 0;
+    if (!el || left <= 1) {
+      velocity = carry = 0;
+      return;
+    }
+    const ticks = Math.min(now - lastFrame, 100) / FRAME_MS;
+    lastFrame = now;
+    velocity = (DAMPING * velocity + STIFFNESS * left) / MASS;
+    carry += velocity * ticks;
+    const before = el.scrollTop;
+    el.scrollTop = before + carry;
+    if (el.scrollTop !== before) carry = 0;
+    lastTop = el.scrollTop;
+    frame = requestAnimationFrame(step);
+  };
+  const glide = () => {
+    if (frame !== undefined) return;
+    lastFrame = performance.now();
+    frame = requestAnimationFrame(step);
   };
 
   const onScroll = () => {
@@ -48,13 +90,19 @@ export function createStickToBottom() {
       following = distance(scroller) <= SLACK;
       return;
     }
-    if (following) pin();
+    if (!following || !scroller) return;
+    // Big changes, such as a session opening, land at once.
+    if (distance(scroller) > scroller.clientHeight / 2) pin();
+    else glide();
   };
   // Made on first use: refs only run in the browser, the hook may not.
   let observer: ResizeObserver | undefined;
   const observe = (el: HTMLElement) =>
     (observer ??= new ResizeObserver(onResize)).observe(el);
-  onSettled(() => () => observer?.disconnect());
+  onSettled(() => () => {
+    observer?.disconnect();
+    if (frame !== undefined) cancelAnimationFrame(frame);
+  });
 
   return {
     scroller: (el: HTMLElement) => {
