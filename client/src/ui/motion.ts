@@ -7,11 +7,11 @@ export type Motion = 'system' | 'full' | 'reduced';
 const KEY = 'motion';
 
 // Document.tsx imports the boot script, and the build renders it under Bun.
-const read = (): Motion => {
+function read(): Motion {
   if (typeof localStorage === 'undefined') return 'system';
   const m = localStorage.getItem(KEY);
   return m === 'full' || m === 'reduced' ? m : 'system';
-};
+}
 
 const [motion, set] = createSignal<Motion>(read(), { name: 'motion' });
 export { motion };

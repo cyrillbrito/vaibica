@@ -30,8 +30,9 @@ export function setMusicLevel(level: MusicLevel) {
   else localStorage.setItem(MUSIC_KEY, level);
 }
 
-const musicVolume = () =>
-  MUSIC_LEVELS[untrack(musicLevel)] ?? MUSIC_LEVELS.medium;
+function musicVolume() {
+  return MUSIC_LEVELS[untrack(musicLevel)] ?? MUSIC_LEVELS.medium;
+}
 
 const FADE_IN_MS = 1500;
 const FADE_OUT_MS = 800;
@@ -82,14 +83,17 @@ export type CallState = {
 const DEAD_RMS = 1e-5;
 const DEAD_MS = 4000;
 
-const trackState = (track: MediaStreamTrack | undefined) =>
-  track && {
-    label: track.label,
-    readyState: track.readyState,
-    muted: track.muted,
-    enabled: track.enabled,
-    settings: track.getSettings(),
-  };
+function trackState(track: MediaStreamTrack | undefined) {
+  return (
+    track && {
+      label: track.label,
+      readyState: track.readyState,
+      muted: track.muted,
+      enabled: track.enabled,
+      settings: track.getSettings(),
+    }
+  );
+}
 
 const [call, setCall] = createSignal<CallState | undefined>(undefined, {
   name: 'voiceCall',
@@ -105,11 +109,14 @@ let current:
     }
   | undefined;
 
-const update = (change: Partial<CallState>) =>
-  setCall((c) => (c ? { ...c, ...change } : c));
+function update(change: Partial<CallState>) {
+  return setCall((c) => (c ? { ...c, ...change } : c));
+}
 
 /** How loud you or the voice are right now, 0 to 1. Read every frame. */
-export const level = (who: Who) => current?.level(who) ?? 0;
+export function level(who: Who) {
+  return current?.level(who) ?? 0;
+}
 
 /**
  * Fades the hold music in while the agent works in silence, and out again.

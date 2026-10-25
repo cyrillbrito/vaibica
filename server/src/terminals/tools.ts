@@ -24,8 +24,9 @@ import {
 // so restarting a dev server never leaves a dead one behind.
 
 const MAX_WAIT = 120;
-const seconds = (value: number | undefined, fallback: number) =>
-  Math.min(Math.max(value ?? fallback, 0), MAX_WAIT) * 1000;
+function seconds(value: number | undefined, fallback: number) {
+  return Math.min(Math.max(value ?? fallback, 0), MAX_WAIT) * 1000;
+}
 
 /** What a terminal is doing, in a few words; `list` uses it too. */
 export function terminalState(t: TerminalInfo) {
@@ -76,12 +77,13 @@ async function notifyWhenDone(id: string, session: string) {
   }
 }
 
-const notify = (fallback: string) =>
-  Type.Optional(
+function notify(fallback: string) {
+  return Type.Optional(
     Type.Boolean({
       description: `true: when the command finishes (or someone stops it), you get a note with its exit code and last lines, even if you are idle by then. ${fallback}`,
     }),
   );
+}
 
 const terminalStart = defineTool({
   name: 'terminal_start',

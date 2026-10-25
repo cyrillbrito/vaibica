@@ -51,7 +51,9 @@ function initial() {
   return sessionStorage.getItem(KEY);
 }
 
-const toMode = (value: string | null) => MODES.find((m) => m === value);
+function toMode(value: string | null) {
+  return MODES.find((m) => m === value);
+}
 
 const start = initial();
 // Whether the switch shows: any `?data=` turns it on for this tab.
@@ -82,16 +84,17 @@ export function exitFixtures() {
 const built = new Map<Mode, Dataset>();
 const extras = new Map<string, unknown>();
 // Built once, so every read sees the same object and nothing re-runs.
-const cached = <T>(m: Mode, key: string, make: () => T) => {
+function cached<T>(m: Mode, key: string, make: () => T) {
   if (!extras.has(`${m}:${key}`)) extras.set(`${m}:${key}`, make());
   return extras.get(`${m}:${key}`) as T;
-};
-const dataset = (m: Mode) => {
+}
+function dataset(m: Mode) {
   if (!built.has(m)) built.set(m, datasets[m]());
   return built.get(m)!;
-};
-const gitOf = (m: Mode) =>
-  cached(m, 'git', () => gitFixtures(dataset(m).git ?? {}));
+}
+function gitOf(m: Mode) {
+  return cached(m, 'git', () => gitFixtures(dataset(m).git ?? {}));
+}
 
 // Demo only: the session list moves on its own, a step every 6s, so status
 // changes and rows gliding to new places can be seen. A session turns
@@ -264,14 +267,17 @@ export function fixtureKept() {
 }
 
 /** Not reactive: whether test data is on, for code that writes. */
-export const testing = () => !!(import.meta.env.DEV && untrack(mode));
+export function testing() {
+  return !!(import.meta.env.DEV && untrack(mode));
+}
 
 // Reads that change nothing go through when the test data has no answer;
 // everything else is refused on test data.
 const READS: ReadonlySet<Call> = new Set(['fs.dirs', 'file.read', 'git.diff']);
 
-const text = (t: string | undefined): FileText =>
-  t === undefined ? { text: null, reason: 'missing' } : { text: t };
+function text(t: string | undefined): FileText {
+  return t === undefined ? { text: null, reason: 'missing' } : { text: t };
+}
 
 /**
  * Undefined: send the command. Otherwise its answer from the test data, or

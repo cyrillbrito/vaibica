@@ -9,11 +9,12 @@ type Term = InstanceType<Ghostty['Terminal']>;
 
 // The WASM loads once per tab, on the first terminal opened.
 let ghostty: Promise<Ghostty> | undefined;
-const load = () =>
-  (ghostty ??= import('ghostty-web').then(async (m) => {
+function load() {
+  return (ghostty ??= import('ghostty-web').then(async (m) => {
     await m.init();
     return m;
   }));
+}
 
 // Keys a phone keyboard lacks.
 const KEYS = [

@@ -2,8 +2,9 @@ import { For, Show, createSignal } from 'solid-js';
 
 import { UploadIcon } from './icons';
 
-const isFiles = (e: DragEvent) =>
-  [...(e.dataTransfer?.types ?? [])].includes('Files');
+function isFiles(e: DragEvent) {
+  return [...(e.dataTransfer?.types ?? [])].includes('Files');
+}
 
 /**
  * A drop target (affectUI's Dropzone): spread `handlers` on a positioned

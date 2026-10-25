@@ -56,7 +56,9 @@ const dismissed = new Map<string, string>();
  * something worth doing: Prune once the cache is cold, Compact while it is
  * warm and the session is big. Cheers when it shrinks.
  */
-const fail = (e: unknown) => toast(e instanceof Error ? e.message : String(e));
+function fail(e: unknown) {
+  return toast(e instanceof Error ? e.message : String(e));
+}
 
 export default function ContextNag(props: {
   id: string;

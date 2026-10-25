@@ -32,7 +32,9 @@ function lines(path: string, n: number, salt: number): string[] {
   });
 }
 
-const text = (t: string[]): FileText => ({ text: `${t.join('\n')}\n` });
+function text(t: string[]): FileText {
+  return { text: `${t.join('\n')}\n` };
+}
 const missing: FileText = { text: null, reason: 'missing' };
 
 /** Before and after for a test change; counts capped to stay light. */
@@ -69,7 +71,9 @@ export interface GitFixtures {
   ) => Promise<unknown> | undefined;
 }
 
-const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+function wait(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
 const MESSAGES = [
   'Let sidebar columns resize by dragging their edge',

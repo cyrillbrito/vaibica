@@ -213,15 +213,17 @@ const max = () => Math.min(480, innerWidth - 400);
 | \`bun run check\` | passes |
 | Phone layout | unchanged |`;
 
-const queue = (...items: [mode: 'steer' | 'followUp', text: string][]) => ({
-  'pi.inbox': {
-    items: items.map(([mode, content], i) => ({
-      id: String(100 + i),
-      mode,
-      content,
-    })),
-  },
-});
+function queue(...items: [mode: 'steer' | 'followUp', text: string][]) {
+  return {
+    'pi.inbox': {
+      items: items.map(([mode, content], i) => ({
+        id: String(100 + i),
+        mode,
+        content,
+      })),
+    },
+  };
+}
 
 /** A finished session with every kind of row. */
 function finished(id: string) {

@@ -19,13 +19,13 @@ await $`bun run build`.cwd(root);
 await $`rm -rf ${out} && mkdir -p ${out}`;
 
 const imports: string[] = [];
-const embed = (path: string) => {
+function embed(path: string) {
   const name = `f${imports.length}`;
   imports.push(
     `import ${name} from ${JSON.stringify(path)} with { type: 'file' };`,
   );
   return name;
-};
+}
 
 // Vite's own manifest in .vite/ isn't served; the glob skips dot folders.
 const dist = join(root, 'client/dist/client');

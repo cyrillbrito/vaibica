@@ -59,15 +59,17 @@ export function removeComment(id: string) {
   setComments((all) => all.filter((c) => c.id !== id));
 }
 
-export const doneComments = (cwd: string) =>
-  comments().filter((c) => c.cwd === cwd && !c.draft && c.text.trim());
+export function doneComments(cwd: string) {
+  return comments().filter((c) => c.cwd === cwd && !c.draft && c.text.trim());
+}
 
 export function clearComments(cwd: string) {
   setComments((all) => all.filter((c) => c.cwd !== cwd || c.draft));
 }
 
-const lines = (c: ReviewComment) =>
-  c.start === c.end ? `${c.start}` : `${c.start}-${c.end}`;
+function lines(c: ReviewComment) {
+  return c.start === c.end ? `${c.start}` : `${c.start}-${c.end}`;
+}
 
 /** The prompt for the agent: each comment with its file, lines, and code. */
 export function reviewPrompt(list: ReviewComment[]) {

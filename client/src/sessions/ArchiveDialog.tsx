@@ -15,8 +15,9 @@ const [picked, setPicked] = createSignal<ReadonlySet<string>>(new Set(), {
 });
 let settle: (ids: string[]) => void = () => {};
 
-const busy = (s: SessionSummary) =>
-  s.status === 'running' || s.status === 'retrying';
+function busy(s: SessionSummary) {
+  return s.status === 'running' || s.status === 'retrying';
+}
 
 /** Every open session `id` started, and the ones those started. */
 function descendants(id: string, all: readonly SessionSummary[]) {

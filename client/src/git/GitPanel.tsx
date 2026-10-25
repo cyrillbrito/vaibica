@@ -42,7 +42,9 @@ import {
   DiscardIcon,
 } from '../ui/icons';
 
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+function plural(n: number, word: string) {
+  return `${n} ${word}${n === 1 ? '' : 's'}`;
+}
 
 /** Asks before throwing changes away; new files get deleted. */
 export function confirmDiscard(changes: GitChange[]) {

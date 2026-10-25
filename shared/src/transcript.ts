@@ -97,16 +97,20 @@ export type VoiceLine = { who: 'you' | 'voice'; text: string; at: number };
 const CALL_WORDS = /\n\n<voice_call>\n[\s\S]*<\/voice_call>$/;
 
 /** A handoff with the call's lines since the last one appended. */
-export const withCallWords = (request: string, lines: string[]) =>
-  lines.length
+export function withCallWords(request: string, lines: string[]) {
+  return lines.length
     ? `${request}\n\n<voice_call>\nWhat was said in the voice call since the last request. It is transcribed from speech, so it may hold misheard words, half sentences, and corrections: go by the latest, and ask when a detail is unclear.\n\n${lines.join('\n')}\n</voice_call>`
     : request;
+}
 
-export const withoutCallWords = (text: string) => text.replace(CALL_WORDS, '');
+export function withoutCallWords(text: string) {
+  return text.replace(CALL_WORDS, '');
+}
 
 /** From the agent or a prompt: voice lines and pruning don't set the status. */
-export const isTurn = (entry: EntryRecord) =>
-  entry.kind !== VOICE_ENTRY && entry.kind !== PRUNE_ENTRY;
+export function isTurn(entry: EntryRecord) {
+  return entry.kind !== VOICE_ENTRY && entry.kind !== PRUNE_ENTRY;
+}
 
 /** One question of the `ask` tool (server/src/tools/ask.ts). */
 export interface Question {
@@ -408,7 +412,9 @@ export function promptAt(m: { kind: string }): number | undefined {
   if (row.kind === 'ask') return row.answer?.timestamp;
 }
 
-const num = (v: unknown) => (typeof v === 'number' ? v : undefined);
+function num(v: unknown) {
+  return typeof v === 'number' ? v : undefined;
+}
 
 // Kept in step with server/src/tools/ask.ts, which the browser can't import.
 const ASK = 'ask';
@@ -441,10 +447,11 @@ function pendingAsk(
     : undefined;
 }
 
-const textOf = (content: readonly { type: string; text?: string }[]) =>
-  content
+function textOf(content: readonly { type: string; text?: string }[]) {
+  return content
     .flatMap((b) => (b.type === 'text' && b.text ? [b.text] : []))
     .join('\n');
+}
 
 /** Shared by the session list (server) and the open session (browser). */
 export function statusOf(
@@ -459,11 +466,15 @@ export function statusOf(
     : 'idle';
 }
 
-export const viewStatus = (view: ConversationView) =>
-  statusOf(liveOf(view), lastTurn(view));
+export function viewStatus(view: ConversationView) {
+  return statusOf(liveOf(view), lastTurn(view));
+}
 
 // Voice lines come and go during a run; the status follows the agent.
-const lastTurn = (view: ConversationView) => view.entries.findLast(isTurn);
+function lastTurn(view: ConversationView) {
+  return view.entries.findLast(isTurn);
+}
 
-const liveOf = (view: ConversationView) =>
-  view.docs['pi.live'] as LiveState | undefined;
+function liveOf(view: ConversationView) {
+  return view.docs['pi.live'] as LiveState | undefined;
+}

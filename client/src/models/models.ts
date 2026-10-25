@@ -4,7 +4,9 @@ import { createSignal } from 'solid-js';
 import type { ModelCatalog, ModelChoice } from '@bica/shared/protocol';
 import { request, useTopic } from '../socket/socket';
 
-export const useModels = () => useTopic('models', () => ({}));
+export function useModels() {
+  return useTopic('models', () => ({}));
+}
 
 // The open session's model, set by its page; undefined: no session open.
 const [openModel, setOpenModel] = createSignal<
@@ -12,8 +14,9 @@ const [openModel, setOpenModel] = createSignal<
 >(undefined, { name: 'openModel' });
 export { openModel, setOpenModel };
 
-export const modelKey = (provider: string, modelId: string) =>
-  `${provider}/${modelId}`;
+export function modelKey(provider: string, modelId: string) {
+  return `${provider}/${modelId}`;
+}
 
 type Named = { provider: string; id: string; name: string };
 
@@ -32,12 +35,12 @@ function split(name: string) {
   return { short: short || name, version };
 }
 
-const newer = (a: string, b: string) => {
+function newer(a: string, b: string) {
   const [x, y] = [a.split('.').map(Number), b.split('.').map(Number)];
   for (let i = 0; i < Math.max(x.length, y.length); i++)
     if ((x[i] ?? 0) !== (y[i] ?? 0)) return (x[i] ?? 0) > (y[i] ?? 0);
   return false;
-};
+}
 
 /**
  * The name to show where room is short, such as "Opus". Only the newest
@@ -77,19 +80,30 @@ export function sessionChoice(view: ConversationView): ModelChoice | undefined {
   return { model: agent.model, thinkingLevel: agent.thinkingLevel ?? 'off' };
 }
 
-export const useAccounts = () => useTopic('accounts', () => ({}));
+export function useAccounts() {
+  return useTopic('accounts', () => ({}));
+}
 
-export const signIn = (id: string, type: 'oauth' | 'api_key') =>
-  request('account.signIn', { id, type });
+export function signIn(id: string, type: 'oauth' | 'api_key') {
+  return request('account.signIn', { id, type });
+}
 
-export const answer = (prompt: string, value: string) =>
-  request('account.answer', { prompt, value });
+export function answer(prompt: string, value: string) {
+  return request('account.answer', { prompt, value });
+}
 
-export const cancelSignIn = () => request('account.cancel', {});
+export function cancelSignIn() {
+  return request('account.cancel', {});
+}
 
-export const signOut = (id: string) => request('account.signOut', { id });
+export function signOut(id: string) {
+  return request('account.signOut', { id });
+}
 
-export const addAccount = (provider: string) =>
-  request('account.add', { provider });
+export function addAccount(provider: string) {
+  return request('account.add', { provider });
+}
 
-export const useFirst = (id: string) => request('account.useFirst', { id });
+export function useFirst(id: string) {
+  return request('account.useFirst', { id });
+}

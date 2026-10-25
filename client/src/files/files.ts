@@ -9,21 +9,26 @@ import { request, useTopic } from '../socket/socket';
 /** What the main area shows: a file, or one side of a git change. */
 export type View = 'file' | 'staged' | 'changes';
 
-export const useFiles = (ref: () => WorkspaceRef) => useTopic('files', ref);
+export function useFiles(ref: () => WorkspaceRef) {
+  return useTopic('files', ref);
+}
 
 /** On the dev machine, so it only helps when you sit at it. */
-export const openInEditor = (ref: WorkspaceRef, path?: string) =>
-  request('editor.open', { ...ref, path }).catch((e: unknown) =>
+export function openInEditor(ref: WorkspaceRef, path?: string) {
+  return request('editor.open', { ...ref, path }).catch((e: unknown) =>
     toast(e instanceof Error ? e.message : String(e)),
   );
+}
 
-export const openPath = (path: string, cwd?: string, reveal?: boolean) =>
-  request('path.open', { path, cwd, reveal }).catch((e: unknown) =>
+export function openPath(path: string, cwd?: string, reveal?: boolean) {
+  return request('path.open', { path, cwd, reveal }).catch((e: unknown) =>
     toast(e instanceof Error ? e.message : String(e)),
   );
+}
 
-export const readFile = (ref: WorkspaceRef, path: string) =>
-  request('file.read', { ...ref, path });
+export function readFile(ref: WorkspaceRef, path: string) {
+  return request('file.read', { ...ref, path });
+}
 
 export function workspaceHref(ref: WorkspaceRef, open?: Open) {
   const q = new URLSearchParams({ w: ref.cwd });
@@ -33,8 +38,9 @@ export function workspaceHref(ref: WorkspaceRef, open?: Open) {
 
 export type Open = { path: string; view: View };
 
-export const sameOpen = (a?: Open, b?: Open) =>
-  a?.path === b?.path && a?.view === b?.view;
+export function sameOpen(a?: Open, b?: Open) {
+  return a?.path === b?.path && a?.view === b?.view;
+}
 
 function setOpen(q: URLSearchParams, open: Open) {
   q.set(open.view === 'file' ? 'f' : 'd', open.path);
@@ -70,13 +76,17 @@ const [keptHere, setKept] = createSignal<Kept[]>(
   { name: 'keptFiles' },
 );
 /** Reactive: files kept open on this device (test data stands in, see fixtures/). */
-export const kept = () => fixtureKept() ?? keptHere();
+export function kept() {
+  return fixtureKept() ?? keptHere();
+}
 
-const samePlace = (a: Kept, ref: WorkspaceRef, path: string) =>
-  a.projectId === ref.projectId && a.cwd === ref.cwd && a.path === path;
+function samePlace(a: Kept, ref: WorkspaceRef, path: string) {
+  return a.projectId === ref.projectId && a.cwd === ref.cwd && a.path === path;
+}
 
-export const isKept = (ref: WorkspaceRef, path: string) =>
-  kept().some((k) => samePlace(k, ref, path));
+export function isKept(ref: WorkspaceRef, path: string) {
+  return kept().some((k) => samePlace(k, ref, path));
+}
 
 function saveKept(list: Kept[]) {
   // Test data must never land in this device's real list.
@@ -85,14 +95,16 @@ function saveKept(list: Kept[]) {
   localStorage.setItem(KEPT_KEY, JSON.stringify(list));
 }
 
-export const keepOpen = (ref: WorkspaceRef, open: Open) =>
-  saveKept([
+export function keepOpen(ref: WorkspaceRef, open: Open) {
+  return saveKept([
     ...kept().filter((k) => !samePlace(k, ref, open.path)),
     { projectId: ref.projectId, cwd: ref.cwd, ...open },
   ]);
+}
 
-export const closeKept = (ref: WorkspaceRef, path: string) =>
-  saveKept(kept().filter((k) => !samePlace(k, ref, path)));
+export function closeKept(ref: WorkspaceRef, path: string) {
+  return saveKept(kept().filter((k) => !samePlace(k, ref, path)));
+}
 
 /**
  * The file open on a workspace page: ?f=path, or ?d=path&s=staged|changes.

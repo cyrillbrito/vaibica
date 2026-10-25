@@ -16,22 +16,24 @@ export type FilterGroup = {
 /** Picked option ids per group id. */
 export type FilterValue = Record<string, string[]>;
 
-export const filterCount = (v: FilterValue) =>
-  Object.values(v).reduce((n, ids) => n + ids.length, 0);
+export function filterCount(v: FilterValue) {
+  return Object.values(v).reduce((n, ids) => n + ids.length, 0);
+}
 
 /** Whether an item passes: in each group with picks, one of them matches. */
-export const passes = (v: FilterValue, item: Record<string, string>) =>
-  Object.entries(v).every(
+export function passes(v: FilterValue, item: Record<string, string>) {
+  return Object.entries(v).every(
     ([group, ids]) => !ids.length || ids.includes(item[group] ?? ''),
   );
+}
 
-const toggle = (v: FilterValue, group: string, id: string): FilterValue => {
+function toggle(v: FilterValue, group: string, id: string): FilterValue {
   const cur = v[group] ?? [];
   return {
     ...v,
     [group]: cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id],
   };
-};
+}
 
 /** The picked filters as removable chips, in the order of their groups. */
 export function FilterChips(props: {

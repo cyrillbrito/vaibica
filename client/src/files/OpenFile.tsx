@@ -28,12 +28,12 @@ const [preview, setPreview] = createSignal(true);
 // Off by default; remembered per device.
 const WRAP_KEY = 'bica.wrap';
 const [wrap, setWrap] = createSignal(localStorage.getItem(WRAP_KEY) === '1');
-const toggleWrap = () => {
+function toggleWrap() {
   const next = !wrap();
   setWrap(next);
   if (next) localStorage.setItem(WRAP_KEY, '1');
   else localStorage.removeItem(WRAP_KEY);
-};
+}
 
 /**
  * One file or diff, full size, with its File/Diff and Split/Unified

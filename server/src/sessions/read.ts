@@ -76,13 +76,15 @@ async function lastReply(id: ConversationId) {
 }
 
 /** The text of a message's content, without images or tool calls. */
-export const textOf = (
+export function textOf(
   content: string | readonly { type: string; text?: string }[],
-) =>
-  (typeof content === 'string'
-    ? content
-    : content.flatMap((b) => (b.type === 'text' ? b.text : [])).join('\n')
+) {
+  return (
+    typeof content === 'string'
+      ? content
+      : content.flatMap((b) => (b.type === 'text' ? b.text : [])).join('\n')
   ).trim();
+}
 
 // Per session, and in total: intent, not the whole conversation.
 const MAX_PROMPTS = 4;

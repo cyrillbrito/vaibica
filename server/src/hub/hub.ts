@@ -17,10 +17,14 @@ import {
 // Settings → Hub, on the model picked there.
 
 /** The hub's folder from Settings, or null before one is picked. */
-const hubFolder = async () => settings().hubFolder;
+async function hubFolder() {
+  return settings().hubFolder;
+}
 
 /** The model from Settings when it is reachable, else the agent's own. */
-const hubChoice = async () => agentChoice(getAgent('hub'), settings().hubModel);
+async function hubChoice() {
+  return agentChoice(getAgent('hub'), settings().hubModel);
+}
 
 /** The newest open hub session outside any project. */
 async function findHub() {

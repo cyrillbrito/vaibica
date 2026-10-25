@@ -43,8 +43,9 @@ function worktreeFolder(projectPath: string, path: string) {
 }
 
 // "shop / NW-69095-restore-export" for messages and tooltips.
-export const nameOf = (g: Group) =>
-  [g.projectName, g.branch ?? g.folder].filter(Boolean).join(' / ');
+export function nameOf(g: Group) {
+  return [g.projectName, g.branch ?? g.folder].filter(Boolean).join(' / ');
+}
 
 // A project's workspaces in use. Its name heads them; the branch goes on the
 // same line when there is just one, else each gets a line of its own.

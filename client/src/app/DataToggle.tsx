@@ -18,14 +18,16 @@ const OPTIONS: [Mode | undefined, string][] = [
   ...MODES.map((m): [Mode, string] => [m, MODE_LABELS[m]]),
 ];
 
-const button = (active: boolean): JSX.CSSProperties => ({
-  border: '0',
-  padding: '6px 8px',
-  'border-radius': '6px',
-  'white-space': 'nowrap',
-  color: '#171717',
-  background: active ? '#fff' : 'transparent',
-});
+function button(active: boolean): JSX.CSSProperties {
+  return {
+    border: '0',
+    padding: '6px 8px',
+    'border-radius': '6px',
+    'white-space': 'nowrap',
+    color: '#171717',
+    background: active ? '#fff' : 'transparent',
+  };
+}
 
 export default function DataToggle() {
   // Out of the way for a screenshot; the data stays until a reload.

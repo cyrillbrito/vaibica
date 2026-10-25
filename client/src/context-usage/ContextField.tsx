@@ -48,12 +48,13 @@ const FILL: Record<Kind | 'free' | 'reserve', string> = {
   reserve: 'border border-line-strong',
 };
 
-const kindOf = (p: Part): Kind =>
-  p.group === 'conversation'
+function kindOf(p: Part): Kind {
+  return p.group === 'conversation'
     ? p.key.startsWith('result:')
       ? 'output'
       : 'talk'
     : p.group;
+}
 
 // 240 divides into rows of 40 (desktop) and 24 (phone).
 const CELLS = 240;
@@ -507,7 +508,7 @@ function Amount(props: { tokens: number; of: number }) {
   );
 }
 
-export const percent = (part: number, whole: number) => {
+export function percent(part: number, whole: number) {
   const p = (part / whole) * 100;
   return `${p > 0 && p < 1 ? '<1' : Math.round(p)}%`;
-};
+}

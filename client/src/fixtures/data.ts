@@ -62,131 +62,148 @@ const DAY = 24 * HOUR;
 const now = Date.now();
 const HOME = '/Users/aleksandra';
 
-const pr = (
+function pr(
   number: number,
   state: PullRequest['state'],
   title = 'Pull request',
-): PullRequest => ({
-  number,
-  state,
-  title,
-  url: `https://example.com/pulls/${number}`,
-  head: 'abc123',
-});
+): PullRequest {
+  return {
+    number,
+    state,
+    title,
+    url: `https://example.com/pulls/${number}`,
+    head: 'abc123',
+  };
+}
 
-const ws = (
+function ws(
   path: string,
   branch: string | null,
   main = false,
   p: PullRequest | null = null,
-): Workspace => ({ path, branch, main, pr: p });
+): Workspace {
+  return { path, branch, main, pr: p };
+}
 
-const project = (
+function project(
   id: string,
   name: string,
   workspaces: Workspace[],
   extra: Partial<Project> = {},
-): Project => ({
-  id,
-  name,
-  path: workspaces[0]!.path,
-  git: true,
-  workspaces,
-  ...extra,
-});
+): Project {
+  return {
+    id,
+    name,
+    path: workspaces[0]!.path,
+    git: true,
+    workspaces,
+    ...extra,
+  };
+}
 
 let n = 0;
-const session = (
+function session(
   projectId: string | null,
   cwd: string | null,
   title: string,
   status: SessionStatus,
   age: number,
   extra: Partial<SessionSummary> = {},
-): SessionSummary => ({
-  id: `fixture-${++n}`,
-  title,
-  status,
-  createdAt: now - age - HOUR,
-  updatedAt: now - age,
-  runningSince: status === 'running' ? now - age : null,
-  projectId,
-  cwd,
-  archivedAt: null,
-  forkedFrom: null,
-  forkedAt: null,
-  startedBy: null,
-  parentDrives: false,
-  handoffs: [],
-  cleanedUp: null,
-  agent: 'coding',
-  voice: null,
-  tonight: null,
-  stuck: null,
-  ...extra,
-});
+): SessionSummary {
+  return {
+    id: `fixture-${++n}`,
+    title,
+    status,
+    createdAt: now - age - HOUR,
+    updatedAt: now - age,
+    runningSince: status === 'running' ? now - age : null,
+    projectId,
+    cwd,
+    archivedAt: null,
+    forkedFrom: null,
+    forkedAt: null,
+    startedBy: null,
+    parentDrives: false,
+    handoffs: [],
+    cleanedUp: null,
+    agent: 'coding',
+    voice: null,
+    tonight: null,
+    stuck: null,
+    ...extra,
+  };
+}
 
-const terminal = (
+function terminal(
   projectId: string,
   cwd: string,
   title: string,
   exitCode: number | null,
   command: string | null = title,
-): TerminalInfo => ({
-  id: `fixture-t-${++n}`,
-  projectId,
-  cwd,
-  title,
-  command,
-  status: exitCode === null ? 'running' : 'exited',
-  exitCode,
-  busy: exitCode === null ? false : null,
-  lastExit: null,
-  startedBy: null,
-  createdAt: now - HOUR,
-});
+): TerminalInfo {
+  return {
+    id: `fixture-t-${++n}`,
+    projectId,
+    cwd,
+    title,
+    command,
+    status: exitCode === null ? 'running' : 'exited',
+    exitCode,
+    busy: exitCode === null ? false : null,
+    lastExit: null,
+    startedBy: null,
+    createdAt: now - HOUR,
+  };
+}
 
-const chats = (workspaces: Workspace[] = []): Project => ({
-  id: 'chats',
-  name: 'Chats',
-  path: `${HOME}/.bica/chats`,
-  git: false,
-  workspaces: [ws(`${HOME}/.bica/chats`, null, true), ...workspaces],
-});
+function chats(workspaces: Workspace[] = []): Project {
+  return {
+    id: 'chats',
+    name: 'Chats',
+    path: `${HOME}/.bica/chats`,
+    git: false,
+    workspaces: [ws(`${HOME}/.bica/chats`, null, true), ...workspaces],
+  };
+}
 
-const change = (
+function change(
   path: string,
   status: GitChange['status'],
   added?: number,
   removed?: number,
   extra: Partial<GitChange> = {},
-): GitChange => ({
-  path,
-  status,
-  version: `${path}@1`,
-  added,
-  removed,
-  ...extra,
-});
+): GitChange {
+  return {
+    path,
+    status,
+    version: `${path}@1`,
+    added,
+    removed,
+    ...extra,
+  };
+}
 
-const commits = (subjects: string[]): GitCommit[] =>
-  subjects.map((subject, i) => ({
+function commits(subjects: string[]): GitCommit[] {
+  return subjects.map((subject, i) => ({
     hash: (0x9f3c2a1 + i * 0x1d4b7).toString(16).padStart(7, '0'),
     subject,
     time: now - (i + 1) * 3 * HOUR,
   }));
+}
 
-const status = (s: Partial<GitStatus>): GitStatus => ({
-  branch: 'main',
-  upstream: 'origin/main',
-  ahead: 0,
-  behind: 0,
-  staged: [],
-  unstaged: [],
-  recent: [],
-  submodules: [],
-  ...s,
-});
+function status(s: Partial<GitStatus>): GitStatus {
+  return {
+    branch: 'main',
+    upstream: 'origin/main',
+    ahead: 0,
+    behind: 0,
+    staged: [],
+    unstaged: [],
+    recent: [],
+    submodules: [],
+    ...s,
+  };
+}
 
 // This repo's own layout, so the file tree looks like a real project.
 const BICA_FILES =

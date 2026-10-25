@@ -222,7 +222,9 @@ const ICONS: Record<string, () => JSX.Element> = {
 };
 
 /** The icon for a tool, for rows and the group's stack. */
-export const toolIcon = (name: string) => ICONS[name] ?? ToolIcon;
+export function toolIcon(name: string) {
+  return ICONS[name] ?? ToolIcon;
+}
 
 function StatusIcon(props: { name: string; status: ToolStatus }) {
   const Icon = dynamic(() => toolIcon(props.name));
@@ -368,8 +370,9 @@ function Section(props: {
 
 /** The prompt it was given, and a way into the session it started. */
 // start_session is the old name, still in older transcripts.
-const startsSession = (name: string) =>
-  name === 'session_start' || name === 'start_session';
+function startsSession(name: string) {
+  return name === 'session_start' || name === 'start_session';
+}
 
 function StartedSession(props: { call: ToolCall }) {
   const sessions = useSessions();
@@ -543,8 +546,9 @@ function Code(props: {
   );
 }
 
-const lines = (text?: string) =>
-  text ? text.split('\n').length.toLocaleString() : '…';
+function lines(text?: string) {
+  return text ? text.split('\n').length.toLocaleString() : '…';
+}
 
 /** Pretty-printed when the text is a JSON object or array, else undefined. */
 function prettyJson(text: string) {
@@ -611,21 +615,24 @@ function targetOf(call: ToolCall) {
   return Object.values(args).find((v) => typeof v === 'string') ?? '';
 }
 
-const str = (value: unknown) => (typeof value === 'string' ? value : '');
+function str(value: unknown) {
+  return typeof value === 'string' ? value : '';
+}
 
-const patchOf = (call: ToolCall) => {
+function patchOf(call: ToolCall) {
   const patch = (call.details as { patch?: unknown } | undefined)?.patch;
   return typeof patch === 'string' ? patch : undefined;
-};
+}
 
 /** The edit's blocks; they stream in, so any field may still be missing. */
-const editsOf = (call: ToolCall) =>
-  (Array.isArray(call.args.edits) ? call.args.edits : []).map(
+function editsOf(call: ToolCall) {
+  return (Array.isArray(call.args.edits) ? call.args.edits : []).map(
     (e: { oldText?: unknown; newText?: unknown }) => ({
       old: str(e?.oldText),
       new: str(e?.newText),
     }),
   );
+}
 
 /**
  * What a write or edit changed, as diffs. A finished edit has a real patch

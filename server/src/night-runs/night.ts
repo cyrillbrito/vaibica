@@ -49,8 +49,11 @@ export function startNight() {
   }, MINUTE);
 }
 
-const running = (s: SessionSummary) =>
-  starting.has(s.id) || s.status === 'running' || s.status === 'retrying';
+function running(s: SessionSummary) {
+  return (
+    starting.has(s.id) || s.status === 'running' || s.status === 'retrying'
+  );
+}
 
 async function tick() {
   const night = (await listSessions()).filter(

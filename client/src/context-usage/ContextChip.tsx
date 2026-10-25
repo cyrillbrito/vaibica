@@ -517,9 +517,9 @@ function jump(target: Item['target']) {
   );
 }
 
-const clock = (ms: number) => {
+function clock(ms: number) {
   const s = Math.ceil(ms / 1000);
   return s >= 3600
     ? `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`
     : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-};
+}

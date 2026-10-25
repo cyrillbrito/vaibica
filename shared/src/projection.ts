@@ -141,10 +141,11 @@ function slimArgs(args: Json) {
   return slim;
 }
 
-const shown = (n: number) =>
-  n < 1000
+function shown(n: number) {
+  return n < 1000
     ? Math.round(n)
     : Math.round(n / (n < 10_000 ? 100 : 1000)) * (n < 10_000 ? 100 : 1000);
+}
 
 function timing(details: unknown) {
   const d = (details ?? {}) as Json;
@@ -158,10 +159,13 @@ function defined<T extends Json>(value: T): T {
   return value;
 }
 
-const str = (value: unknown) => (typeof value === 'string' ? value : '');
+function str(value: unknown) {
+  return typeof value === 'string' ? value : '';
+}
 
-const lines = (text: string) =>
-  text ? text.replace(/\n$/, '').split('\n') : [];
+function lines(text: string) {
+  return text ? text.replace(/\n$/, '').split('\n') : [];
+}
 
 /**
  * Lines added and removed by a write or edit: from the finished edit's

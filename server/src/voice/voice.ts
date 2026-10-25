@@ -442,12 +442,12 @@ export function stopCall(callId: string) {
   calls.get(callId)?.stop('browser');
 }
 
-const ago = (at: number) => {
+function ago(at: number) {
   const seconds = Math.round((Date.now() - at) / 1000);
   return seconds < 90
     ? `${seconds} seconds ago`
     : `${Math.round(seconds / 60)} minutes ago`;
-};
+}
 
 const run = promisify(execFile);
 

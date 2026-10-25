@@ -16,11 +16,11 @@ import { jsonFile } from './storage';
 // ones). Preferences of one device, like the theme, stay in its browser.
 const file = jsonFile<SettingsChange>('settings.json', { initial: () => ({}) });
 
-const parseRef = (id: string): ModelRef | null => {
+function parseRef(id: string): ModelRef | null {
   if (!id) return null;
   const [provider, ...rest] = id.split('/');
   return { provider: provider!, modelId: rest.join('/') };
-};
+}
 
 /** The saved settings, with the defaults filled in. */
 export function settings(): Settings {

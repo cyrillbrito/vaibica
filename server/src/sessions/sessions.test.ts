@@ -21,13 +21,13 @@ async function newSession(tab: Tab, prompt: string, requestId?: string) {
   );
 }
 
-const statusOf = (tab: Tab, id: string) => {
+function statusOf(tab: Tab, id: string) {
   const sessions = tab.watch('sessions', {});
   return (status: string) =>
     sessions.until((list) =>
       list.some((s) => s.id === id && s.status === status),
     );
-};
+}
 
 test('a prompt gets an answer, and the session ends done', async () => {
   const tab = await bica.connect();

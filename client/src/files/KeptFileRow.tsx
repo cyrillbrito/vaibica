@@ -11,13 +11,16 @@ import { closeKept, openFromSearch, workspaceHref, type Kept } from './files';
 
 // Every file shares the workspace page's path, so the router's
 // aria-current can't tell them apart.
-export const isOpenKept = (
+export function isOpenKept(
   k: Kept,
   location: { pathname: string; search: string },
-) =>
-  location.pathname === paths.p(k.projectId)() &&
-  new URLSearchParams(location.search).get('w') === k.cwd &&
-  openFromSearch(location.search)?.path === k.path;
+) {
+  return (
+    location.pathname === paths.p(k.projectId)() &&
+    new URLSearchParams(location.search).get('w') === k.cwd &&
+    openFromSearch(location.search)?.path === k.path
+  );
+}
 
 // The shortest run of parent folders that tells same-named files apart:
 // "web/src" for packages/web/src/index.ts next to packages/server/src/index.ts.

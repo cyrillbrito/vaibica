@@ -10,11 +10,12 @@ beforeAll(async () => {
 });
 afterAll(() => bica?.stop());
 
-const refused = (attempt: Promise<unknown>) =>
-  attempt.then(
+function refused(attempt: Promise<unknown>) {
+  return attempt.then(
     () => false,
     () => true,
   );
+}
 
 test("another website's page can't open the socket", async () => {
   expect(await refused(bica.connect({ origin: 'https://evil.example' }))).toBe(

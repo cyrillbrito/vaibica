@@ -56,7 +56,7 @@ void getSharedHighlighter({
   langs: LANGS,
 }).then((h) => setShiki(() => h));
 
-const loadLang = (lang: string) => {
+function loadLang(lang: string) {
   if (requested.has(lang)) return;
   requested.add(lang);
   getSharedHighlighter({
@@ -66,16 +66,17 @@ const loadLang = (lang: string) => {
     () => setLangsLoaded((n) => n + 1),
     () => {}, // Not a language Shiki knows: stays plain.
   );
-};
+}
 
-const escape = (s: string) =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function escape(s: string) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
 // Every update re-renders every block, so finished code blocks come from here.
 const cache = new Map<string, string>();
 
 // Reads the signals, so the markdown memo re-runs once Shiki or a language is ready.
-const highlight = (code: string, lang?: string) => {
+function highlight(code: string, lang?: string) {
   const h = shiki();
   if (!h || !lang || lang === 'plaintext' || lang === 'text')
     return escape(code);
@@ -100,28 +101,26 @@ const highlight = (code: string, lang?: string) => {
     cache.set(key, html);
   }
   return html;
-};
+}
 
 // TanStack has no GFM autolinks: link bare `https://…` / `www.…` and `<https://…>`.
 const ANGLE = /^<(https?:\/\/[^\s<>]+)>/;
 const BARE = /^(?:https?:\/\/|www\.)[^\s<]+/;
-const link = (
-  href: string,
-  text: string,
-  length: number,
-): InlineParseResult => ({
-  node: { type: 'link', href, children: [{ type: 'text', value: text }] },
-  length,
-});
+function link(href: string, text: string, length: number): InlineParseResult {
+  return {
+    node: { type: 'link', href, children: [{ type: 'text', value: text }] },
+    length,
+  };
+}
 // Same trailing trim as GFM: punctuation, and a `)` with no opener.
-const trimUrl = (url: string): string => {
+function trimUrl(url: string): string {
   const trimmed = url.replace(/[?!.,:;*_~'"]+$/, '');
   const unbalanced =
     trimmed.endsWith(')') &&
     trimmed.split(')').length > trimmed.split('(').length;
   const next = unbalanced ? trimmed.slice(0, -1) : trimmed;
   return next === url ? url : trimUrl(next);
-};
+}
 const autolinks: MarkdownExtension = {
   name: 'autolinks',
   inlineParser: {
@@ -152,7 +151,7 @@ const EXTENSIONS = new Set(
 );
 // Code spans: `~/x`, `./x`, `/a/b`, `src/x.ts`, `src/`, or `REPORT.md`, with
 // an optional `:line:column`. Not `solid-js/web` or `args.path`.
-const isPath = (code: string): boolean => {
+function isPath(code: string): boolean {
   const name = code.replace(LINE, '');
   if (!/^[\w.~@+/-]+$/.test(name) || /^[-@]/.test(name)) return false;
   if (/^(?:~|\.\.?)\//.test(name) || /^\w[\w.-]*\/$/.test(name)) return true;
@@ -161,7 +160,7 @@ const isPath = (code: string): boolean => {
   if (parts.length > 1)
     return name.endsWith('/') || /\.\w+$/.test(parts.at(-1)!);
   return EXTENSIONS.has(name.split('.').at(-1)!) && name.includes('.');
-};
+}
 // Bare text only links unmistakable paths: `~/…`, `./…`, and `/a/b/c`.
 const BARE_PATH = /^(?:~|\.\.?)?\/[\w.@+-]+(?:\/[\w.@+-]+)*\/?(?::\d+){0,2}/;
 const pathlinks: MarkdownExtension = {
@@ -180,7 +179,7 @@ const pathlinks: MarkdownExtension = {
   },
 };
 type Node = { type: string; value?: string; children?: Node[] };
-const linkCodePaths = (node: Node): void => {
+function linkCodePaths(node: Node): void {
   if (node.type === 'link' || !node.children) return;
   node.children = node.children.map((child) => {
     if (child.type === 'inlineCode' && isPath(child.value!)) {
@@ -194,7 +193,7 @@ const linkCodePaths = (node: Node): void => {
     linkCodePaths(child);
     return child;
   });
-};
+}
 
 // Model output is untrusted: TanStack escapes raw HTML and drops unsafe URLs.
 // Heading ids would change as a streamed heading grows.

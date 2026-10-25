@@ -6,11 +6,12 @@ import type { Agent } from './common';
 const LEVELS = ['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'];
 
 /** `choice` at the agent's least effort or above. */
-export const atLeast = (agent: Agent, choice: ModelChoice): ModelChoice =>
-  agent.minEffort &&
-  LEVELS.indexOf(choice.thinkingLevel) < LEVELS.indexOf(agent.minEffort)
+export function atLeast(agent: Agent, choice: ModelChoice): ModelChoice {
+  return agent.minEffort &&
+    LEVELS.indexOf(choice.thinkingLevel) < LEVELS.indexOf(agent.minEffort)
     ? { ...choice, thinkingLevel: agent.minEffort }
     : choice;
+}
 
 /**
  * The model a session of `agent` starts on: `preferred`, such as a setting,

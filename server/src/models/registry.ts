@@ -49,7 +49,9 @@ const LEVELS: readonly ThinkingLevel[] = [
   'max',
 ];
 
-const key = (ref: ModelRef) => `${ref.provider}/${ref.modelId}`;
+function key(ref: ModelRef) {
+  return `${ref.provider}/${ref.modelId}`;
+}
 
 /** A model the providers' keys reach, and an effort it supports. */
 export function checkChoice({

@@ -75,16 +75,22 @@ export interface ContextUsage {
 
 // pi-ai's estimate: four characters a token, an image as IMAGE_CHARS.
 const CHARS_PER_TOKEN = 4;
-const tokensOf = (chars: number) => chars / CHARS_PER_TOKEN;
+function tokensOf(chars: number) {
+  return chars / CHARS_PER_TOKEN;
+}
 
 /** The size of a request, as pi-ai counts it. */
-export const requestTokens = (u: Usage) =>
-  u.totalTokens || u.input + u.cacheRead + u.cacheWrite + u.output;
+export function requestTokens(u: Usage) {
+  return u.totalTokens || u.input + u.cacheRead + u.cacheWrite + u.output;
+}
 
-const answered = (m: AssistantMessage) =>
-  m.stopReason !== 'error' &&
-  m.stopReason !== 'aborted' &&
-  requestTokens(m.usage) > 0;
+function answered(m: AssistantMessage) {
+  return (
+    m.stopReason !== 'error' &&
+    m.stopReason !== 'aborted' &&
+    requestTokens(m.usage) > 0
+  );
+}
 
 export function contextUsage(
   view: ConversationView,
@@ -337,8 +343,9 @@ export const MIN_PRUNE = 1000;
 export const BLOATED = 200_000;
 
 /** 0 below 200k, then one step per 100k, up to 4 at 500k. */
-export const bloat = (used: number) =>
-  used < BLOATED ? 0 : Math.min(4, Math.floor(used / 100_000) - 1);
+export function bloat(used: number) {
+  return used < BLOATED ? 0 : Math.min(4, Math.floor(used / 100_000) - 1);
+}
 
 function spendOf(usage: UsageState | undefined): Spend[] {
   return Object.entries(usage?.models ?? {})
@@ -353,20 +360,23 @@ function spendOf(usage: UsageState | undefined): Spend[] {
     .sort((a, b) => b.cost - a.cost);
 }
 
-const sum = (parts: Map<string, Part>) => {
+function sum(parts: Map<string, Part>) {
   let n = 0;
   for (const p of parts.values()) n += p.tokens;
   return n;
-};
+}
 
-const textLength = (
+function textLength(
   content: string | readonly { type: string; text?: string }[],
-) =>
-  typeof content === 'string'
+) {
+  return typeof content === 'string'
     ? content.length
     : content.reduce((n, b) => n + (b.text?.length ?? 0), 0);
+}
 
-const firstLine = (text: string) => text.trim().split('\n')[0]!.slice(0, 120);
+function firstLine(text: string) {
+  return text.trim().split('\n')[0]!.slice(0, 120);
+}
 
 // The coding tools' summary, or the argument that names the target.
 function describe(args: Record<string, unknown>) {

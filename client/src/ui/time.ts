@@ -16,7 +16,9 @@ setInterval(() => setTick(Date.now()), 1000);
 export { tick };
 
 /** Reactive: milliseconds since `timestamp`, updated every second. */
-export const elapsed = (timestamp: number) => Math.max(0, tick() - timestamp);
+export function elapsed(timestamp: number) {
+  return Math.max(0, tick() - timestamp);
+}
 
 /** "12s", "2m 5s". */
 export function formatDuration(ms: number) {

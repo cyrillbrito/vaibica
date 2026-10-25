@@ -79,10 +79,13 @@ export async function suggestCommitMessage(
 }
 
 /** Most recent subjects start with `type:` or `type(scope):`. */
-const conventional = (subjects: string[]) =>
-  subjects.length >= 3 &&
-  subjects.filter((s) => /^[a-z]+(\([^)]*\))?!?: /.test(s)).length * 2 >
-    subjects.length;
+function conventional(subjects: string[]) {
+  return (
+    subjects.length >= 3 &&
+    subjects.filter((s) => /^[a-z]+(\([^)]*\))?!?: /.test(s)).length * 2 >
+      subjects.length
+  );
+}
 
 /** The reply's first line, without fences, quotes, labels, or a period. */
 function clean(reply: string) {

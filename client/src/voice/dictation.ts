@@ -68,7 +68,7 @@ export function createDictation(onText: (text: string) => void) {
     },
     // Starts, or stops and transcribes; resolves once the text is in.
     toggle: () => {
-      if (recorder) return void recorder.stop();
+      if (recorder) return recorder.stop();
       if (phase() === 'idle') return start();
     },
     cancel: () => {

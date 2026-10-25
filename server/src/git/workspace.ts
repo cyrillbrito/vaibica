@@ -42,17 +42,19 @@ export function inside(cwd: string, path: string) {
 }
 
 // --no-optional-locks: our polling must never block the agent's git.
-const git = (cwd: string, args: string[]) =>
-  exec('git', ['--no-optional-locks', ...args], {
+function git(cwd: string, args: string[]) {
+  return exec('git', ['--no-optional-locks', ...args], {
     cwd,
     maxBuffer: 64 * 1024 * 1024,
   }).then((r) => r.stdout);
+}
 
-const isRepo = (dir: string) =>
-  stat(join(dir, '.git')).then(
+function isRepo(dir: string) {
+  return stat(join(dir, '.git')).then(
     () => true,
     () => false,
   );
+}
 
 /** The workspace's own repo, or one of its submodules by relative path. */
 async function repoDir(cwd: string, repo?: string) {
@@ -424,14 +426,15 @@ async function discardIn(cwd: string, paths: string[]) {
 }
 
 // Network commands: never wait on a password prompt nobody can see.
-const remote = (cwd: string, args: string[]) =>
-  exec('git', args, {
+function remote(cwd: string, args: string[]) {
+  return exec('git', args, {
     cwd,
     timeout: 120_000,
     env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
   }).catch((error) => {
     throw gitError(error);
   });
+}
 
 export async function push(ref: WorkspaceRef, repo?: string) {
   const { cwd } = await open(ref);
@@ -606,17 +609,20 @@ export function toText(buffer: Buffer | null, path: string): FileText {
   return { text: buffer.toString('utf8') };
 }
 
-const fromDisk = (full: string) => readFile(full).catch(() => null);
+function fromDisk(full: string) {
+  return readFile(full).catch(() => null);
+}
 
 // "HEAD:path" or ":path" (the index); null when that side has no such file.
-const fromGit = (cwd: string, spec: string) =>
-  exec('git', ['show', spec], {
+function fromGit(cwd: string, spec: string) {
+  return exec('git', ['show', spec], {
     cwd,
     encoding: 'buffer',
     maxBuffer: MAX_MEDIA * 2,
   })
     .then((r) => r.stdout)
     .catch(() => null);
+}
 
 export async function readText(ref: WorkspaceRef, path: string) {
   const { cwd } = await open(ref);
@@ -663,8 +669,8 @@ export async function diff(
  * The commit a submodule entry points at, from "160000 commit <hash>"
  * (ls-tree) or "160000 <hash> 0" (ls-files); null if it isn't one there.
  */
-const pointer = (cwd: string, args: string[]) =>
-  git(cwd, args).then(
+function pointer(cwd: string, args: string[]) {
+  return git(cwd, args).then(
     (o) => {
       if (!o.startsWith('160000 ')) return null;
       const [, a, b] = o.split(/\s/);
@@ -672,6 +678,7 @@ const pointer = (cwd: string, args: string[]) =>
     },
     () => null,
   );
+}
 
 export async function watchFiles(
   ref: WorkspaceRef,

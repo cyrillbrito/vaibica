@@ -88,9 +88,9 @@ function ensureConnected() {
 
 // Phones drop sockets in the background; come back without waiting.
 // Leaving or hiding the page is the last moment to save what's open.
-const saveOpen = () => {
+function saveOpen() {
   for (const entry of entries.values()) if (entry.refs) save(entry);
-};
+}
 addEventListener('pagehide', saveOpen);
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') saveOpen();

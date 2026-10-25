@@ -53,7 +53,9 @@ interface Group {
 const RECENT = 4;
 let nextId = 0;
 
-const words = (q: string) => q.toLowerCase().split(/\s+/).filter(Boolean);
+function words(q: string) {
+  return q.toLowerCase().split(/\s+/).filter(Boolean);
+}
 
 /**
  * Where a new session starts: a project's main folder, one of its worktrees, a

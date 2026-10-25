@@ -51,8 +51,8 @@ type Look = { variant?: Variant; size?: Size };
  * Classes for a button with text; also for links that look like one.
  * `round`: a pill, to sit next to round icon buttons.
  */
-export const buttonClass = (look: Look & { round?: boolean } = {}) =>
-  [
+export function buttonClass(look: Look & { round?: boolean } = {}) {
+  return [
     'flex shrink-0 items-center justify-center',
     VARIANT[look.variant ?? 'ghost'],
     SIZE[look.size ?? 'lg'],
@@ -60,10 +60,11 @@ export const buttonClass = (look: Look & { round?: boolean } = {}) =>
     PRESS,
     look.variant === 'primary' ? DISABLED_PRIMARY : DISABLED,
   ].join(' ');
+}
 
 /** Classes for a square icon button; also for links that look like one. */
-export const iconButtonClass = (look: Look & { round?: boolean } = {}) =>
-  [
+export function iconButtonClass(look: Look & { round?: boolean } = {}) {
+  return [
     'grid shrink-0 place-items-center',
     VARIANT[look.variant ?? 'ghost'],
     ICON_SIZE[look.size ?? 'lg'],
@@ -75,6 +76,7 @@ export const iconButtonClass = (look: Look & { round?: boolean } = {}) =>
     PRESS,
     look.variant === 'primary' ? DISABLED_PRIMARY : DISABLED,
   ].join(' ');
+}
 
 type ButtonProps = Look & JSX.ButtonHTMLAttributes<HTMLButtonElement>;
 

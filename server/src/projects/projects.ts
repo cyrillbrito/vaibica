@@ -34,10 +34,14 @@ const file = jsonFile<Stored[]>('projects.json', {
   reread: true,
 });
 
-const load = async () => file.read();
+async function load() {
+  return file.read();
+}
 
 // Checked on every read: a folder can become (or stop being) a repo.
-const isGit = (path: string) => existsSync(join(path, '.git'));
+function isGit(path: string) {
+  return existsSync(join(path, '.git'));
+}
 
 // The folder itself stays a workspace, so the list is never empty.
 async function chatsProject(): Promise<Project> {
@@ -150,13 +154,16 @@ async function initRepo(path: string) {
   if (!inRepo) await exec('git', ['init', '-q'], { cwd: path });
 }
 
-const slugify = (title: string, fallback: string) =>
-  title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 40)
-    .replace(/-+$/, '') || fallback;
+function slugify(title: string, fallback: string) {
+  return (
+    title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 40)
+      .replace(/-+$/, '') || fallback
+  );
+}
 
 const projects = live(listProjects, (refresh) => {
   const timer = setInterval(refresh, POLL_MS);

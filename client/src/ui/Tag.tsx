@@ -18,8 +18,9 @@ const TONE: Record<Tone, string> = {
 };
 
 /** The classes of a `Tag`, for a link or button that looks like one. */
-export const tagClass = (tone: Tone) =>
-  `inline-flex h-5 shrink-0 items-center gap-1 rounded-sm px-1.5 text-meta font-medium whitespace-nowrap [&_svg]:size-3.5 ${TONE[tone]}`;
+export function tagClass(tone: Tone) {
+  return `inline-flex h-5 shrink-0 items-center gap-1 rounded-sm px-1.5 text-meta font-medium whitespace-nowrap [&_svg]:size-3.5 ${TONE[tone]}`;
+}
 
 /**
  * A calm tinted label for a state: Waiting, Failed, Running, Open #42. The

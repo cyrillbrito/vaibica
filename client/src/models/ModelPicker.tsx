@@ -17,11 +17,12 @@ import { Switch } from '../ui/Switch';
 
 type Model = ModelCatalog['models'][number];
 
-const dollars = (n: number) =>
-  `$${n >= 10 ? Math.round(n) : n.toFixed(2).replace(/\.?0+$/, '')}`;
+function dollars(n: number) {
+  return `$${n >= 10 ? Math.round(n) : n.toFixed(2).replace(/\.?0+$/, '')}`;
+}
 
 // "400k context · $1.25 / $10 per 1M": input, then output, price.
-const facts = (m: Model) => {
+function facts(m: Model) {
   const price = !m.cost.input
     ? null
     : m.cost.output
@@ -30,7 +31,7 @@ const facts = (m: Model) => {
   return [`${formatTokens(m.contextWindow)} context`, price]
     .filter(Boolean)
     .join(' · ');
-};
+}
 
 const EFFORT: Record<ThinkingLevel, [short: string, long: string]> = {
   off: ['Off', 'No thinking'],

@@ -143,7 +143,9 @@ export function contextMenu(items: () => MenuEntry[]) {
   };
 }
 
-const isOpen = () => !!menu?.matches(':popover-open');
+function isOpen() {
+  return !!menu?.matches(':popover-open');
+}
 
 function close(restoreFocus = true) {
   if (!isOpen()) return;
@@ -156,12 +158,16 @@ function close(restoreFocus = true) {
 }
 
 /** Closes the open menu, if any, leaving focus where it is. */
-export const closeContextMenu = () => close(false);
+export function closeContextMenu() {
+  return close(false);
+}
 
-const enabled = () => [
-  ...(menu?.querySelectorAll<HTMLElement>('[role=menuitem]:not(:disabled)') ??
-    []),
-];
+function enabled() {
+  return [
+    ...(menu?.querySelectorAll<HTMLElement>('[role=menuitem]:not(:disabled)') ??
+      []),
+  ];
+}
 
 function move(e: KeyboardEvent) {
   const items = enabled();

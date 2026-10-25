@@ -24,8 +24,12 @@ export const SWITCH_AT = 0.9;
 // An account that failed without telling its limits is skipped this long.
 const COOL_DOWN_MS = 5 * 60_000;
 
-export const baseOf = (id: string) => id.split(':')[0]!;
-export const isExtra = (id: string) => id.includes(':');
+export function baseOf(id: string) {
+  return id.split(':')[0]!;
+}
+export function isExtra(id: string) {
+  return id.includes(':');
+}
 
 /** The provider again under `<base>:<n>`, for a second sign-in. */
 export function extraAccount(base: Provider, n: string): Provider {
@@ -40,7 +44,9 @@ export function extraAccount(base: Provider, n: string): Provider {
 
 // Account ids in the order you prefer them (account-info.ts).
 let preferred: string[] = [];
-export const setPreferred = (ids: string[]) => void (preferred = ids);
+export function setPreferred(ids: string[]) {
+  return void (preferred = ids);
+}
 
 /**
  * The provider and its extra accounts: the preferred ones first, then the
@@ -61,11 +67,19 @@ const limits = new Map<string, { windows: PlanWindow[]; updatedAt: number }>();
 const cooling = new Map<string, number>();
 const listeners = new Set<() => void>();
 
-export const onLimits = (listener: () => void) => void listeners.add(listener);
-const changed = () => listeners.forEach((listener) => listener());
+export function onLimits(listener: () => void) {
+  return void listeners.add(listener);
+}
+function changed() {
+  return listeners.forEach((listener) => listener());
+}
 
-export const limitsOf = (id: string) => limits.get(id);
-export const allLimits = () => [...limits];
+export function limitsOf(id: string) {
+  return limits.get(id);
+}
+export function allLimits() {
+  return [...limits];
+}
 
 export function restoreLimits(
   saved: [string, { windows: PlanWindow[]; updatedAt: number }][],
@@ -91,8 +105,9 @@ export function recordLimits(id: string, headers: Record<string, string>) {
   changed();
 }
 
-const seconds = (value: string | undefined) =>
-  value && Number(value) ? Number(value) * 1000 : null;
+function seconds(value: string | undefined) {
+  return value && Number(value) ? Number(value) * 1000 : null;
+}
 
 function claudeWindows(s: Record<string, string>): PlanWindow[] {
   return (
@@ -164,14 +179,15 @@ export function pickOrder(models: MutableModels, provider: string) {
     .map((a) => a.id);
 }
 
-const said = (content: AssistantMessage['content']) =>
-  content.some((b) =>
+function said(content: AssistantMessage['content']) {
+  return content.some((b) =>
     b.type === 'text'
       ? !!b.text
       : b.type === 'thinking'
         ? !!(b.thinking || b.redacted || b.thinkingSignature)
         : true,
   );
+}
 
 // Errors another account might not have: limits, sign-ins, and keys. Not
 // overloaded: that's the provider's, and moving would only cost the cache.

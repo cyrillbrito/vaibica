@@ -5,14 +5,17 @@ import type { SessionStatus, SessionSummary } from '@bica/shared/protocol';
 
 // Focused, not just visible: a tab behind another window, or a laptop left
 // open on a session, isn't someone looking.
-const isFocused = () =>
-  document.visibilityState === 'visible' && document.hasFocus();
+function isFocused() {
+  return document.visibilityState === 'visible' && document.hasFocus();
+}
 const [focused, setFocused] = createSignal(isFocused(), {
   name: 'pageFocused',
 });
 export { focused as pageFocused };
 
-const update = () => setFocused(isFocused());
+function update() {
+  return setFocused(isFocused());
+}
 addEventListener('focus', update);
 addEventListener('blur', update);
 document.addEventListener('visibilitychange', update);

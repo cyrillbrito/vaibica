@@ -33,14 +33,14 @@ let nextId = 0;
 
 // Prompts sent from this browser, oldest first, shared by every composer.
 const HISTORY_KEY = 'prompt-history';
-const readHistory = (): string[] => {
+function readHistory(): string[] {
   try {
     return JSON.parse(localStorage.getItem(HISTORY_KEY) ?? '[]');
   } catch {
     return [];
   }
-};
-const remember = (prompt: string) => {
+}
+function remember(prompt: string) {
   // Huge prompts would fill localStorage's few megabytes.
   if (prompt.length > 20_000) return;
   const list = readHistory().filter((p) => p !== prompt);
@@ -48,26 +48,28 @@ const remember = (prompt: string) => {
   try {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(-200)));
   } catch {}
-};
+}
 
 // What's typed, kept per session so it neither follows you to the next one
 // nor dies with a reload. Images stay in memory, since they're too big.
 type Draft = { text: string; pastes: [number, string][] };
-const draftKey = (key: string) => `draft:${key}`;
-const readDraft = (key: string): Draft => {
+function draftKey(key: string) {
+  return `draft:${key}`;
+}
+function readDraft(key: string): Draft {
   try {
     const draft = JSON.parse(localStorage.getItem(draftKey(key)) ?? 'null');
     if (draft) return draft;
   } catch {}
   return { text: '', pastes: [] };
-};
-const writeDraft = (key: string, draft: Draft) => {
+}
+function writeDraft(key: string, draft: Draft) {
   try {
     if (draft.text.trim())
       localStorage.setItem(draftKey(key), JSON.stringify(draft));
     else localStorage.removeItem(draftKey(key));
   } catch {}
-};
+}
 const draftImages = new Map<string, Attached[]>();
 
 const foldedPaste = /\[Pasted text #(\d+) · \d+ lines\]/g;

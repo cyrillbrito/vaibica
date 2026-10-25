@@ -72,5 +72,6 @@ export const SessionDoc = defineDoc<SessionMeta>({
 });
 
 /** The agent a session runs as; one this Bica doesn't know runs as Coding. */
-export const agentIdOf = (meta?: { profile?: string }) =>
-  isAgent(meta?.profile) ? meta.profile : 'coding';
+export function agentIdOf(meta?: { profile?: string }) {
+  return isAgent(meta?.profile) ? meta.profile : 'coding';
+}

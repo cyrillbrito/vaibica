@@ -135,17 +135,20 @@ export default function Queue(props: {
   );
 }
 
-const blocks = (content: Queued['content']) =>
-  typeof content === 'string'
+function blocks(content: Queued['content']) {
+  return typeof content === 'string'
     ? [{ type: 'text', text: content }]
     : (content as readonly { type: string; text?: string }[]);
+}
 
-const textOf = (content: Queued['content']) =>
-  blocks(content)
+function textOf(content: Queued['content']) {
+  return blocks(content)
     .flatMap((b) => (b.type === 'text' && b.text ? [b.text] : []))
     .join(' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
 
-const imageCount = (content: Queued['content']) =>
-  blocks(content).filter((b) => b.type === 'image').length;
+function imageCount(content: Queued['content']) {
+  return blocks(content).filter((b) => b.type === 'image').length;
+}

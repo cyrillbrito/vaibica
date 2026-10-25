@@ -161,7 +161,9 @@ function dismiss(id?: string, way: Item['leaving'] = 'fade') {
 }
 
 type Settle<T> = Message | ((value: T) => Message);
-const settle = <T,>(m: Settle<T>, v: T) => (typeof m === 'function' ? m(v) : m);
+function settle<T>(m: Settle<T>, v: T) {
+  return typeof m === 'function' ? m(v) : m;
+}
 
 /** Shows a short message. Returns its id, for updating or dismissing it. */
 export function toast(message: Message, options?: ToastOptions) {

@@ -1,10 +1,12 @@
 import type { JsonValue } from '@earendil-works/chord';
 import type { Extension, ToolRegistration } from '@earendil-works/pi-durable';
 
-export const timeTools = (extension: Extension): Extension => ({
-  ...extension,
-  tools: extension.tools?.map(timed),
-});
+export function timeTools(extension: Extension): Extension {
+  return {
+    ...extension,
+    tools: extension.tools?.map(timed),
+  };
+}
 
 /**
  * Stamps `startedAt` on a running call's details, so its live row counts up.
@@ -28,5 +30,6 @@ function timed(tool: ToolRegistration): ToolRegistration {
   };
 }
 
-const isObject = (value: unknown): value is Record<string, JsonValue> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
+function isObject(value: unknown): value is Record<string, JsonValue> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}

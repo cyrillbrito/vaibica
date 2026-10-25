@@ -2,7 +2,9 @@ import type { ImageProcessor } from '@earendil-works/pi-durable/tools';
 
 const INLINE = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp']);
 // Limits count base64, which is 4/3 of the bytes.
-const bytesOf = (base64Bytes: number) => Math.floor((base64Bytes * 3) / 4);
+function bytesOf(base64Bytes: number) {
+  return Math.floor((base64Bytes * 3) / 4);
+}
 
 /**
  * `read`'s image processor on Bun.Image, so the binary needs no Photon wasm:
@@ -49,4 +51,6 @@ export const bunImages: ImageProcessor = {
   },
 };
 
-const base64 = (bytes: Uint8Array) => Buffer.from(bytes).toString('base64');
+function base64(bytes: Uint8Array) {
+  return Buffer.from(bytes).toString('base64');
+}

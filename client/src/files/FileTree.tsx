@@ -12,14 +12,18 @@ export type TreeStatus = GitStatusEntry['status'];
 const UNIQUE = '\u200b';
 
 // "a/b/c.ts" → ["a/", "a/b/"].
-const folders = (path: string) =>
-  path
+function folders(path: string) {
+  return path
     .split('/')
     .slice(0, -1)
     .map((_, i, parts) => `${parts.slice(0, i + 1).join('/')}/`);
+}
 
-const coarse = () =>
-  typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches;
+function coarse() {
+  return (
+    typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches
+  );
+}
 
 /**
  * Paths as a Pierre tree, or as a flat list. A click on a file opens it;

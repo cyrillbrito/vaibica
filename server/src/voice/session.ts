@@ -21,8 +21,9 @@ import {
 } from '../sessions/store';
 
 /** The text an entry's last assistant or user message says. */
-const entryText = (entry: EntryRecord | undefined) =>
-  textOf(entry?.model?.at(-1)?.content ?? '');
+function entryText(entry: EntryRecord | undefined) {
+  return textOf(entry?.model?.at(-1)?.content ?? '');
+}
 
 /**
  * What a voice call (server/src/voice/voice.ts) does with its session: hand it

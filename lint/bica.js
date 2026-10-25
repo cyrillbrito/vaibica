@@ -80,10 +80,72 @@ const radiusTokens = defineRule({
   },
 });
 
+// A named function at the top of a file reads as one: `function x()`, not
+// `const x = () =>`. A type on the constant is the real need for an arrow, as
+// it types the parameters; nested arrows are fine.
+const topLevelFunctions = defineRule({
+  meta: {
+    fixable: 'code',
+    messages: {
+      declaration:
+        'Write top-level `{{name}}` as `function {{name}}()`, not as a constant.',
+    },
+  },
+  create(context) {
+    const source = context.sourceCode;
+    function toDeclaration(name, arrow) {
+      const between = source.text.slice(arrow.range[0], arrow.body.range[0]);
+      let head = between.replace(/\s*=>\s*\(?\s*$/, '');
+      if (arrow.async) head = head.replace(/^async\s*/, '');
+      if (!/^[(<]/.test(head)) head = `(${head})`;
+      const body =
+        arrow.body.type === 'BlockStatement'
+          ? source.getText(arrow.body)
+          : `{\nreturn ${source.getText(arrow.body)};\n}`;
+      const async = arrow.async ? 'async ' : '';
+      return `${async}function ${name}${head} ${body}`;
+    }
+    return {
+      VariableDeclaration(node) {
+        const parent = node.parent;
+        const top =
+          parent.type === 'Program' ||
+          (parent.type === 'ExportNamedDeclaration' &&
+            parent.parent.type === 'Program');
+        if (!top || node.kind !== 'const') return;
+        for (const declarator of node.declarations) {
+          const init = declarator.init;
+          if (
+            !init ||
+            declarator.id.type !== 'Identifier' ||
+            declarator.id.typeAnnotation ||
+            (init.type !== 'ArrowFunctionExpression' &&
+              init.type !== 'FunctionExpression')
+          )
+            continue;
+          const name = declarator.id.name;
+          const fixable =
+            init.type === 'ArrowFunctionExpression' &&
+            node.declarations.length === 1;
+          context.report({
+            node: declarator,
+            messageId: 'declaration',
+            data: { name },
+            fix: fixable
+              ? (fixer) => fixer.replaceText(node, toDeclaration(name, init))
+              : undefined,
+          });
+        }
+      },
+    };
+  },
+});
+
 export default definePlugin({
   meta: { name: 'bica' },
   rules: {
     'type-tokens': typeTokens,
     'radius-tokens': radiusTokens,
+    'top-level-functions': topLevelFunctions,
   },
 });

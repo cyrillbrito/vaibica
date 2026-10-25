@@ -7,10 +7,10 @@ const MAX = 24;
 const R = 12.5;
 const C = 16;
 
-const point = (deg: number) => {
+function point(deg: number) {
   const a = ((deg - 90) * Math.PI) / 180;
   return `${(C + R * Math.cos(a)).toFixed(2)} ${(C + R * Math.sin(a)).toFixed(2)}`;
-};
+}
 
 /**
  * A ring of one segment per part, the done ones filled, with a number in the

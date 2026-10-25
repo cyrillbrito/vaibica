@@ -28,8 +28,12 @@ export function nameOf(id: string) {
   return models.getProvider(base)?.name ?? base;
 }
 
-export const emailOf = (id: string) => file.read().accounts[id]?.email ?? null;
-export const planOf = (id: string) => file.read().accounts[id]?.plan ?? null;
+export function emailOf(id: string) {
+  return file.read().accounts[id]?.email ?? null;
+}
+export function planOf(id: string) {
+  return file.read().accounts[id]?.plan ?? null;
+}
 
 /** Puts the account ahead of the others of its plan. */
 export async function useFirst(id: string) {
@@ -66,7 +70,9 @@ const CLAUDE_PLANS: Record<string, string> = {
   claude_team: 'Team',
   claude_enterprise: 'Enterprise',
 };
-const title = (s: string) => s[0]!.toUpperCase() + s.slice(1);
+function title(s: string) {
+  return s[0]!.toUpperCase() + s.slice(1);
+}
 
 /**
  * Who the account is: Claude's profile endpoint (the one Claude Code reads)

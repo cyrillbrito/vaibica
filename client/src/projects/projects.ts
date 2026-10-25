@@ -6,23 +6,33 @@ import { useSessions } from '../sessions/sessions';
 import { request, useTopic } from '../socket/socket';
 import { useTerminals } from '../terminals/terminals';
 
-export const useProjects = () => useTopic('projects', () => ({}));
+export function useProjects() {
+  return useTopic('projects', () => ({}));
+}
 
-export const addProject = (path: string) => request('project.add', { path });
+export function addProject(path: string) {
+  return request('project.add', { path });
+}
 
-export const reorderProjects = (ids: string[]) =>
-  request('project.reorder', { ids });
+export function reorderProjects(ids: string[]) {
+  return request('project.reorder', { ids });
+}
 
-export const pinProject = (id: string, pinned: boolean) =>
-  request('project.pin', { id, pinned });
+export function pinProject(id: string, pinned: boolean) {
+  return request('project.pin', { id, pinned });
+}
 
-export const listDirs = (path?: string) => request('fs.dirs', { path });
+export function listDirs(path?: string) {
+  return request('fs.dirs', { path });
+}
 
-export const removeWorktree = (projectId: string, cwd: string, force = false) =>
-  request('worktree.cleanUp', { projectId, cwd, force });
+export function removeWorktree(projectId: string, cwd: string, force = false) {
+  return request('worktree.cleanUp', { projectId, cwd, force });
+}
 
-const baseName = (path: string) =>
-  path.split('/').filter(Boolean).pop() ?? path;
+function baseName(path: string) {
+  return path.split('/').filter(Boolean).pop() ?? path;
+}
 
 export const folderName = baseName;
 

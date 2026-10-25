@@ -22,13 +22,15 @@ const BACKGROUND = 32_768;
 
 type Shape = 'running' | 'finished' | 'asking';
 
-const part = (
+function part(
   key: string,
   label: string,
   group: Group,
   tokens: number,
   detail?: string,
-): Part => ({ key, label, group, tokens, detail });
+): Part {
+  return { key, label, group, tokens, detail };
+}
 
 // Parts per shape: [system, tools, conversation], largest first in each.
 function parts(shape: Shape, worst: boolean): Part[] {
@@ -221,22 +223,24 @@ const CLAUDE: ThinkingLevel[] = ['off', 'low', 'medium', 'high', 'max'];
 const CODEX: ThinkingLevel[] = ['minimal', 'low', 'medium', 'high', 'xhigh'];
 
 type Model = ModelCatalog['models'][number];
-const model = (
+function model(
   provider: string,
   id: string,
   name: string,
   levels: ThinkingLevel[],
   contextWindow: number,
   cost: [input: number, output: number],
-): Model => ({
-  provider,
-  id,
-  name,
-  levels,
-  contextWindow,
-  cost: { input: cost[0], output: cost[1] },
-  cacheTtl: provider === 'anthropic' ? { short: 300, long: 3600 } : {},
-});
+): Model {
+  return {
+    provider,
+    id,
+    name,
+    levels,
+    contextWindow,
+    cost: { input: cost[0], output: cost[1] },
+    cacheTtl: provider === 'anthropic' ? { short: 300, long: 3600 } : {},
+  };
+}
 
 /** The catalog: list prices from pi-ai's model data, as of writing. */
 export function fixtureCatalog(worst: boolean): ModelCatalog {

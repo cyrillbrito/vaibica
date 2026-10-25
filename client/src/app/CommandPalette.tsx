@@ -120,8 +120,9 @@ function matches(e: KeyboardEvent, k: Keys) {
   );
 }
 
-const wordStart = (t: string, i: number) =>
-  i === 0 || !/[\p{L}\p{N}]/u.test(t[i - 1]!);
+function wordStart(t: string, i: number) {
+  return i === 0 || !/[\p{L}\p{N}]/u.test(t[i - 1]!);
+}
 
 // The word's letters in order from `from`, scored by how many sit together.
 function letters(t: string, word: string, from: number) {

@@ -69,8 +69,9 @@ function play(chime: Chime) {
   }
 }
 
-const busy = (s: SessionStatus | undefined) =>
-  s === 'running' || s === 'retrying';
+function busy(s: SessionStatus | undefined) {
+  return s === 'running' || s === 'retrying';
+}
 
 function chimeFor(s: SessionStatus): Chime | undefined {
   if (s === 'waiting') return 'waiting';

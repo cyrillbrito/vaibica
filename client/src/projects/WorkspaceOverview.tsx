@@ -58,10 +58,13 @@ const KIND_CLASS: Record<string, string> = {
   Conflict: 'text-warn-ink',
 };
 
-const folder = (path: string) =>
-  path.includes('/') ? path.slice(0, path.indexOf('/')) : '(top level)';
+function folder(path: string) {
+  return path.includes('/') ? path.slice(0, path.indexOf('/')) : '(top level)';
+}
 
-const num = (n: number) => n.toLocaleString();
+function num(n: number) {
+  return n.toLocaleString();
+}
 
 /**
  * The workspace page before a file is open: the workspace as a card, after

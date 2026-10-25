@@ -25,24 +25,24 @@ const lines: Line[] = readFileSync(file, 'utf8')
 if (!lines.length) throw new Error(`${file} is empty`);
 
 const topics = new Map<string, string>();
-const topicOf = (l: Line) => {
+function topicOf(l: Line) {
   const m = l.msg;
   if (m.type === 'subscribe') topics.set(`${l.c}:${m.sub}`, m.topic);
   if (m.type === 'request') return `call ${m.call}`;
   if (m.type === 'reply') return 'reply';
   return m.sub != null ? (topics.get(`${l.c}:${m.sub}`) ?? '?') : '?';
-};
+}
 
-const add = (
+function add(
   map: Map<string, { n: number; bytes: number }>,
   key: string,
   bytes: number,
-) => {
+) {
   const row = map.get(key) ?? { n: 0, bytes: 0 };
   row.n++;
   row.bytes += bytes;
   map.set(key, row);
-};
+}
 
 const byKind = new Map<string, { n: number; bytes: number }>();
 const byPath = new Map<string, { n: number; bytes: number }>();
@@ -67,17 +67,16 @@ for (const l of lines) {
     }
 }
 
-const kb = (b: number) => (b / 1024).toFixed(1).padStart(8) + ' KB';
-const table = (
-  title: string,
-  map: Map<string, { n: number; bytes: number }>,
-) => {
+function kb(b: number) {
+  return (b / 1024).toFixed(1).padStart(8) + ' KB';
+}
+function table(title: string, map: Map<string, { n: number; bytes: number }>) {
   console.log(`\n${title}`);
   for (const [key, { n, bytes }] of [...map]
     .sort((a, b) => b[1].bytes - a[1].bytes)
     .slice(0, top))
     console.log(`${kb(bytes)} ${String(n).padStart(6)}x  ${key}`);
-};
+}
 
 const total = lines.reduce((s, l) => s + l.bytes, 0);
 const secs = (lines.at(-1)!.t - lines[0]!.t) / 1000;

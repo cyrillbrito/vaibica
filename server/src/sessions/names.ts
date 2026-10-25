@@ -4,8 +4,9 @@ import { askFast, fastModelId } from '../models/fast-model';
 import { editSession } from './store';
 
 // The fallback when there is no fast model or it fails: the prompt's first words.
-export const promptTitle = (prompt: string) =>
-  prompt.trim().split(/\s+/).slice(0, 6).join(' ').slice(0, 48);
+export function promptTitle(prompt: string) {
+  return prompt.trim().split(/\s+/).slice(0, 6).join(' ').slice(0, 48);
+}
 
 const MAX_TITLE = 60;
 

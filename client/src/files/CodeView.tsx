@@ -26,15 +26,16 @@ type Diffs = typeof import('@pierre/diffs');
 type Instance = InstanceType<Diffs['File']> | InstanceType<Diffs['FileDiff']>;
 
 /** Why a side can't be shown as text, or nothing when it can. */
-const problem = (t: FileText) =>
-  t.text === null && t.reason !== 'missing' && t.reason !== 'media'
+function problem(t: FileText) {
+  return t.text === null && t.reason !== 'missing' && t.reason !== 'media'
     ? `File is ${t.reason}`
     : '';
+}
 
 type Media = { label: string; mimeType: string; url: string };
 
-const toMedia = (t: FileText, label: string): Media[] =>
-  t.text === null && t.reason === 'media'
+function toMedia(t: FileText, label: string): Media[] {
+  return t.text === null && t.reason === 'media'
     ? [
         {
           label,
@@ -47,6 +48,7 @@ const toMedia = (t: FileText, label: string): Media[] =>
         },
       ]
     : [];
+}
 
 // Pierre's scrollbars sit under the last line, out of reach in a long file.
 // CodeView shows one pinned to the bottom of the view instead.

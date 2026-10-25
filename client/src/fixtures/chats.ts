@@ -40,10 +40,8 @@ export function useSessionShortcuts(current: () => string | undefined) {
 }
 `;
 
-const SIDEBAR = (
-  row: string,
-  extra = '',
-) => `import { For, Show, createMemo } from 'solid-js';
+function SIDEBAR(row: string, extra = '') {
+  return `import { For, Show, createMemo } from 'solid-js';
 
 import { paths } from '../router';
 import { useSessions } from '../lib/sessions';
@@ -73,6 +71,7 @@ ${row}            </li>
   );
 }
 `;
+}
 
 const ROW_BEFORE = `              <a
                 class={ROW}

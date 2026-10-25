@@ -41,8 +41,9 @@ export async function toPromptImage(file: File): Promise<PromptImage> {
   return { mimeType: blob.type, data: await base64(blob) };
 }
 
-export const imageUrl = (image: PromptImage) =>
-  `data:${image.mimeType};base64,${image.data}`;
+export function imageUrl(image: PromptImage) {
+  return `data:${image.mimeType};base64,${image.data}`;
+}
 
 /** Full size in a new tab; browsers won't open data: URLs there. */
 export function openImage(image: PromptImage) {

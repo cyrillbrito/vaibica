@@ -54,7 +54,9 @@ interface Terminal {
 const terminals = new Map<string, Terminal>();
 const listeners = new Set<(list: TerminalInfo[]) => void>();
 
-const list = () => [...terminals.values()].map((t) => t.info);
+function list() {
+  return [...terminals.values()].map((t) => t.info);
+}
 
 function announce() {
   const value = list();
@@ -78,11 +80,13 @@ export async function watchTerminal(id: string, sink: Sink) {
   return () => void t.sinks.delete(sink);
 }
 
-const view = (t: Terminal): TerminalOutput => ({
-  run: t.run,
-  start: t.start,
-  output: t.output,
-});
+function view(t: Terminal): TerminalOutput {
+  return {
+    run: t.run,
+    start: t.start,
+    output: t.output,
+  };
+}
 
 function flush(t: Terminal) {
   if (t.timer) clearTimeout(t.timer);
@@ -387,9 +391,13 @@ export async function removeTerminal(id: string) {
 
 // ---------- for agents: plain text ----------
 
-export const terminalInfo = (id: string) => get(id).info;
+export function terminalInfo(id: string) {
+  return get(id).info;
+}
 
-export const terminalsIn = (cwd: string) => list().filter((t) => t.cwd === cwd);
+export function terminalsIn(cwd: string) {
+  return list().filter((t) => t.cwd === cwd);
+}
 
 export const allTerminals = list;
 

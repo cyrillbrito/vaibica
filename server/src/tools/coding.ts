@@ -32,8 +32,12 @@ function ownFolder(tool: ToolRegistration): ToolRegistration {
 }
 
 // Durable's tools are typed by their own schemas; extensions take any.
-const any = (tool: unknown) => tool as ToolRegistration;
-const read = () => any(createReadTool({ images: bunImages }));
+function any(tool: unknown) {
+  return tool as ToolRegistration;
+}
+function read() {
+  return any(createReadTool({ images: bunImages }));
+}
 
 // Only the hub agent selects it (server/src/hub/agent.ts).
 export const HubFileTools = defineExtension({

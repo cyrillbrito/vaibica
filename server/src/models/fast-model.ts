@@ -7,10 +7,10 @@ import { settings } from '../settings';
  * (`PI_FAST_MODEL` until then); unset: the features that need it quietly do
  * without.
  */
-export const fastModelId = () => {
+export function fastModelId() {
   const ref = settings().fastModel;
   return ref && `${ref.provider}/${ref.modelId}`;
-};
+}
 
 const THINKING_ROOM = 2_000;
 

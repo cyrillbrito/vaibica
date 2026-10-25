@@ -60,7 +60,9 @@ function find(graph: TaskGraph) {
   return found;
 }
 
-export const stuckOf = (id: ConversationId) => stuck.get(id)?.why ?? null;
+export function stuckOf(id: ConversationId) {
+  return stuck.get(id)?.why ?? null;
+}
 
 /** Runs the session's parked work again; work without its code stays stuck. */
 export async function retryStuck(id: string) {

@@ -72,8 +72,9 @@ export async function findSkills(cwd: string): Promise<Skill[]> {
   return [...byName.values()];
 }
 
-const escape = (s: string) =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function escape(s: string) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
 /**
  * The skills section of the instructions, or null when there are none: the

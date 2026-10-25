@@ -33,25 +33,24 @@ interface Options<T> {
 }
 
 /** A JSON file in `.data`. */
-export const jsonFile = <T>(name: string, options: Options<T>) =>
-  dataFile<T>(
+export function jsonFile<T>(name: string, options: Options<T>) {
+  return dataFile<T>(
     name,
     options,
     JSON.parse,
     (v) => `${JSON.stringify(v, null, 2)}\n`,
   );
+}
 
 /** A one-line text file in `.data`. */
-export const textFile = (
-  name: string,
-  options: Partial<Options<string>> = {},
-) =>
-  dataFile(
+export function textFile(name: string, options: Partial<Options<string>> = {}) {
+  return dataFile(
     name,
     { initial: () => '', ...options },
     (text) => text.trim(),
     (v) => v,
   );
+}
 
 function dataFile<T>(
   name: string,

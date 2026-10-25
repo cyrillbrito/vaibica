@@ -11,6 +11,7 @@ export default defineConfig({
     ...solidV2.rules,
     'bica/type-tokens': 'error',
     'bica/radius-tokens': 'error',
+    'bica/top-level-functions': 'error',
   },
   overrides: [
     {

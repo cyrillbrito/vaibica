@@ -15,9 +15,11 @@ import { stop, submit } from './prompts';
 import { prompters, readSession, recentMessages } from './read';
 import { listSessions } from './store';
 
-const text = (value: string) => ({
-  output: [{ type: 'text' as const, text: value }],
-});
+function text(value: string) {
+  return {
+    output: [{ type: 'text' as const, text: value }],
+  };
+}
 
 const STATUS: Record<SessionStatus, string> = {
   running: 'running',
@@ -58,7 +60,7 @@ function checkInCharge(
 }
 
 /** The session tools; the hub's descriptions drop the "leave others alone" limits. */
-const sessionTools = (hub: boolean): ToolRegistration[] => {
+function sessionTools(hub: boolean): ToolRegistration[] {
   const sessionStart = defineTool({
     name: 'session_start',
     description: hub
@@ -392,7 +394,7 @@ const sessionTools = (hub: boolean): ToolRegistration[] => {
     // Orchestration stays with the model: codemode scripts can't reach it.
     callers: ['model' as const],
   }));
-};
+}
 
 export const SessionTools = defineExtension({
   name: 'session-tools',

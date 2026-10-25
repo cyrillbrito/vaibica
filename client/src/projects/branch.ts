@@ -17,5 +17,6 @@ export function splitBranch(branch: string) {
 }
 
 /** The ticket's page, from a project's `tickets` template with `{key}` in it. */
-export const ticketUrl = (template: string | undefined, key: string) =>
-  template?.replace('{key}', encodeURIComponent(key));
+export function ticketUrl(template: string | undefined, key: string) {
+  return template?.replace('{key}', encodeURIComponent(key));
+}

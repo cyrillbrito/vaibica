@@ -35,9 +35,12 @@ const TAIL = 80;
 const NOTE = '[Old output cleared to save context';
 
 /** Whether a result is already a pruning note, so it isn't cleared again. */
-export const isCleared = (message: ToolResultMessage) =>
-  message.content[0]?.type === 'text' &&
-  message.content[0].text.startsWith(NOTE);
+export function isCleared(message: ToolResultMessage) {
+  return (
+    message.content[0]?.type === 'text' &&
+    message.content[0].text.startsWith(NOTE)
+  );
+}
 
 /** Characters a message adds to the context, as context-usage.ts counts them. */
 export function chars(message: Message): number {
@@ -136,8 +139,9 @@ function pruneResult(message: ToolResultMessage): ToolResultMessage {
 }
 
 // A cut can split an emoji's surrogate pair, and providers reject the half.
-const whole = (text: string) =>
-  text.replace(/^[\uDC00-\uDFFF]|[\uD800-\uDBFF]$/g, '');
+function whole(text: string) {
+  return text.replace(/^[\uDC00-\uDFFF]|[\uD800-\uDBFF]$/g, '');
+}
 
 function pruneCalls(
   message: AssistantMessage,
