@@ -134,15 +134,9 @@ Buttons sink to 97% while pressed and spring back in 150ms (`ui/Button`), but no
 
 ## Layout
 
-Tailwind's default breakpoints. State lives in `client/src/ui/layout.ts`.
+What each screen size shows is in [layout.md](./layout.md): phone is below `md`, tablet `md` to `xl`, and wide screen from `xl`, Tailwind's default breakpoints. State lives in `client/src/ui/layout.ts`.
 
-| Width | Sessions | Chat | Files · Git |
-| --- | --- | --- | --- |
-| < `md` (768) | Drawer from the left | Full | Bottom sheet |
-| `md`–`xl` | Column, hideable | Center | Drawer from the right |
-| ≥ `xl` (1280) | Column, hideable | Center | Column, hideable |
-
-- Toggles sit in the chat top bar. `⌘B` sessions, `⌥⌘B` files and changes, `Esc` closes overlays. Every shortcut is in the [command palette](./command-palette.md).
+- Toggles sit in the page's top bar.
 - Hiding or showing a column slides it (200ms, motion-safe): a hidden column is zero wide, not removed, and its content keeps its width so it moves instead of squeezing. Only the toggle animates; dragging an edge or resizing the window stays instant (`sliding` in `layout.ts`).
 - Columns resize by dragging their inner edge (arrow keys when focused, double-click resets). Widths are bounded per column and by the window: the centre column always keeps 400px, and the rendered width is re-clamped when the window shrinks (`layout.ts`). Column wrappers are `shrink-0 min-w-0` and their contents `overflow-hidden`, so inner content can't push a column wider.
 - Overlays have a backdrop and make `main` inert. Navigating closes them.

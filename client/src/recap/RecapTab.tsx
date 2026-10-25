@@ -18,7 +18,7 @@ import { IconButton } from '../ui/Button';
 import { Spinner } from '../ui/Spinner';
 import { createArrival } from '../ui/arrive';
 import { errorText } from '../ui/errors';
-import { CheckIcon, RefreshIcon } from '../ui/icons';
+import { CheckIcon, RefreshIcon, StepsIcon } from '../ui/icons';
 import { closeDrawer } from '../ui/layout';
 import { formatDuration, timeAgo } from '../ui/time';
 import { getRecap, recapActivity } from './recap';
@@ -32,10 +32,23 @@ const RUNNING_EVERY = 15_000;
 // More changed files fold behind "Show all".
 const FILES_SHOWN = 5;
 
-export default function RecapTab(props: {
-  id: string;
-  workspace: WorkspaceRef;
-}) {
+/** The side panel's Recap tab, on a session's page only. */
+export const recapTab = {
+  id: 'recap',
+  label: 'Recap',
+  icon: StepsIcon,
+  when: (at: { session: string | undefined }) => !!at.session,
+  content: (props: {
+    workspace: WorkspaceRef;
+    session: string | undefined;
+  }) => (
+    <Show when={props.session}>
+      {(id) => <RecapTab id={id()} workspace={props.workspace} />}
+    </Show>
+  ),
+};
+
+function RecapTab(props: { id: string; workspace: WorkspaceRef }) {
   const sessions = useSessions();
   const session = createMemo(() => sessions().find((s) => s.id === props.id), {
     name: 'recapSession',

@@ -1,45 +1,65 @@
-import { useLocation, useNavigate } from '@solidjs/router';
-import type { JSX } from '@solidjs/web';
-import { Errored, Loading, Show, createMemo, createSignal } from 'solid-js';
-
-import { closeDrawer } from '../ui/layout';
-import { copyText } from '../ui/clipboard';
-import type { GitStatus, WorkspaceRef } from '@bica/shared/protocol';
+import { useLocation, useSearchParams } from '@solidjs/router';
+import { Dynamic } from '@solidjs/web';
 import {
-  openFromSearch,
-  openInEditor,
-  useFiles,
-  openHref,
-} from '../files/files';
-import { repos, useGitStatus } from '../git/git';
+  Errored,
+  For,
+  Loading,
+  Show,
+  createMemo,
+  createSignal,
+  type Component,
+} from 'solid-js';
+
+import type { WorkspaceRef } from '@bica/shared/protocol';
+import { openFromSearch, type Open } from '../files/files';
+import { filesTab } from '../files/FilesTab';
+import { gitTab } from '../git/GitTab';
 import { useCurrentWorkspace } from '../projects/projects';
-import { TREE_STATUS, asList, toggleAsList } from '../files/ChangeList';
-import FileTree from '../files/FileTree';
-import GitPanel from '../git/GitPanel';
-import RecapTab from '../recap/RecapTab';
-import { keepOpenItem } from '../files/OpenFile';
+import { recapTab } from '../recap/RecapTab';
 import { IconButton } from '../ui/Button';
 import Empty from '../ui/Empty';
-import { moveFocus } from '../ui/listKeys';
 import Failed from '../ui/Failed';
-import {
-  CloseIcon,
-  CodeIcon,
-  CopyIcon,
-  DiffIcon,
-  FilesIcon,
-  ListIcon,
-  StepsIcon,
-  TreeIcon,
-} from '../ui/icons';
+import { CloseIcon } from '../ui/icons';
+import { closeDrawer } from '../ui/layout';
+import { moveFocus } from '../ui/listKeys';
 
-type Tab = 'files' | 'git' | 'recap';
+/** What a tab's content gets: where the panel stands. */
+type PanelTabProps = {
+  workspace: WorkspaceRef;
+  /** The open session, on a session's page. */
+  session: string | undefined;
+  /** The file or diff open in the main area. */
+  open: Open | undefined;
+};
 
-// Survives switching workspaces: you usually want the same kind of view.
-const [tab, setTab] = createSignal<Tab>('git');
+// Each feature defines its tab next to its code and doesn't import this:
+// only routes/ and App.tsx import app/ (docs/architecture.md). The list below
+// checks each one against it.
+type PanelTab = {
+  id: string;
+  label: string;
+  icon: Component;
+  /** Absent: on every page. */
+  when?: (at: { session: string | undefined }) => boolean;
+  /** Header buttons while the tab is picked. */
+  actions?: Component;
+  content: Component<PanelTabProps>;
+};
+
+// In the order they show.
+const TABS: PanelTab[] = [filesTab, gitTab, recapTab];
+// Where a tab that isn't on this page falls back to.
+const FALLBACK = gitTab.id;
+
+// Links that drop ?panel= show the last tab picked: switching workspaces, you
+// usually want the same kind of view.
+const [lastPicked, setLastPicked] = createSignal(FALLBACK, {
+  name: 'panelLastPicked',
+});
 
 export default function SidePanel() {
   const location = useLocation();
+  const [search, setSearch] = useSearchParams<{ panel: string }>();
   const current = useCurrentWorkspace();
   const sessionId = createMemo(
     () => {
@@ -48,34 +68,33 @@ export default function SidePanel() {
     },
     { name: 'panelSession' },
   );
-  // The Recap tab is there only on a session's page; elsewhere Git stands in.
-  const shown = (): Tab => (tab() === 'recap' && !sessionId() ? 'git' : tab());
-
-  // Arrow keys move between the tabs, and only the picked one is in the Tab
-  // order, as the ARIA tabs pattern has it.
-  const TabButton = (props: { id: Tab; children: JSX.Element }) => (
-    <button
-      id={`side-tab-${props.id}`}
-      class="flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-muted transition-colors hover:text-fg aria-selected:bg-active aria-selected:text-fg touch:h-11"
-      role="tab"
-      aria-selected={shown() === props.id ? 'true' : 'false'}
-      aria-controls="side-panel"
-      tabindex={shown() === props.id ? 0 : -1}
-      onClick={() => setTab(props.id)}
-      onKeyDown={(e) =>
-        moveFocus(
-          e,
-          [
-            ...e.currentTarget.parentElement!.querySelectorAll<HTMLElement>(
-              '[role=tab]',
-            ),
-          ],
-          true,
-        )?.click()
-      }
-    >
-      {props.children}
-    </button>
+  const tabs = createMemo(
+    () => TABS.filter((t) => !t.when || t.when({ session: sessionId() })),
+    { name: 'panelTabs' },
+  );
+  const shown = createMemo(
+    () => {
+      const want = search.panel ?? lastPicked();
+      return (
+        tabs().find((t) => t.id === want) ??
+        tabs().find((t) => t.id === FALLBACK)!
+      );
+    },
+    { name: 'panelShown' },
+  );
+  // In the URL, so a reload or a link opens the same tab; replaced, so
+  // switching tabs doesn't fill Back.
+  const pick = (id: string) => {
+    setLastPicked(id);
+    setSearch({ panel: id }, { replace: true });
+  };
+  // Project and session pages open files; elsewhere nothing is selected.
+  const open = createMemo(
+    () =>
+      /^\/[ps]\//.test(location.pathname)
+        ? openFromSearch(location.search)
+        : undefined,
+    { name: 'panelOpen' },
   );
 
   return (
@@ -84,143 +103,77 @@ export default function SidePanel() {
       aria-label="Workspace"
     >
       <header class="flex h-12 shrink-0 items-center gap-1 border-b border-line px-2 touch:h-14">
+        {/* Arrow keys move between the tabs, and only the picked one is in
+            the Tab order, as the ARIA tabs pattern has it. */}
         <div
           class="flex items-center gap-1"
           role="tablist"
           aria-label="Side panel"
         >
-          <TabButton id="files">
-            <FilesIcon /> Files
-          </TabButton>
-          <TabButton id="git">
-            <DiffIcon /> Git
-          </TabButton>
-          <Show when={sessionId()}>
-            <TabButton id="recap">
-              <StepsIcon /> Recap
-            </TabButton>
-          </Show>
+          <For each={tabs()}>
+            {(t) => (
+              <button
+                id={`side-tab-${t.id}`}
+                class="flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-muted transition-colors hover:text-fg aria-selected:bg-active aria-selected:text-fg touch:h-11"
+                role="tab"
+                aria-selected={shown() === t ? 'true' : 'false'}
+                aria-controls="side-panel"
+                tabindex={shown() === t ? 0 : -1}
+                onClick={() => pick(t.id)}
+                onKeyDown={(e) =>
+                  moveFocus(
+                    e,
+                    [
+                      ...e.currentTarget.parentElement!.querySelectorAll<HTMLElement>(
+                        '[role=tab]',
+                      ),
+                    ],
+                    true,
+                  )?.click()
+                }
+              >
+                <Dynamic component={t.icon} /> {t.label}
+              </button>
+            )}
+          </For>
         </div>
-        <Show when={shown() === 'git'}>
-          <IconButton
-            class="ml-auto"
-            title={
-              asList() ? 'Show changes as a tree' : 'Show changes as a list'
-            }
-            onClick={toggleAsList}
-          >
-            {asList() ? <TreeIcon /> : <ListIcon />}
+        <div class="ml-auto flex items-center gap-1">
+          <Show when={shown().actions}>
+            {(actions) => <Dynamic component={actions()} />}
+          </Show>
+          <IconButton class="xl:hidden" title="Close" onClick={closeDrawer}>
+            <CloseIcon />
           </IconButton>
-        </Show>
-        <IconButton
-          class={[shown() !== 'git' && 'ml-auto', 'xl:hidden']}
-          title="Close"
-          onClick={closeDrawer}
-        >
-          <CloseIcon />
-        </IconButton>
+        </div>
       </header>
       <Errored fallback={(error) => <Failed error={error()} />}>
-        {/* Keyed so a new page's panel data blanks the panel instead of
-            holding the whole navigation (see Page in App.tsx). */}
-        <Loading on={[location.pathname, current()?.workspace.path]}>
+        {/* Keyed so a new page's or tab's data blanks the panel instead of
+            holding the old one (see Page in App.tsx). */}
+        <Loading
+          on={[location.pathname, current()?.workspace.path, shown().id]}
+        >
           <Show
             when={current()}
             fallback={<Empty>Open a project or session to see its files</Empty>}
           >
             {(c) => (
-              <WorkspacePanel
-                workspace={c().ref}
-                tab={shown()}
-                session={sessionId()}
-              />
+              <div
+                id="side-panel"
+                class="flex min-h-0 min-w-0 flex-1 flex-col"
+                role="tabpanel"
+                aria-labelledby={`side-tab-${shown().id}`}
+              >
+                <Dynamic
+                  component={shown().content}
+                  workspace={c().ref}
+                  session={sessionId()}
+                  open={open()}
+                />
+              </div>
             )}
           </Show>
         </Loading>
       </Errored>
     </aside>
   );
-}
-
-function WorkspacePanel(props: {
-  workspace: WorkspaceRef;
-  tab: Tab;
-  session: string | undefined;
-}) {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const status = useGitStatus(() => props.workspace);
-  const files = useFiles(() => props.workspace);
-  // Project and session pages open files; elsewhere nothing is selected.
-  const open = createMemo(() =>
-    /^\/[ps]\//.test(location.pathname)
-      ? openFromSearch(location.search)
-      : undefined,
-  );
-
-  return (
-    <div
-      id="side-panel"
-      class="flex min-h-0 min-w-0 flex-1 flex-col"
-      role="tabpanel"
-      aria-labelledby={`side-tab-${props.tab}`}
-    >
-      <Show when={props.tab === 'recap' && props.session}>
-        {(id) => <RecapTab id={id()} workspace={props.workspace} />}
-      </Show>
-      <Show when={props.tab === 'files'}>
-        <FileTree
-          paths={files()}
-          status={treeStatus(status())}
-          selected={open()?.view === 'file' ? open()?.path : undefined}
-          onOpen={(path) => {
-            closeDrawer();
-            navigate(openHref(props.workspace, { path, view: 'file' }));
-          }}
-          menu={(paths) => [
-            ...keepOpenItem(
-              navigate,
-              props.workspace,
-              paths.length === 1
-                ? { path: paths[0]!, view: 'file' }
-                : undefined,
-            ),
-            ...(paths.length === 1
-              ? [
-                  {
-                    label: 'Open in editor',
-                    icon: <CodeIcon />,
-                    onSelect: () =>
-                      void openInEditor(props.workspace, paths[0]),
-                  },
-                ]
-              : []),
-            {
-              label: paths.length === 1 ? 'Copy path' : 'Copy paths',
-              icon: <CopyIcon />,
-              onSelect: () => void copyText(paths.join('\n')),
-            },
-          ]}
-        />
-      </Show>
-      <Show when={props.tab === 'git'}>
-        <Show when={status()} fallback={<Empty>Not a git repository</Empty>}>
-          {(s) => (
-            <GitPanel workspace={props.workspace} status={s()} open={open()} />
-          )}
-        </Show>
-      </Show>
-    </div>
-  );
-}
-
-// Unstaged wins: it's what the file on disk looks like now.
-function treeStatus(status: GitStatus | null | undefined) {
-  const map = new Map<string, (typeof TREE_STATUS)[keyof typeof TREE_STATUS]>();
-  for (const c of (status ? repos(status) : []).flatMap((r) => [
-    ...r.staged,
-    ...r.unstaged,
-  ]))
-    map.set(c.path, TREE_STATUS[c.status]);
-  return [...map].map(([path, status]) => ({ path, status }));
 }

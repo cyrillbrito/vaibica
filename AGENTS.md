@@ -88,6 +88,7 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 - [hub.md](docs/hub.md): the one session that coordinates the others.
 - [voice.md](docs/voice.md): voice calls, handoffs, hold music, and dictation.
 - [projects.md](docs/projects.md): projects, worktrees, chats, pull requests, the sidebar.
+- [layout.md](docs/layout.md): the sidebar, the centre, and the side panel on each screen size, and the side panel's tabs. Read before adding a side panel tab.
 - [files.md](docs/files.md): the workspace page, file and diff views, review comments, file lists.
 - [git.md](docs/git.md): the Git tab and commit messages.
 - [command-palette.md](docs/command-palette.md): ⌘K and every keyboard shortcut. Read before adding a shortcut.

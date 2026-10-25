@@ -1,6 +1,6 @@
 # Files and diffs
 
-Every workspace ([projects.md](./projects.md)) has a workspace page for reviewing the agent's work: one file or diff full size in the centre, with the side panel's Files and Git ([git.md](./git.md)) tabs on the right. The same side panel sits next to every session.
+Every workspace ([projects.md](./projects.md)) has a workspace page for reviewing the agent's work: one file or diff full size in the centre, with the [side panel](./layout.md)'s Files and Git ([git.md](./git.md)) tabs on the right. The same side panel sits next to every session.
 
 The files stay on the dev machine. The browser asks the server for them and never reads the disk.
 

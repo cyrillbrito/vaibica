@@ -104,9 +104,10 @@ export function createSidebarMenus(props: {
           return;
         await removeWorktree(projectId, cwd!, true);
       }
+      // Any file open or panel tab picked there is in the query too.
       if (
-        location.pathname + location.search ===
-        workspaceHref({ projectId, cwd: cwd! })
+        location.pathname === paths.p(projectId)() &&
+        new URLSearchParams(location.search).get('w') === cwd
       )
         navigate(paths());
       toast(`Removed ${label}`);

@@ -34,7 +34,7 @@ Each branch shows its pull request's number and state, and a click opens it on G
 
 ## The sidebar
 
-The sidebar starts with the [hub](./hub.md), then groups sessions by project and workspace, with each workspace's terminals and kept files above its sessions. ⌘B hides it.
+The sidebar starts with the [hub](./hub.md), then groups sessions by project and workspace, with each workspace's terminals and kept files above its sessions. How it shows on each screen is in [layout.md](./layout.md).
 
 - A workspace's header opens its workspace page: the workspace card, files, and Git ([files.md](./files.md)).
 - Drag a project's header to reorder projects.
