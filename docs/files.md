@@ -22,7 +22,8 @@ There are no tabs. Opening something replaces what was there, and what's open li
 - Images, PDFs, audio, and video show as themselves, before and after side by side in a diff.
 - Markdown, HTML, and Mermaid files open rendered, and the eye button shows the source. HTML runs in a sandbox with no access to Bica.
 - Open in editor starts your editor on the dev machine, from `VISUAL` or `EDITOR`.
-- Paths in replies are links. A file opens in the editor and a folder in Finder.
+- Download saves the file through the browser, at any size, so it reaches a phone or another computer.
+- Paths in replies are links that open in Bica, so they work away from the dev machine. A file opens in its workspace, over the chat when it is the session's own, and a folder opens its workspace. A file outside every workspace opens in a new tab: PDFs, images, and media as themselves, and text as plain text. ⌘ click opens it in the editor instead, and Alt click shows it in Finder.
 
 ## File lists
 
@@ -35,3 +36,5 @@ There is no file watcher. While someone looks at a workspace, the server checks 
 ## Safety
 
 Every request names a workspace, and paths that lead outside it are refused. Large or binary files aren't shown as text.
+
+Downloads and files outside every workspace go over plain HTTP, at `/download/<token>/<name>`. The socket hands out each link, and its random token lasts an hour, so another website can't guess one, even through DNS rebinding. HTML and SVG are served as plain text, because they would run on Bica's own origin.

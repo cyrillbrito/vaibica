@@ -26,6 +26,61 @@ export function openPath(path: string, cwd?: string, reveal?: boolean) {
   );
 }
 
+/**
+ * Shows a path from a chat message in Bica, so it works away from the dev
+ * machine too: a file in its workspace, over the chat when it is the
+ * session's own. Files outside every workspace open in a new tab.
+ */
+export async function showPath(
+  path: string,
+  cwd: string | undefined,
+  navigate: (href: string) => void,
+) {
+  const found = await request('path.find', { path, cwd }).catch(
+    (e: unknown) => void toast.error(e),
+  );
+  if (!found) return;
+  const { workspace } = found;
+  if (workspace) {
+    const open: Open = { path: found.path, view: 'file' };
+    if (found.folder) navigate(workspaceHref(workspace));
+    else if (workspace.cwd === cwd) navigate(openHref(workspace, open));
+    else navigate(workspaceHref(workspace, open));
+  } else if (found.url) {
+    // Safari blocks a tab opened this long after the click; a tap on the
+    // toast is a fresh one.
+    const url = found.url;
+    if (!window.open(url, '_blank'))
+      toast(
+        { title: 'Outside every workspace', description: found.path },
+        {
+          action: { label: 'Open', onClick: () => window.open(url, '_blank') },
+        },
+      );
+  } else
+    toast(
+      { title: 'A folder outside every workspace', description: found.path },
+      {
+        action: {
+          label: 'Show in Finder',
+          onClick: () => void openPath(found.path),
+        },
+      },
+    );
+}
+
+/** Saves a workspace file through the browser, at any size. */
+export async function downloadFile(ref: WorkspaceRef, path: string) {
+  try {
+    const link = document.createElement('a');
+    link.href = `${await request('file.link', { ...ref, path })}?download`;
+    link.download = '';
+    link.click();
+  } catch (e) {
+    toast.error(e);
+  }
+}
+
 export function readFile(ref: WorkspaceRef, path: string) {
   return request('file.read', { ...ref, path });
 }

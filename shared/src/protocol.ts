@@ -294,6 +294,14 @@ export type FileText =
   | { text: null; reason: 'media'; mimeType: string; data: string }
   | { text: null; reason: 'missing' | 'binary' | 'too large' };
 
+/**
+ * A path from a chat message: in a workspace, relative to it; else absolute,
+ * with a link that serves it when it is a file.
+ */
+export type FoundPath =
+  | { workspace: WorkspaceRef; path: string; folder: boolean; url?: undefined }
+  | { workspace: null; path: string; folder: boolean; url?: string };
+
 /** One limit of a plan: the 5-hour session, the week, or a spend cap. */
 export interface PlanWindow {
   key: string;
@@ -562,6 +570,10 @@ export interface Calls {
     args: { path: string; cwd?: string; reveal?: boolean };
     result: null;
   };
+  // Where Bica shows a path from a chat message (server/src/git/editor.ts).
+  'path.find': { args: { path: string; cwd?: string }; result: FoundPath };
+  // A URL serving the file over HTTP for an hour (server/src/git/download.ts).
+  'file.link': { args: WorkspaceRef & { path: string }; result: string };
   // Absent command: an interactive shell. Its id.
   'terminal.create': {
     args: WorkspaceRef & { command?: string; title?: string };

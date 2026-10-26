@@ -1,4 +1,5 @@
 import { getSharedHighlighter, type DiffsHighlighter } from '@pierre/diffs';
+import { useNavigate } from '@solidjs/router';
 import type {
   InlineNode,
   InlineParseResult,
@@ -18,7 +19,7 @@ import {
 
 import { CopyButton } from '../ui/CopyButton';
 
-import { openPath } from '../files/files';
+import { openPath, showPath } from '../files/files';
 
 import { createSmoothText } from './smooth-text';
 
@@ -143,7 +144,7 @@ const autolinks: MarkdownExtension = {
   },
 };
 
-// Paths open on the dev machine (server/src/editor.ts), not in the browser.
+// Paths open in Bica, or with a modifier on the dev machine (files.ts).
 const PATH = 'bica-path:';
 const LINE = /(?::\d+){0,2}$/;
 const EXTENSIONS = new Set(
@@ -217,6 +218,7 @@ export default function Markdown(props: {
   // A reply that may still grow: added text types in. Read once.
   streaming?: boolean;
 }) {
+  const navigate = useNavigate();
   const streaming = untrack(() => props.streaming);
   const smooth = streaming ? createSmoothText(() => props.text) : undefined;
   const blocks = createMemo(
@@ -253,14 +255,16 @@ export default function Markdown(props: {
       }}
       onPointerLeave={() => setCode(undefined)}
       onClick={(event) => {
-        // Links leave the app in a new tab. Paths open in the editor, or with
-        // Alt in Finder.
+        // Links leave the app in a new tab. Paths open in Bica, with ⌘ in
+        // the editor, and with Alt in Finder.
         const link = (event.target as Element).closest('a');
         if (!link?.href) return;
         event.preventDefault();
         const href = link.getAttribute('href') ?? '';
-        if (href.startsWith(PATH))
-          void openPath(href.slice(PATH.length), props.cwd, event.altKey);
+        const path = href.startsWith(PATH) && href.slice(PATH.length);
+        if (path && (event.metaKey || event.ctrlKey || event.altKey))
+          void openPath(path, props.cwd, event.altKey);
+        else if (path) void showPath(path, props.cwd, navigate);
         else window.open(link.href, '_blank', 'noopener');
       }}
     >

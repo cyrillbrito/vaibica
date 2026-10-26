@@ -11,14 +11,21 @@ import {
 import { closeDrawer } from '../ui/layout';
 import { useSettings } from '../settings';
 import type { Workspace, WorkspaceRef } from '@bica/shared/protocol';
-import { closeKept, isKept, keepOpen, workspaceHref, type Open } from './files';
+import {
+  closeKept,
+  downloadFile,
+  isKept,
+  keepOpen,
+  workspaceHref,
+  type Open,
+} from './files';
 import { repos, stage, useGitStatus } from '../git/git';
 import CodeView from './CodeView';
 import ReviewBar from './ReviewBar';
 import type { MenuEntry } from '../ui/ContextMenu';
 import { IconButton } from '../ui/Button';
 import { previewKind } from './FilePreview';
-import { PinIcon, PreviewIcon, WrapIcon } from '../ui/icons';
+import { DownloadIcon, PinIcon, PreviewIcon, WrapIcon } from '../ui/icons';
 import { Segmented, segmentClass } from '../ui/Segmented';
 
 // Side by side by default; remembered for the tab's lifetime.
@@ -189,6 +196,13 @@ export default function OpenFile(props: {
           }
         >
           <PinIcon />
+        </IconButton>
+        <IconButton
+          size="md"
+          title="Download"
+          onClick={() => void downloadFile(ref(), o().path)}
+        >
+          <DownloadIcon />
         </IconButton>
         {props.actions}
       </header>

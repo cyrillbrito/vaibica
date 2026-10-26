@@ -52,6 +52,8 @@ export default defineConfig({
     allowedHosts: ['.ts.net'],
     proxy: {
       [SOCKET_PATH]: { target: `ws://127.0.0.1:${port + 1}`, ws: true },
+      // Files over HTTP (server/src/git/download.ts).
+      '/download/': `http://127.0.0.1:${port + 1}`,
     },
   },
   build: {

@@ -1,4 +1,4 @@
-import type { IncomingMessage, Server } from 'node:http';
+import type { IncomingMessage, Server, ServerResponse } from 'node:http';
 import type { Duplex } from 'node:stream';
 import {
   diffRevisions,
@@ -74,7 +74,8 @@ import {
 import { suggestCommitMessage } from './git/commit-message';
 import { sessionActivity } from './recap/activity';
 import { sessionRecap } from './recap/recap';
-import { openInEditor, openPath } from './git/editor';
+import { findPath, openInEditor, openPath } from './git/editor';
+import { serveDownload, workspaceFileLink } from './git/download';
 import {
   createTerminal,
   removeTerminal,
@@ -297,6 +298,8 @@ const calls: Handlers = {
     await openPath(path, cwd, reveal === true);
     return null;
   },
+  'path.find': async ({ path, cwd }) => findPath(path, cwd),
+  'file.link': async (args) => workspaceFileLink(ref(args), args.path),
   'terminal.create': async (args) =>
     createTerminal(ref(args), { command: args.command, title: args.title }),
   'terminal.input': async ({ id, data }) => {
@@ -327,6 +330,8 @@ const calls: Handlers = {
 const READS = new Set<Call>([
   'fs.dirs',
   'file.read',
+  'file.link',
+  'path.find',
   'git.diff',
   'git.suggest',
   'recap.activity',
@@ -379,8 +384,19 @@ function ref({ projectId, cwd }: WorkspaceRef): WorkspaceRef {
 
 const wss = new WebSocketServer({ noServer: true });
 
-/** Production: attach to the Node server that serves the app. */
+/**
+ * Attach to the Node server that serves the app, or only this in dev. Its
+ * download links go first, before the server's own request handler.
+ */
 export function attach(server: Server) {
+  const own = server.listeners('request') as ((
+    req: IncomingMessage,
+    res: ServerResponse,
+  ) => void)[];
+  server.removeAllListeners('request');
+  server.on('request', (req: IncomingMessage, res: ServerResponse) => {
+    if (!serveDownload(req, res)) for (const handle of own) handle(req, res);
+  });
   server.on('upgrade', (req, socket, head) => {
     const { pathname } = new URL(req.url ?? '/', 'http://localhost');
     if (pathname === SOCKET_PATH) handleUpgrade(req, socket, head);
