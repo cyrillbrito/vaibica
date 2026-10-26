@@ -10,6 +10,7 @@ import DataToggle from './app/DataToggle';
 import Toaster from './ui/Toast';
 import Failed from './ui/Failed';
 import SidePanel from './app/SidePanel';
+import EditProject from './projects/EditProject';
 import ProjectPicker from './projects/ProjectPicker';
 import ArchiveDialog from './sessions/ArchiveDialog';
 import Resizer from './ui/Resizer';
@@ -161,6 +162,10 @@ export default function App() {
           </Show>
 
           <ProjectPicker />
+          {/* Reads the projects topic, which the root mount mustn't wait on. */}
+          <Loading>
+            <EditProject />
+          </Loading>
           <ArchiveDialog />
           <CommandPalette />
           <ContextMenu />

@@ -69,6 +69,7 @@ import {
   listDirs,
   reorderProjects,
   pinProject,
+  updateProject,
   watchProjects,
 } from './projects/projects';
 import { suggestCommitMessage } from './git/commit-message';
@@ -147,6 +148,10 @@ const calls: Handlers = {
   },
   'project.pin': async ({ id, pinned }) => {
     await pinProject(id, pinned);
+    return null;
+  },
+  'project.update': async ({ id, ...edit }) => {
+    await updateProject(id, edit);
     return null;
   },
   'worktree.cleanUp': async (args) =>

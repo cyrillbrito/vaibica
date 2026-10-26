@@ -90,7 +90,7 @@ export async function createSession({
   const named = worktree ? await nameSession(prompt) : '';
   if (worktree) {
     cwd = await createWorktree(projectId, named || promptTitle(prompt));
-    const command = await setupCommand(projectId, cwd);
+    const command = setupCommand(cwd);
     if (command) {
       const id = await createTerminal(
         { projectId, cwd },

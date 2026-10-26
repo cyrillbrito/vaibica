@@ -8,6 +8,7 @@ import { promisify } from 'node:util';
 import type {
   DirListing,
   Project,
+  ProjectEdit,
   PullRequest,
   Workspace,
 } from '@bica/shared/protocol';
@@ -25,10 +26,9 @@ const CHATS: Stored = {
 // Worktrees made in a terminal show up within this long.
 const POLL_MS = 5000;
 
-// `setup`: a shell command run in each new worktree, set by hand in the file.
-type Stored = Omit<Project, 'git' | 'workspaces'> & { setup?: string };
+type Stored = Omit<Project, 'git' | 'workspaces'>;
 
-// Read every time, so a hand edit (like `setup`) applies without a restart.
+// Read every time, so a hand edit applies without a restart.
 const file = jsonFile<Stored[]>('projects.json', {
   initial: () => [],
   reread: true,
@@ -215,6 +215,18 @@ export async function pinProject(id: string, pinned: boolean) {
   await projects.refresh();
 }
 
+/** Edits from the Edit project dialog. */
+export async function updateProject(id: string, edit: ProjectEdit) {
+  const name = edit.name.trim();
+  if (!name) throw new Error('A project needs a name');
+  await file.update((list) => {
+    const p = list.find((p) => p.id === id);
+    if (!p) throw new Error(`No project ${id}`);
+    p.name = name;
+  });
+  await projects.refresh();
+}
+
 /**
  * A new worktree for a session: its own branch from the freshly fetched
  * default branch, or the local one when it is ahead, in a sibling folder
@@ -309,13 +321,8 @@ const LOCKFILES: [string, string][] = [
   ['uv.lock', 'uv sync'],
 ];
 
-/**
- * What gets a fresh worktree ready: the project's `setup` from
- * `.data/projects.json`, else an install guessed from the lockfile.
- */
-export async function setupCommand(projectId: string, path: string) {
-  const stored = (await load()).find((p) => p.id === projectId);
-  if (stored?.setup) return stored.setup;
+/** What gets a fresh worktree ready: an install guessed from the lockfile. */
+export function setupCommand(path: string) {
   return LOCKFILES.find(([file]) => existsSync(join(path, file)))?.[1];
 }
 

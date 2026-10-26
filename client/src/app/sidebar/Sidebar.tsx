@@ -17,7 +17,7 @@ import StatusDot from '../../sessions/StatusDot';
 import { useTerminals } from '../../terminals/terminals';
 import { useBadge } from '../../ui/badge';
 import { IconButton } from '../../ui/Button';
-import { openContextMenu } from '../../ui/ContextMenu';
+import { contextMenu, openContextMenu } from '../../ui/ContextMenu';
 import Divider, { dividerClass } from '../../ui/Divider';
 import { createFlip } from '../../ui/flip';
 import {
@@ -439,8 +439,14 @@ export default function Sidebar() {
                   <h2
                     data-flip={`p:${s().key}`}
                     data-drag-handle={movable(s().key) || undefined}
-                    class="flex min-h-7 items-center pl-2 font-semibold"
+                    class="context-target flex min-h-7 items-center pl-2 font-semibold"
                     title={s().name}
+                    {...contextMenu(() => {
+                      const main = s().groups.find(
+                        (g) => g.target && !g.worktree,
+                      );
+                      return main ? menus.workspaceMenu(main) : [];
+                    })}
                   >
                     <span class="min-w-0 truncate">{s().name}</span>
                   </h2>

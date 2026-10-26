@@ -1,7 +1,7 @@
 import { useLocation } from '@solidjs/router';
 import { createMemo, createSignal } from 'solid-js';
 
-import type { Project, Workspace } from '@bica/shared/protocol';
+import type { Project, ProjectEdit, Workspace } from '@bica/shared/protocol';
 import { useSessions } from '../sessions/sessions';
 import { request, useTopic } from '../socket/socket';
 import { useTerminals } from '../terminals/terminals';
@@ -20,6 +20,10 @@ export function reorderProjects(ids: string[]) {
 
 export function pinProject(id: string, pinned: boolean) {
   return request('project.pin', { id, pinned });
+}
+
+export function updateProject(id: string, edit: ProjectEdit) {
+  return request('project.update', { id, ...edit });
 }
 
 export function listDirs(path?: string) {

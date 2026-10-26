@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from '@solidjs/router';
 
 import type { SessionSummary } from '@bica/shared/protocol';
 import { openInEditor, workspaceHref } from '../../files/files';
+import { openEditProject } from '../../projects/EditProject';
 import { openProjectPicker } from '../../projects/ProjectPicker';
 import {
   CHATS_ID,
@@ -217,6 +218,11 @@ export function createSidebarMenus(props: {
       : []),
     ...(g.target && !g.worktree && g.projectKey !== CHATS_ID
       ? ([
+          {
+            label: 'Edit project',
+            icon: <SettingsIcon />,
+            onSelect: () => openEditProject(g.projectKey),
+          },
           {
             label: g.pinned ? 'Unpin project' : 'Pin project',
             icon: <PinIcon />,

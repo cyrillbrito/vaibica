@@ -215,6 +215,9 @@ export interface Project {
   workspaces: Workspace[];
 }
 
+/** What the Edit project dialog changes. */
+export type ProjectEdit = Pick<Project, 'name'>;
+
 /** A project's main folder or one of its git worktrees. */
 export interface Workspace {
   path: string;
@@ -409,6 +412,7 @@ export interface Calls {
   // Project ids in their new sidebar order; ids left out keep their place after.
   'project.reorder': { args: { ids: string[] }; result: null };
   'project.pin': { args: { id: string; pinned: boolean }; result: null };
+  'project.update': { args: { id: string } & ProjectEdit; result: null };
   // Removes a worktree and its local branch, archives its sessions, closes its
   // terminals. Returns what would be lost and removes nothing, unless force.
   // Named when removing was called clean up.
