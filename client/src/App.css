@@ -782,8 +782,8 @@
   --diffs-font-family: var(--font-mono);
   --diffs-font-size: var(--text-code);
   --diffs-line-height: var(--text-code--line-height);
-  /* Blue/orange instead of green/red: the author can't tell reds apart.
-     GitHub's colorblind palette. Overrides, since the Shiki theme sets the
+  /* Blue/orange instead of green/red, which many colorblind people can't
+     tell apart: GitHub's colorblind palette. Overrides, since the Shiki theme sets the
      plain variables. */
   --diffs-addition-color-override: light-dark(#0969da, #58a6ff);
   --diffs-deletion-color-override: light-dark(#bc4c00, #f0883e);

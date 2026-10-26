@@ -37,7 +37,7 @@ export async function submit(
   // Anything sent here starts a run, and agents took a note or another
   // session's message for the end of their questions.
   if (from !== 'user' && (await readSession(id)).status === 'waiting')
-    prompt += `\n\n(This isn't the user's answer: your questions to him are still open.)`;
+    prompt += `\n\n(This isn't the user's answer: your questions to them are still open.)`;
   await keepCopies(conversation.id);
   await keepModel(conversation.id);
   await recordSender(conversation.id, from);

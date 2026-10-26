@@ -80,7 +80,7 @@ test('a child session reports each turn to its parent, with what the user told i
   const parentChat = tab.watch('conversation', { id: parent });
   await parentChat.until((c) => shows(c, 'First pick: red'));
 
-  // Writing to a child session leaves it with its parent, which hears his words.
+  // Writing to a child session leaves it with its parent, which hears the user's words.
   await settled(tab, child);
   await tab.request('session.submit', {
     id: child,

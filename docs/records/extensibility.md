@@ -35,13 +35,13 @@ Three features moved, and a fourth started.
 
 - The agent side fit well. Tools, prompt lines, and hooks are what Pi Durable already offers, and moving them cost little.
 - The UI side didn't. Terminals left 17 core files, but core gained about 900 lines of generic machinery with one user, and finding "New terminal here" meant going through a slot, a hook, and a lazy component.
-- Deep UI resists it. The composer has many modes and conditions, and making it pluggable would make it worse for the one person who uses it.
+- Deep UI resists it. The composer has many modes and conditions, and making it pluggable would make it worse for the people who use it.
 - Most of the payoff never arrives. With one author and only built-in code, there are no outside users, no isolation to gain, and no code loaded at runtime. Loading outside UI code would also need a shared Solid copy, a Tailwind build at runtime, and compilers inside the `bica` binary.
 - Other apps draw the same line. Obsidian's core plugins ship as app code. VS Code keeps terminal, search, and SCM as internal code, and only features like git and language support use its public extension API. Zed's extensions can't touch the UI. JupyterLab makes everything a plugin and pays for it with dependency injection everywhere.
 
 ## The decision
 
-Bica is built for one person, so the code serves him, not a plugin API.
+Bica is built for one developer's workflow, so the code serves that workflow, not a plugin API.
 
 - Each feature lives in its own folder and doesn't spread across the app. Core may import it by name.
 - Agent-side behavior uses Pi Durable's extensions directly where that's simple: tools, prompt sections, and hooks.

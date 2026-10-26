@@ -20,7 +20,7 @@ const ROLE = `This session runs unattended at night. Nobody can answer until mor
 // the same style as every other agent's.
 const REPORT = `Your final reply is the morning report. The user reads it without having seen the work, and decides from it what to keep, review, or redo:
 - The first line is Done, Partly done, or Blocked, and the outcome in one sentence.
-- Then what changed, with the path of any file you wrote for him; the checks you ran and their results, and what you couldn't check; the decisions you took alone; open questions; and the next step.
+- Then what changed, with the path of any file you wrote for them; the checks you ran and their results, and what you couldn't check; the decisions you took alone; open questions; and the next step.
 - Earlier replies aren't read: a line each, or nothing.
 ${STYLE}
 ${QUOTE_EXACTLY}

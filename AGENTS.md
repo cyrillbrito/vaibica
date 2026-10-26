@@ -6,7 +6,7 @@ The name is Bica, a Lisbon espresso, in the UI, docs, code, the binary, env vars
 
 ## Mindset
 
-Bica is a complete development tool for one person, the author. It is not a product for others. It should cover everything needed to build features with agents, from start to finish:
+Bica is built first for its author's own daily work: a complete development tool for one developer, not a product for teams. The repo is public, so anyone can read, run, or fork it, and everything in it is written for that stranger too. It should cover everything needed to build features with agents, from start to finish:
 
 - Agent sessions are the core, but not the whole tool.
 - Each feature gets its own worktree, so parallel agents never collide.
@@ -14,7 +14,7 @@ Bica is a complete development tool for one person, the author. It is not a prod
 - Git covers commit, push, pull requests, and removing merged worktrees.
 - Files can be opened, searched, and quickly edited.
 
-If a daily dev task forces a switch to another app, that is a gap worth closing. Heavy editing in VS Code is the one accepted exception.
+If a daily dev task forces a switch to another app, that is a gap worth closing. Heavy editing in a full editor is the one accepted exception.
 
 There is no time to prove every idea here, so borrow from people who already built or measured it: other apps, Pi packages, studies, and posts. Look at several sources, take the part that gives the most benefit for the least complexity, and leave the rest. Treat their numbers with care, since anyone can find a benchmark that flatters their tool, but still link them: they show the direction is sound and where the idea came from. A doc for a feature built this way ends with its sources.
 
@@ -130,15 +130,16 @@ Pi Durable, Solid 2, and Pierre are new and change often, and the web may descri
 - Use the terms in [docs/GLOSSARY.md](docs/GLOSSARY.md) for names, comments, docs, and UI labels. Stored fields, socket names, and Durable extension names keep older words so stored data still reads; their comments say so. Add a term there when a new concept appears.
 - Read [docs/UI.md](docs/UI.md) before any UI work.
 - Keep this file and `docs/` up to date with every change. Add a doc when a new area appears.
+- The repo is public. Keep one machine's setup out of code, docs, comments, prompts, and test data: no personal paths, machine or tailnet names, accounts, or tools only the author uses. Use placeholders such as `<machine>`, and made-up names in fixtures. Prompts call the user "they".
 - Simplicity first. If a change adds complexity, look for a smaller one.
 - Keep each feature's code in its own folder, not spread across the app. Give a pattern a shared shape once three features repeat it, not before.
 - Answer questions in the reply. Don't write a plan or an exploration doc unless the user asks for one.
 
 ## Verifying UI
 
-After UI changes, check them in a real browser with `agent-browser`, a global CLI configured in `~/.agent-browser/config.json`. Its skill explains how to use it. These are the facts for this repo:
+After UI changes, check them in a real browser with [`agent-browser`](https://github.com/vercel-labs/agent-browser), a browser CLI for agents. Its skill explains how to use it. These are the facts for this repo:
 
-- The dev server (`bun run dev`: Vite on 3142, the server on 3143) usually hosts the Bica session you are running in. Don't restart or stop it. It has no live updates (`server.ws: false`), so reload the page to see page edits, but server code (`server/src`) runs as it started until Bica restarts: test server changes on your own dev server on another port, such as `BICA_PORT=3199 BICA_DATA_DIR=/tmp/bica-test bun run dev`, which puts its server on 3200. Another dev server may run on a different port; inspect running terminals before starting one.
+- The dev server (`bun run dev`: Vite on 3142, the server on 3143) may host the Bica session you are running in. Don't restart or stop it. It has no live updates (`server.ws: false`), so reload the page to see page edits, but server code (`server/src`) runs as it started until Bica restarts: test server changes on your own dev server on another port, such as `BICA_PORT=3199 BICA_DATA_DIR=/tmp/bica-test bun run dev`, which puts its server on 3200. Another dev server may run on a different port; inspect running terminals before starting one.
 - Open `http://localhost:3142`, then check `errors` and `console` for Solid warnings and socket errors.
 - For a change to a building block in `client/src/ui/`, open `http://localhost:3142/ui`: the playground shows every one in light and dark side by side.
 - For the phone layout, run `set viewport 390 844` and check again.

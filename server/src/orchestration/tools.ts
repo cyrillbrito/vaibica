@@ -45,7 +45,7 @@ function other(id: string, self: ConversationId) {
 const USER_ASKED = Type.Optional(
   Type.Boolean({
     description:
-      'true: the user told you to, for a session you started that is his now. Only then',
+      'true: the user told you to, for a session you started that is theirs now. Only then',
   }),
 );
 
@@ -68,8 +68,8 @@ function checkInCharge(
   const why = `You started ${named(target)}, but it has no parent now, so it's the user's`;
   throw new Error(
     action === 'archive'
-      ? `${why}, and he may still want it. Leave it open, or ask him in your reply. Pass \`user_asked\` only if he told you to archive it.`
-      : `${why}. Leave it to him: tell him what you wanted it to know instead. Pass \`user_asked\` only if he told you to do this.`,
+      ? `${why}, and the user may still want it. Leave it open, or ask them in your reply. Pass \`user_asked\` only if they told you to archive it.`
+      : `${why}. Leave it to the user: tell them what you wanted it to know instead. Pass \`user_asked\` only if they told you to do this.`,
   );
 }
 
@@ -78,7 +78,7 @@ function sessionTools(hub: boolean): ToolRegistration[] {
   const sessionStart = defineTool({
     name: 'session_start',
     description: hub
-      ? "Start a session for one thread of work, when the user asked for it: a normal session in the user's session list, which he can watch and steer too. Pass `folder`, a project folder or worktree from your projects list; with `worktree`, it gets a new worktree of that folder's project. It runs on the user's default model. It's your child session: you get a note whenever it finishes a turn, until the user detaches it. With `detached`, it's the user's from the start and you hear nothing of it. Its prompt must stand alone, like a ticket: it sees nothing of this conversation. Sessions in one folder share its files, so code work gets its own worktree."
+      ? "Start a session for one thread of work, when the user asked for it: a normal session in the user's session list, which they can watch and steer too. Pass `folder`, a project folder or worktree from your projects list; with `worktree`, it gets a new worktree of that folder's project. It runs on the user's default model. It's your child session: you get a note whenever it finishes a turn, until the user detaches it. With `detached`, it's the user's from the start and you hear nothing of it. Its prompt must stand alone, like a ticket: it sees nothing of this conversation. Sessions in one folder share its files, so code work gets its own worktree."
       : "Start a new, separate session in the user's session list: same model as you, in your folder unless you pass `folder` or `worktree`. Use it when the user asks to split work across sessions, e.g. one session per bug. The user watches and steers it too. It's your child session: you get a note whenever it finishes a turn, until the user detaches it, and can talk to it with session_send. With `detached`, it's the user's from the start and you hear nothing of it. Its prompt must stand alone: it sees nothing of this conversation. Sessions in one folder share its files, so give each its own part of the code, or its own worktree.",
     parameters: Type.Object({
       prompt: Type.String({
@@ -137,8 +137,8 @@ function sessionTools(hub: boolean): ToolRegistration[] {
         api.conversationId,
         `${prompt}\n\n(${
           detached
-            ? `${me} started this session and handed it off: it hears nothing of your turns, so work for the user and answer him in your replies. Message it with session_send only if this task asks you to.`
-            : `${me} started this session and is in charge of it: it reads each turn you end, so report in your replies, and ask it things with session_send. The user may write to you too: answer him in your replies, and his words come before its plan.`
+            ? `${me} started this session and handed it off: it hears nothing of your turns, so work for the user and answer them in your replies. Message it with session_send only if this task asks you to.`
+            : `${me} started this session and is in charge of it: it reads each turn you end, so report in your replies, and ask it things with session_send. The user may write to you too: answer them in your replies, and their words come before its plan.`
         })`,
         `start_session:${api.callId}`,
         folder,
@@ -235,7 +235,7 @@ function sessionTools(hub: boolean): ToolRegistration[] {
 
   const sessionArchive = defineTool({
     name: 'session_archive',
-    description: `Archive another session once its work is done: it leaves the session list (the user can bring it back), and the terminals it started close. With \`remove_worktree\`, its worktree folder and local branch go too, unless another open session works there, or it has uncommitted files or commits no other branch has.${hub ? ' Only when the user asked for it.' : " Only archive sessions you started or the user named. Archive one you started once its result is in your reply and the user wouldn't want to open it himself: a lookup, a check, one child session of many. Keep it when he might want to read or continue it: he asked for it, it holds a decision, a long back and forth, unmerged work, or a question for him. Name what you archived in your reply, so he can bring it back. A session you started that has no parent now is his: archive it only if he told you to."}`,
+    description: `Archive another session once its work is done: it leaves the session list (the user can bring it back), and the terminals it started close. With \`remove_worktree\`, its worktree folder and local branch go too, unless another open session works there, or it has uncommitted files or commits no other branch has.${hub ? ' Only when the user asked for it.' : " Only archive sessions you started or the user named. Archive one you started once its result is in your reply and the user wouldn't want to open it themselves: a lookup, a check, one child session of many. Keep it when the user might want to read or continue it: they asked for it, it holds a decision, a long back and forth, unmerged work, or a question for them. Name what you archived in your reply, so they can bring it back. A session you started that has no parent now is theirs: archive it only if they told you to."}`,
     parameters: Type.Object({
       id: Type.String({ description: 'The session id' }),
       remove_worktree: Type.Optional(

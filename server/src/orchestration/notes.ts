@@ -80,7 +80,7 @@ export async function unwatch(id: string) {
   for (const hub of hubs)
     await tell(
       hub,
-      `The user stopped your watch on ${named(s)}: you hear no more of its turns. Drop it from your board unless he wants it kept.`,
+      `The user stopped your watch on ${named(s)}: you hear no more of its turns. Drop it from your board unless they want it kept.`,
     );
 }
 
@@ -154,7 +154,7 @@ async function runEnded(id: ConversationId) {
 }
 
 /**
- * The user takes a session from its parent: it's his from now on, and the
+ * The user takes a session from its parent: it's theirs from now on, and the
  * parent hears to leave it alone.
  */
 export async function detach(id: string) {
@@ -170,6 +170,6 @@ export async function detach(id: string) {
   const s = await readSession(id);
   await tell(
     parent,
-    `The user detached ${named(s)} from you, so it's his now. Leave it to him: don't message, steer, or stop it unless he asks. You hear no more of its turns.`,
+    `The user detached ${named(s)} from you, so it's theirs now. Leave it to them: don't message, steer, or stop it unless they ask. You hear no more of its turns.`,
   );
 }

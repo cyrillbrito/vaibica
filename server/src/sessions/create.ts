@@ -225,7 +225,7 @@ export async function fork(id: string, at?: number) {
       ownership: { kind: 'ownerless' },
       // SessionDoc forks with the parent's current value. It keeps the
       // project, agent, and voice; what belongs to the parent's runs, its
-      // starter, or its prompt cache goes. Only the user forks, so it's his.
+      // starter, or its prompt cache goes. Only the user forks, so it's theirs.
       init: async (tx, newId) => {
         const doc = await tx.doc(SessionDoc, newId);
         doc.title = `${doc.title || 'Session'} (fork)`.slice(0, 200);
