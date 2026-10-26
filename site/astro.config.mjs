@@ -3,6 +3,10 @@ import starlight from '@astrojs/starlight';
 import d2 from 'astro-d2';
 
 export default defineConfig({
+  site: 'https://vaibica.com',
+  // Next to Bica's own ports (client/vite.config.ts), clear of Astro's 4321
+  // that other projects use.
+  server: { port: 3144 },
   // Bun's isolated install hides satteri's native package from the bundled
   // prerender chunks, so load it from node_modules instead.
   vite: {

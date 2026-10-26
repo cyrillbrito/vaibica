@@ -3,7 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun dev.ts"
+    "dev": "bun dev.ts",
+    "start": "bun start.js",
+    "build:bica": "bun cli/build.ts",
+    "test": "bun test --parallel",
+    "typecheck": "bun check"
   },
   "dependencies": {
     "@bica/shared": "workspace:*",

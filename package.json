@@ -11,14 +11,16 @@
   "type": "module",
   "scripts": {
     "dev": "bun run --parallel --filter @bica/server --filter @bica/client dev",
-    "build": "bun run --filter @bica/client build",
-    "start": "bun server/start.js",
-    "build:bica": "bun server/cli/build.ts",
-    "lint": "oxlint client server shared",
+    "dev:site": "bun run --cwd site dev",
+    "build": "bun run --cwd client build",
+    "build:site": "bun run --cwd site build",
+    "build:bica": "bun run --cwd server build:bica",
+    "start": "bun run --cwd server start",
+    "test": "bun run --cwd server test",
+    "typecheck": "bun run --workspaces typecheck",
+    "lint": "oxlint client server shared site",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
-    "test": "bun test --parallel",
-    "typecheck": "bun check -p client && bun check -p client/tsconfig.node.json && bun check -p server && bun check -p shared",
     "checks": "bun run typecheck && bun run lint && bun run fmt:check && bun run test"
   },
   "devDependencies": {

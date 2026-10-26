@@ -29,7 +29,7 @@ Bica is a Bun server on the dev machine and a web app that talks to it over one 
 
 The repo is three Bun workspace packages, one per side, so each runs and type-checks on its own:
 
-- `client`: the Solid app, built by Vite, which runs in the browser. Its types have the DOM and no Bun or Node.
+- `client`: the Solid app, built by Vite, which runs in the browser. Its types have the DOM and no Bun or Node. `vite.config.ts` runs in Node, so `tsconfig.node.json` checks it apart, with Node's types.
 - `server`: plain Bun, with the socket, the agents, git, and the shells. Its types have Bun and no DOM.
 - `shared`: the code both run, imported as `@bica/shared/...`: the message types, the agents' names, and the transcript projection.
 

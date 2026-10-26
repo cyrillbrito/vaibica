@@ -13,5 +13,4 @@ minimumReleaseAgeExcludes = [
   "@solidjs/vite-plugin",
   "@solidjs/compiler",
   "filesystem-routing",
-  "@earendil-works/pi-codemode",
 ]

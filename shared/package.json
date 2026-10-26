@@ -5,6 +5,9 @@
   "exports": {
     "./*": "./src/*.ts"
   },
+  "scripts": {
+    "typecheck": "bun check"
+  },
   "dependencies": {
     "@earendil-works/chord": "^1.4.0",
     "@earendil-works/pi-ai": "^1.4.0",

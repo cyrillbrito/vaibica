@@ -1,6 +1,7 @@
 {
-  // vite.config.ts, which runs in Bun.
+  // vite.config.ts, which runs in Node, apart from the app so neither sees the
+  // other's globals.
   "extends": "../tsconfig.json",
-  "compilerOptions": { "types": ["bun"] },
+  "compilerOptions": { "types": ["node"] },
   "include": ["vite.config.ts"]
 }

@@ -38,6 +38,8 @@ bun run dev   # http://localhost:3142, data in .data/
 | Command | Does |
 | --- | --- |
 | `bun run checks` | Types, lint, format, and Bun tests: run before each commit |
+| `bun run test` | Bun tests only; `bun test <path>` runs one file |
+| `bun run dev:site` | The website and docs, on port 3144 |
 | `bun run build:bica` | Compile the binary into `dist/bica/bica` |
 | `bun run build` / `start` | Production build, served on port 3141 |
 

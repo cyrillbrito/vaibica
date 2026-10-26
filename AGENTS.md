@@ -34,9 +34,9 @@ There is no time to prove every idea here, so borrow from people who already bui
 
 ## Stack
 
-- Bun 1.4.3 or newer runs the server, installs packages, type-checks, and runs Vite in development.
+- Bun 1.4.3 or newer runs the server, installs packages, type-checks, and runs the tests. Vite runs on Node, its tested runtime, and `bun run` falls back to Bun when Node isn't installed.
 - Three Bun workspace packages: `client` (the Solid app), `server` (plain Bun), and `shared` (the code both run, as `@bica/shared/...`). See [architecture.md](docs/architecture.md#packages).
-- `site` is a prototype of the website: an Astro home page plus Starlight docs at `/docs`, with D2 diagrams through `astro-d2`. Run it with `bun run --filter @bica/site dev` on port 4321.
+- `site` is a prototype of the website: an Astro home page plus Starlight docs at `/docs`, with D2 diagrams through `astro-d2`. `bun run dev:site` runs it on port 3144.
 - Solid 2 (release candidate) through `@solidjs/vite-plugin` in client start mode: the app renders only in the browser, with no server-side rendering. This is not SolidStart.
 - Pi Durable, with `pi-ai` for models, runs the agent and stores it in SQLite.
 - Tailwind v4 with no component library, see [docs/UI.md](docs/UI.md).
@@ -47,12 +47,16 @@ There is no time to prove every idea here, so borrow from people who already bui
 
 ## Commands
 
+Each package owns its scripts (`dev`, `build`, `test`, `typecheck`), and the root forwards to them: `--cwd <folder>` for one package, `--filter` or `--workspaces` for several. Lint, format, and `checks` cover the whole repo, so they live only at the root.
+
 - `bun run checks` runs every check: types, lint, the format check, and the tests. Run it before every commit, and fix what fails.
 - `bun run typecheck` type-checks with `bun check`, Bun's built-in checker, so `typescript` is not a dependency. `bun run lint` lints, and `bun run fmt` formats.
 - `bun run test` runs the behavior tests with `bun test`, each file in its own process. `bun test <path>` runs one file. See [docs/testing.md](docs/testing.md) before writing a test.
 - `bun run dev` is the dev server: Vite on port 3142, forwarding the socket to the server on 3143. It usually runs already, see Verifying UI below.
+- `bun run dev:site` and `bun run build:site` run and build the website.
 - `bun run build` and `bun run start` run a built copy, see [docs/deploy.md](docs/deploy.md).
 - `bun run build:bica` compiles the `bica` binary into `dist/bica/bica`, and the `release` workflow publishes it as a draft GitHub release, see the same doc.
+- Ports: 3141 for `bica` and `bun run start`, 3142 for Vite in dev, 3143 for the dev server, 3144 for the website. `BICA_PORT` moves the dev pair.
 
 ## Next
 

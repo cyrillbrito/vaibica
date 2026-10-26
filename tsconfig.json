@@ -1,6 +1,6 @@
 {
   // Shared options; each package's tsconfig extends this and is checked on
-  // its own (`bun run typecheck`).
+  // its own (each package's `typecheck` script).
   "files": [],
   "compilerOptions": {
     "target": "ESNext",
