@@ -81,13 +81,14 @@ export default function ContextChip(props: {
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
     openContextMenu(r.right - 200, r.bottom + 4, [
       {
-        label: usage().compacting ? 'Compacting…' : 'Compact now',
+        label: usage().compacting ? 'Compacting…' : 'Compact',
+        hint: 'A model summarizes the older part of the session, so the next prompt sends far less. The transcript keeps everything.',
         icon: <CompactIcon />,
         disabled: usage().compacting && 'Already compacting',
         onSelect: () => void compactSession(props.id),
       },
       {
-        label: isPruning(props.id) ? 'Pruning…' : 'Prune old output',
+        label: isPruning(props.id) ? 'Pruning…' : 'Prune',
         hint: PRUNE_HINT,
         icon: <PruneIcon />,
         disabled: isPruning(props.id)
