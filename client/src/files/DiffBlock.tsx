@@ -12,6 +12,25 @@ export type DiffSource =
 const SPLIT_MIN_PX = 560;
 
 /**
+ * Tailwind's lg, measured on the view rather than the screen, since the
+ * sidebar and side panel take part of it. Narrower views give the line
+ * numbers' width to the code.
+ */
+export const LINE_NUMBERS_MIN_PX = 1024;
+
+/**
+ * Whitespace-only changes are left out. Code keeps 6 unchanged lines
+ * around each change, 2 more than the default; Markdown keeps 4, since a
+ * paragraph is one line that wraps into many.
+ */
+export function parseDiffOptions(path: string) {
+  return {
+    ignoreWhitespace: true,
+    context: /\.(md|mdx|markdown)$/i.test(path) ? 4 : 6,
+  };
+}
+
+/**
  * A small inline diff, rendered by Pierre, side by side when asked and there's
  * room. It has no header because the caller shows the path. Its height is
  * capped on desktop only: on a phone a scroller inside the page's scroller is
@@ -48,6 +67,8 @@ export default function DiffBlock(props: {
           // Wrapped, not scrolled: a hidden scrollbar hides the line's end.
           overflow: 'wrap' as const,
           disableFileHeader: true,
+          disableLineNumbers: host.clientWidth < LINE_NUMBERS_MIN_PX,
+          parseDiffOptions: parseDiffOptions(source.name),
         };
         instance ??= new diffs.FileDiff(options);
         instance.setOptions(options);

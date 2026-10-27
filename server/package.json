@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun dev.ts",
-    "start": "bun start.js",
+    "start": "bun start.ts",
     "build:bica": "bun cli/build.ts",
     "test": "bun test --parallel",
     "typecheck": "bun check"

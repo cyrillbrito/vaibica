@@ -10,7 +10,7 @@ import {
 
 import { closeDrawer } from '../ui/layout';
 import { useSettings } from '../settings';
-import type { Workspace, WorkspaceRef } from '@bica/shared/protocol';
+import type { GitStatus, Workspace, WorkspaceRef } from '@bica/shared/protocol';
 import {
   closeKept,
   downloadFile,
@@ -19,7 +19,7 @@ import {
   workspaceHref,
   type Open,
 } from './files';
-import { repos, stage, useGitStatus } from '../git/git';
+import { repos, stage, useGitStatus, useLiveGitStatus } from '../git/git';
 import CodeView from './CodeView';
 import ReviewBar from './ReviewBar';
 import type { MenuEntry } from '../ui/ContextMenu';
@@ -57,10 +57,8 @@ export default function OpenFile(props: {
   const settings = useSettings();
   const ref = () => props.workspace.ref;
   const status = useGitStatus(ref);
-  // The change behind an open diff: its version re-reads the view.
-  const change = createMemo(() => {
+  const find = (s: GitStatus | null | undefined) => {
     const o = props.open;
-    const s = status();
     if (!s) return undefined;
     for (const r of repos(s)) {
       const list = o.view === 'staged' ? r.staged : r.unstaged;
@@ -68,7 +66,16 @@ export default function OpenFile(props: {
       if (found) return { ...found, repo: r.path };
     }
     return undefined;
-  });
+  };
+  // The change behind an open diff: its version re-reads the view.
+  const change = createMemo(() => find(status()), { name: 'openChange' });
+  // A diff reads its sides from the server's status, so they never mix
+  // with a saved copy's, which could show an old diff for a moment.
+  const liveStatus = useLiveGitStatus(ref);
+  const shownChange = createMemo(
+    () => (props.open.view === 'file' ? change() : find(liveStatus())),
+    { name: 'shownChange' },
+  );
 
   // Stage on view: seeing a change is reviewing it. The diff stays put,
   // now as Staged; later agent edits land under Changes again.
@@ -210,9 +217,10 @@ export default function OpenFile(props: {
         workspace={ref()}
         path={o().path}
         view={o().view}
-        oldPath={change()?.oldPath}
-        repo={change()?.repo}
-        version={change()?.version}
+        oldPath={shownChange()?.oldPath}
+        repo={shownChange()?.repo}
+        version={shownChange()?.version}
+        blobs={shownChange()?.blobs}
         split={split()}
         wrap={wrap()}
         preview={preview()}

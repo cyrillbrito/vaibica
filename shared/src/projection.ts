@@ -20,12 +20,19 @@ const ARG_CHARS = 200;
 // Shown whole: its questions are the card.
 const ASK = 'ask';
 
-/** Projects views one after another; entries never change, so each is projected once. */
-export function projector(catalog: () => ModelCatalog | undefined) {
+/**
+ * Projects views one after another; entries never change, so each is
+ * projected once. `image` saves a prompt's image and returns its file, which
+ * the browser loads over HTTP; without it, images stay inline.
+ */
+export function projector(
+  catalog: () => ModelCatalog | undefined,
+  image?: (mimeType: string, data: string) => string,
+) {
   const entries = new WeakMap<EntryRecord, EntryRecord>();
   const entry = (e: EntryRecord) => {
     let slim = entries.get(e);
-    if (!slim) entries.set(e, (slim = slimEntry(e)));
+    if (!slim) entries.set(e, (slim = slimEntry(e, image)));
     return slim;
   };
   // Context usage reads everything, so it's worked out here; only when the
@@ -67,8 +74,13 @@ export function projector(catalog: () => ModelCatalog | undefined) {
   };
 }
 
-function slimEntry({ edits: _edits, ...e }: EntryRecord): EntryRecord {
-  return e.model ? { ...e, model: e.model.map(slimMessage) } : e;
+function slimEntry(
+  { edits: _edits, ...e }: EntryRecord,
+  image?: (mimeType: string, data: string) => string,
+): EntryRecord {
+  return e.model
+    ? { ...e, model: e.model.map((m) => slimMessage(m, image)) }
+    : e;
 }
 
 function slimLive(live: LiveState): LiveState {
@@ -90,7 +102,19 @@ function slimLive(live: LiveState): LiveState {
   }) as LiveState;
 }
 
-function slimMessage(m: Message): Message {
+function slimMessage(
+  m: Message,
+  image?: (mimeType: string, data: string) => string,
+): Message {
+  if (m.role === 'user' && image && typeof m.content !== 'string')
+    return {
+      ...m,
+      content: m.content.map((b) =>
+        b.type === 'image'
+          ? { ...b, data: '', file: image(b.mimeType, b.data) }
+          : b,
+      ),
+    };
   // Only the context breakdown reads it, and that's worked out here.
   if ((m.role as string) === 'system')
     return { role: 'system', content: '' } as never;

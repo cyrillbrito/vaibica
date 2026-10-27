@@ -52,11 +52,11 @@ A file goes to the feature that owns it, not the one that uses it first. Feature
 
 A client feature folder mixes components (`PascalCase.tsx`) with stores and helpers (`kebab-case.ts`). The file named after the feature, such as `sessions/sessions.ts`, holds its state and its requests to the server. The `shared` package stays flat: `protocol.ts` holds every call and topic in one file.
 
-Some folders aren't features. In the client, `app/` is the frame around pages (sidebar, ⌘K, top bar, side panel), `ui/` the design system and DOM helpers, `socket/` the browser end of the socket, `fixtures/` the test data, and `routes/` the pages, one file per URL. On the server, the root files do one job each, `socket.ts` is the one table of calls and topics, and `testing/` starts a real Bica for the tests.
+Some folders aren't features. In the client, `app/` is the frame around pages (sidebar, ⌘K, top bar, side panel), `ui/` the design system and DOM helpers, `socket/` the browser end of the socket, `fixtures/` the test data, and `routes/` the pages, one file per URL. On the server, the root files do one job each: `serve.ts` is the HTTP server and its few routes, `socket.ts` is the one table of calls and topics, and `testing/` starts a real Bica for the tests.
 
 Features call each other directly, by relative path to the file they need, with no `index.ts` in between. Only `routes/` and `App.tsx` import `app/`, and `router.ts` is open to all. No package has import cycles, and lint fails on one. The session tools start sessions, and sessions need the tools, so nothing in `sessions/` imports `orchestration/`: `socket.ts` installs them through `agents/extensions.ts` before the harness opens, and sessions find them by name in Pi Durable's registry.
 
-The app renders only in the browser. In development, `bun run dev` runs two processes: Vite serves the pages on 3142 and forwards the socket to the server one port up. `bun run start` and the `bica` binary run one server that serves the built app too. The server doesn't hot-reload: it runs as it started until Bica restarts. Page edits still reload.
+The app renders only in the browser. In development, `bun run dev` runs two processes: Vite serves the pages on 3142 and forwards the socket and the server's HTTP routes (`server/src/serve.ts`) to the server one port up. `bun run start` and the `bica` binary run one server that serves the built app too. The server doesn't hot-reload: it runs as it started until Bica restarts. Page edits still reload.
 
 ## How a prompt travels
 
@@ -79,6 +79,7 @@ Bica's data sits in the repo's `.data/`. The browser keeps small preferences per
 | Keys and sign-ins | `auth.json`, readable only by you |
 | Plan accounts' emails and order | `accounts.json` |
 | Plan limits for the meters | `plan-usage.json` |
+| Images sent with prompts, by content hash | `attachments/` |
 | Worktrees, branches, files | git and the disk |
 
 `server/src/storage.ts` is the one way to these files: it knows where `.data` is, keeps keys private, saves through a temporary file so a crash never leaves half a file, and refuses to overwrite a file it can't read. In `harness.sqlite`, each session has Pi Durable's documents (`pi.agent`, `pi.live`, `pi.inbox`, and more) and Bica's own, `bica.session`, with its title, project, archive, and what the features around it keep. Code reads and changes it through `sessionMeta` and `editSession` in `server/src/sessions/store.ts`.

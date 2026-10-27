@@ -4,8 +4,6 @@ import type { Op } from '@earendil-works/chord/delta';
 import type { ConversationView } from '@earendil-works/pi-durable';
 import type { AgentId } from './agents';
 
-export { SOCKET_PATH } from './socket-path';
-
 // A run in progress (or backing off after a provider error), or none: failed,
 // asked the user something (waiting), finished with an answer not yet opened
 // (done), or read (idle).
@@ -262,6 +260,10 @@ export interface GitChange {
   status: 'M' | 'A' | 'D' | 'R' | 'U' | '!';
   // Changes whenever this side of the file does, so open views re-read.
   version: string;
+  // Each side's git blob hash, for `/blob/<hash>` (server/src/git/blob.ts),
+  // which the browser caches for good; null: that side has no file. Absent:
+  // read it through `git.diff` (submodules, conflicts, too big to hash).
+  blobs?: { old: string | null; new: string | null };
   // Lines added and removed on this side; absent: binary or not counted.
   added?: number;
   removed?: number;
@@ -369,7 +371,11 @@ export interface TerminalOutput {
 /** A pasted or picked image, sent with a prompt. data: base64, no prefix. */
 export interface PromptImage {
   mimeType: string;
+  // Empty in a transcript, which points to `file` instead.
   data: string;
+  // Its copy on the dev machine, saved by the server when the prompt is
+  // sent (server/src/sessions/attachments.ts): the agent's tools can open it.
+  file?: string;
   // The n of its `[Image #n]` marker in the prompt's text, if it has one.
   ref?: number;
 }

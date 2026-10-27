@@ -3,7 +3,6 @@ import { defineConfig, type Plugin } from 'vite';
 import solid from '@solidjs/vite-plugin';
 import tailwindcss from '@tailwindcss/vite';
 import compression from 'compression';
-import { SOCKET_PATH } from '@bica/shared/socket-path';
 
 // Own ports so other projects never collide (live is 3141, see
 // server/cli/bica.ts); fail instead of hopping so the tailscale serve mapping
@@ -51,9 +50,11 @@ export default defineConfig({
     // Reached from the phone through `tailscale serve` (docs/deploy.md).
     allowedHosts: ['.ts.net'],
     proxy: {
-      [SOCKET_PATH]: { target: `ws://127.0.0.1:${port + 1}`, ws: true },
+      '/ws': { target: `ws://127.0.0.1:${port + 1}`, ws: true },
       // Files over HTTP (server/src/git/download.ts).
       '/download/': `http://127.0.0.1:${port + 1}`,
+      '/blob/': `http://127.0.0.1:${port + 1}`,
+      '/attachment/': `http://127.0.0.1:${port + 1}`,
     },
   },
   build: {

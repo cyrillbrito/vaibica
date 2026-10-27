@@ -46,6 +46,8 @@ Agents start and follow sessions of their own, which stay normal sessions you ca
 - A long paste folds into a marker like `[Pasted text #1 · 40 lines]` and goes out in full.
 - A pasted, picked, or dropped image puts a marker like `[Image #1]` at the caret, and its thumbnail shows the same number. The model gets each image right after its marker, so you can talk about images in order, as with Claude Code's `[Image #N]`. Removing the thumbnail removes the marker, and one Backspace right after a marker removes it with its image, as in Codex. An image whose marker you edit away goes after the text.
 - An image shows at once, dimmed with a spinner, while the browser shrinks it, which takes seconds for a phone photo. While a prompt's images upload, the send button spins.
+- The server saves each sent image as a file in the data folder's `attachments/`, named by its content hash, and the prompt gives the agent its path right after the image. The model sees the pixels, and its tools can hand the file to a script, such as a barcode reader. Codex does the same with a [`<local_image path=…>`](https://github.com/openai/codex/issues/40595) tag next to each image.
+- The transcript names the file instead of carrying the image, and the browser loads it over HTTP at `/attachment/<name>` and keeps it for good. Older images are saved the first time their session opens.
 
 ## Forks
 

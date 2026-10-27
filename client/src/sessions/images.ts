@@ -46,12 +46,16 @@ export async function toPromptImage(file: File): Promise<PromptImage> {
   return { mimeType: blob.type, data: await base64(blob) };
 }
 
+/** A sent image comes by its file over HTTP, cached for good (server/src/sessions/attachments.ts). */
 export function imageUrl(image: PromptImage) {
+  if (!image.data && image.file)
+    return `/attachment/${image.file.split(/[\\/]/).pop()}`;
   return `data:${image.mimeType};base64,${image.data}`;
 }
 
 /** Full size in a new tab; browsers won't open data: URLs there. */
 export function openImage(image: PromptImage) {
+  if (!image.data) return void open(imageUrl(image), '_blank');
   const bytes = Uint8Array.from(atob(image.data), (c) => c.charCodeAt(0));
   const url = URL.createObjectURL(new Blob([bytes], { type: image.mimeType }));
   open(url, '_blank');

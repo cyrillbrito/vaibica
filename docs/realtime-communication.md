@@ -1,6 +1,6 @@
 # Real-time communication
 
-All work data moves between the dev machine and the browser over one WebSocket per tab: sessions, transcripts, files, diffs, git, settings, and every command on them. HTTP only serves the app itself. The page loads empty, connects, and fills in. The socket refuses connections from other sites' pages.
+All work data moves between the dev machine and the browser over one WebSocket per tab: sessions, transcripts, files, diffs, git, settings, and every command on them. HTTP serves the app, plus the file links, diff blobs, and prompt images the socket points to (`server/src/serve.ts`). Socket messages are compressed (permessage-deflate), which makes transcripts about 4 times smaller. The page loads empty, connects, and fills in. The socket refuses connections from other sites' pages.
 
 ## Two kinds of traffic
 
@@ -39,7 +39,7 @@ Everything else, such as the session list, git, and files, the server re-reads w
 
 There is no loading UI. Each area shows the last copy the browser has, or stays blank until its data lands, and pages switch at once.
 
-The browser keeps recent topics in memory and saves them in IndexedDB, so going back or reopening the app starts from the last copy. A cached copy is only shown, never patched: the first snapshot replaces it. A conversation tells the server which entries it already holds, so only newer ones come again.
+The browser keeps recent topics in memory and saves them in IndexedDB within a few seconds of their data arriving, and again when the page hides, so going back or reopening the app starts from the last copy, even after a phone killed the page. A cached copy is only shown, never patched: the first snapshot replaces it. Reads that must not act on old data, such as a diff picking which blobs to load, use `useLiveTopic`, which waits for that first snapshot. A conversation tells the server which entries it already holds, so only newer ones come again.
 
 ## Logging the traffic
 

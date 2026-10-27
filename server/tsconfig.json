@@ -4,5 +4,5 @@
   "compilerOptions": {
     "types": ["bun"]
   },
-  "include": ["src", "cli", "scripts", "dev.ts", "start.js"]
+  "include": ["src", "cli", "scripts", "dev.ts", "start.ts"]
 }

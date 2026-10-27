@@ -4,7 +4,7 @@ Bica runs on the dev machine and listens on localhost only. There are three ways
 
 - The `bica` binary, on port 3141, for using Bica.
 - A built copy from the repo (`bun run build`, then `bun run start`), also on 3141.
-- The dev server (`bun run dev`), for working on Bica. That is two processes: Vite serves the pages on 3142 and forwards the socket to the server on 3143.
+- The dev server (`bun run dev`), for working on Bica. That is two processes: Vite serves the pages on 3142 and forwards the socket, file links, diff blobs, and prompt images to the server on 3143.
 
 Each port is pinned and fails instead of moving to the next free one, so a proxy in front of it never points at the wrong process.
 

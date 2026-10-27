@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { readFile, readdir, stat } from 'node:fs/promises';
 import { isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { promisify } from 'node:util';
@@ -14,7 +15,7 @@ import { getProject } from '../projects/projects';
 
 const exec = promisify(execFile);
 const MAX_FILE = 2 * 1024 * 1024;
-// Media goes over the socket as base64, so it gets a looser cap than text.
+// Media is shown as itself, not as text, so it gets a looser cap.
 const MAX_MEDIA = 25 * 1024 * 1024;
 // Plain folders are walked by hand; stop somewhere sane.
 const MAX_FILES = 20_000;
@@ -190,6 +191,8 @@ async function readRepo(cwd: string, prefix = ''): Promise<GitStatus> {
     const s = await stat(join(cwd, path)).catch(() => null);
     return s ? `${s.mtimeMs}:${s.size}` : 'gone';
   };
+  // Changes whose new side is the file on disk, hashed once the list is known.
+  const onDisk: { change: GitChange; old: string | null }[] = [];
   for (let i = 0; i < records.length; i++) {
     const r = records[i]!;
     if (r.startsWith('# branch.head ')) {
@@ -203,11 +206,13 @@ async function readRepo(cwd: string, prefix = ''): Promise<GitStatus> {
       status.behind = -Number(b);
     } else if (r.startsWith('? ')) {
       const path = r.slice(2);
-      status.unstaged.push({
+      const change: GitChange = {
         path,
         status: 'U',
         version: await worktreeVersion(path),
-      });
+      };
+      status.unstaged.push(change);
+      onDisk.push({ change, old: null });
     } else if (r.startsWith('1 ') || r.startsWith('2 ')) {
       // "1 XY sub mH mI mW hH hI path", renames add a score and "\0origPath".
       const f = r.split(' ');
@@ -217,21 +222,30 @@ async function readRepo(cwd: string, prefix = ''): Promise<GitStatus> {
       const renamed = r[0] === '2';
       const path = f.slice(renamed ? 9 : 8).join(' ');
       const oldPath = renamed ? records[++i] : undefined;
+      // A submodule's hashes are commits, not files.
+      const file = sub[0] !== 'S';
       if (xy[0] !== '.')
         status.staged.push({
           path,
           ...(oldPath ? { oldPath } : {}),
           status: xy[0] as GitChange['status'],
           version: f[7]!,
+          ...(file
+            ? { blobs: { old: stored(f[6]!), new: stored(f[7]!) } }
+            : {}),
         });
       // A dirty submodule lists its files as its own repo; here it is a
       // change only when it points at another commit.
-      if (xy[1] !== '.' && (sub[0] !== 'S' || sub[1] === 'C' || xy[1] === 'D'))
-        status.unstaged.push({
+      if (xy[1] !== '.' && (file || sub[1] === 'C' || xy[1] === 'D')) {
+        const change: GitChange = {
           path,
-          status: xy[1] === 'D' ? 'D' : 'M',
+          // A: added with `git add -N`, tracked but with nothing staged.
+          status: xy[1] === 'D' || xy[1] === 'A' ? xy[1] : 'M',
           version: await worktreeVersion(path),
-        });
+        };
+        status.unstaged.push(change);
+        if (file) onDisk.push({ change, old: stored(f[7]!) });
+      }
     } else if (r.startsWith('u ')) {
       const path = r.split(' ').slice(10).join(' ');
       status.unstaged.push({
@@ -241,6 +255,13 @@ async function readRepo(cwd: string, prefix = ''): Promise<GitStatus> {
       });
     }
   }
+  if (onDisk.length <= MAX_COUNTED)
+    await Promise.all(
+      onDisk.map(async ({ change, old }) => {
+        const hash = await diskBlob(join(cwd, change.path));
+        if (hash !== undefined) change.blobs = { old, new: hash };
+      }),
+    );
   const count = (lines: Map<string, Lines>) => (c: GitChange) => {
     const n = lines.get(c.path);
     if (n) [c.added, c.removed] = n;
@@ -262,6 +283,75 @@ async function readRepo(cwd: string, prefix = ''): Promise<GitStatus> {
       if (c.oldPath) c.oldPath = prefix + c.oldPath;
     }
   return status;
+}
+
+// Git writes all zeros for a side that has no file.
+function stored(hash: string) {
+  return /^0+$/.test(hash) ? null : hash;
+}
+
+/** Git's own hash of a blob, so a file on disk matches its staged copy. */
+function blobHash(bytes: Buffer) {
+  return createHash('sha1')
+    .update(`blob ${bytes.length}\0`)
+    .update(bytes)
+    .digest('hex');
+}
+
+// Status polls every few seconds; a file is only read again once it changes.
+const diskHashes = new Map<string, { at: string; hash: string }>();
+
+/** The hash of a file on disk; null: no file; undefined: too big to hash. */
+async function diskBlob(full: string) {
+  const s = await stat(full).catch(() => null);
+  if (!s?.isFile()) {
+    diskHashes.delete(full);
+    return null;
+  }
+  // Text past MAX_FILE isn't shown anyway, so a growing log isn't re-read.
+  const cap = MEDIA[extension(full) ?? ''] ? MAX_MEDIA : MAX_FILE;
+  if (s.size > cap) return undefined;
+  const at = `${s.mtimeMs}:${s.size}`;
+  const known = diskHashes.get(full);
+  if (known?.at === at) return known.hash;
+  const bytes = await readFile(full).catch(() => null);
+  if (!bytes) return null;
+  const hash = blobHash(bytes);
+  diskHashes.set(full, { at, hash });
+  return hash;
+}
+
+/**
+ * The bytes behind a blob hash from status: the file on disk while it
+ * still has that hash, else git's stored copy. Neither, for the side on
+ * disk: the file changed since, so its current bytes, with exact false so
+ * nobody keeps them under the old hash. Null: no such file or blob; 'too
+ * large' when it won't fit in memory.
+ */
+export async function readBlob(
+  ref: WorkspaceRef,
+  path: string,
+  hash: string,
+  { repoPath, onDisk }: { repoPath?: string; onDisk: boolean },
+) {
+  const { cwd } = await open(ref);
+  const full = inside(cwd, path);
+  const s = await stat(full).catch(() => null);
+  const disk = s?.isFile() && s.size <= MAX_MEDIA ? await fromDisk(full) : null;
+  if (disk && blobHash(disk) === hash) return { bytes: disk, exact: true };
+  const repo = await repoDir(cwd, repoPath);
+  const kept = await exec('git', ['cat-file', 'blob', hash], {
+    cwd: repo,
+    encoding: 'buffer',
+    maxBuffer: MAX_MEDIA,
+  }).then(
+    (r) => r.stdout,
+    (e: { code?: string }) =>
+      e.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER' ? 'too large' : null,
+  );
+  if (kept === 'too large') return kept;
+  if (kept) return { bytes: kept, exact: true };
+  return disk && onDisk ? { bytes: disk, exact: false } : null;
 }
 
 type Lines = [added: number, removed: number];
@@ -578,8 +668,12 @@ const MEDIA: Record<string, string> = {
 };
 
 // By extension, else by magic bytes: screenshots often land with odd names.
+function extension(path: string) {
+  return /\.([^./]+)$/.exec(path)?.[1]?.toLowerCase();
+}
+
 function mediaType(path: string, buffer: Buffer) {
-  const ext = /\.([^./]+)$/.exec(path)?.[1]?.toLowerCase();
+  const ext = extension(path);
   if (ext && MEDIA[ext]) return MEDIA[ext];
   const head = buffer.subarray(0, 12).toString('latin1');
   if (head.startsWith('\x89PNG')) return 'image/png';
@@ -590,23 +684,30 @@ function mediaType(path: string, buffer: Buffer) {
   return undefined;
 }
 
+/** How a file can be shown: as text, as media of a type, or not at all. */
+export function kindOf(
+  buffer: Buffer,
+  path: string,
+): 'text' | 'binary' | 'too large' | { mimeType: string } {
+  const mimeType = mediaType(path, buffer);
+  if (mimeType) return buffer.length > MAX_MEDIA ? 'too large' : { mimeType };
+  if (buffer.length > MAX_FILE) return 'too large';
+  // Git's own test: a NUL in the first 8000 bytes means binary.
+  if (buffer.subarray(0, 8000).includes(0)) return 'binary';
+  return 'text';
+}
+
 export function toText(buffer: Buffer | null, path: string): FileText {
   if (!buffer) return { text: null, reason: 'missing' };
-  const mimeType = mediaType(path, buffer);
-  if (mimeType)
-    return buffer.length > MAX_MEDIA
-      ? { text: null, reason: 'too large' }
-      : {
-          text: null,
-          reason: 'media',
-          mimeType,
-          data: buffer.toString('base64'),
-        };
-  if (buffer.length > MAX_FILE) return { text: null, reason: 'too large' };
-  // Git's own test: a NUL in the first 8000 bytes means binary.
-  if (buffer.subarray(0, 8000).includes(0))
-    return { text: null, reason: 'binary' };
-  return { text: buffer.toString('utf8') };
+  const kind = kindOf(buffer, path);
+  if (kind === 'text') return { text: buffer.toString('utf8') };
+  if (typeof kind === 'string') return { text: null, reason: kind };
+  return {
+    text: null,
+    reason: 'media',
+    mimeType: kind.mimeType,
+    data: buffer.toString('base64'),
+  };
 }
 
 function fromDisk(full: string) {

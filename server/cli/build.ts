@@ -45,7 +45,7 @@ import { run } from ${JSON.stringify(join(server, 'cli/bica.ts'))};
 
 await run({
   version: ${JSON.stringify(version)},
-  load: () => import(${JSON.stringify(join(server, 'src/socket.ts'))}),
+  load: () => import(${JSON.stringify(join(server, 'src/serve.ts'))}),
   client: { ${client.join(', ')} },
   wasm: ${wasm},
   // Bun resolves this form from the binary's own module graph.

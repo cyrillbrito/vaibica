@@ -6,12 +6,13 @@ import type {
   Message,
   ToolCall,
   ToolResultMessage,
+  UserMessage,
 } from '@earendil-works/pi-ai';
 import { estimateMessageTokens } from '@earendil-works/pi-ai/utils/estimate';
 import type { ContextEdit, ContextView } from '@earendil-works/pi-durable';
 
 export const PRUNE_HINT =
-  'Clears old tool output and images from what the model reads, so the next prompt sends less. Your prompts, the replies and the reasoning stay, and the transcript keeps everything.';
+  'Clears old tool output and images from what the model reads, so the next prompt sends less. The text of your prompts, the replies and the reasoning stay, and the transcript keeps everything.';
 
 /**
  * The entry that carries the edits, and in `data.freed` the tokens they
@@ -37,6 +38,8 @@ const PREVIEW_FROM = 1500;
 const HEAD = 160;
 const TAIL = 80;
 const NOTE = '[Old output cleared to save context';
+// A prompt's image goes too; the note after it still names its file.
+const IMAGE_NOTE = '[Image cleared to save context]';
 
 // The newest messages stay whole: the answer and its last steps are what a
 // follow-up refers to. Older steps clear even inside a long turn.
@@ -54,10 +57,10 @@ function isCleared(message: ToolResultMessage) {
 }
 
 /**
- * The ids of the tool calls pruning may touch: all but the newest
- * KEEP_RECENT messages. A call counts as recent when its call or its output is.
+ * What pruning may touch: all but the newest KEEP_RECENT messages. A call
+ * counts as recent when its call or its output is.
  */
-function oldCalls(ctx: Context): Set<string> {
+function oldParts(ctx: Context) {
   const messages = ctx.contributions.flat();
   const recent = new Set<string>();
   for (const m of messages.slice(-KEEP_RECENT)) {
@@ -65,27 +68,29 @@ function oldCalls(ctx: Context): Set<string> {
     if (m.role === 'assistant')
       for (const b of m.content) if (b.type === 'toolCall') recent.add(b.id);
   }
-  const old = new Set<string>();
-  for (const m of messages.slice(0, -KEEP_RECENT))
+  const calls = new Set<string>();
+  const older = messages.slice(0, -KEEP_RECENT);
+  for (const m of older)
     if (m.role === 'toolResult' && !recent.has(m.toolCallId))
-      old.add(m.toolCallId);
-  return old;
+      calls.add(m.toolCallId);
+  return { calls, prompts: new Set<Message>(older) };
 }
 
 /**
  * Edits that prune all but the newest messages (KEEP_RECENT): tool output
  * and images give way to a note, and long tool arguments shrink to their
- * summary and first line. Prompts, thinking and replies stay.
+ * summary and first line. The text of prompts, thinking and replies stay.
  */
 export function pruneEdits(ctx: Context): ContextEdit[] {
-  const old = oldCalls(ctx);
+  const old = oldParts(ctx);
   const edits: ContextEdit[] = [];
   ctx.entries.forEach((entry, i) => {
     const messages = ctx.contributions[i]!;
     const cleaned = messages.map((m) => {
       if (m.role === 'toolResult')
-        return old.has(m.toolCallId) ? pruneResult(m) : m;
-      if (m.role === 'assistant') return pruneCalls(m, old);
+        return old.calls.has(m.toolCallId) ? pruneResult(m) : m;
+      if (m.role === 'assistant') return pruneCalls(m, old.calls);
+      if (m.role === 'user' && old.prompts.has(m)) return pruneImages(m);
       return m;
     });
     if (cleaned.some((m, j) => m !== messages[j]))
@@ -129,6 +134,17 @@ function pruneResult(message: ToolResultMessage): ToolResultMessage {
             : `${note} Its start and end:\n${whole(text.slice(0, HEAD))}\n[…]\n${whole(text.slice(-TAIL))}`,
       },
     ],
+  };
+}
+
+function pruneImages(message: UserMessage): UserMessage {
+  if (typeof message.content === 'string') return message;
+  if (!message.content.some((b) => b.type === 'image')) return message;
+  return {
+    ...message,
+    content: message.content.map((b) =>
+      b.type === 'image' ? { type: 'text', text: IMAGE_NOTE } : b,
+    ),
   };
 }
 

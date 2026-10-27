@@ -1,8 +1,18 @@
-import type { GitStatus, WorkspaceRef } from '@bica/shared/protocol';
-import { request, useTopic } from '../socket/socket';
+import type {
+  FileText,
+  GitChange,
+  GitStatus,
+  WorkspaceRef,
+} from '@bica/shared/protocol';
+import { request, useLiveTopic, useTopic } from '../socket/socket';
 
 export function useGitStatus(ref: () => WorkspaceRef) {
   return useTopic('git.status', ref);
+}
+
+/** Only the server's current status, never the copy saved on this device. */
+export function useLiveGitStatus(ref: () => WorkspaceRef) {
+  return useLiveTopic('git.status', ref);
 }
 
 /** The workspace's own repo first, then each submodule worth showing. */
@@ -53,6 +63,62 @@ export function suggestMessage(
     ...options,
     repo: options.repo || undefined,
   });
+}
+
+/** One side of a diff; media read over HTTP comes as a Blob. */
+export type Side =
+  | FileText
+  | { text: null; reason: 'media'; mimeType: string; blob: Blob };
+
+/**
+ * Both sides of a diff by their blob hashes from status. The browser
+ * caches each for good (server/src/git/blob.ts), so a side seen before
+ * costs no request.
+ */
+export async function readBlobs(
+  ref: WorkspaceRef,
+  path: string,
+  blobs: NonNullable<GitChange['blobs']>,
+  // Unstaged: the new side is the file on disk, which may change again.
+  unstaged: boolean,
+  oldPath?: string,
+  repo?: string,
+) {
+  const side = async (
+    hash: string | null,
+    at: string,
+    onDisk = false,
+  ): Promise<Side> => {
+    if (!hash) return { text: null, reason: 'missing' };
+    const q = new URLSearchParams({
+      project: ref.projectId,
+      cwd: ref.cwd,
+      path: at,
+    });
+    if (repo) q.set('repo', repo);
+    if (onDisk) q.set('disk', '');
+    const res = await fetch(`/blob/${hash}?${q}`);
+    // Deleted since status; the next one says so.
+    if (res.status === 404) return { text: null, reason: 'missing' };
+    if (!res.ok) throw new Error(`Couldn't read ${at}`);
+    const unshown = res.headers.get('X-Bica-Unshown');
+    if (unshown === 'binary' || unshown === 'too large')
+      return { text: null, reason: unshown };
+    if (res.headers.get('Content-Type')?.startsWith('text/plain'))
+      return { text: await res.text() };
+    const blob = await res.blob();
+    return {
+      text: null,
+      reason: 'media',
+      mimeType: blob.type,
+      blob,
+    };
+  };
+  const [old, next] = await Promise.all([
+    side(blobs.old, oldPath ?? path),
+    side(blobs.new, path, unstaged),
+  ]);
+  return { old, new: next };
 }
 
 export function readDiff(

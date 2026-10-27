@@ -15,6 +15,7 @@ import { loadMemory, projectList } from '../agents/common';
 import { defaultChoice } from '../models/models';
 import { checkChoice, models } from '../models/registry';
 import { readSession } from './read';
+import { saveImage } from './attachments';
 import { agentIdOf, editSession, getConversation, sessionMeta } from './store';
 
 /** Who sends a prompt: the user, Bica's own notes, or another session's id. */
@@ -171,10 +172,13 @@ function toPrompt(content: QueuedInput['content']) {
   return { prompt: text, images };
 }
 
-/** Plain text, or text and images as content blocks. */
+/** Plain text, or text and images as content blocks, each image saved. */
 export function input(prompt: string, images: PromptImage[]) {
   if (!images.length) return prompt;
-  return promptBlocks(prompt, images);
+  return promptBlocks(
+    prompt,
+    images.map((i) => ({ ...i, file: saveImage(i.mimeType, i.data) })),
+  );
 }
 
 /** Switches the model or effort; the next request uses it. */

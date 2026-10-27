@@ -30,6 +30,8 @@ The words Bica uses for its concepts, one name per concept. Docs, code names, co
 
 **Prompt**: What a session is given to work on: what you send from the composer, a note, or a message. _Avoid_: input, submission (Pi Durable's words for it), request
 
+**Attachment**: An image sent with a prompt, saved on the dev machine by its content's hash, so the agent's tools can open it and the browser loads it by URL. The UI calls it an image. _Avoid_: upload, paste
+
 **Reply**: What the agent writes back. Its last reply in a run, Pi Durable's final answer, is what other sessions read of it. _Avoid_: answer (that is yours, to a question), response
 
 **Run**: The agent working from a prompt until it replies, stops, or fails, as in Pi Durable. _Avoid_: job, task

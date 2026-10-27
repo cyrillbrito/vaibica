@@ -10,7 +10,6 @@ import {
 } from 'solid-js';
 
 import {
-  SOCKET_PATH,
   type Call,
   type Calls,
   type ClientMessage,
@@ -35,6 +34,10 @@ interface Entry {
   first: PromiseWithResolvers<unknown>;
   // Settles once the copy saved on this device, if any, is in `value`.
   loaded: Promise<void>;
+  // A snapshot has come since the last subscribe: `value` is current, not
+  // a saved or left-behind copy. `ready` settles when it turns true.
+  live: boolean;
+  ready: PromiseWithResolvers<unknown>;
 }
 
 // The value before the first snapshot; `undefined` can be a real value.
@@ -64,7 +67,7 @@ const pending = new Map<string, Pending>();
 function connect() {
   clearTimeout(retryTimer);
   const scheme = location.protocol === 'https:' ? 'wss' : 'ws';
-  const socket = new WebSocket(`${scheme}://${location.host}${SOCKET_PATH}`);
+  const socket = new WebSocket(`${scheme}://${location.host}/ws`);
   ws = socket;
   socket.onopen = () => {
     retries = 0;
@@ -121,17 +124,22 @@ function receive(message: ServerMessage) {
       ? withKept(entry.value(), message.value, message.kept)
       : message.value;
     entry.n = message.n;
+    entry.live = true;
     entry.set(value);
+    entry.ready.resolve(value);
     entry.first.resolve(value);
+    saveSoon(entry);
   } else if (message.type === 'changes') {
     // A gap means our copy is wrong: drop it and start over.
     if (message.n !== entry.n + 1) return reopen(entry);
     entry.n = message.n;
     entry.set(applyImmutable(entry.value(), message.ops));
+    saveSoon(entry);
   } else {
     console.error(`[socket] ${entry.key}:`, message.error);
     // Before any data, the view can't render: let its error boundary show it.
     if (entry.value() === UNSET) entry.first.reject(new Error(message.error));
+    entry.ready.reject(new Error(message.error));
   }
 }
 
@@ -139,6 +147,10 @@ function open(entry: Entry) {
   bySub.delete(entry.sub);
   const sub = (entry.sub = nextId++);
   entry.n = -1;
+  entry.live = false;
+  entry.ready = Promise.withResolvers();
+  // Only live reads wait on it.
+  entry.ready.promise.catch(() => {});
   bySub.set(sub, entry);
   // A conversation waits for its saved copy, to tell the server what it has.
   const ready = entry.topic === 'conversation' ? entry.loaded : undefined;
@@ -179,9 +191,25 @@ function withKept(old: unknown, value: unknown, kept: number) {
 }
 
 function save(entry: Entry) {
+  clearTimeout(saving.get(entry));
+  saving.delete(entry);
   const value = entry.value();
   if (value !== UNSET && !UNSAVED.has(entry.topic))
     void saveTopic(entry.key, value);
+}
+
+// What arrives is saved within a few seconds, so a slow load is never
+// repeated, even if the page dies without warning, as phones' do. At most
+// once per interval while a run streams.
+const SAVE_MS = 3000;
+const saving = new Map<Entry, ReturnType<typeof setTimeout>>();
+
+function saveSoon(entry: Entry) {
+  if (saving.has(entry) || UNSAVED.has(entry.topic)) return;
+  saving.set(
+    entry,
+    setTimeout(() => save(entry), SAVE_MS),
+  );
 }
 
 function reopen(entry: Entry) {
@@ -213,6 +241,8 @@ function acquire(topic: Topic, params: unknown) {
       set: (v) => set(() => v),
       first,
       loaded: Promise.resolve(),
+      live: false,
+      ready: Promise.withResolvers(),
     };
     const e = entry;
     e.loaded = UNSAVED.has(topic)
@@ -283,16 +313,37 @@ export function useTopicWhenReady<T extends Topic>(
   ) as Accessor<Topics[T]['value'] | undefined>;
 }
 
+/**
+ * Like `useTopic`, but pending until the server's own first snapshot: never
+ * the copy saved on this device. For reads that must not show old data.
+ * A reconnect doesn't pend it again: it keeps the last live value until
+ * the next snapshot replaces it.
+ */
+export function useLiveTopic<T extends Topic>(
+  topic: T,
+  params: () => Topics[T]['params'],
+): Accessor<Topics[T]['value']> {
+  const entry = useEntry(topic, params);
+  return createMemo(
+    () => {
+      const e = entry();
+      const value = e.value();
+      return e.live ? value : e.ready.promise;
+    },
+    { name: `topic:${topic}:live` },
+  ) as Accessor<Topics[T]['value']>;
+}
+
 function useEntry(topic: Topic, params: () => unknown) {
   return createMemo(
-    (): Pick<Entry, 'value' | 'first'> => {
+    (): Pick<Entry, 'value' | 'first' | 'live' | 'ready'> => {
       const p = params();
       // Dev only: test data stands in without subscribing (lib/fixtures).
       const test = fixture(topic, p);
       if (test) {
         const first = Promise.withResolvers<unknown>();
         first.resolve(test.value);
-        return { value: () => test.value, first };
+        return { value: () => test.value, first, live: true, ready: first };
       }
       const e = acquire(topic, p);
       onCleanup(() => release(e));

@@ -172,9 +172,11 @@ export default function FileTree(props: {
   };
   onSettled(() => destroy);
 
+  // Reads the paths too, so the tree waits for them: create reads them
+  // after an await, where a list still loading throws unseen.
   createEffect(
-    () => !!props.flat,
-    (want) => {
+    () => ({ want: !!props.flat, paths: props.paths }),
+    ({ want }) => {
       if (tree && want !== flat) destroy();
       void untrack(create);
     },

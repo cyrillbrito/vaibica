@@ -14,12 +14,12 @@ import {
 
 import { render } from '@solidjs/web';
 
-import type { FileText, WorkspaceRef } from '@bica/shared/protocol';
+import type { GitChange, WorkspaceRef } from '@bica/shared/protocol';
 import { comments, startComment } from './review';
-import { readDiff } from '../git/git';
+import { readBlobs, readDiff, type Side } from '../git/git';
 import { readFile, type View } from './files';
 import CommentCard from './CommentCard';
-import { THEME } from './DiffBlock';
+import { LINE_NUMBERS_MIN_PX, THEME, parseDiffOptions } from './DiffBlock';
 import FilePreview, { previewKind, type PreviewKind } from './FilePreview';
 import { errorText } from '../ui/errors';
 
@@ -27,7 +27,7 @@ type Diffs = typeof import('@pierre/diffs');
 type Instance = InstanceType<Diffs['File']> | InstanceType<Diffs['FileDiff']>;
 
 /** Why a side can't be shown as text, or nothing when it can. */
-function problem(t: FileText) {
+function problem(t: Side) {
   return t.text === null && t.reason !== 'missing' && t.reason !== 'media'
     ? `File is ${t.reason}`
     : '';
@@ -35,20 +35,17 @@ function problem(t: FileText) {
 
 type Media = { label: string; mimeType: string; url: string };
 
-function toMedia(t: FileText, label: string): Media[] {
-  return t.text === null && t.reason === 'media'
-    ? [
-        {
-          label,
-          mimeType: t.mimeType,
-          url: URL.createObjectURL(
-            new Blob([Uint8Array.from(atob(t.data), (c) => c.charCodeAt(0))], {
-              type: t.mimeType,
-            }),
-          ),
-        },
-      ]
-    : [];
+function toMedia(t: Side, label: string): Media[] {
+  if (t.text !== null || t.reason !== 'media') return [];
+  // A new URL each time: showMedia revokes the last ones, even for the
+  // same data when only split, wrap, or preview changed.
+  const blob =
+    'blob' in t
+      ? t.blob
+      : new Blob([Uint8Array.from(atob(t.data), (c) => c.charCodeAt(0))], {
+          type: t.mimeType,
+        });
+  return [{ label, mimeType: t.mimeType, url: URL.createObjectURL(blob) }];
 }
 
 // Pierre's scrollbars sit under the last line, out of reach in a long file.
@@ -70,6 +67,8 @@ export default function CodeView(props: {
   // The submodule the change is in; absent, the workspace's own repo.
   repo?: string;
   version?: string;
+  // A diff's blob hashes from status, read over HTTP; absent: `git.diff`.
+  blobs?: GitChange['blobs'];
   split: boolean;
   // Long lines wrap instead of scrolling sideways.
   wrap: boolean;
@@ -233,11 +232,14 @@ export default function CodeView(props: {
       const { workspace: ref, path, view, oldPath, repo } = props;
       // A new version is a reason to read again.
       void props.version;
+      const blobs = view === 'file' ? undefined : props.blobs;
       const [diffs, data] = await Promise.all([
         import('@pierre/diffs'),
         view === 'file'
           ? readFile(ref, path)
-          : readDiff(ref, path, view === 'staged', oldPath, repo),
+          : blobs
+            ? readBlobs(ref, path, blobs, view === 'changes', oldPath, repo)
+            : readDiff(ref, path, view === 'staged', oldPath, repo),
       ]);
       return { diffs, data, path, view, oldPath };
     },
@@ -290,7 +292,19 @@ export default function CodeView(props: {
             additions: newText.split('\n'),
           };
           const commenting = !!props.comment;
-          setNote(oldText === newText ? 'No changes' : '');
+          // Whitespace is left out of the diff (parseDiffOptions).
+          const trimmed = (t: string) =>
+            t
+              .split('\n')
+              .map((l) => l.trim())
+              .join('\n');
+          setNote(
+            oldText === newText
+              ? 'No changes'
+              : trimmed(oldText) === trimmed(newText)
+                ? 'Only whitespace changed'
+                : '',
+          );
           const options = {
             theme: THEME,
             themeType: 'system' as const,
@@ -300,6 +314,9 @@ export default function CodeView(props: {
                 ? ('split' as const)
                 : ('unified' as const),
             disableFileHeader: true,
+            // Narrow views give the width to the code instead.
+            disableLineNumbers: scroller.clientWidth < LINE_NUMBERS_MIN_PX,
+            parseDiffOptions: parseDiffOptions(k.path),
             overflow,
             unsafeCSS: SCROLLBAR_CSS,
             onPostRender,

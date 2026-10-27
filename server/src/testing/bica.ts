@@ -5,7 +5,6 @@
 // The server is one per process (its data folder and harness are globals),
 // so call `startBica` once per test file: `bun test --parallel` runs each
 // file in its own process.
-import { createServer } from 'node:http';
 import { mkdir, mkdtemp, realpath, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -25,7 +24,6 @@ import type {
   Topics,
   WorkspaceRef,
 } from '@bica/shared/protocol';
-import { SOCKET_PATH } from '@bica/shared/socket-path';
 
 export type Bica = Awaited<ReturnType<typeof startBica>>;
 export type Tab = Awaited<ReturnType<typeof connect>>;
@@ -55,12 +53,10 @@ export async function startBica({ root }: { root?: string } = {}) {
   const faux = fauxProvider({ tokensPerSecond: 0 });
   const { models } = await import('../models/registry');
   models.setProvider(faux.provider);
-  const socket = await import('../socket');
+  const { serve } = await import('../serve');
 
-  const server = createServer();
-  socket.attach(server);
-  await new Promise<void>((done) => server.listen(0, '127.0.0.1', done));
-  const { port } = server.address() as { port: number };
+  const server = serve(0);
+  const port = server.port!;
   const sockets: WebSocket[] = [];
 
   return {
@@ -115,7 +111,7 @@ export async function startBica({ root }: { root?: string } = {}) {
     },
     async stop() {
       for (const ws of sockets) ws.close();
-      server.close();
+      await server.stop(true);
       if (owned) await rm(root!, { recursive: true, force: true });
     },
   };
@@ -126,7 +122,7 @@ export async function connect(
   port: number,
   { origin = `http://127.0.0.1:${port}` }: { origin?: string } = {},
 ) {
-  const ws = new WebSocket(`ws://127.0.0.1:${port}${SOCKET_PATH}`, {
+  const ws = new WebSocket(`ws://127.0.0.1:${port}/ws`, {
     headers: { Origin: origin },
   } as never);
   await new Promise((open, fail) => {

@@ -4,6 +4,9 @@ import {
   fauxToolCall,
 } from '@earendil-works/pi-ai/providers/faux';
 
+import { writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+
 import { shows, startBica, type Bica } from '../testing/bica';
 
 let bica: Bica;
@@ -41,4 +44,44 @@ test("the agent's edits show as changes, and a commit records them", async () =>
   await tab.request('git.commit', { ...ref, message: 'Add notes', all: true });
   const after = await status.until((s) => shows(s?.recent, 'Add notes'));
   expect([...after!.staged, ...after!.unstaged]).toEqual([]);
+});
+
+test("a diff's sides load by hash, and a file changed since is never kept under the old one", async () => {
+  const tab = await bica.connect();
+  const ref = await bica.project(tab, 'blobs');
+  const status = tab.watch('git.status', ref);
+  const file = join(ref.cwd, 'poem.txt');
+  await writeFile(file, 'first line\n');
+  await status.until((s) => shows(s?.unstaged, 'poem.txt'));
+  await tab.request('git.commit', { ...ref, message: 'Add poem', all: true });
+  await status.until((s) => shows(s?.recent, 'Add poem'));
+
+  await writeFile(file, 'second line\n');
+  const changed = await status.until((s) => !!s?.unstaged[0]?.blobs?.new);
+  const blobs = changed!.unstaged[0]!.blobs!;
+  const read = (hash: string, { disk = false, path = 'poem.txt' } = {}) => {
+    const q = new URLSearchParams({
+      project: ref.projectId,
+      cwd: ref.cwd,
+      path,
+    });
+    if (disk) q.set('disk', '');
+    return fetch(`http://127.0.0.1:${bica.port}/blob/${hash}?${q.toString()}`);
+  };
+  const before = await read(blobs.old!);
+  expect(await before.text()).toBe('first line\n');
+  const after = await read(blobs.new!, { disk: true });
+  expect(await after.text()).toBe('second line\n');
+  expect(after.headers.get('Cache-Control')).toContain('immutable');
+
+  // Edited before the browser asked: the new bytes, but not to keep.
+  await writeFile(file, 'third line\n');
+  const stale = await read(blobs.new!, { disk: true });
+  expect(await stale.text()).toBe('third line\n');
+  expect(stale.headers.get('Cache-Control')).toBe('no-store');
+
+  // Only the side on disk falls back, and only to files in the workspace.
+  expect((await read(blobs.new!)).status).toBe(404);
+  const other = await read(blobs.new!, { disk: true, path: '../poem.txt' });
+  expect(other.status).toBe(404);
 });

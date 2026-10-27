@@ -142,7 +142,7 @@ test('a phone that reconnects and resends its request gets one session with ever
   expect(list.filter((s) => shows(s, 'from the phone'))).toHaveLength(1);
 });
 
-test('the model reads each image where the prompt names it', async () => {
+test('the model reads each image where the prompt names it, with its file', async () => {
   const tab = await bica.connect();
   let seen: unknown;
   bica.reply((context) => {
@@ -161,11 +161,16 @@ test('the model reads each image where the prompt names it', async () => {
     images: [image('second', 2), image('first', 1), image('unnamed')],
     requestId: crypto.randomUUID(),
   });
-  await tab.watch('conversation', { id }).until((c) => shows(c, 'seen them'));
-  const order = (seen as { type: string; text?: string; data?: string }[]).map(
-    (b) => b.text ?? b.data,
+  const conversation = await tab
+    .watch('conversation', { id })
+    .until((c) => shows(c, 'seen them'));
+  const blocks = seen as { type: string; text?: string; data?: string }[];
+  const files = blocks.flatMap(
+    (b) => /^\n\[image file: (.+)\]\n$/.exec(b.text ?? '')?.[1] ?? [],
   );
-  expect(order).toEqual([
+  expect(
+    blocks.map((b) => b.text ?? b.data).filter((t) => t![0] !== '\n'),
+  ).toEqual([
     'Compare [Image #1]',
     'first',
     ' with [Image #2]',
@@ -173,4 +178,66 @@ test('the model reads each image where the prompt names it', async () => {
     ' please',
     'unnamed',
   ]);
+  // The agent's tools can open each file: the image's own bytes.
+  expect(files).toHaveLength(3);
+  const first = await Bun.file(files[0]!).bytes();
+  expect(Buffer.from(first).toString('base64')).toBe(
+    Buffer.from('first', 'base64').toString('base64'),
+  );
+
+  // The browser gets the file's name, not the bytes, and loads it by URL.
+  const user = JSON.stringify(
+    conversation!.entries.find((e) => e.model?.[0]?.role === 'user'),
+  );
+  expect(user).not.toContain('"data":"first"');
+  expect(user).toContain(files[0]!.split('/').pop()!);
+  const res = await fetch(
+    `http://127.0.0.1:${bica.port}/attachment/${files[0]!.split('/').pop()}`,
+  );
+  expect(new Uint8Array(await res.arrayBuffer())).toEqual(first);
+  expect(res.headers.get('Cache-Control')).toContain('immutable');
+  expect(
+    (await fetch(`http://127.0.0.1:${bica.port}/attachment/..%2Fsecret`))
+      .status,
+  ).toBe(404);
+});
+
+test("Prune takes old prompts' images out of what the model reads, and keeps their files", async () => {
+  const tab = await bica.connect();
+  const { projectId } = await bica.project(tab);
+  const conversation = (id: string) => tab.watch('conversation', { id });
+  bica.reply(fauxAssistantMessage('answer 0'));
+  const id = await tab.request('session.create', {
+    projectId,
+    prompt: 'Look at [Image #1]',
+    images: [{ mimeType: 'image/png', data: 'old', ref: 1 }],
+    requestId: crypto.randomUUID(),
+  });
+  await conversation(id).until((c) => shows(c, 'answer 0'));
+  for (const n of [1, 2, 3]) {
+    bica.reply(fauxAssistantMessage(`answer ${n}`));
+    await tab.request('session.submit', {
+      id,
+      prompt: `prompt ${n}`,
+      requestId: crypto.randomUUID(),
+    });
+    await conversation(id).until((c) => shows(c, `answer ${n}`));
+  }
+
+  await tab.request('session.cleanup', { id });
+  let seen: unknown;
+  bica.reply((context) => {
+    seen = context.messages.find((m) => m.role === 'user')?.content;
+    return fauxAssistantMessage('after prune');
+  });
+  await tab.request('session.submit', {
+    id,
+    prompt: 'one more',
+    requestId: crypto.randomUUID(),
+  });
+  await conversation(id).until((c) => shows(c, 'after prune'));
+  const first = JSON.stringify(seen);
+  expect(first).toContain('Look at [Image #1]');
+  expect(first).not.toContain('"type":"image"');
+  expect(first).toContain('[image file: ');
 });

@@ -12,6 +12,7 @@ import type { EntriesHeld, ModelCatalog } from '@bica/shared/protocol';
 import { context, getHarness } from '../harness';
 import { projector, stepDetail } from '@bica/shared/projection';
 import { watchModels } from '../models/models';
+import { saveImage } from './attachments';
 
 /**
  * The conversation's view now, then the ops of every commit that changes it;
@@ -37,7 +38,7 @@ export async function watchConversation(
   }
   let catalog: ModelCatalog | undefined;
   const unwatchModels = await watchModels((c) => (catalog = c));
-  const project = projector(() => catalog);
+  const project = projector(() => catalog, saveImage);
   const watch = await conversation.watch(context);
   let sent = project(watch.value);
   const kept = keptEntries(sent.entries, have);

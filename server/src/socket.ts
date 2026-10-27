@@ -1,14 +1,11 @@
-import type { IncomingMessage, Server, ServerResponse } from 'node:http';
-import type { Duplex } from 'node:stream';
+import type { Server, ServerWebSocket, WebSocketHandler } from 'bun';
 import {
   diffRevisions,
   type JsonValue,
   type Op,
 } from '@earendil-works/chord/delta';
-import { WebSocketServer, type WebSocket } from 'ws';
 
 import {
-  SOCKET_PATH,
   type Call,
   type Calls,
   type ClientMessage,
@@ -76,7 +73,7 @@ import { suggestCommitMessage } from './git/commit-message';
 import { sessionActivity } from './recap/activity';
 import { sessionRecap } from './recap/recap';
 import { findPath, openInEditor, openPath } from './git/editor';
-import { serveDownload, workspaceFileLink } from './git/download';
+import { workspaceFileLink } from './git/download';
 import {
   createTerminal,
   detachTerminal,
@@ -392,47 +389,40 @@ function ref({ projectId, cwd }: WorkspaceRef): WorkspaceRef {
   };
 }
 
-const wss = new WebSocketServer({ noServer: true });
+type Connection = ReturnType<typeof connect>;
+type Socket = ServerWebSocket<{ connection?: Connection }>;
 
-/**
- * Attach to the Node server that serves the app, or only this in dev. Its
- * download links go first, before the server's own request handler.
- */
-export function attach(server: Server) {
-  const own = server.listeners('request') as ((
-    req: IncomingMessage,
-    res: ServerResponse,
-  ) => void)[];
-  server.removeAllListeners('request');
-  server.on('request', (req: IncomingMessage, res: ServerResponse) => {
-    if (!serveDownload(req, res)) for (const handle of own) handle(req, res);
-  });
-  server.on('upgrade', (req, socket, head) => {
-    const { pathname } = new URL(req.url ?? '/', 'http://localhost');
-    if (pathname === SOCKET_PATH) handleUpgrade(req, socket, head);
-  });
-}
-
-export function handleUpgrade(
-  req: IncomingMessage,
-  socket: Duplex,
-  head: Buffer,
-) {
+/** Turns a request for the socket's URL into the socket. */
+export function upgrade(req: Request, server: Server<Socket['data']>) {
   // There is no login (docs/deploy.md), so at least keep other websites from
   // driving the agent: browsers always send Origin on WebSocket handshakes.
-  const origin = req.headers.origin;
-  if (origin && hostOf(origin) !== req.headers.host) {
-    socket.end('HTTP/1.1 403 Forbidden\r\n\r\n');
-    return;
-  }
-  wss.handleUpgrade(req, socket, head, connect);
+  const origin = req.headers.get('origin');
+  if (origin && hostOf(origin) !== req.headers.get('host'))
+    return new Response('Forbidden', { status: 403 });
+  if (server.upgrade(req, { data: {} })) return;
+  return new Response('Expected a WebSocket', { status: 426 });
 }
 
-function connect(ws: WebSocket) {
+export const websocket: WebSocketHandler<Socket['data']> = {
+  // A prompt's images travel inside it; this is the ws package's default.
+  maxPayloadLength: 100 * 1024 * 1024,
+  // Past this, Bun drops messages silently, which would leave a request
+  // unanswered; closing makes the tab reconnect and start over.
+  backpressureLimit: 64 * 1024 * 1024,
+  closeOnBackpressureLimit: true,
+  // Transcripts are JSON and shrink about 4x, which a phone on a slow link
+  // feels; the CPU it costs is small for one user's tabs.
+  perMessageDeflate: true,
+  open: (ws) => void (ws.data.connection = connect(ws)),
+  message: (ws, data) => ws.data.connection?.receive(String(data)),
+  close: (ws) => ws.data.connection?.close(),
+};
+
+function connect(ws: Socket) {
   const subs = new Map<number, () => void>();
   const log = wsLogger();
   const send = (message: ServerMessage) => {
-    if (ws.readyState !== ws.OPEN) return;
+    if (ws.readyState !== WebSocket.OPEN) return;
     const text = JSON.stringify(message);
     log('out', text);
     ws.send(text);
@@ -506,29 +496,28 @@ function connect(ws: WebSocket) {
     }
   }
 
-  ws.on('message', (data) => {
-    let message: ClientMessage;
-    try {
-      // binaryType is the default 'nodebuffer', so always one Buffer.
-      const text = (data as Buffer).toString('utf8');
-      message = JSON.parse(text);
-      log('in', text);
-    } catch {
-      ws.close(1003, 'Bad message');
-      return;
-    }
-    if (message.type === 'request') void request(message);
-    else if (message.type === 'subscribe') void subscribe(message);
-    else if (message.type === 'unsubscribe') {
-      subs.get(message.sub)?.();
-      subs.delete(message.sub);
-    }
-  });
-
-  ws.on('close', () => {
-    for (const stop of subs.values()) stop();
-    subs.clear();
-  });
+  return {
+    receive(text: string) {
+      let message: ClientMessage;
+      try {
+        message = JSON.parse(text);
+        log('in', text);
+      } catch {
+        ws.close(1003, 'Bad message');
+        return;
+      }
+      if (message.type === 'request') void request(message);
+      else if (message.type === 'subscribe') void subscribe(message);
+      else if (message.type === 'unsubscribe') {
+        subs.get(message.sub)?.();
+        subs.delete(message.sub);
+      }
+    },
+    close() {
+      for (const stop of subs.values()) stop();
+      subs.clear();
+    },
+  };
 }
 
 function hostOf(url: string) {

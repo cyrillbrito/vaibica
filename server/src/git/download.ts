@@ -1,6 +1,5 @@
-import { createReadStream } from 'node:fs';
+import type { BunRequest } from 'bun';
 import { stat } from 'node:fs/promises';
-import type { IncomingMessage, ServerResponse } from 'node:http';
 import { basename } from 'node:path';
 
 import type { WorkspaceRef } from '@bica/shared/protocol';
@@ -31,34 +30,21 @@ export async function workspaceFileLink(ref: WorkspaceRef, path: string) {
   return fileLink(inside(cwd, path));
 }
 
-/** Answers a request for a download link; false for any other request. */
-export function serveDownload(req: IncomingMessage, res: ServerResponse) {
-  const url = new URL(req.url ?? '/', 'http://localhost');
-  if (!url.pathname.startsWith(PREFIX)) return false;
-  const file = links.get(url.pathname.slice(PREFIX.length).split('/')[0]!);
-  if (!file || (req.method !== 'GET' && req.method !== 'HEAD'))
-    res.writeHead(404).end();
-  else void send(file, url.searchParams.has('download'), req, res);
-  return true;
-}
-
-async function send(
-  file: string,
-  save: boolean,
-  req: IncomingMessage,
-  res: ServerResponse,
-) {
-  const info = await stat(file).catch(() => undefined);
-  if (!info?.isFile()) return void res.writeHead(404).end();
-  res.writeHead(200, {
-    'Content-Type': save ? 'application/octet-stream' : await shownType(file),
-    'Content-Length': info.size,
-    'Content-Disposition': `${save ? 'attachment' : 'inline'}; filename*=UTF-8''${encodeURIComponent(basename(file))}`,
-    'Cache-Control': 'private, no-store',
-    'X-Content-Type-Options': 'nosniff',
+export async function serveDownload(req: BunRequest<'/download/:token/*'>) {
+  const file = links.get(req.params.token);
+  const info = file ? await stat(file).catch(() => undefined) : undefined;
+  if (!info?.isFile()) return new Response(null, { status: 404 });
+  const save = new URL(req.url).searchParams.has('download');
+  return new Response(Bun.file(file!), {
+    headers: {
+      'Content-Type': save
+        ? 'application/octet-stream'
+        : await shownType(file!),
+      'Content-Disposition': `${save ? 'attachment' : 'inline'}; filename*=UTF-8''${encodeURIComponent(basename(file!))}`,
+      'Cache-Control': 'private, no-store',
+      'X-Content-Type-Options': 'nosniff',
+    },
   });
-  if (req.method === 'HEAD') return void res.end();
-  createReadStream(file).pipe(res);
 }
 
 // The page runs on Bica's own origin, so HTML or SVG shown as itself could

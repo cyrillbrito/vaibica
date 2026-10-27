@@ -1,15 +1,9 @@
 // Bica's production server in the terminal, with keys to open the UI, the way
-// Vite's dev server does. Both ways to run a build start here: start.js from
+// Vite's dev server does. Both ways to run a build start here: start.ts from
 // the repo, and the `bica` binary that cli/build.ts compiles with the client
 // and codemode's files embedded.
 import { spawn, spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import {
-  createServer,
-  type IncomingMessage,
-  type Server,
-  type ServerResponse,
-} from 'node:http';
 import { homedir, platform } from 'node:os';
 import { dirname, extname, join } from 'node:path';
 import { parseArgs } from 'node:util';
@@ -17,8 +11,8 @@ import { parseArgs } from 'node:util';
 /** The server and the built app, and in the binary the paths of codemode's embedded files. */
 export interface Build {
   version: string;
-  /** The socket module, server/src/socket.ts. */
-  load: () => Promise<{ attach: (server: Server) => void }>;
+  /** The server, server/src/serve.ts. */
+  load: () => Promise<typeof import('../src/serve')>;
   /** URL path, such as `/assets/app.js`, to the file of Vite's build, dist/client. */
   client: Record<string, string>;
   wasm?: string;
@@ -56,25 +50,24 @@ export async function run(build: Build) {
   if (build.wasm) process.env.BICA_CODEMODE_WASM = build.wasm;
   if (build.worker) process.env.BICA_CODEMODE_WORKER = build.worker;
 
-  const { attach } = await build.load();
-  const server = createServer((req, res) => sendClient(build.client, req, res));
-  attach(server);
-  server.on('error', (error: NodeJS.ErrnoException) =>
-    fail(
-      error.code === 'EADDRINUSE'
+  const { serve } = await build.load();
+  let server: ReturnType<typeof serve>;
+  try {
+    server = serve(port, (req) => sendClient(build.client, req));
+  } catch (error) {
+    return fail(
+      (error as NodeJS.ErrnoException).code === 'EADDRINUSE'
         ? `Port ${port} is in use. Pick another with --port.`
-        : error.message,
-    ),
-  );
-  server.listen(port, '127.0.0.1', () => {
-    const url = `http://localhost:${port}`;
-    console.log(`\n  Bica ${build.version} running\n\n  Local:  ${url}\n`);
-    if (process.stdin.isTTY) keys(url, join(data, 'chrome.json'));
-  });
+        : (error as Error).message,
+    );
+  }
+  const url = `http://localhost:${port}`;
+  console.log(`\n  Bica ${build.version} running\n\n  Local:  ${url}\n`);
+  if (process.stdin.isTTY) keys(url, join(data, 'chrome.json'));
 
   const quit = () => {
     if (process.stdin.isTTY) process.stdin.setRawMode(false);
-    server.close();
+    void server.stop();
     // Shells and agent runs end with the process; Pi Durable resumes runs on the next start.
     process.exit(0);
   };
@@ -87,30 +80,21 @@ function fail(message: string): never {
   process.exit(1);
 }
 
-function sendClient(
-  client: Record<string, string>,
-  req: IncomingMessage,
-  res: ServerResponse,
-) {
-  const { pathname } = new URL(req.url ?? '/', 'http://localhost');
+function sendClient(client: Record<string, string>, req: Request) {
+  const { pathname } = new URL(req.url);
   // A page's URL, such as /s/<id>, gets the app, which routes in the browser.
   const path =
     client[pathname] ?? (extname(pathname) ? undefined : client['/index.html']);
-  if (!path || (req.method !== 'GET' && req.method !== 'HEAD')) {
-    res.writeHead(404).end();
-    return;
-  }
-  const file = Bun.file(path);
-  res.writeHead(200, {
-    'Content-Type': file.type,
-    'Content-Length': file.size,
-    // Vite hashes the names of what it puts in assets/.
-    'Cache-Control': pathname.startsWith('/assets/')
-      ? 'public, max-age=31536000, immutable'
-      : 'public, max-age=0, must-revalidate',
+  if (!path || (req.method !== 'GET' && req.method !== 'HEAD'))
+    return new Response(null, { status: 404 });
+  return new Response(Bun.file(path), {
+    headers: {
+      // Vite hashes the names of what it puts in assets/.
+      'Cache-Control': pathname.startsWith('/assets/')
+        ? 'public, max-age=31536000, immutable'
+        : 'public, max-age=0, must-revalidate',
+    },
   });
-  if (req.method === 'HEAD') res.end();
-  else void file.bytes().then((bytes) => res.end(bytes));
 }
 
 // Keys
