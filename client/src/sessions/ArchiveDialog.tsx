@@ -1,8 +1,7 @@
-import { For, Show, createSignal } from 'solid-js';
+import { For, createSignal } from 'solid-js';
 
 import type { SessionSummary } from '@bica/shared/protocol';
 import { archiveSession } from './sessions';
-import StatusDot from './StatusDot';
 import { Button } from '../ui/Button';
 import { CheckMark } from '../ui/CheckMark';
 import { Dialog } from '../ui/Dialog';
@@ -120,13 +119,9 @@ export default function ArchiveDialog() {
               onClick={() => toggle(s().id)}
             >
               <CheckMark on={picked().has(s().id)} />
-              <StatusDot status={s().status} />
               <span class="min-w-0 flex-1 truncate">
                 {s().title || 'Untitled'}
               </span>
-              <Show when={busy(s())}>
-                <span class="shrink-0 text-meta text-muted">Running</span>
-              </Show>
             </button>
           )}
         </For>
