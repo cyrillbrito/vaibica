@@ -34,7 +34,6 @@ import TitleInput from '../../sessions/TitleInput';
 import TopBar from '../../app/TopBar';
 import { IconButton } from '../../ui/Button';
 import Empty from '../../ui/Empty';
-import { Spinner } from '../../ui/Spinner';
 import { CloseIcon, ParentIcon, SessionIcon, VoiceIcon } from '../../ui/icons';
 import { drawer, hasPanels, setNoPanels } from '../../ui/layout';
 import { openFromSearch, sameOpen, sessionFileHref } from '../../files/files';
@@ -54,8 +53,7 @@ import {
   useSessions,
 } from '../../sessions/sessions';
 import { pageFocused } from '../../ui/badge';
-import { createStopwatch, formatLive } from '../../ui/time';
-import { readError } from '../../sessions/error-message';
+import Working from '../../sessions/Working';
 import type { ContextBreakdown } from '@bica/shared/context-breakdown';
 import type { ContextUsage } from '@bica/shared/context-usage';
 import { SessionId } from '../../sessions/step-detail';
@@ -67,57 +65,6 @@ import {
   viewStatus,
   type Message,
 } from '@bica/shared/transcript';
-
-/**
- * The agent is on it but nothing has streamed yet: the spinner, a shimmering
- * word, and a live timer, after affectUI's Thinking State. Laid out like the
- * steps row that takes its place once a step arrives, so nothing moves. A
- * failed attempt waiting to retry says so, with the reason on hover.
- */
-function Working(props: {
-  since?: number;
-  retry?: { at: number; error: string };
-}) {
-  const now = createStopwatch(() => true);
-  return (
-    <div
-      role="status"
-      class="appear flex h-7 min-w-0 items-center gap-2 px-1.5 text-meta text-muted touch:h-11"
-    >
-      <Spinner class={props.retry && 'text-warn-ink'} />
-      <span
-        class={[
-          'text-ui font-medium',
-          props.retry ? 'text-warn-ink' : 'shimmer',
-        ]}
-      >
-        {props.retry ? 'Retrying' : 'Working'}
-      </span>
-      <Show
-        when={props.retry}
-        fallback={
-          <Show
-            when={props.since && formatLive(Math.max(0, now() - props.since))}
-          >
-            {(t) => <span class="tabular-nums">{t()}</span>}
-          </Show>
-        }
-      >
-        {(retry) => (
-          <span class="min-w-0 truncate" title={retry().error}>
-            <span class="tabular-nums">
-              {retry().at > now()
-                ? `in ${Math.ceil((retry().at - now()) / 1000)}s`
-                : 'now'}
-            </span>
-            {' · '}
-            {readError(retry().error).message}
-          </span>
-        )}
-      </Show>
-    </div>
-  );
-}
 
 export default function Session(props: RouteProps<'/s/:id'>) {
   const view = useConversation(() => props.params.id!);
@@ -245,20 +192,18 @@ export default function Session(props: RouteProps<'/s/:id'>) {
     },
     { name: 'transcriptRows' },
   );
-  // The run started but nothing streamed yet, or the provider failed and a
-  // retry waits: a pill at the bottom says it's on it.
+  // While a run lasts, one line at the bottom says the agent is on it, timed
+  // from the prompt that started this stretch of work.
   const waiting = createMemo(
     () => {
       const live = view()?.docs['pi.live'] as LiveState | undefined;
       if (!live?.run) return undefined;
-      const retry = live.generation?.retry;
-      const last = messages().at(-1);
-      const since = last && promptAt(last);
-      if (!retry && last && since === undefined) return undefined;
-      return {
-        since,
-        retry,
-      };
+      let since: number | undefined;
+      for (const m of messages().toReversed()) {
+        if (m.kind === 'end' || m.kind === 'error') break;
+        since = promptAt(m) ?? since;
+      }
+      return { since, retry: live.generation?.retry };
     },
     {
       name: 'waitingOnAgent',

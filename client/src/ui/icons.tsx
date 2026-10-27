@@ -57,6 +57,7 @@ import Moon from 'lucide/dist/esm/icons/moon.mjs';
 import Inbox from 'lucide/dist/esm/icons/inbox.mjs';
 import PanelLeft from 'lucide/dist/esm/icons/panel-left.mjs';
 import Command from 'lucide/dist/esm/icons/command.mjs';
+import Coffee from 'lucide/dist/esm/icons/coffee.mjs';
 import PanelRight from 'lucide/dist/esm/icons/panel-right.mjs';
 import Pencil from 'lucide/dist/esm/icons/pencil.mjs';
 import PhoneOff from 'lucide/dist/esm/icons/phone-off.mjs';
@@ -186,6 +187,40 @@ export const ThoughtIcon = icon(Lightbulb);
 export const StopIcon = icon(Square, 'fill-current');
 export const PushIcon = icon(ChevronsUp);
 export const StepsIcon = icon(ListChecks);
+// Lucide's cup, its three wisps of steam rising one after another: the agent
+// is brewing. The cup's own path is the one long one.
+const BREWING = Coffee.map(([tag, attrs]) => {
+  const wisp = ['M6 2v2', 'M10 2v2', 'M14 2v2'].indexOf(String(attrs.d));
+  return wisp === -1
+    ? [tag, attrs]
+    : [
+        tag,
+        {
+          ...attrs,
+          class: 'animate-steam',
+          style: `animation-delay: ${wisp * 300}ms`,
+        },
+      ];
+}) as IconNode;
+export const BrewingIcon = icon(BREWING);
+// The cup filling from the bottom and starting over, under the same steam.
+export const PouringIcon = icon([
+  [
+    'rect',
+    {
+      x: '5',
+      y: '10',
+      width: '10',
+      height: '9',
+      rx: '2',
+      fill: 'currentColor',
+      stroke: 'none',
+      class: 'animate-fill',
+      style: 'transform-box: fill-box; transform-origin: bottom',
+    },
+  ],
+  ...BREWING,
+] as IconNode);
 export const QueueIcon = icon(ListPlus);
 export const QuestionIcon = icon(MessageCircleQuestion);
 /** Keeping a file open in the sidebar. */

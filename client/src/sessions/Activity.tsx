@@ -11,7 +11,7 @@ import {
 } from 'solid-js';
 
 import { useStepDetail } from './step-detail';
-import { createStopwatch, formatDuration, formatLive } from '../ui/time';
+import { createStopwatch, formatDuration } from '../ui/time';
 import type { Activity as ActivityData, Step } from '@bica/shared/transcript';
 import { StepsIcon, ThoughtIcon } from '../ui/icons';
 import Chevron from '../ui/Chevron';
@@ -144,24 +144,19 @@ function Header(props: { activity: ActivityData; seen: boolean }) {
   return (
     <summary
       class={[ROW, 'gap-2 text-muted hover:text-fg']}
-      aria-label={`${props.activity.active ? 'Working' : doneLabel()}, ${counts()}${failed() ? `, ${failed()} failed` : ''}`}
+      aria-label={`${props.activity.active ? '' : `${doneLabel()}, `}${counts()}${failed() ? `, ${failed()} failed` : ''}`}
     >
-      <ThinkingLoader
-        label="Working"
-        done={!props.activity.active}
-        doneLabel={doneLabel()}
-        doneIcon={<StepsIcon />}
-        labelClass="font-medium"
-      />
+      {/* While it runs, the line at the bottom of the transcript says so. */}
+      <Show when={!props.activity.active} fallback={<StepsIcon />}>
+        <ThinkingLoader
+          label="Working"
+          done
+          doneLabel={doneLabel()}
+          doneIcon={<StepsIcon />}
+          labelClass="font-medium"
+        />
+      </Show>
       <span class="flex min-w-0 items-baseline gap-1.5 truncate text-meta tabular-nums">
-        <Show when={props.activity.active && formatLive(time() ?? 0)}>
-          {(t) => (
-            <>
-              <span class="text-muted">{t()}</span>
-              <span aria-hidden="true">·</span>
-            </>
-          )}
-        </Show>
         <span class="truncate">{counts()}</span>
         <Show when={failed()}>
           <span class="shrink-0 text-danger">· {failed()} failed</span>

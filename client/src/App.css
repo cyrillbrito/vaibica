@@ -227,6 +227,41 @@
     }
   }
 
+  /* The steam over the brewing cup: each wisp rises and fades. */
+  --animate-steam: steam 900ms ease-out infinite;
+
+  @keyframes steam {
+    from {
+      opacity: 0;
+      transform: translateY(2px);
+    }
+    40% {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-2px);
+    }
+  }
+
+  /* Coffee filling the pouring cup from the bottom, then starting over. */
+  --animate-fill: fill 2.4s var(--ease-out) infinite;
+
+  @keyframes fill {
+    from {
+      opacity: 0.35;
+      transform: scaleY(0);
+    }
+    80% {
+      opacity: 0.35;
+      transform: scaleY(1);
+    }
+    to {
+      opacity: 0;
+      transform: scaleY(1);
+    }
+  }
+
   /* A filter chip or a comment arriving: fades and grows in a little. */
   --animate-chip-in: chip-in 200ms var(--ease-out) backwards;
 

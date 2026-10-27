@@ -27,6 +27,7 @@ import { Switch } from '../ui/Switch';
 import { Tag, type Tone } from '../ui/Tag';
 import TextArea from '../ui/TextArea';
 import { ThinkingLoader } from '../ui/ThinkingLoader';
+import Working from '../sessions/Working';
 import { toast } from '../ui/Toast';
 import { Trend } from '../ui/Trend';
 import {
@@ -257,6 +258,9 @@ function Loading() {
           labelClass="font-medium"
         />
       </div>
+      <Working since={Date.now() - 42_000} />
+      <Working />
+      <Working retry={{ at: Date.now() + 8000, error: 'Overloaded' }} />
       <Row>
         <ProgressRing total={8} done={done() ? 8 : 5} label="5 of 8 done" />
         <RollingNumber value={n()} class="text-display font-semibold" />
