@@ -20,7 +20,7 @@ A session an agent starts is a child session, and the agent's session is its par
 - Only starting gives a session a parent, and agents can't change who leads one. Sessions you start and forks have none.
 - A session that started another one but no longer leads it can't message, stop, or archive it, unless you tell it to.
 
-Archiving a parent asks which of its open child sessions go with it, with the finished ones picked.
+Archiving a parent asks which of its open child sessions go with it, with none picked. The ones left open are detached, as with Detach, since an archived parent hears nothing. Archiving from `session_archive` or removing a worktree detaches them too.
 
 ## Who hears what
 

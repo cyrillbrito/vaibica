@@ -111,6 +111,24 @@ export async function retireSessions(
       meta.cleanedUp = { branch, pr };
       delete meta.watchedBy;
     });
+  await releaseChildren(here.map((s) => s.id));
+}
+
+/**
+ * The open child sessions of archived `parents` become the user's, as with
+ * Detach: an archived parent hears nothing, so no one would lead them. It
+ * isn't told, since a note would wake it.
+ */
+async function releaseChildren(parents: string[]) {
+  for (const s of await listSessions())
+    if (s.parent && parents.includes(s.parent) && !s.archivedAt)
+      await editSession(Number(s.id) as ConversationId, (meta) => {
+        meta.parent = null;
+        meta.handoffs = [
+          ...(meta.handoffs ?? []),
+          { at: Date.now(), to: 'you' },
+        ];
+      });
 }
 
 /** Hides a session from the list, or brings it back. Nothing is deleted. */
@@ -123,8 +141,9 @@ export async function archive(id: string, archived: boolean) {
       delete meta.watchedBy;
     } else delete meta.archivedAt;
   });
+  if (!archived) return;
   // Its dev servers and shells go with it.
-  if (archived)
-    for (const t of allTerminals())
-      if (t.startedBy === id) await removeTerminal(t.id);
+  for (const t of allTerminals())
+    if (t.startedBy === id) await removeTerminal(t.id);
+  await releaseChildren([id]);
 }

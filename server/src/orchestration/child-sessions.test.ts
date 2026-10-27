@@ -110,6 +110,38 @@ test('a child session reports each turn to its parent, with what the user told i
   expect(shows(parentChat.value, 'Third pick: green')).toBe(false);
 });
 
+test('archiving a parent detaches the child sessions it leaves open', async () => {
+  const tab = await bica.connect();
+  const { projectId } = await bica.project(tab, 'archive-parent');
+  script = {
+    Boss: [
+      fauxAssistantMessage(
+        fauxToolCall('session_start', {
+          prompt: 'Helper: count to three',
+          summary: 'Start a child session',
+        }),
+        { stopReason: 'toolUse' },
+      ),
+      'Helper started',
+    ],
+  };
+  const parent = await tab.request('session.create', {
+    projectId,
+    prompt: 'Boss the counting',
+    requestId: crypto.randomUUID(),
+  });
+  const list = await sessionsOf(tab).until((l) =>
+    l.some((s) => s.parent === parent),
+  );
+  const child = list.find((s) => s.parent === parent)!.id;
+  await settled(tab, child, parent);
+  await tab.request('session.archive', { id: parent, archived: true });
+  const after = await sessionsOf(tab).until((l) =>
+    l.some((s) => s.id === child && s.parent === null),
+  );
+  expect(after.find((s) => s.id === child)!.archivedAt).toBeNull();
+});
+
 test('the hub hears each turn of a session it watches, until the user stops the watch', async () => {
   const tab = await bica.connect();
   const { projectId } = await bica.project(tab, 'watched');

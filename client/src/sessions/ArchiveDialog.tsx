@@ -37,8 +37,9 @@ function descendants(id: string, all: readonly SessionSummary[]) {
 
 /**
  * The ids to archive along with `s`, itself included; empty when cancelled.
- * Asks only when `s` has child sessions that are still open: the finished ones
- * come picked. Ones detached from it are the user's, so they aren't offered.
+ * Asks only when `s` has child sessions that are still open, none picked: the
+ * ones left open are detached. Ones detached already are the user's, so they
+ * aren't offered.
  */
 function askArchive(
   s: SessionSummary,
@@ -48,7 +49,7 @@ function askArchive(
   if (!kids.length) return Promise.resolve([s.id]);
   setParent(s);
   setChildren(kids);
-  setPicked(new Set(kids.filter((k) => !busy(k)).map((k) => k.id)));
+  setPicked(new Set<string>());
   dialog?.showModal();
   return new Promise((resolve) => (settle = resolve));
 }
@@ -104,7 +105,8 @@ export default function ArchiveDialog() {
       }
     >
       <p class="px-4 pt-3 pb-1 text-muted">
-        This session leads others. The checked ones are archived with it.
+        This session leads others. Checked ones are archived with it, and the
+        rest are detached and stay open.
       </p>
       <OptionList inset={2} class="flex-1">
         <For each={children()} keyed={(s) => s.id}>

@@ -69,6 +69,6 @@ Read state lives on the server, so opening a session on the phone marks it read 
 
 ## Archiving
 
-Archive moves a session to the sidebar's Archived section, and unarchive brings it back. Nothing is deleted. A running session can't be archived. Archiving a parent asks which of its child sessions go with it.
+Archive moves a session to the sidebar's Archived section, and unarchive brings it back. Nothing is deleted. A running session can't be archived. Archiving a parent asks which of its child sessions go with it, none by default, and detaches the rest ([orchestration](./orchestration.md)).
 
 To archive many at once, ⌘ click or shift click sessions in the sidebar, then use the bar at the bottom.
