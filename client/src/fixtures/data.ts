@@ -143,6 +143,7 @@ function terminal(
   title: string,
   exitCode: number | null,
   command: string | null = title,
+  parent: string | null = null,
 ): TerminalInfo {
   return {
     id: `fixture-t-${++n}`,
@@ -154,7 +155,8 @@ function terminal(
     exitCode,
     busy: exitCode === null ? false : null,
     lastExit: null,
-    startedBy: null,
+    startedBy: parent,
+    parent,
     createdAt: now - HOUR,
   };
 }
@@ -640,7 +642,15 @@ function worst(): Dataset {
         null,
         'bun run dev --port 3143 --host 0.0.0.0 --strictPort --open false --mode development',
       ),
-      terminal('nw', nw, 'Setup', 130, 'pnpm install --frozen-lockfile'),
+      // Led by a session, so archiving that session offers to close it.
+      terminal(
+        'nw',
+        nw,
+        'Setup',
+        130,
+        'pnpm install --frozen-lockfile',
+        'worst-ask',
+      ),
       terminal('x', x, 'zsh', 255, null),
     ],
     kept: [

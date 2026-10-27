@@ -22,7 +22,17 @@ Agents get four tools, shaped after Codex's and Claude Code's background shells:
 - `terminal_send` types into it, optionally pressing Ctrl-C first.
 - `terminal_stop` closes it.
 
-With `notify`, the agent gets a note when the command finishes, even if it is idle by then. A dev server rarely finishes, so its note usually means it crashed. Agents are told to use terminals instead of `&`, to check for a running one first, and to stop what they started. Archiving a session closes the terminals it started.
+With `notify`, the agent gets a note when the command finishes, even if it is idle by then. A dev server rarely finishes, so its note usually means it crashed. Agents are told to use terminals instead of `&`, to check for a running one first, and to stop what they started.
+
+## Parent and Detach
+
+A terminal an agent starts has that session as its parent, as a [child session](./orchestration.md) does, and follows the same rules:
+
+- A "Parent in charge" strip under the terminal's top bar links to the parent. Detach there makes the terminal yours for good.
+- Archiving the parent closes the terminals it leads. When there are any, the archive dialog lists them checked; unchecking one detaches it, so it stays open.
+- Once detached, the agent that started it can't type into it or close it, unless you tell it to (`user_asked`), and hears nothing more from it. `list` shows it as the user's.
+
+Terminals you open have no parent. Unlike a session, a terminal is closed, not archived: its process is gone, so there is nothing to bring back.
 
 The [hub](./hub.md) gets only `terminal_read`, to read any terminal without typing into it.
 

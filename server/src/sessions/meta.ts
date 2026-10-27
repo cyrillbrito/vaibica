@@ -142,8 +142,8 @@ export async function archive(id: string, archived: boolean) {
     } else delete meta.archivedAt;
   });
   if (!archived) return;
-  // Its dev servers and shells go with it.
+  // The dev servers and shells it leads go with it; detached ones stay.
   for (const t of allTerminals())
-    if (t.startedBy === id) await removeTerminal(t.id);
+    if (t.parent === id) await removeTerminal(t.id);
   await releaseChildren([id]);
 }

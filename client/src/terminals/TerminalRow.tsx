@@ -14,6 +14,7 @@ import {
   TerminalIcon,
 } from '../ui/icons';
 import { closeDrawer } from '../ui/layout';
+import { toast } from '../ui/Toast';
 import { removeTerminal, restartTerminal, stopTerminal } from './terminals';
 
 // A terminal's row in the sidebar, under its workspace.
@@ -23,7 +24,12 @@ export default function TerminalRow(p: { terminal: TerminalInfo }) {
 
   const closeTerminal = async (t: TerminalInfo) => {
     if (location.pathname === paths.t(t.id)()) navigate(paths());
-    await removeTerminal(t.id);
+    try {
+      await removeTerminal(t.id);
+      toast({ title: 'Closed terminal', description: t.title });
+    } catch (e) {
+      toast.error(e);
+    }
   };
 
   const terminalMenu = (t: TerminalInfo): MenuEntry[] => [

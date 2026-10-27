@@ -13,7 +13,7 @@ import {
 } from '../../projects/projects';
 import { paths } from '../../router';
 import { archiveWithChildren } from '../../sessions/ArchiveDialog';
-import { archiveSession, forkSession, markSeen } from '../../sessions/sessions';
+import { forkSession, markSeen, setArchived } from '../../sessions/sessions';
 import { createTerminal } from '../../terminals/terminals';
 import { copyText } from '../../ui/clipboard';
 import type { MenuEntry } from '../../ui/ContextMenu';
@@ -155,7 +155,7 @@ export function createSidebarMenus(props: {
       ? {
           label: 'Unarchive',
           icon: <RestoreIcon />,
-          onSelect: () => void archiveSession(s.id, false),
+          onSelect: () => void setArchived([s], false),
         }
       : {
           label: 'Archive',

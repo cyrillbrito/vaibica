@@ -1,4 +1,8 @@
 import { afterAll, beforeAll, expect, test } from 'bun:test';
+import {
+  fauxAssistantMessage,
+  fauxToolCall,
+} from '@earendil-works/pi-ai/providers/faux';
 
 import { startBica, type Bica } from '../testing/bica';
 
@@ -20,6 +24,48 @@ test('a terminal streams its output and takes input', async () => {
   await tab.request('terminal.input', { id, data: 'ping 🌈\n' });
   await screen.until((t) => t?.output.includes('ping 🌈'));
   await tab.request('terminal.remove', { id });
+});
+
+test('archiving a session closes the terminals it leads, and leaves the ones detached from it', async () => {
+  const tab = await bica.connect();
+  const { projectId } = await bica.project(tab, 'archive-terminals');
+  const start = (name: string) =>
+    fauxAssistantMessage(
+      fauxToolCall('terminal_start', {
+        name,
+        command: 'cat',
+        wait: 0,
+        summary: 'Start a server',
+      }),
+      { stopReason: 'toolUse' },
+    );
+  bica.reply(
+    start('keep me'),
+    start('close me'),
+    fauxAssistantMessage('Both running'),
+  );
+  const id = await tab.request('session.create', {
+    projectId,
+    prompt: 'Start two servers',
+    requestId: crypto.randomUUID(),
+  });
+  const terminals = tab.watch('terminals', {});
+  const list = await terminals.until(
+    (l) => l.filter((t) => t.parent === id).length === 2,
+  );
+  await tab
+    .watch('sessions', {})
+    .until((l) => l.some((s) => s.id === id && s.status === 'done'));
+
+  await tab.request('terminal.detach', {
+    id: list.find((t) => t.title === 'keep me')!.id,
+  });
+  await tab.request('session.archive', { id, archived: true });
+  const left = await terminals.until(
+    (l) => !l.some((t) => t.title === 'close me'),
+  );
+  expect(left.find((t) => t.title === 'keep me')?.status).toBe('running');
+  for (const t of left) await tab.request('terminal.remove', { id: t.id });
 });
 
 test('stopping a terminal ends the processes its command started', async () => {

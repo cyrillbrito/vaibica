@@ -2,6 +2,7 @@ import { Title } from '@solidjs/meta';
 import { useNavigate, type RouteProps } from '@solidjs/router';
 import { Show, createMemo } from 'solid-js';
 
+import ParentStrip from '../../orchestration/ParentStrip';
 import TerminalView from '../../terminals/TerminalView';
 import TopBar from '../../app/TopBar';
 import { Button } from '../../ui/Button';
@@ -11,6 +12,7 @@ import { RestoreIcon, StopIcon, CloseIcon, TerminalIcon } from '../../ui/icons';
 import { useProjects, workspaceName } from '../../projects/projects';
 import { useSessions } from '../../sessions/sessions';
 import {
+  detachTerminal,
   removeTerminal,
   restartTerminal,
   stopTerminal,
@@ -32,8 +34,8 @@ export default function TerminalPage(props: RouteProps<'/t/:id'>) {
     const project = projects().find((p) => p.id === t?.projectId);
     return t && project ? workspaceName(project, t.cwd) : undefined;
   };
-  const starter = () =>
-    sessions().find((s) => s.id === info()?.startedBy) ?? undefined;
+  const parent = () =>
+    sessions().find((s) => s.id === info()?.parent) ?? undefined;
 
   const close = async (id: string) => {
     await removeTerminal(id);
@@ -109,17 +111,16 @@ export default function TerminalPage(props: RouteProps<'/t/:id'>) {
                 {where()}
               </span>
             </Show>
-            <Show when={starter()}>
-              {(s) => (
-                <a
-                  class="truncate text-meta text-muted underline-offset-2 hover:text-fg hover:underline max-md:hidden"
-                  href={paths.s(s().id)}
-                >
-                  from {s().title || 'a session'}
-                </a>
-              )}
-            </Show>
           </TopBar>
+          <Show when={t().parent}>
+            <div class="border-t border-line bg-panel px-2">
+              <ParentStrip
+                parent={parent()}
+                detachTitle="Take it from its session: it's yours, and archiving the session leaves it open"
+                onDetach={() => void detachTerminal(t().id)}
+              />
+            </div>
+          </Show>
           {/* Keyed: another terminal gets a fresh screen. */}
           <Show when={t().id} keyed>
             {(id) => (

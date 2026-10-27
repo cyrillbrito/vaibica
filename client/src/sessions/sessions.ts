@@ -3,8 +3,11 @@ import type { AgentId } from '@bica/shared/agents';
 import type {
   ModelChoice,
   PromptImage,
+  SessionSummary,
   VoiceSettings,
 } from '@bica/shared/protocol';
+import { errorText } from '../ui/errors';
+import { toast } from '../ui/Toast';
 import {
   request,
   requestId,
@@ -65,8 +68,45 @@ export function tonightAction(
   return request('session.tonight', { id, action, prompt });
 }
 
-export function archiveSession(id: string, archived = true) {
+function archiveSession(id: string, archived = true) {
   return request('session.archive', { id, archived });
+}
+
+/** Archives or brings back `list`, and says how it went in a toast. */
+export async function setArchived(
+  list: readonly SessionSummary[],
+  archived = true,
+  note?: string,
+) {
+  if (!list.length) return;
+  // Child sessions go before their parents: archiving a parent detaches the
+  // ones still open, and those archived with it should keep their place.
+  const results: PromiseSettledResult<unknown>[] = [];
+  let left = [...list];
+  while (left.length) {
+    const leaves = left.filter((s) => !left.some((o) => o.parent === s.id));
+    left = left.filter((s) => !leaves.includes(s));
+    results.push(
+      ...(await Promise.allSettled(
+        leaves.map((s) => archiveSession(s.id, archived)),
+      )),
+    );
+  }
+  const failed = results.filter((r) => r.status === 'rejected');
+  const done = list.length - failed.length;
+  const verb = archived ? 'Archived' : 'Unarchived';
+  const count = (n: number) => `${n} session${n === 1 ? '' : 's'}`;
+  if (failed.length)
+    toast.error({
+      title: `Couldn't ${archived ? 'archive' : 'unarchive'} ${count(failed.length)}`,
+      description: errorText(failed[0]!.reason),
+    });
+  if (!done) return;
+  const one = list.length === 1 ? list[0]!.title : '';
+  toast({
+    title: `${verb} ${count(done)}`,
+    description: [one, note].filter(Boolean).join(' · ') || undefined,
+  });
 }
 
 export function markSeen(id: string, seen = true) {

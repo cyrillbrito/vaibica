@@ -262,6 +262,7 @@ export async function createTerminal(
       busy: null,
       lastExit: null,
       startedBy: options.startedBy ?? null,
+      parent: options.startedBy ?? null,
       createdAt: Date.now(),
     },
     pty: null,
@@ -369,6 +370,7 @@ export async function restartTerminal(
       ...t.info,
       command: next.command?.trim() || null,
       startedBy: next.startedBy ?? t.info.startedBy,
+      parent: next.startedBy ?? t.info.parent,
     };
   t.run++;
   t.start = 0;
@@ -386,6 +388,14 @@ export async function removeTerminal(id: string) {
   await stopTerminal(id);
   terminals.delete(id);
   for (const sink of t.sinks) sink.snapshot(null);
+  announce();
+}
+
+/** Takes it from its session for good: archiving that session leaves it open. */
+export function detachTerminal(id: string) {
+  const t = get(id);
+  if (!t.info.parent) return;
+  t.info = { ...t.info, parent: null };
   announce();
 }
 

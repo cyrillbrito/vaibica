@@ -421,7 +421,7 @@ function sessionTools(hub: boolean): ToolRegistration[] {
             );
           for (const t of shells)
             lines.push(
-              `    terminal ${t.id} "${t.title}": ${terminalState(t)}${mine(t.startedBy)}`,
+              `    terminal ${t.id} "${t.title}": ${terminalState(t)}${t.parent === me ? ', yours' : t.startedBy === me ? ", started by you, now the user's" : ''}`,
             );
         }
       }

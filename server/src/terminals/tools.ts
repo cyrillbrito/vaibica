@@ -53,6 +53,21 @@ function report(id: string, lines?: number) {
   };
 }
 
+const USER_ASKED = Type.Optional(
+  Type.Boolean({
+    description:
+      'true: the user told you to, for a terminal you started that is theirs now. Only then',
+  }),
+);
+
+/** As with sessions, a terminal's starter backs off once it's detached. */
+function checkInCharge(t: TerminalInfo, me: string, userAsked?: boolean) {
+  if (t.startedBy !== me || t.parent === me || userAsked) return;
+  throw new Error(
+    `You started terminal ${t.id} "${t.title}", but it has no parent now, so it's the user's. Leave it to them: read it, or open your own with another name. Pass \`user_asked\` only if they told you to do this.`,
+  );
+}
+
 /** The session hears when the terminal's command finishes. */
 async function notifyWhenDone(id: string, session: string) {
   const code = await commandDone(id);
@@ -61,6 +76,8 @@ async function notifyWhenDone(id: string, session: string) {
   let note: string;
   try {
     const t = terminalInfo(id);
+    // Detached since: the user's now, so its starter hears nothing more.
+    if (t.startedBy === session && t.parent !== session) return;
     note = `${
       code === null
         ? `The shell in terminal ${id} "${t.title}" ended.`
@@ -113,7 +130,7 @@ const terminalStart = defineTool({
     const same = title
       ? terminalsIn(workspace.cwd).find((t) => t.title === title)
       : undefined;
-    if (same && same.status !== 'exited' && same.startedBy !== session)
+    if (same && same.status !== 'exited' && same.parent !== session)
       throw new Error(
         `Terminal ${same.id} "${title}" is already open here and isn't yours. Read it with terminal_read, or pick another name.`,
       );
@@ -173,9 +190,12 @@ const terminalSend = defineTool({
         description: `Most seconds to wait for output to settle (default 3, max ${MAX_WAIT})`,
       }),
     ),
+    user_asked: USER_ASKED,
   }),
-  execute: async ({ id, input, interrupt, notify, wait }, api) => {
-    if (terminalInfo(id).status === 'exited')
+  execute: async ({ id, input, interrupt, notify, wait, user_asked }, api) => {
+    const t = terminalInfo(id);
+    checkInCharge(t, String(api.conversationId), user_asked);
+    if (t.status === 'exited')
       throw new Error(
         'The terminal has exited. terminal_start with its name opens it again.',
       );
@@ -193,9 +213,12 @@ const terminalStop = defineTool({
     'Close a terminal when you are done with it: its shell and whatever runs in it end (SIGTERM, then SIGKILL after 3 seconds), and it leaves the sidebar. Returns its last lines. To restart what runs in it, use terminal_start with its name instead; to stop only the command, terminal_send with `interrupt`.',
   parameters: Type.Object({
     id: Type.String({ description: 'The terminal id' }),
+    user_asked: USER_ASKED,
   }),
-  execute: async ({ id }) => {
-    const { title } = terminalInfo(id);
+  execute: async ({ id, user_asked }, api) => {
+    const t = terminalInfo(id);
+    checkInCharge(t, String(api.conversationId), user_asked);
+    const { title } = t;
     const last = tail(id, 20);
     await removeTerminal(id);
     return {

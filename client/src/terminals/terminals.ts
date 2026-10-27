@@ -32,3 +32,8 @@ export function restartTerminal(id: string) {
 export function removeTerminal(id: string) {
   return request('terminal.remove', { id });
 }
+
+/** Takes it from its session: archiving that session leaves it open. */
+export function detachTerminal(id: string) {
+  return request('terminal.detach', { id });
+}

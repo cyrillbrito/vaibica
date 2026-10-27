@@ -3,11 +3,10 @@ import { createMemo, createSignal } from 'solid-js';
 
 import type { SessionSummary } from '@bica/shared/protocol';
 import { paths } from '../../router';
-import { archiveSession } from '../../sessions/sessions';
+import { setArchived } from '../../sessions/sessions';
 import type { MenuEntry } from '../../ui/ContextMenu';
 import { ArchiveIcon, CloseIcon, RestoreIcon } from '../../ui/icons';
 import { closeDrawer } from '../../ui/layout';
-import { toast } from '../../ui/Toast';
 
 /**
  * Sessions picked with ⌘ or shift click, for acting on many at once.
@@ -76,17 +75,18 @@ export function createSelection(props: {
     const skipped = list.filter((s) => !s.archivedAt && busy(s)).length;
     clear();
     if (ready.some((s) => isOpen(s.id))) navigate(paths());
-    await Promise.allSettled(ready.map((s) => archiveSession(s.id)));
-    toast(
-      `Archived ${ready.length} session${ready.length === 1 ? '' : 's'}` +
-        (skipped ? `, skipped ${skipped} still running` : ''),
+    await setArchived(
+      ready,
+      true,
+      skipped ? `Skipped ${skipped} still running` : undefined,
     );
   };
 
   const unarchive = async (list: SessionSummary[]) => {
     clear();
-    await Promise.allSettled(
-      list.filter((s) => s.archivedAt).map((s) => archiveSession(s.id, false)),
+    await setArchived(
+      list.filter((s) => s.archivedAt),
+      false,
     );
   };
 

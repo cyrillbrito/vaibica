@@ -52,13 +52,13 @@ The words Bica uses for its concepts, one name per concept. Docs, code names, co
 
 **Orchestration**: Sessions working with other sessions: starting, reading, messaging, and hearing of each other's runs. _Avoid_: delegation, multi-agent
 
-**Parent**: The session in charge of a child session: it hears each run the child ends. A session gets one only when another starts it, and loses it for good when you detach it. _Avoid_: starter (the session that started it may not be its parent), owner, orchestrator
+**Parent**: The session in charge of a child session, or of a terminal its agent started: it hears each run the child ends, and archiving it closes the terminal. A session gets one only when another starts it, and loses it for good when you detach it. _Avoid_: starter (the session that started it may not be its parent), owner, orchestrator
 
 **Child session**: A session with a parent, which another session started to orchestrate several things at once. "Child" for short once the context is clear. _Avoid_: worker, subagent (Bica has none hidden), helper
 
 **In charge**: Who leads a session: its parent while it has one, and you otherwise. _Avoid_: driver, owner, handoff (that is the voice's)
 
-**Detach**: Taking a child session from its parent, so it's yours and the parent hears no more of it. A session started detached never had a parent. _Avoid_: take over, unlink, release
+**Detach**: Taking a child session or a terminal from its parent, so it's yours and the parent hears no more of it. A session started detached never had a parent. _Avoid_: take over, unlink, release
 
 **Watch**: The hub following a session it doesn't lead, hearing each run it ends, until it or you stop. _Avoid_: subscribe, follow, notify
 

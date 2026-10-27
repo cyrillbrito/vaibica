@@ -11,10 +11,10 @@ import {
 } from '../../projects/projects';
 import type { SessionSummary } from '@bica/shared/protocol';
 import {
-  archiveSession,
   forkSession,
   markSeen,
   renameSession,
+  setArchived,
   stopSession,
   useSessions,
 } from '../../sessions/sessions';
@@ -308,7 +308,7 @@ export function useCommands() {
               label: 'Unarchive',
               icon: RestoreIcon,
               group,
-              run: () => void archiveSession(s.id, false),
+              run: () => void setArchived([s], false),
             },
           ]
         : running

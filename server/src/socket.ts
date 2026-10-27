@@ -79,6 +79,7 @@ import { findPath, openInEditor, openPath } from './git/editor';
 import { serveDownload, workspaceFileLink } from './git/download';
 import {
   createTerminal,
+  detachTerminal,
   removeTerminal,
   resizeTerminal,
   restartTerminal,
@@ -321,6 +322,10 @@ const calls: Handlers = {
   },
   'terminal.restart': async ({ id }) => {
     await restartTerminal(id);
+    return null;
+  },
+  'terminal.detach': async ({ id }) => {
+    detachTerminal(id);
     return null;
   },
   'terminal.remove': async ({ id }) => {

@@ -351,6 +351,9 @@ export interface TerminalInfo {
   lastExit: number | null;
   // The session whose agent started it; null: started by the user.
   startedBy: string | null;
+  // The session in charge of it, which closes it when archived; null: none,
+  // so it's yours (docs/terminals.md).
+  parent: string | null;
   createdAt: number;
 }
 
@@ -593,6 +596,8 @@ export interface Calls {
   'terminal.restart': { args: { id: string }; result: null };
   // Stops it if needed and drops it from the list.
   'terminal.remove': { args: { id: string }; result: null };
+  // Takes a terminal from its session: it's yours from now on.
+  'terminal.detach': { args: { id: string }; result: null };
 }
 
 /** Live state: a snapshot, then numbered changes. */
