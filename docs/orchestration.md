@@ -30,7 +30,6 @@ Bica tells sessions about each other with notes: prompts from Bica itself, queue
 | --- | --- |
 | ends a run | its parent, and the hubs that watch it |
 | ends a run with a question for you, or an error | also every hub |
-| messaged a session during that run | not that session again, unless it asks or failed |
 | is archived | nobody |
 
 A message from `session_send` is one prompt to the receiver. The sender hears back only when the receiver answers with a message of its own, or when it would get a note anyway, and the message tells the receiver which.

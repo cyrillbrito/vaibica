@@ -50,9 +50,6 @@ export type SessionMeta = {
   voice?: VoiceSettings;
   // The hubs that watch it (session_watch), which hear each run it ends.
   watchedBy?: string[];
-  // Sessions it messaged during its current run: they need no note that
-  // repeats what it told them.
-  messaged?: string[];
   // The memory index as the agent sees it (loadMemory), '' for none. Unset:
   // taken again on the next prompt, as after a compaction.
   memory?: string;

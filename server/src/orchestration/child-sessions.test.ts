@@ -33,6 +33,7 @@ function route(context: Context) {
   );
   const next = key ? script[key]!.shift() : undefined;
   if (next === undefined) return fauxAssistantMessage('Noted');
+  if (typeof next === 'function') return next(context);
   return typeof next === 'string'
     ? fauxAssistantMessage(next)
     : (next as ReturnType<typeof fauxAssistantMessage>);
@@ -108,6 +109,49 @@ test('a child session reports each turn to its parent, with what the user told i
     .until((c) => shows(c, 'Third pick: green'));
   await settled(tab, child, parent);
   expect(shows(parentChat.value, 'Third pick: green')).toBe(false);
+});
+
+test('a child session that messages its parent mid-turn still reports the end of that turn', async () => {
+  const tab = await bica.connect();
+  const { projectId } = await bica.project(tab, 'mid-turn');
+  script = {
+    Chief: [
+      fauxAssistantMessage(
+        fauxToolCall('session_start', {
+          prompt: 'Worker: sort the list',
+          summary: 'Start a child session',
+        }),
+        { stopReason: 'toolUse' },
+      ),
+      'Worker started',
+    ],
+    Worker: [
+      (context: Context) =>
+        fauxAssistantMessage(
+          fauxToolCall('session_send', {
+            id: /\(session (\d+)\) started this session/.exec(
+              firstPrompt(context),
+            )![1],
+            message: 'Going with ascending order',
+            summary: 'Tell the parent',
+          }),
+          { stopReason: 'toolUse' },
+        ),
+      'Sorted ascending, all done',
+    ],
+  };
+  const parent = await tab.request('session.create', {
+    projectId,
+    prompt: 'Chief of sorting',
+    requestId: crypto.randomUUID(),
+  });
+  await tab
+    .watch('conversation', { id: parent })
+    .until(
+      (c) =>
+        shows(c, 'Going with ascending order') &&
+        shows(c, 'Sorted ascending, all done'),
+    );
 });
 
 test('archiving a parent detaches the child sessions it leaves open', async () => {

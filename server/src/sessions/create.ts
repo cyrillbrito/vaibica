@@ -243,7 +243,6 @@ export async function fork(id: string, at?: number) {
           'handoffs',
           'cleanedUp',
           'watchedBy',
-          'messaged',
           'memory',
           'projects',
           'tonight',

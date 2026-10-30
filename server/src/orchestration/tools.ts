@@ -10,7 +10,7 @@ import { allTerminals } from '../terminals/terminals';
 import { terminalState } from '../terminals/tools';
 import { spawnSession } from '../sessions/create';
 import { archive, removeWorktree } from '../sessions/meta';
-import { noteMessage, watch } from './notes';
+import { watch } from './notes';
 import { stop, submit } from '../sessions/prompts';
 import {
   lastSender,
@@ -303,7 +303,6 @@ function sessionTools(hub: boolean): ToolRegistration[] {
           `${named(target)} is archived, so nothing reads it. Say it in your reply instead, or ask the user to bring the session back.`,
         );
       checkInCharge(target, me.id, user_asked);
-      await noteMessage(api.conversationId, id);
       // A sender that reads its turns anyway needs no answer by message.
       const hears = target.parent === me.id || target.watchedBy.includes(me.id);
       await submit(

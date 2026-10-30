@@ -48,14 +48,6 @@ export function watchRuns() {
   }));
 }
 
-/** Session `from` messaged `to` during its current run. */
-export function noteMessage(from: ConversationId, to: string) {
-  return editSession(from, (meta) => {
-    if (!meta.messaged?.includes(to))
-      meta.messaged = [...(meta.messaged ?? []), to];
-  });
-}
-
 /** `hub` starts or stops hearing each run this session ends. */
 export async function watch(id: string, hub: string, on: boolean) {
   const conversation = await getConversation(id);
@@ -95,17 +87,9 @@ function runChanged(id: ConversationId | undefined, running: boolean) {
 /**
  * Notes for the end of a run: to its parent and the hubs that watch it, and
  * when it asks or fails, to every hub too, which coordinates them all
- * (docs/hub.md). One it already messaged this run hears only of a question
- * or an error.
+ * (docs/hub.md).
  */
 async function runEnded(id: ConversationId) {
-  // Taken and cleared at once: these were for the run that just ended.
-  const told = await editSession(id, (meta) => {
-    // A copy: the draft's array can't be read once the commit settles.
-    const taken = [...(meta.messaged ?? [])];
-    if (meta.messaged) delete meta.messaged;
-    return taken;
-  });
   const s = await readSession(String(id)).catch(() => undefined);
   // Archived: done with, so it doesn't report.
   if (!s || s.archivedAt) return;
@@ -116,7 +100,6 @@ async function runEnded(id: ConversationId) {
     for (const other of await listSessions())
       if (other.agent === 'hub' && !other.archivedAt) listeners.add(other.id);
   listeners.delete(String(id));
-  if (!asksOrFailed) for (const w of told) listeners.delete(w);
   if (!listeners.size) return;
   let what = `finished its turn. Its last reply:\n\n${s.reply || '(none)'}`;
   if (s.status === 'error')
