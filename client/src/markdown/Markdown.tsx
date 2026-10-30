@@ -10,6 +10,7 @@ import { renderHtml } from '@tanstack/markdown/html';
 import { parseMarkdown } from '@tanstack/markdown/parser';
 import {
   For,
+  Loading,
   Show,
   createMemo,
   createSignal,
@@ -21,6 +22,7 @@ import { CopyButton } from '../ui/CopyButton';
 
 import { openPath, showPath } from '../files/files';
 
+import Mermaid from './Mermaid';
 import { createSmoothText } from './smooth-text';
 
 // Pierre's shared Shiki instance, the same one the diff and file views use.
@@ -222,17 +224,23 @@ export default function Markdown(props: {
   const streaming = untrack(() => props.streaming);
   const smooth = streaming ? createSmoothText(() => props.text) : undefined;
   const blocks = createMemo(
-    () =>
-      parseMarkdown(smooth ? smooth.text() : props.text, options).children.map(
-        (node, i) => {
-          linkCodePaths(node);
-          const html = renderHtml(
-            { type: 'root', children: [node] },
-            { highlighter: highlight },
-          );
-          return { key: `${i}:${html}`, html };
-        },
-      ),
+    () => {
+      const text = smooth ? smooth.text() : props.text;
+      const nodes = parseMarkdown(text, options).children;
+      return nodes.map((node, i) => {
+        // A diagram renders once its fence closes, not on every streamed line.
+        const closed =
+          i < nodes.length - 1 || /\n(```|~~~)\s*$/.test(text.trimEnd());
+        if (node.type === 'code' && node.lang === 'mermaid' && closed)
+          return { key: `${i}:mermaid:${node.value}`, mermaid: node.value };
+        linkCodePaths(node);
+        const html = renderHtml(
+          { type: 'root', children: [node] },
+          { highlighter: highlight },
+        );
+        return { key: `${i}:${html}`, html };
+      });
+    },
     { name: 'markdownBlocks' },
   );
   // A block that starts after the first paint fades in, unless it came with
@@ -273,6 +281,13 @@ export default function Markdown(props: {
           const n = untrack(i);
           const fresh = smooth && ready && n > newest && !smooth.jumped();
           newest = Math.max(newest, n);
+          const diagram = untrack(block).mermaid;
+          if (diagram !== undefined)
+            return (
+              <Loading>
+                <Mermaid text={diagram} class="my-3" />
+              </Loading>
+            );
           return (
             <div
               class={fresh ? 'stream-in' : 'contents'}

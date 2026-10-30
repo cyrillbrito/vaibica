@@ -20,6 +20,7 @@ The transcript shows your prompts with their images, the agent's replies, its th
 - Each new paragraph, list item, or code block of a streaming reply fades in as it starts, except in a catch-up.
 - While you're at the bottom, the transcript follows new lines on a spring instead of jumping, so a steady stream scrolls as one motion (`ui/stick-to-bottom.ts`, with the spring of StackBlitz's [use-stick-to-bottom](https://github.com/stackblitz-labs/use-stick-to-bottom)). Opening a session still lands at the end at once.
 - Hover a reply to copy or fork it. Code blocks get their own copy button.
+- A ` ```mermaid ` block renders as a diagram once its fence closes, with the same renderer as `.mmd` files (`markdown/Mermaid.tsx`): hand-drawn, in the theme's colors. Mermaid loads on the first diagram. One that fails to parse shows as code, with the reason under it, so you can ask the agent to fix it. Every agent is told replies render Mermaid.
 - Notes from Bica and messages from other sessions show as a quiet row with the sender.
 - Hide thinking, in Settings → Appearance, leaves thinking out on that device.
 

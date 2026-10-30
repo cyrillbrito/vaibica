@@ -195,7 +195,8 @@ export const BASE_SECTIONS = {
 // skill (a reason, hard limits, named exceptions, a check), which held up
 // where softer wording didn't. Replies render last so the long AGENTS.md
 // doesn't bury them.
-export const STYLE = `- Write the way a colleague talks: plain words, full sentences, one idea per sentence. Say what a thing is before naming it, and what code does, not how it feels. Give numbers only when they are the answer.`;
+export const STYLE = `- Write the way a colleague talks: plain words, full sentences, one idea per sentence. Say what a thing is before naming it, and what code does, not how it feels. Give numbers only when they are the answer.
+- Replies render Mermaid: when a flow, structure, or sequence is easier seen than read, draw it in a \`mermaid\` fenced block. Keep it small and top-down (\`flowchart TD\`), quote labels with brackets in them (\`A["run (once)"]\`), and still say the point in words.`;
 
 /** Code and paths, for a reader who looks at the reply. */
 export const QUOTE_EXACTLY = `- Use inline code for code, paths, and commands, and fenced blocks for snippets. Quote code, paths, commands, and errors exactly.`;

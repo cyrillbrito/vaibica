@@ -1,7 +1,7 @@
-import { Loading, Match, Switch, createMemo, lazy } from 'solid-js';
+import { Loading, Match, Switch } from 'solid-js';
 
 import Markdown from '../markdown/Markdown';
-import { errorText } from '../ui/errors';
+import Mermaid from '../markdown/Mermaid';
 
 export type PreviewKind = 'markdown' | 'html' | 'mermaid';
 
@@ -13,44 +13,6 @@ export function previewKind(path: string): PreviewKind | undefined {
   if (ext === 'mmd' || ext === 'mermaid') return 'mermaid';
   return undefined;
 }
-
-let count = 0;
-
-// Loaded on first use: mermaid is large and most files never need it.
-const Mermaid = lazy(async () => {
-  const { default: mermaid } = await import('mermaid');
-  return {
-    default: (props: { text: string }) => {
-      const svg = createMemo(
-        async () => {
-          mermaid.initialize({
-            startOnLoad: false,
-            theme: matchMedia('(prefers-color-scheme: dark)').matches
-              ? 'dark'
-              : 'default',
-          });
-          try {
-            return (await mermaid.render(`mermaid-${++count}`, props.text)).svg;
-          } catch (error) {
-            const p = document.createElement('p');
-            p.className = 'text-muted';
-            p.textContent = errorText(error);
-            return p.outerHTML;
-          }
-        },
-        { name: 'mermaidSvg' },
-      );
-      return (
-        <div
-          class="flex justify-center p-6 [&_svg]:h-auto [&_svg]:max-w-full"
-          // Mermaid's strict security level sanitizes labels in the SVG.
-          // eslint-disable-next-line solid/no-innerhtml
-          innerHTML={svg()}
-        />
-      );
-    },
-  };
-});
 
 /** A file shown as what it makes: formatted Markdown, a page, a diagram. */
 export default function FilePreview(props: {
@@ -76,7 +38,7 @@ export default function FilePreview(props: {
       </Match>
       <Match when={props.kind === 'mermaid'}>
         <Loading>
-          <Mermaid text={props.text} />
+          <Mermaid text={props.text} class="p-6" />
         </Loading>
       </Match>
     </Switch>
